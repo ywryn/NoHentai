@@ -185,6 +185,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Paginator from 'primevue/paginator'
@@ -205,6 +206,7 @@ const loading = ref(false)
 
 const popover = ref()
 const popoverData = ref(null)
+const router = useRouter()
 
 // EX 类型配置
 const exTypeList = [
@@ -419,8 +421,7 @@ function toggleType (type) {
 
 function navigateToGallery (id, gid) {
   if (gid) {
-    const url = `/gallery/${gid}/`
-    window.open(url, '_blank', 'noopener,noreferrer')
+    router.push(`/gallery/${gid}/`)
   }
 }
 
