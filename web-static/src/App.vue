@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, computed, ref } from 'vue'
+import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMomMode } from '@/composables/useMomMode'
 import ThemeToggle from '@/components/ThemeToggle.vue'
@@ -11,23 +11,10 @@ const { initMomMode } = useMomMode()
 // 路由相关
 const route = useRoute()
 
-// 移动端菜单状态
-const isMobileMenuOpen = ref(false)
-
 // 检测是否为阅读器页面
 const isReaderPage = computed(() => {
   return route.path.startsWith('/reader/')
 })
-
-// 切换移动端菜单
-const toggleMobileMenu = () => {
-  isMobileMenuOpen.value = !isMobileMenuOpen.value
-}
-
-// 关闭移动端菜单
-const closeMobileMenu = () => {
-  isMobileMenuOpen.value = false
-}
 
 onMounted(() => {
   initMomMode()
@@ -38,19 +25,41 @@ onMounted(() => {
 
   <!-- Navigation Bar (hidden on reader pages) -->
   <div class="navigation-bar" v-show="!isReaderPage">
+    <div class="nav-left">
+      <a class="brand-logo" href="/" aria-label="NoHentai">
+        の
+      </a>
+      <ul class="icon-nav">
+        <li>
+          <a href="/" aria-label="Front Page" title="Front Page">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 10.5l9-7 9 7V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z" />
+            </svg>
+          </a>
+        </li>
+        <li>
+          <a href="/data" aria-label="Data Analys" title="Data Analys">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 19h16v2H4zM6 10h3v7H6zM11 6h3v11h-3zM16 12h3v5h-3z" />
+            </svg>
+          </a>
+        </li>
+        <li>
+          <a href="https://exhentai.org/" target="_blank" aria-label="ExHentai" title="ExHentai">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M14 3h7v7h-2V6.41l-9.29 9.3-1.42-1.42 9.3-9.29H14z" />
+              <path d="M5 5h6v2H7v10h10v-4h2v6H5z" />
+            </svg>
+          </a>
+        </li>
+      </ul>
+    </div>
     <!-- Desktop Navigation - 静态版本 -->
     <ul class="nav-menu desktop-menu">
-      <li><a href="/" @click="closeMobileMenu">Front Page</a></li>
-      <li><a href="/data" @click="closeMobileMenu">Data Analys</a></li>
+      <li><a href="/">Front Page</a></li>
+      <li><a href="/data">Data Analys</a></li>
       <li><a href="https://exhentai.org/" target="_blank">ExHentai</a></li>
     </ul>
-    
-    <!-- Mobile Menu Button -->
-    <button class="mobile-menu-btn" @click="toggleMobileMenu">
-      <span class="hamburger-line" :class="{ active: isMobileMenuOpen }"></span>
-      <span class="hamburger-line" :class="{ active: isMobileMenuOpen }"></span>
-      <span class="hamburger-line" :class="{ active: isMobileMenuOpen }"></span>
-    </button>
     
     <!-- Theme Toggle (always visible) -->
     <div class="theme-toggle-nav">
@@ -58,14 +67,6 @@ onMounted(() => {
       <ThemeToggle />
     </div>
     
-    <!-- Mobile Menu - 静态版本 -->
-    <div class="mobile-menu" :class="{ open: isMobileMenuOpen }">
-      <ul class="mobile-nav-menu">
-        <li><a href="/" @click="closeMobileMenu">Front Page</a></li>
-        <li><a href="/data" @click="closeMobileMenu">Data Analys</a></li>
-        <li><a href="https://exhentai.org/" target="_blank" @click="closeMobileMenu">ExHentai</a></li>
-      </ul>
-    </div>
   </div>
   <router-view></router-view> <!-- 路由出口 -->
 </template>
@@ -99,8 +100,84 @@ onMounted(() => {
     background: var(--surface-color);
     border: 1px solid var(--border-color);
     border-radius: 8px;
+    gap: 10px;
   }
-  
+
+  .nav-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .icon-nav {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: none;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .icon-nav a {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color);
+    background: var(--surface-color);
+    transition: all 0.2s ease;
+  }
+
+  .icon-nav a:hover {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+
+  .icon-nav svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+
+  .brand-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--logo-bg);
+    color: var(--logo-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 20px;
+    text-decoration: none;
+    flex-shrink: 0;
+    border: 1px solid var(--logo-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  }
+
+  .brand-logo:hover {
+    color: var(--logo-text-hover);
+  }
+
+  :global(.my-app-dark) .brand-logo {
+    --logo-bg: #3a2b3f;
+    --logo-text: #f7a3c1;
+    --logo-border: #5a3c63;
+    --logo-text-hover: #f28fb3;
+  }
+
+  :global(.my-app-light) .brand-logo {
+    --logo-bg: #fff3e6;
+    --logo-text: #e57aa7;
+    --logo-border: #e9c9d8;
+    --logo-text-hover: #d86a97;
+  }
+
   .nav-menu {
     list-style: none;
     margin: 0;
@@ -154,104 +231,13 @@ onMounted(() => {
     background: var(--border-color);
   }
   
-  /* Mobile Menu Button */
-  .mobile-menu-btn {
-    display: none;
-    flex-direction: column;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 8px;
-    z-index: 1001;
-  }
-  
-  .hamburger-line {
-    width: 24px;
-    height: 3px;
-    background-color: var(--text-color);
-    margin: 3px 0;
-    transition: all 0.3s ease;
-    border-radius: 2px;
-  }
-  
-  .hamburger-line.active:nth-child(1) {
-    transform: rotate(45deg) translate(6px, 6px);
-  }
-  
-  .hamburger-line.active:nth-child(2) {
-    opacity: 0;
-  }
-  
-  .hamburger-line.active:nth-child(3) {
-    transform: rotate(-45deg) translate(6px, -6px);
-  }
-  
-  /* Mobile Menu */
-  .mobile-menu {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
-    height: auto;
-    background: var(--surface-color);
-    z-index: 1000;
-    padding: 8px 0;
-    transform: translateY(-8px);
-    opacity: 0;
-    pointer-events: none;
-    transition: transform 0.2s ease, opacity 0.2s ease;
-  }
-  
-  .mobile-menu.open {
-    transform: translateY(0);
-    opacity: 1;
-    pointer-events: auto;
-  }
-  
-  .mobile-nav-menu {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-  
-  .mobile-nav-menu li {
-    border-bottom: 1px solid var(--border-color);
-  }
-  
-  .mobile-nav-menu li:last-child {
-    border-bottom: none;
-  }
-  
-  .mobile-nav-menu a {
-    color: var(--text-color);
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 18px;
-    padding: 20px 24px;
-    display: block;
-    transition: all 0.3s ease;
-  }
-  
-  .mobile-nav-menu a:hover {
-    background: rgba(100, 108, 255, 0.1);
-    color: var(--primary-color);
-  }
-
   @media (max-width: 900px) {
     .nav-menu.desktop-menu {
       display: none;
     }
 
-    .mobile-menu-btn {
+    .icon-nav {
       display: flex;
-    }
-
-    .mobile-menu {
-      display: block;
     }
 
     .navigation-bar {
@@ -265,9 +251,9 @@ onMounted(() => {
       border-radius: 6px;
     }
 
-    .mobile-nav-menu a {
-      font-size: 16px;
-      padding: 16px 18px;
+    .icon-nav a {
+      width: 30px;
+      height: 30px;
     }
   }
 
