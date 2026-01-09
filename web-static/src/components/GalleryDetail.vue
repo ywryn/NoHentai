@@ -1,10 +1,7 @@
 <template>
   <div class="gallery-detail-wrapper">
     <div v-if="galleryData" class="gallery-detail-container">
-    <!-- 数据源指示器 -->
-    <div :class="['data-source-indicator', provider]">
-      {{ provider.toUpperCase() }}
-    </div>
+    <!-- 数据源指示器已移除 -->
 
     <!-- 左侧封面 -->
     <div class="cover">
@@ -45,7 +42,7 @@
         </ul>
 
 
-        <Divider layout="vertical" class="!hidden md:!flex" />
+        <Divider layout="vertical" class="detail-separator" />
 
         <!-- EX Tags -->
         <div v-if="provider === 'ex'" class="tags">

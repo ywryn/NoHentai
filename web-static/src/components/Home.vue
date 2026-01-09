@@ -61,10 +61,11 @@
 
     <!-- 顶部分页器 -->
     <Paginator
-      :template="'CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageInput'"
+      :template="'CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown'"
       :rows="perPage"
       :totalRecords="totalRecords"
       :first="firstIndex"
+      :pageLinkSize="3"
       @page="onPageChange"
     />
 
@@ -172,10 +173,11 @@
 
     <!-- 底部分页器 -->
     <Paginator
-      :template="'CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageInput'"
+      :template="'CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown'"
       :rows="perPage"
       :totalRecords="totalRecords"
       :first="firstIndex"
+      :pageLinkSize="3"
       @page="onPageChange"
     />
   </div>
