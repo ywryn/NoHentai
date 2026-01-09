@@ -247,6 +247,8 @@
 .torrent-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: auto;
+  min-width: 900px;
 }
 
 .torrent-table th,
@@ -255,6 +257,7 @@
   border: 1px solid var(--border-color);
   text-align: left;
   font-size: 14px;
+  white-space: nowrap;
 }
 
 .torrent-table th {
@@ -271,6 +274,11 @@
 .torrent-table td a:hover {
   color: #aed6f1;
   text-decoration: underline;
+}
+
+.torrent-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
 }
 
 
@@ -524,3 +532,51 @@
   font-size: 14px;
 }
 
+@media (max-width: 900px) {
+  .gallery-detail-container {
+    flex-direction: column;
+    padding: 12px;
+  }
+
+  .cover {
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+
+  .details {
+    width: 100%;
+  }
+
+  .info-tags {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .info-list li strong {
+    min-width: 80px;
+  }
+
+  .torrents,
+  .thumbnail-gallery {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .gallery-detail-wrapper {
+    padding: 0 8px;
+  }
+
+  .gallery-detail-container {
+    border-radius: 6px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .info-list li {
+    font-size: 13px;
+  }
+}

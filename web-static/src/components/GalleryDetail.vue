@@ -69,28 +69,30 @@
     <!-- EX Torrents Section -->
   <section v-if="provider === 'ex' && galleryData.torrents?.length" class="torrents">
     <h4>Torrent Downloads</h4>
-    <table class="torrent-table">
-      <thead>
-        <tr>
-          <th style="width: 40%;">Name</th>
-          <th style="width: 15%;">Size</th>
-          <th style="width: 15%;">Torrent Size</th>
-          <th style="width: 15%;">Added</th>
-          <th style="width: 15%;">Torrent Download</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(torrent, index) in galleryData.torrents" :key="index">
-          <td>{{ torrent.name }}</td>
-          <td>{{ formatFileSize(Number(torrent.fsize)) }}</td>
-          <td>{{ formatFileSize(Number(torrent.tsize)) }}</td>
-          <td>{{ formatDate(Number(torrent.added)) }}</td>
-          <td>
-            <a :href="`https://exhentai.org/torrent/${itemId}/${torrent.hash}.torrent`" target="_blank">Torrent</a>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="torrent-table-wrapper">
+      <table class="torrent-table">
+        <thead>
+          <tr>
+            <th style="width: 40%;">Name</th>
+            <th style="width: 15%;">Size</th>
+            <th style="width: 15%;">Torrent Size</th>
+            <th style="width: 15%;">Added</th>
+            <th style="width: 15%;">Torrent Download</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(torrent, index) in galleryData.torrents" :key="index">
+            <td>{{ torrent.name }}</td>
+            <td>{{ formatFileSize(Number(torrent.fsize)) }}</td>
+            <td>{{ formatFileSize(Number(torrent.tsize)) }}</td>
+            <td>{{ formatDate(Number(torrent.added)) }}</td>
+            <td>
+              <a :href="`https://exhentai.org/torrent/${itemId}/${torrent.hash}.torrent`" target="_blank">Torrent</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
 

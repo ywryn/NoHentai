@@ -2,7 +2,7 @@
   <div class="container">
     <div class="control-panel">
       <!-- 类型筛选 -->
-      <div class="button-group">
+      <div class="button-group desktop-types">
         <Button
           v-for="type in currentTypeList"
           :key="type.name"
@@ -11,6 +11,26 @@
           @click="toggleType(type.name)"
           aria-label="Filter by type"
         />
+      </div>
+      <div class="type-scroller">
+        <button
+          class="type-pill"
+          :class="{ active: !activeType }"
+          @click="toggleType(null)"
+          aria-label="Show all types"
+        >
+          All
+        </button>
+        <button
+          v-for="type in currentTypeList"
+          :key="type.name"
+          class="type-pill"
+          :class="[type.color, { active: activeType === type.name }]"
+          @click="toggleType(type.name)"
+          :aria-label="`Filter by ${type.name}`"
+        >
+          {{ type.name }}
+        </button>
       </div>
 
       <!-- 搜索条 -->
@@ -50,6 +70,31 @@
 
     <!-- 表格展示 -->
     <div class="results-table">
+      <div class="results-cards">
+        <div v-if="!loading && results.length" class="card-grid">
+          <article v-for="item in results" :key="item.gid" class="gallery-card" @click="navigateToGallery(item.id, item.gid)">
+            <div class="card-thumb">
+              <img :src="item.thumb || '/placeholder.png'" alt="thumb" />
+            </div>
+            <div class="card-body">
+              <div class="card-title">{{ item.title_jpn || item.title }}</div>
+              <div v-if="item.tags && item.tags.length" class="card-tags">
+                {{ item.tags.map(t => t.tag_cn || t.tag).join(' · ') }}
+              </div>
+              <div class="card-meta">
+                <span class="card-type">{{ item.category }}</span>
+                <span class="card-pages" v-if="item.filecount">{{ item.filecount }} pages</span>
+              </div>
+              <div class="card-sub">
+                <span class="card-uploader">{{ item.uploader }}</span>
+                <span class="card-date">{{ item.favTime ? item.favTime.replace('T', ' ').slice(0, 16) : '' }}</span>
+              </div>
+            </div>
+          </article>
+        </div>
+        <div v-else-if="loading" class="empty-state">Loading…</div>
+        <div v-else class="empty-state">No data</div>
+      </div>
       <table>
         <thead>
           <tr>

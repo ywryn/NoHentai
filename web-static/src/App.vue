@@ -189,20 +189,24 @@ onMounted(() => {
   /* Mobile Menu */
   .mobile-menu {
     display: none;
-    position: fixed;
-    top: 0;
+    position: absolute;
+    top: 100%;
     left: 0;
     width: 100%;
-    height: 100vh;
+    height: auto;
     background: var(--surface-color);
     z-index: 1000;
-    padding-top: 80px;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
+    padding: 8px 0;
+    transform: translateY(-8px);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.2s ease, opacity 0.2s ease;
   }
   
   .mobile-menu.open {
-    transform: translateX(0);
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
   }
   
   .mobile-nav-menu {
@@ -237,7 +241,35 @@ onMounted(() => {
     color: var(--primary-color);
   }
 
-  /* 已取消响应式设计 */
+  @media (max-width: 900px) {
+    .nav-menu.desktop-menu {
+      display: none;
+    }
+
+    .mobile-menu-btn {
+      display: flex;
+    }
+
+    .mobile-menu {
+      display: block;
+    }
+
+    .navigation-bar {
+      gap: 10px;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .navigation-bar {
+      padding: 8px 10px;
+      border-radius: 6px;
+    }
+
+    .mobile-nav-menu a {
+      font-size: 16px;
+      padding: 16px 18px;
+    }
+  }
 
 
 </style>
