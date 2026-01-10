@@ -160,6 +160,8 @@ import { ref, onMounted, watch } from "vue";
 import Chart from "primevue/chart";
 import { useTheme } from '@/composables/useTheme';
 import '@/assets/DataAnalys.css';
+
+const baseUrl = import.meta.env.BASE_URL;
 export default {
     components: { Chart },
     setup() {
@@ -232,7 +234,7 @@ export default {
         async fetchStats() {
             try {
                 // 从静态 JSON 文件计算统计数据
-                const response = await fetch('/data/galleries.json');
+                const response = await fetch(`${baseUrl}data/galleries.json`);
                 const galleries = await response.json();
                 
                 // 计算统计数据
@@ -266,8 +268,8 @@ export default {
             try {
                 // 加载画廊和翻译数据
                 const [galleriesResponse, translationsResponse] = await Promise.all([
-                    fetch('/data/galleries.json'),
-                    fetch('/data/translations.json')
+                    fetch(`${baseUrl}data/galleries.json`),
+                    fetch(`${baseUrl}data/translations.json`)
                 ]);
                 
                 const galleries = await galleriesResponse.json();
@@ -324,7 +326,7 @@ export default {
         async fetchQuarterlyStats() {
             try {
                 // 从静态 JSON 文件计算季度统计
-                const response = await fetch('/data/galleries.json');
+                const response = await fetch(`${baseUrl}data/galleries.json`);
                 const galleries = await response.json();
                 
                 const quarterlyStats = {};

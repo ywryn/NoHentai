@@ -109,6 +109,8 @@ import Tag from "primevue/tag";
 import Rating from "primevue/rating";
 import ToggleSwitch from "primevue/toggleswitch";
 
+const baseUrl = import.meta.env.BASE_URL;
+
 export default {
   name: "GalleryDetail",
   components: { Divider, Tag, Rating, ToggleSwitch },
@@ -155,8 +157,8 @@ provider: 'ex', // 只支持ExHentai数据源
       try {
         // 加载静态 JSON 数据
         const [galleriesResponse, translationsResponse] = await Promise.all([
-          fetch('/data/galleries.json'),
-          fetch('/data/translations.json')
+          fetch(`${baseUrl}data/galleries.json`),
+          fetch(`${baseUrl}data/translations.json`)
         ]);
         
         this.allGalleries = await galleriesResponse.json();

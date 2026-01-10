@@ -206,6 +206,7 @@ const loading = ref(false)
 
 const popover = ref()
 const popoverData = ref(null)
+const baseUrl = import.meta.env.BASE_URL
 const router = useRouter()
 
 // EX 类型配置
@@ -287,7 +288,7 @@ const paddedResults = computed(() => {
 // 加载静态 JSON 数据
 async function loadGalleriesData() {
   try {
-    const response = await fetch('/data/galleries.json')
+    const response = await fetch(`${baseUrl}data/galleries.json`)
     allGalleries.value = await response.json()
     console.log(`Loaded ${allGalleries.value.length} galleries from static data`)
   } catch (error) {
@@ -299,7 +300,7 @@ async function loadGalleriesData() {
 // 加载标签翻译数据
 async function loadTranslationData() {
   try {
-    const response = await fetch('/data/translations.json')
+    const response = await fetch(`${baseUrl}data/translations.json`)
     translationData.value = await response.json()
     console.log('Loaded translation data')
   } catch (error) {

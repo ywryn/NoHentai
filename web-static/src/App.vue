@@ -26,23 +26,23 @@ onMounted(() => {
   <!-- Navigation Bar (hidden on reader pages) -->
   <div class="navigation-bar" v-show="!isReaderPage">
     <div class="nav-left">
-      <a class="brand-logo" href="/" aria-label="NoHentai">
+      <RouterLink class="brand-logo" to="/" aria-label="NoHentai">
         の
-      </a>
+      </RouterLink>
       <ul class="icon-nav">
         <li>
-          <a href="/" aria-label="Front Page" title="Front Page">
+          <RouterLink to="/" aria-label="Front Page" title="Front Page">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M3 10.5l9-7 9 7V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z" />
             </svg>
-          </a>
+          </RouterLink>
         </li>
         <li>
-          <a href="/data" aria-label="Data Analys" title="Data Analys">
+          <RouterLink to="/data" aria-label="Data Analys" title="Data Analys">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 19h16v2H4zM6 10h3v7H6zM11 6h3v11h-3zM16 12h3v5h-3z" />
             </svg>
-          </a>
+          </RouterLink>
         </li>
         <li>
           <a href="https://exhentai.org/" target="_blank" aria-label="ExHentai" title="ExHentai">
@@ -56,8 +56,8 @@ onMounted(() => {
     </div>
     <!-- Desktop Navigation - 静态版本 -->
     <ul class="nav-menu desktop-menu">
-      <li><a href="/">Front Page</a></li>
-      <li><a href="/data">Data Analys</a></li>
+      <li><RouterLink to="/">Front Page</RouterLink></li>
+      <li><RouterLink to="/data">Data Analys</RouterLink></li>
       <li><a href="https://exhentai.org/" target="_blank">ExHentai</a></li>
     </ul>
     
