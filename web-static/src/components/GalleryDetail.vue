@@ -21,7 +21,7 @@
 
       <div class="info-tags">
         <!-- EX 数据信息列表 -->
-        <ul v-if="provider === 'ex'" class="info-list">
+        <ul class="info-list">
           <li><strong>Uploader:</strong> {{ galleryData.uploader }}</li>
           <li><strong>Posted:</strong> {{ formatDate(galleryData.posted) }}</li>
           <li><strong>File Size:</strong> {{ formatFileSize(galleryData.filesize) }}</li>
@@ -45,7 +45,7 @@
         <Divider layout="vertical" class="detail-separator" />
 
         <!-- EX Tags -->
-        <div v-if="provider === 'ex'" class="tags">
+        <div class="tags">
           <ToggleSwitch v-model="isChinese" :onLabel="'中文'" :offLabel="'英文'" class="language-toggle" />
           <div v-for="(tags, group) in groupedTags" :key="group" class="tag-group">
             <strong>{{ group }}</strong>:
@@ -64,7 +64,7 @@
     </div>
 
     <!-- EX Torrents Section -->
-  <section v-if="provider === 'ex' && galleryData.torrents?.length" class="torrents">
+  <section v-if="galleryData.torrents?.length" class="torrents">
     <h4>Torrent Downloads</h4>
     <div class="torrent-table-wrapper">
       <table class="torrent-table">
@@ -117,7 +117,6 @@ export default {
   data() {
     return {
       itemId: null,
-provider: 'ex', // 只支持ExHentai数据源
       galleryData: null,
       isChinese: true,
       loading: true,
@@ -146,7 +145,6 @@ provider: 'ex', // 只支持ExHentai数据源
       // 只支持ExHentai路由格式：/gallery/:gid
       const params = this.$route.params;
       
-      this.provider = 'ex';
       this.itemId = params.gid;
     },
 
@@ -250,7 +248,7 @@ provider: 'ex', // 只支持ExHentai数据源
   },
   computed: {
     groupedTags() {
-      if (this.provider !== 'ex' || !this.galleryData?.tags) {
+      if (!this.galleryData?.tags) {
         return {};
       }
 
@@ -275,9 +273,6 @@ provider: 'ex', // 只支持ExHentai数据源
       
       return Object.fromEntries(Object.entries(groups).filter(([, v]) => v.length > 0));
     },
-
-    // 静态版本移除分页相关计算属性
-    // visiblePageLinks, hasMorePages 已移除
   },
 };
 </script>

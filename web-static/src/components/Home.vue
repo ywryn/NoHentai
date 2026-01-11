@@ -35,13 +35,23 @@
 
       <!-- 搜索条 -->
       <div class="search-bar">
-        <InputText
-          v-model.trim="searchQuery"
-          placeholder="Search Keywords"
-          class="custom-input"
-          @keyup.enter="performSearch"
-          aria-label="Search keywords"
-        />
+        <div class="search-input-wrap">
+          <InputText
+            v-model.trim="searchQuery"
+            placeholder="Search Keywords"
+            class="custom-input"
+            @keyup.enter="performSearch"
+            aria-label="Search keywords"
+          />
+          <span
+            class="search-help-link"
+            role="button"
+            tabindex="0"
+            aria-label="Search syntax help"
+            @click="toggleSearchHelp"
+            @keyup.enter="toggleSearchHelp"
+          >?</span>
+        </div>
         <Button
           label="Search"
           class="btn search-btn"
@@ -169,6 +179,21 @@
         <img v-if="popoverData?.thumb" :src="popoverData.thumb" alt="thumbnail" />
         <div v-else>No Image Available</div>
       </Popover>
+      <Popover ref="searchHelpPopover" class="search-help-popover">
+        <div class="search-help-content">
+          <div class="search-help-title">Search Syntax</div>
+          <div class="search-help-list">
+            <div>AND: space separated terms</div>
+            <div>Exclude: -term</div>
+            <div>OR: ~term (any ~term matches)</div>
+            <div>Phrase: "exact words"</div>
+            <div>Wildcard: term*</div>
+            <div>Exact tag: tag$</div>
+            <div>Fields: title:, uploader:, category:, gid:</div>
+            <div>Tags: tag:, f:/m:/a:/p:/c:/l:/g:/o:</div>
+          </div>
+        </div>
+      </Popover>
     </div>
 
     <!-- 底部分页器 -->
@@ -206,6 +231,7 @@ const loading = ref(false)
 
 const popover = ref()
 const popoverData = ref(null)
+const searchHelpPopover = ref()
 const baseUrl = import.meta.env.BASE_URL
 const router = useRouter()
 
@@ -350,22 +376,204 @@ function enrichTags(tags) {
   return enrichedTags
 }
 
+// 简化搜索解析（静态版）
+const namespaceAliases = {
+  f: 'female',
+  m: 'male',
+  a: 'artist',
+  p: 'parody',
+  c: 'character',
+  l: 'language',
+  g: 'group',
+  o: 'other',
+  cos: 'cosplayer',
+  x: 'mixed',
+  r: 'reclass'
+}
+
+function tokenizeQuery(query) {
+  const tokens = []
+  let buffer = ''
+  let inQuote = false
+  let wasQuoted = false
+
+  for (const ch of query) {
+    if (ch === '"') {
+      inQuote = !inQuote
+      wasQuoted = true
+      continue
+    }
+    if (!inQuote && (ch === ' ' || ch === ',')) {
+      if (buffer) {
+        tokens.push({ text: buffer, quoted: wasQuoted })
+        buffer = ''
+        wasQuoted = false
+      }
+      continue
+    }
+    buffer += ch
+  }
+  if (buffer) {
+    tokens.push({ text: buffer, quoted: wasQuoted })
+  }
+  return tokens
+}
+
+function parseQuery(query) {
+  const include = []
+  const exclude = []
+  const orTerms = []
+
+  const tokens = tokenizeQuery(query)
+  for (const token of tokens) {
+    let raw = token.text.trim()
+    if (!raw) continue
+
+    let mode = 'include'
+    if (raw.startsWith('-')) {
+      mode = 'exclude'
+      raw = raw.slice(1)
+    } else if (raw.startsWith('~')) {
+      mode = 'or'
+      raw = raw.slice(1)
+    }
+
+    raw = raw.replace(/_/g, ' ').trim()
+    if (!raw) continue
+
+    let exactTag = false
+    if (raw.endsWith('$')) {
+      exactTag = true
+      raw = raw.slice(0, -1)
+    }
+
+    let wildcard = false
+    if (raw.endsWith('*') || raw.endsWith('%')) {
+      wildcard = true
+      raw = raw.slice(0, -1)
+    }
+
+    let field = 'any'
+    let namespace = null
+    let value = raw
+
+    if (raw.includes(':')) {
+      const [prefixRaw, rest] = raw.split(':', 2)
+      const prefix = prefixRaw.toLowerCase()
+      const restValue = rest || ''
+
+      if (['title', 'uploader', 'category', 'gid', 'tag'].includes(prefix)) {
+        field = prefix
+        value = restValue
+      } else {
+        const ns = namespaceAliases[prefix] || prefix
+        field = 'tag'
+        namespace = ns
+        value = restValue
+      }
+    }
+
+    value = value.trim().toLowerCase()
+    if (!value) continue
+
+    const term = { field, value, wildcard, exactTag, namespace, quoted: token.quoted }
+    if (mode === 'exclude') {
+      exclude.push(term)
+    } else if (mode === 'or') {
+      orTerms.push(term)
+    } else {
+      include.push(term)
+    }
+  }
+
+  return { include, exclude, orTerms }
+}
+
+function matchText(text, term) {
+  const target = (text || '').toString().toLowerCase()
+  if (!target) return false
+  if (term.wildcard) return target.startsWith(term.value)
+  return target.includes(term.value)
+}
+
+function matchTagList(tags, term) {
+  if (!Array.isArray(tags)) return false
+
+  for (const tag of tags) {
+    if (typeof tag !== 'string') continue
+    const tagLower = tag.toLowerCase()
+
+    if (term.namespace) {
+      if (!tagLower.startsWith(`${term.namespace}:`)) continue
+      const tagValue = tagLower.slice(term.namespace.length + 1)
+      if (term.exactTag) {
+        if (tagValue === term.value) return true
+      } else if (term.wildcard) {
+        if (tagValue.startsWith(term.value)) return true
+      } else if (tagValue.includes(term.value)) {
+        return true
+      }
+    } else {
+      const tagValue = tagLower.includes(':') ? tagLower.split(':', 2)[1] : tagLower
+      if (term.exactTag) {
+        if (tagValue === term.value) return true
+      } else if (term.wildcard) {
+        if (tagValue.startsWith(term.value)) return true
+      } else if (tagLower.includes(term.value)) {
+        return true
+      }
+    }
+  }
+
+  return false
+}
+
+function matchTerm(item, term) {
+  if (term.field === 'gid') {
+    return String(item.gid || '') === term.value
+  }
+
+  if (term.field === 'title') {
+    return matchText(item.title, term) || matchText(item.title_jpn, term)
+  }
+
+  if (term.field === 'uploader') {
+    return matchText(item.uploader, term)
+  }
+
+  if (term.field === 'category') {
+    return matchText(item.category, term)
+  }
+
+  if (term.field === 'tag') {
+    return matchTagList(item.tags, term)
+  }
+
+  return (
+    matchText(item.title, term) ||
+    matchText(item.title_jpn, term) ||
+    matchText(item.uploader, term) ||
+    matchText(item.category, term) ||
+    matchTagList(item.tags, term)
+  )
+}
+
 // 数据过滤和分页函数
 function filterAndPaginateData(page = 1, keyword = '', type = null) {
   loading.value = true
   
   let filtered = [...allGalleries.value]
   
-  // 关键词搜索
-  if (keyword) {
-    const kw = keyword.toLowerCase()
-    filtered = filtered.filter(item => 
-      item.title?.toLowerCase().includes(kw) ||
-      item.title_jpn?.toLowerCase().includes(kw) ||
-      (Array.isArray(item.tags) && item.tags.some(tag => 
-        typeof tag === 'string' && tag.toLowerCase().includes(kw)
-      ))
-    )
+  // 关键词搜索（简化语法）
+  const query = keyword.trim()
+  if (query) {
+    const parsed = parseQuery(query)
+    filtered = filtered.filter(item => {
+      if (parsed.exclude.some(term => matchTerm(item, term))) return false
+      if (parsed.include.some(term => !matchTerm(item, term))) return false
+      if (parsed.orTerms.length && !parsed.orTerms.some(term => matchTerm(item, term))) return false
+      return true
+    })
   }
   
   // 类型过滤
@@ -434,6 +642,10 @@ function showPopover (event, item) {
 
 function hidePopover () {
   popover.value?.hide()
+}
+
+function toggleSearchHelp(event) {
+  searchHelpPopover.value?.toggle(event)
 }
 
 onMounted(async () => {
