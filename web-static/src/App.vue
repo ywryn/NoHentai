@@ -31,7 +31,7 @@ onMounted(() => {
       </RouterLink>
       <ul class="icon-nav">
         <li>
-          <RouterLink to="/" aria-label="Front Page" title="Front Page">
+          <RouterLink to="/" aria-label="Ex Home" title="Ex Home">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M3 10.5l9-7 9 7V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z" />
             </svg>
@@ -56,7 +56,7 @@ onMounted(() => {
     </div>
     <!-- Desktop Navigation - 静态版本 -->
     <ul class="nav-menu desktop-menu">
-      <li><RouterLink to="/">Front Page</RouterLink></li>
+      <li><RouterLink to="/">Ex Home</RouterLink></li>
       <li><RouterLink to="/data">Data Analys</RouterLink></li>
       <li><a href="https://exhentai.org/" target="_blank">ExHentai</a></li>
     </ul>

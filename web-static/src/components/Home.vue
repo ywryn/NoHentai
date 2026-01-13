@@ -103,8 +103,8 @@
                 <span class="card-pages" v-if="item.filecount">{{ item.filecount }} pages</span>
               </div>
               <div class="card-sub">
-                <span class="card-uploader">{{ item.uploader }}</span>
-                <span class="card-date">{{ item.favTime ? item.favTime.replace('T', ' ').slice(0, 16) : '' }}</span>
+                <span class="card-fav-time">{{ item.favTime }}</span>
+                <span class="card-fav-category">{{ item.favCategory }}</span>
               </div>
             </div>
           </article>
@@ -118,7 +118,7 @@
             <th>Type</th>
             <th>Title</th>
             <th style="width: 150px;">Published</th>
-            <th>Uploader</th>
+            <th>Favorite Info</th>
           </tr>
         </thead>
 
@@ -161,8 +161,10 @@
               </div>
             </td>
             <td v-if="!item.__placeholder">
-              {{ item.uploader }}<br />
-              {{ item.filecount }}
+              <div class="fav-info">
+                <div class="fav-time">{{ item.favTime }}</div>
+                <div class="fav-category">{{ item.favCategory }}</div>
+              </div>
             </td>
             <td v-else></td>
           </tr>
@@ -284,6 +286,13 @@ function formatTimestamp(timestamp) {
     day: '2-digit'
   }).replace(/\//g, '-')
 }
+function formatFavDate(value) {
+  if (!value) return 'Unknown'
+  const str = String(value)
+  const match = str.match(/\d{4}-\d{2}-\d{2}/)
+  return match ? match[0] : str
+}
+
 
 // ExHentai数据映射和填充逻辑
 const paddedResults = computed(() => {
@@ -293,14 +302,17 @@ const paddedResults = computed(() => {
       typeClass: currentTypeClassMap.value[item.category] || 'default',
       title: item.title,
       title_jpn: item.title_jpn,
-      published: item.favTime ? item.favTime.replace('T', ' ').slice(0, 16) : '',
+      published: item.posted ? formatTimestamp(item.posted) : '',
       gid: item.gid,
       id: null,
       uploader: item.uploader,
       filecount: item.filecount ? `${item.filecount} pages` : '',
       tags: Array.isArray(item.tags) ? item.tags : [],
       rating: item.rating,
-      thumb: item.thumb
+      thumb: item.thumb,
+      favTime: formatFavDate(item.favTime),
+      favCategory: item.favCategory || 'Unknown',
+      category: item.category
     }
   })
 

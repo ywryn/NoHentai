@@ -72,6 +72,29 @@
   --site-name-color: #e57aa7;
 }
 
+/* 热力图区域 */
+.heatmap-section {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: var(--data-section-bg);
+  border-radius: 8px;
+  border: 1px solid var(--data-border-color);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+
+.heatmap-chart-container {
+  width: 100%; 
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-top: 1rem;
+}
+
+.heatmap-chart {
+  width: 850px;
+  height: 120px;
+}
+
 /* 统计区域布局 */
 .stats-row {
   display: flex;

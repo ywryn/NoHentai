@@ -517,6 +517,16 @@ body {
   text-overflow: ellipsis;
 }
 
+.card-fav-time {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.card-fav-category {
+  font-size: 11px;
+  opacity: 0.75;
+}
+
 table {
   width: 100%;
   table-layout: fixed;
@@ -662,6 +672,24 @@ th:nth-child(4), td:nth-child(4) { width: 160px; }
   gap: 5px;
 }
 
+.fav-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fav-time {
+  font-size: 14px;
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.fav-category {
+  font-size: 12px;
+  color: var(--text-color);
+  opacity: 0.7;
+}
+
 /* ⚠️不再覆盖评分星星的颜色，保持 PrimeVue 默认外观 */
 /* .p-rating .p-rating-icon { color: #f9dc80 !important; }  — 已移除 */
 
@@ -805,10 +833,6 @@ th:nth-child(4), td:nth-child(4) { width: 160px; }
 
   .card-grid {
     grid-template-columns: 1fr;
-  }
-
-  .card-uploader {
-    display: none;
   }
 
 }

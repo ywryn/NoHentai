@@ -24,6 +24,8 @@
         <ul class="info-list">
           <li><strong>Uploader:</strong> {{ galleryData.uploader }}</li>
           <li><strong>Posted:</strong> {{ formatDate(galleryData.posted) }}</li>
+          <li><strong>Fav Time:</strong> {{ formatFavDate(galleryData.favTime) }}</li>
+          <li><strong>Fav Category:</strong> {{ galleryData.favCategory || 'Unknown' }}</li>
           <li><strong>File Size:</strong> {{ formatFileSize(galleryData.filesize) }}</li>
           <li><strong>Length:</strong> {{ galleryData.filecount }} pages</li>
           <li>
@@ -224,10 +226,19 @@ export default {
     },
 
     formatDate(timestamp) {
+      if (!timestamp) return '';
       const date = new Date(timestamp * 1000);
-      return date.toISOString().replace("T", " ").split(".")[0];
+      return date.toISOString().slice(0, 10);
     },
 
+
+
+    formatFavDate(value) {
+      if (!value) return 'Unknown';
+      const str = String(value);
+      const match = str.match(/\d{4}-\d{2}-\d{2}/);
+      return match ? match[0] : str;
+    },
 
     formatFileSize(bytes) {
       if (bytes === 0) return "0 B";

@@ -135,7 +135,7 @@
 
 .info-list li strong {
   color: #3498db;
-  min-width: 100px;
+  min-width: 150px;
   display: inline-block;
 }
 
@@ -536,7 +536,7 @@
   }
 
   .info-list li strong {
-    min-width: 80px;
+    min-width: 120px;
   }
 
   .torrents,

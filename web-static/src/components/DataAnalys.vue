@@ -6,6 +6,16 @@
             <p><span class="site-name">NoHentai</span>：ExHentai/E-Hentai 个人收藏&同步网站。支持数据分析（包括分类分布、季度趋势以及不同命名空间下的热门标签统计）、Gallery高级检索、E/Ex数据源同步。</p>
         </div>
 
+        <!-- 收藏活动热力图 -->
+        <div class="heatmap-section">
+            <div class="heatmap-content">
+                <h2 class="section-title">Favorite Activity</h2>
+                <div class="heatmap-chart-container">
+                    <Chart type="matrix" :data="heatmapChartData" :options="heatmapChartOptions" class="heatmap-chart" />
+                </div>
+            </div>
+        </div>
+
         <!-- 顶部行：Statistics (左) 和 Categories (右) -->
         <div class="stats-row">
             <div class="stats-left">
@@ -165,6 +175,11 @@ import { ref, onMounted, watch } from "vue";
 import Chart from "primevue/chart";
 import { useTheme } from '@/composables/useTheme';
 import '@/assets/DataAnalys.css';
+import { Chart as ChartJS } from 'chart.js';
+import { MatrixController, MatrixElement } from 'chartjs-chart-matrix';
+
+// 注册 matrix 图表类型
+ChartJS.register(MatrixController, MatrixElement);
 
 const baseUrl = import.meta.env.BASE_URL;
 export default {
@@ -208,12 +223,16 @@ export default {
             // 新增用于季度折线图的数据和选项
             quarterlyLineData: null,
             quarterlyLineOptions: null,
+            // 热力图数据
+            heatmapChartData: null,
+            heatmapChartOptions: null,
         };
     },
     mounted() {
         this.fetchStats();
         this.fetchTags();
         this.fetchQuarterlyStats();
+        this.initHeatmap();
     },
     watch: {
         isDark: {
@@ -230,6 +249,10 @@ export default {
                         count: counts[index]
                     }));
                     this.initQuarterlyLineChart(quarterlyData);
+                }
+                // 重新生成热力图
+                if (this.heatmapChartData) {
+                    this.initHeatmap();
                 }
             },
             immediate: false
@@ -543,6 +566,130 @@ export default {
                     },
                 },
             };
+        },
+        async initHeatmap() {
+            try {
+                // 从静态 JSON 文件加载数据
+                const response = await fetch(`${baseUrl}data/galleries.json`);
+                const galleries = await response.json();
+
+                // 统计每天的收藏数量
+                const dayCount = {};
+
+                galleries.forEach(gallery => {
+                    if (gallery.favTime) {
+                        try {
+                            // 解析 favTime，格式: "2024-01-09 05:18" 或类似
+                            const dateMatch = gallery.favTime.match(/(\d{4})-(\d{2})-(\d{2})/);
+                            if (dateMatch) {
+                                const dateKey = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`;
+                                dayCount[dateKey] = (dayCount[dateKey] || 0) + 1;
+                            }
+                        } catch (e) {
+                            // 忽略解析错误
+                        }
+                    }
+                });
+
+                // 生成过去一年的数据
+                const today = new Date();
+                const oneYearAgo = new Date(today);
+                oneYearAgo.setFullYear(today.getFullYear() - 1);
+
+                // 找到起始日期（周日对齐）
+                const startDate = new Date(oneYearAgo);
+                startDate.setDate(startDate.getDate() - startDate.getDay());
+
+                // 生成 matrix 数据
+                const matrixData = [];
+                const currentDate = new Date(startDate);
+
+                while (currentDate <= today) {
+                    const dateKey = currentDate.toISOString().split('T')[0];
+                    const dayOfWeek = currentDate.getDay(); // 0=Sunday, 6=Saturday
+                    const weekNumber = Math.floor((currentDate - startDate) / (7 * 24 * 60 * 60 * 1000));
+
+                    matrixData.push({
+                        x: weekNumber,
+                        y: dayOfWeek,
+                        v: dayCount[dateKey] || 0,
+                        d: dateKey
+                    });
+
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+
+                // 计算颜色范围
+                const values = matrixData.map(d => d.v).filter(v => v > 0);
+                const maxValue = Math.max(...values, 1);
+
+                // 配置图表
+                const textColor = this.isDark ? '#f1f5f9' : '#2d3748';
+                const gridColor = this.isDark ? '#475569' : '#d6d3d1';
+                const isDarkMode = this.isDark;
+
+                this.heatmapChartData = {
+                    datasets: [{
+                        label: 'Favorites Added',
+                        data: matrixData,
+                        backgroundColor: (context) => {
+                            const value = context.dataset.data[context.dataIndex].v;
+                            if (value === 0) return isDarkMode ? '#1e293b' : '#ebedf0';
+
+                            const alpha = Math.min(value / maxValue, 1);
+                            if (alpha <= 0.25) return isDarkMode ? '#0e4429' : '#9be9a8';
+                            if (alpha <= 0.5) return isDarkMode ? '#006d32' : '#40c463';
+                            if (alpha <= 0.75) return isDarkMode ? '#26a641' : '#30a14e';
+                            return isDarkMode ? '#39d353' : '#216e39';
+                        },
+                        borderColor: gridColor,
+                        borderWidth: 1,
+                        width: 15,
+                        height: 15,
+                    }]
+                };
+
+                this.heatmapChartOptions = {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title() { return ''; },
+                                label(context) {
+                                    const item = context.dataset.data[context.dataIndex];
+                                    return `${item.d}: ${item.v} favorites`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            offset: false,
+                            display: false
+                        },
+                        y: {
+                            type: 'linear',
+                            offset: false,
+                            reverse: true,
+                            ticks: {
+                                stepSize: 1,
+                                color: textColor,
+                                callback: function(value) {
+                                    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                                    return days[value] || '';
+                                }
+                            },
+                            grid: { display: false }
+                        }
+                    }
+                };
+
+            } catch (error) {
+                console.error("Failed to init heatmap:", error);
+            }
         },
     },
 };
