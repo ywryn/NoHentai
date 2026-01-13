@@ -41,6 +41,37 @@
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* 网站说明区块 */
+.site-description {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--data-section-bg);
+  border-radius: 8px;
+  border-left: 3px solid #0891b2;
+  border: 1px solid var(--data-border-color);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.site-description p {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--data-text-color);
+  font-size: 0.95rem;
+}
+
+.site-description .site-name {
+  font-weight: 700;
+  color: var(--site-name-color);
+}
+
+.my-app-dark .site-description .site-name {
+  --site-name-color: #f7a3c1;
+}
+
+.my-app-light .site-description .site-name {
+  --site-name-color: #e57aa7;
+}
+
 /* 统计区域布局 */
 .stats-row {
   display: flex;

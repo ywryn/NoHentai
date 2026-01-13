@@ -1,6 +1,11 @@
 <template>
     <div class="container">
 
+        <!-- 网站说明 -->
+        <div class="site-description">
+            <p><span class="site-name">NoHentai</span>：ExHentai/E-Hentai 个人收藏&同步网站。支持数据分析（包括分类分布、季度趋势以及不同命名空间下的热门标签统计）、Gallery高级检索、E/Ex数据源同步。</p>
+        </div>
+
         <!-- 顶部行：Statistics (左) 和 Categories (右) -->
         <div class="stats-row">
             <div class="stats-left">

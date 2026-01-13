@@ -1,5 +1,11 @@
 <template>
   <div class="container">
+    <!-- SEO文字块，对搜索引擎可见但对用户隐藏 -->
+    <div class="seo-description">
+      <h1>NoHentai - ExHentai/E-Hentai Personal Favorites Backup Site</h1>
+      <p>NoHentai is a personal collection backup and browsing platform for ExHentai and E-Hentai galleries. Browse your favorite doujinshi, manga, artist CG, game CG, and other hentai content with advanced search capabilities including tag filtering, category selection, and keyword search. This site provides a comprehensive backup solution for your ExHentai favorites with support for Japanese titles, tag translations, and detailed metadata.</p>
+    </div>
+
     <div class="control-panel">
       <!-- 类型筛选 -->
       <div class="button-group desktop-types">

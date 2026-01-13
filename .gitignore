@@ -79,3 +79,4 @@ serverless_app/
 web/
 app/
 sync_script.py
+dev-requirements.md

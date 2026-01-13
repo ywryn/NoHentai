@@ -158,6 +158,16 @@ body {
   --p-paginator-jump-to-page-input-max-width: 100px;
 }
 
+/* ============ SEO Description (hidden from users, visible to search engines) ============ */
+.seo-description {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 /* ============ Layout Blocks ============ */
 .control-panel {
   width: 100%;
