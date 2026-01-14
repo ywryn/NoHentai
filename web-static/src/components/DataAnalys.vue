@@ -20,7 +20,15 @@
         <div class="stats-row">
             <div class="stats-left">
                 <h1 class="section-title-large">Gallery Statistics</h1>
-                <p class="stats-text">Total Galleries: {{ stats.total_count }}</p>
+                <div class="stats-row-inline">
+                    <p class="stats-text">
+                        Total Galleries: {{ stats.total_count }}
+                    </p>
+                    <div class="toggle-wrapper">
+                        <span class="toggle-label">Show All</span>
+                        <ToggleSwitch v-model="showFullData" @change="toggleFullData" />
+                    </div>
+                </div>
                 <div class="line-chart-container">
                     <Chart type="line" :data="quarterlyLineData" :options="quarterlyLineOptions"
                         class="chart-full" />
@@ -173,6 +181,7 @@
 <script>
 import { ref, onMounted, watch } from "vue";
 import Chart from "primevue/chart";
+import ToggleSwitch from "primevue/toggleswitch";
 import { useTheme } from '@/composables/useTheme';
 import '@/assets/DataAnalys.css';
 import { Chart as ChartJS } from 'chart.js';
@@ -183,7 +192,7 @@ ChartJS.register(MatrixController, MatrixElement);
 
 const baseUrl = import.meta.env.BASE_URL;
 export default {
-    components: { Chart },
+    components: { Chart, ToggleSwitch },
     setup() {
         const { isDark } = useTheme()
         return { isDark }
@@ -226,6 +235,9 @@ export default {
             // 热力图数据
             heatmapChartData: null,
             heatmapChartOptions: null,
+            // 完整季度数据
+            fullQuarterlyData: [],
+            showFullData: false,
         };
     },
     mounted() {
@@ -240,15 +252,9 @@ export default {
                 // 主题切换时重新生成图表配置
                 this.updateChart();
                 this.updateBarCharts();
-                if (this.quarterlyLineData && this.quarterlyLineData.labels && this.quarterlyLineData.labels.length > 0) {
+                if (this.fullQuarterlyData && this.fullQuarterlyData.length > 0) {
                     // 重新创建季度图表
-                    const quarters = this.quarterlyLineData.labels;
-                    const counts = this.quarterlyLineData.datasets[0].data;
-                    const quarterlyData = quarters.map((quarter, index) => ({
-                        quarter,
-                        count: counts[index]
-                    }));
-                    this.initQuarterlyLineChart(quarterlyData);
+                    this.updateQuarterlyChart();
                 }
                 // 重新生成热力图
                 if (this.heatmapChartData) {
@@ -356,36 +362,93 @@ export default {
                 // 从静态 JSON 文件计算季度统计
                 const response = await fetch(`${baseUrl}data/galleries.json`);
                 const galleries = await response.json();
-                
-                const quarterlyStats = {};
-                
+
+                const quarterlyStatsPosted = {};
+                const quarterlyStatsFavTime = {};
+
                 galleries.forEach(gallery => {
+                    // 统计 posted 时间
                     const posted = gallery.posted;
-                    if (!posted) return;
-                    
-                    try {
-                        const timestamp = parseInt(posted);
-                        const date = new Date(timestamp * 1000); // 秒级时间戳转毫秒
-                        const year = date.getUTCFullYear();
-                        const month = date.getUTCMonth() + 1; // 0-based 月份
-                        const quarter = Math.ceil(month / 3);
-                        const key = `${year}-Q${quarter}`;
-                        
-                        quarterlyStats[key] = (quarterlyStats[key] || 0) + 1;
-                    } catch (e) {
-                        // 忽略无效时间戳
+                    if (posted) {
+                        try {
+                            const timestamp = parseInt(posted);
+                            const date = new Date(timestamp * 1000); // 秒级时间戳转毫秒
+                            const year = date.getUTCFullYear();
+                            const month = date.getUTCMonth() + 1; // 0-based 月份
+                            const quarter = Math.ceil(month / 3);
+                            const key = `${year}-Q${quarter}`;
+
+                            quarterlyStatsPosted[key] = (quarterlyStatsPosted[key] || 0) + 1;
+                        } catch (e) {
+                            // 忽略无效时间戳
+                        }
+                    }
+
+                    // 统计 favTime 时间
+                    const favTime = gallery.favTime;
+                    if (favTime) {
+                        try {
+                            // 解析 favTime，格式: "2024-01-09 05:18"
+                            const dateMatch = favTime.match(/(\d{4})-(\d{2})-(\d{2})/);
+                            if (dateMatch) {
+                                const year = parseInt(dateMatch[1]);
+                                const month = parseInt(dateMatch[2]);
+                                const quarter = Math.ceil(month / 3);
+                                const key = `${year}-Q${quarter}`;
+
+                                quarterlyStatsFavTime[key] = (quarterlyStatsFavTime[key] || 0) + 1;
+                            }
+                        } catch (e) {
+                            // 忽略解析错误
+                        }
                     }
                 });
-                
-                // 转换为数组并排序
-                const data = Object.entries(quarterlyStats)
-                    .map(([quarter, count]) => ({ quarter, count }))
-                    .sort((a, b) => a.quarter.localeCompare(b.quarter));
-                    
-                this.initQuarterlyLineChart(data);
+
+                // 合并所有季度并排序
+                const allQuarters = new Set([
+                    ...Object.keys(quarterlyStatsPosted),
+                    ...Object.keys(quarterlyStatsFavTime)
+                ]);
+
+                const fullData = Array.from(allQuarters)
+                    .sort()
+                    .map(quarter => ({
+                        quarter,
+                        postedCount: quarterlyStatsPosted[quarter] || 0,
+                        favTimeCount: quarterlyStatsFavTime[quarter] || 0
+                    }));
+
+                // 保存完整数据
+                this.fullQuarterlyData = fullData;
+
+                // 默认显示近5年数据
+                this.updateQuarterlyChart();
             } catch (error) {
                 console.error("Failed to fetch quarterly stats:", error);
             }
+        },
+        updateQuarterlyChart() {
+            let data = this.fullQuarterlyData;
+            let displayData = data;
+
+            if (!this.showFullData && data.length > 0) {
+                // 计算5年前的季度
+                const currentDate = new Date();
+                const currentYear = currentDate.getFullYear();
+                const currentMonth = currentDate.getMonth() + 1;
+                const currentQuarter = Math.ceil(currentMonth / 3);
+
+                const fiveYearsAgo = currentYear - 5;
+                const cutoffQuarter = `${fiveYearsAgo}-Q${currentQuarter}`;
+
+                // 过滤出近5年的数据
+                displayData = data.filter(item => item.quarter >= cutoffQuarter);
+            }
+
+            this.initQuarterlyLineChart(displayData);
+        },
+        toggleFullData() {
+            this.updateQuarterlyChart();
         },
         updateChart() {
             const labels = Object.keys(this.stats.categories);
@@ -437,27 +500,42 @@ export default {
             this.barChartOptions = this.getBarChartOptions();
         },
         initQuarterlyLineChart(quarterlyData) {
-            // quarterlyData 格式假设为： [{ "quarter": "2022-Q1", "count": 123 }, ...]
+            // quarterlyData 格式： [{ "quarter": "2022-Q1", "postedCount": 123, "favTimeCount": 45 }, ...]
             const quarters = quarterlyData.map(item => item.quarter);
-            const counts = quarterlyData.map(item => item.count);
+            const postedCounts = quarterlyData.map(item => item.postedCount);
+            const favTimeCounts = quarterlyData.map(item => item.favTimeCount);
 
             // 动态主题颜色
             const textColor = this.isDark ? '#f1f5f9' : '#2d3748';
             const textColorSecondary = this.isDark ? '#cbd5e1' : '#64748b';
             const gridColor = this.isDark ? '#475569' : '#d6d3d1';
-            const borderColor = this.isDark ? '#00bcd4' : '#0891b2';
-            const bgColor = this.isDark ? 'rgba(107, 114, 128, 0.2)' : 'rgba(8, 145, 178, 0.1)';
+
+            // Posted 线条颜色
+            const postedBorderColor = this.isDark ? '#00bcd4' : '#0891b2';
+            const postedBgColor = this.isDark ? 'rgba(0, 188, 212, 0.2)' : 'rgba(8, 145, 178, 0.1)';
+
+            // FavTime 线条颜色
+            const favTimeBorderColor = this.isDark ? '#f06292' : '#e91e63';
+            const favTimeBgColor = this.isDark ? 'rgba(240, 98, 146, 0.2)' : 'rgba(233, 30, 99, 0.1)';
 
             this.quarterlyLineData = {
                 labels: quarters,
                 datasets: [
                     {
-                        label: 'Quarterly Counts',
-                        data: counts,
+                        label: 'Posted Time',
+                        data: postedCounts,
                         fill: true,
-                        borderColor: borderColor,
+                        borderColor: postedBorderColor,
                         tension: 0.4,
-                        backgroundColor: bgColor
+                        backgroundColor: postedBgColor
+                    },
+                    {
+                        label: 'Favorite Time',
+                        data: favTimeCounts,
+                        fill: true,
+                        borderColor: favTimeBorderColor,
+                        tension: 0.4,
+                        backgroundColor: favTimeBgColor
                     }
                 ]
             };
