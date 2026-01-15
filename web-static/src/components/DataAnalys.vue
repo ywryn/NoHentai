@@ -241,10 +241,7 @@ export default {
         };
     },
     mounted() {
-        this.fetchStats();
-        this.fetchTags();
-        this.fetchQuarterlyStats();
-        this.initHeatmap();
+        this.fetchPrecomputedStats();
     },
     watch: {
         isDark: {
@@ -256,175 +253,41 @@ export default {
                     // 重新创建季度图表
                     this.updateQuarterlyChart();
                 }
-                // 重新生成热力图
-                if (this.heatmapChartData) {
-                    this.initHeatmap();
+                // 重新生成热力图（使用已加载的数据）
+                if (this.heatmapChartData && this.heatmapChartData.datasets && this.heatmapChartData.datasets[0]) {
+                    // 从已有数据中提取并重新渲染
+                    const matrixData = this.heatmapChartData.datasets[0].data;
+                    const values = matrixData.map(d => d.v).filter(v => v > 0);
+                    const maxValue = Math.max(...values, 1);
+                    this.initHeatmapFromPrecomputed({ data: matrixData, maxValue });
                 }
             },
             immediate: false
         }
     },
     methods: {
-        async fetchStats() {
+        async fetchPrecomputedStats() {
             try {
-                // 从静态 JSON 文件计算统计数据
-                const response = await fetch(`${baseUrl}data/galleries.json`);
-                const galleries = await response.json();
-                
-                // 计算统计数据
-                const fixedCategories = [
-                    "Doujinshi", "Manga", "Artist CG", "Game CG", 
-                    "Western", "Non-H", "Image Set", "Cosplay", 
-                    "Asian Porn", "Misc"
-                ];
-                
-                const categoryCounts = {};
-                fixedCategories.forEach(cat => categoryCounts[cat] = 0);
-                
-                galleries.forEach(item => {
-                    const category = item.category;
-                    if (categoryCounts.hasOwnProperty(category)) {
-                        categoryCounts[category]++;
-                    }
-                });
-                
-                this.stats = {
-                    total_count: galleries.length,
-                    categories: categoryCounts
-                };
-                
+                // 读取预计算的统计数据
+                const response = await fetch(`${baseUrl}data/stats.json`);
+                const precomputed = await response.json();
+
+                // 加载基础统计
+                this.stats = precomputed.stats;
                 this.updateChart();
-            } catch (error) {
-                console.error("Failed to fetch stats:", error);
-            }
-        },
-        async fetchTags() {
-            try {
-                // 加载画廊和翻译数据
-                const [galleriesResponse, translationsResponse] = await Promise.all([
-                    fetch(`${baseUrl}data/galleries.json`),
-                    fetch(`${baseUrl}data/translations.json`)
-                ]);
-                
-                const galleries = await galleriesResponse.json();
-                const translations = await translationsResponse.json();
-                
-                // 为每个类型统计标签
-                for (const type of this.types) {
-                    const tagCounter = {};
-                    
-                    galleries.forEach(gallery => {
-                        const tags = gallery.tags || [];
-                        tags.forEach(tag => {
-                            if (typeof tag === 'string' && tag.startsWith(`${type}:`)) {
-                                tagCounter[tag] = (tagCounter[tag] || 0) + 1;
-                            }
-                        });
-                    });
-                    
-                    // 获取前 20 个最常见标签
-                    const topTags = Object.entries(tagCounter)
-                        .sort(([,a], [,b]) => b - a)
-                        .slice(0, 20)
-                        .map(([tag, count]) => {
-                            // 添加翻译信息
-                            const [namespace, value] = tag.split(':', 2);
-                            let tagDetail = null;
-                            
-                            try {
-                                tagDetail = translations.data
-                                    .find(item => item.namespace === namespace)?.data?.[value];
-                            } catch (e) {
-                                // 忽略翻译错误
-                            }
-                            
-                            return {
-                                tag: tag,
-                                namespace: namespace,
-                                value: value,
-                                count: count,
-                                tag_cn: tagDetail?.name || '',
-                                intro: tagDetail?.intro || '',
-                                links: tagDetail?.links || ''
-                            };
-                        });
-                    
-                    this.tags[type] = topTags;
-                }
-                
+
+                // 加载标签统计
+                this.tags = precomputed.tags;
                 this.updateBarCharts();
-            } catch (error) {
-                console.error('Failed to fetch tags:', error);
-            }
-        },
-        async fetchQuarterlyStats() {
-            try {
-                // 从静态 JSON 文件计算季度统计
-                const response = await fetch(`${baseUrl}data/galleries.json`);
-                const galleries = await response.json();
 
-                const quarterlyStatsPosted = {};
-                const quarterlyStatsFavTime = {};
-
-                galleries.forEach(gallery => {
-                    // 统计 posted 时间
-                    const posted = gallery.posted;
-                    if (posted) {
-                        try {
-                            const timestamp = parseInt(posted);
-                            const date = new Date(timestamp * 1000); // 秒级时间戳转毫秒
-                            const year = date.getUTCFullYear();
-                            const month = date.getUTCMonth() + 1; // 0-based 月份
-                            const quarter = Math.ceil(month / 3);
-                            const key = `${year}-Q${quarter}`;
-
-                            quarterlyStatsPosted[key] = (quarterlyStatsPosted[key] || 0) + 1;
-                        } catch (e) {
-                            // 忽略无效时间戳
-                        }
-                    }
-
-                    // 统计 favTime 时间
-                    const favTime = gallery.favTime;
-                    if (favTime) {
-                        try {
-                            // 解析 favTime，格式: "2024-01-09 05:18"
-                            const dateMatch = favTime.match(/(\d{4})-(\d{2})-(\d{2})/);
-                            if (dateMatch) {
-                                const year = parseInt(dateMatch[1]);
-                                const month = parseInt(dateMatch[2]);
-                                const quarter = Math.ceil(month / 3);
-                                const key = `${year}-Q${quarter}`;
-
-                                quarterlyStatsFavTime[key] = (quarterlyStatsFavTime[key] || 0) + 1;
-                            }
-                        } catch (e) {
-                            // 忽略解析错误
-                        }
-                    }
-                });
-
-                // 合并所有季度并排序
-                const allQuarters = new Set([
-                    ...Object.keys(quarterlyStatsPosted),
-                    ...Object.keys(quarterlyStatsFavTime)
-                ]);
-
-                const fullData = Array.from(allQuarters)
-                    .sort()
-                    .map(quarter => ({
-                        quarter,
-                        postedCount: quarterlyStatsPosted[quarter] || 0,
-                        favTimeCount: quarterlyStatsFavTime[quarter] || 0
-                    }));
-
-                // 保存完整数据
-                this.fullQuarterlyData = fullData;
-
-                // 默认显示近5年数据
+                // 加载季度数据
+                this.fullQuarterlyData = precomputed.quarterly;
                 this.updateQuarterlyChart();
+
+                // 加载热力图数据
+                this.initHeatmapFromPrecomputed(precomputed.heatmap);
             } catch (error) {
-                console.error("Failed to fetch quarterly stats:", error);
+                console.error("Failed to fetch precomputed stats:", error);
             }
         },
         updateQuarterlyChart() {
@@ -645,61 +508,10 @@ export default {
                 },
             };
         },
-        async initHeatmap() {
+        initHeatmapFromPrecomputed(heatmapData) {
             try {
-                // 从静态 JSON 文件加载数据
-                const response = await fetch(`${baseUrl}data/galleries.json`);
-                const galleries = await response.json();
-
-                // 统计每天的收藏数量
-                const dayCount = {};
-
-                galleries.forEach(gallery => {
-                    if (gallery.favTime) {
-                        try {
-                            // 解析 favTime，格式: "2024-01-09 05:18" 或类似
-                            const dateMatch = gallery.favTime.match(/(\d{4})-(\d{2})-(\d{2})/);
-                            if (dateMatch) {
-                                const dateKey = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`;
-                                dayCount[dateKey] = (dayCount[dateKey] || 0) + 1;
-                            }
-                        } catch (e) {
-                            // 忽略解析错误
-                        }
-                    }
-                });
-
-                // 生成过去一年的数据
-                const today = new Date();
-                const oneYearAgo = new Date(today);
-                oneYearAgo.setFullYear(today.getFullYear() - 1);
-
-                // 找到起始日期（周日对齐）
-                const startDate = new Date(oneYearAgo);
-                startDate.setDate(startDate.getDate() - startDate.getDay());
-
-                // 生成 matrix 数据
-                const matrixData = [];
-                const currentDate = new Date(startDate);
-
-                while (currentDate <= today) {
-                    const dateKey = currentDate.toISOString().split('T')[0];
-                    const dayOfWeek = currentDate.getDay(); // 0=Sunday, 6=Saturday
-                    const weekNumber = Math.floor((currentDate - startDate) / (7 * 24 * 60 * 60 * 1000));
-
-                    matrixData.push({
-                        x: weekNumber,
-                        y: dayOfWeek,
-                        v: dayCount[dateKey] || 0,
-                        d: dateKey
-                    });
-
-                    currentDate.setDate(currentDate.getDate() + 1);
-                }
-
-                // 计算颜色范围
-                const values = matrixData.map(d => d.v).filter(v => v > 0);
-                const maxValue = Math.max(...values, 1);
+                const matrixData = heatmapData.data;
+                const maxValue = heatmapData.maxValue;
 
                 // 配置图表
                 const textColor = this.isDark ? '#f1f5f9' : '#2d3748';
@@ -764,9 +576,8 @@ export default {
                         }
                     }
                 };
-
             } catch (error) {
-                console.error("Failed to init heatmap:", error);
+                console.error("Failed to init heatmap from precomputed:", error);
             }
         },
     },

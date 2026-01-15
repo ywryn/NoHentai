@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "predev": "npm run generate-stats",
+    "generate-stats": "node scripts/generate-stats.js",
+    "prebuild": "npm run generate-stats",
     "build": "vite build",
     "preview": "vite preview"
   },
