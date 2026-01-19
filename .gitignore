@@ -77,6 +77,4 @@ CLAUDE_CN.md
 web/node_modules
 serverless_app/
 web/
-app/
-sync_script.py
 dev-requirements.md
