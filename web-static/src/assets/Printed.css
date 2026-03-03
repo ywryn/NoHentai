@@ -100,7 +100,7 @@
 /* ── 封面 ── */
 .digi-thumb {
   background: var(--bg-color);
-  aspect-ratio: 2 / 3;
+  aspect-ratio: 7 / 10;
   display: flex;
   align-items: center;
   justify-content: center;

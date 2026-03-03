@@ -105,7 +105,7 @@ const filteredItems = computed(() => {
     <div v-else-if="error" class="digi-empty digi-error">{{ error }}</div>
     <div v-else-if="!filteredItems.length" class="digi-empty">No results</div>
     <div v-else class="digi-grid">
-      <article v-for="item in filteredItems" :key="item.ID" class="digi-card" @click="clickCard(item)">
+      <article v-for="(item, index) in filteredItems" :key="index" class="digi-card" @click="clickCard(item)">
         <!-- 封面 -->
         <div class="digi-thumb">
           <img
