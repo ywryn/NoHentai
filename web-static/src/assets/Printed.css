@@ -1,4 +1,4 @@
-.dige-container {
+.digi-container {
   max-width: 1300px;
   margin: 0 auto;
   padding: 10px 15px 30px;
@@ -6,21 +6,21 @@
 }
 
 /* ── 头部 ── */
-.dige-header {
+.digi-header {
   display: flex;
   align-items: baseline;
   gap: 14px;
   margin-bottom: 16px;
 }
 
-.dige-title {
+.digi-title {
   font-size: 18px;
   font-weight: 700;
   color: var(--text-color);
   margin: 0;
 }
 
-.dige-stats {
+.digi-stats {
   font-size: 13px;
   color: var(--text-muted, #94a3b8);
   display: flex;
@@ -28,18 +28,18 @@
   gap: 6px;
 }
 
-.dige-dot {
+.digi-dot {
   opacity: 0.4;
 }
 
 /* ── 搜索框 ── */
-.dige-search {
+.digi-search {
   margin-bottom: 14px;
   display: flex;
   justify-content: center;
 }
 
-.dige-search-input {
+.digi-search-input {
   width: 100%;
   max-width: 400px;
   box-sizing: border-box;
@@ -53,69 +53,71 @@
   transition: border-color 0.2s ease;
 }
 
-.dige-search-input::placeholder {
+.digi-search-input::placeholder {
   color: var(--text-muted, #94a3b8);
 }
 
-.dige-search-input:focus {
+.digi-search-input:focus {
   border-color: var(--primary-color, #e57aa7);
 }
 
 /* ── 空/错误状态 ── */
-.dige-empty {
+.digi-empty {
   text-align: center;
   padding: 60px 0;
   color: var(--text-muted, #94a3b8);
   font-size: 14px;
 }
 
-.dige-error {
+.digi-error {
   color: #f87171;
 }
 
 /* ── 卡片网格 ── */
-.dige-grid {
+.digi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;
 }
 
-.dige-card {
+.digi-card {
   background: var(--surface-color);
   border: 1px solid var(--border-color);
   border-radius: 10px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  cursor: pointer;
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.dige-card:hover {
+.digi-card:hover {
   transform: translateY(-2px);
   border-color: var(--primary-color, #e57aa7);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 /* ── 封面 ── */
-.dige-thumb {
+.digi-thumb {
   background: var(--bg-color);
-  min-height: 180px;
+  aspect-ratio: 2 / 3;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
-.dige-thumb img {
+.digi-thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.dige-no-cover {
+.digi-no-cover {
   width: 100%;
-  min-height: 180px;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -127,7 +129,7 @@
 }
 
 /* ── 信息区 ── */
-.dige-body {
+.digi-body {
   padding: 10px 12px 12px;
   display: flex;
   flex-direction: column;
@@ -135,7 +137,7 @@
   flex: 1;
 }
 
-.dige-id {
+.digi-id {
   display: inline-block;
   font-size: 11px;
   font-weight: 700;
@@ -147,7 +149,7 @@
   align-self: flex-start;
 }
 
-.dige-book-title {
+.digi-book-title {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-color);
@@ -155,21 +157,49 @@
   word-break: break-all;
 }
 
-.dige-remark {
+.digi-remark {
   font-size: 12px;
   color: var(--text-muted, #94a3b8);
   line-height: 1.4;
   word-break: break-all;
 }
 
+/* ── Toast 提示 ── */
+.digi-toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30, 41, 59, 0.92);
+  color: #f1f5f9;
+  font-size: 13px;
+  padding: 8px 20px;
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: 999;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+}
+
+.digi-toast-enter-active,
+.digi-toast-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.digi-toast-enter-from,
+.digi-toast-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(8px);
+}
+
 /* ── 响应式 ── */
 @media (max-width: 600px) {
-  .dige-grid {
+  .digi-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 8px;
   }
 
-  .dige-container {
+  .digi-container {
     padding: 8px 10px 20px;
   }
 }

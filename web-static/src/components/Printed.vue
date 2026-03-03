@@ -1,6 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import * as OpenCC from 'opencc-js'
+
+const router = useRouter()
 
 // 将输入转为繁体，与原始输入一起作为查询词（字段不转换）
 const toTraditional = OpenCC.Converter({ from: 'cn', to: 'tw' })
@@ -41,6 +44,23 @@ const matchedCount = computed(
 )
 
 const searchQuery = ref('')
+const toast = ref('')
+let toastTimer = null
+
+function showToast(msg) {
+  toast.value = msg
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => { toast.value = '' }, 2500)
+}
+
+function clickCard(item) {
+  const sid = item.sid
+  if (sid != null && sid !== '' && galleryMap.value[String(sid)]) {
+    router.push(`/gallery/${sid}/`)
+  } else {
+    showToast('未匹配元数据')
+  }
+}
 
 const filteredItems = computed(() => {
   const raw = searchQuery.value.trim().toLowerCase()
@@ -58,57 +78,59 @@ const filteredItems = computed(() => {
 </script>
 
 <template>
-  <div class="dige-container">
-    <div class="dige-header">
-      <h2 class="dige-title">Printed</h2>
-      <div class="dige-stats" v-if="!loading && !error">
+  <div class="digi-container">
+    <div class="digi-header">
+      <h2 class="digi-title">Printed</h2>
+      <div class="digi-stats" v-if="!loading && !error">
         <span>共 {{ items.length }} 部</span>
-        <span class="dige-dot">·</span>
+        <span class="digi-dot">·</span>
         <span>已关联封面 {{ matchedCount }} 部</span>
         <template v-if="searchQuery.trim()">
-          <span class="dige-dot">·</span>
+          <span class="digi-dot">·</span>
           <span>结果 {{ filteredItems.length }} 部</span>
         </template>
       </div>
     </div>
 
-    <div class="dige-search" v-if="!loading && !error">
+    <div class="digi-search" v-if="!loading && !error">
       <input
         v-model="searchQuery"
-        class="dige-search-input"
+        class="digi-search-input"
         placeholder="搜索 ID / 书名 / 日文名 / sid"
         type="search"
       />
     </div>
 
-    <div v-if="loading" class="dige-empty">Loading…</div>
-    <div v-else-if="error" class="dige-empty dige-error">{{ error }}</div>
-
-    <div v-else-if="!filteredItems.length" class="dige-empty">No results</div>
-
-    <div v-else class="dige-grid">
-      <article v-for="item in filteredItems" :key="item.ID" class="dige-card">
+    <div v-if="loading" class="digi-empty">Loading…</div>
+    <div v-else-if="error" class="digi-empty digi-error">{{ error }}</div>
+    <div v-else-if="!filteredItems.length" class="digi-empty">No results</div>
+    <div v-else class="digi-grid">
+      <article v-for="item in filteredItems" :key="item.ID" class="digi-card" @click="clickCard(item)">
         <!-- 封面 -->
-        <div class="dige-thumb">
+        <div class="digi-thumb">
           <img
             v-if="getThumb(item.sid)"
             :src="getThumb(item.sid)"
             :alt="item['书名']"
             loading="lazy"
           />
-          <div v-else class="dige-no-cover">
+          <div v-else class="digi-no-cover">
             <span>{{ item.ID }}</span>
           </div>
         </div>
 
         <!-- 信息 -->
-        <div class="dige-body">
-          <span class="dige-id">{{ item.ID }}</span>
-          <div class="dige-book-title">{{ item['书名'] }}</div>
-          <div v-if="item['备注']" class="dige-remark">{{ item['备注'] }}</div>
+        <div class="digi-body">
+          <span class="digi-id">{{ item.ID }}</span>
+          <div class="digi-book-title">{{ item['书名'] }}</div>
+          <div v-if="item['备注']" class="digi-remark">{{ item['备注'] }}</div>
         </div>
       </article>
     </div>
+
+    <Transition name="digi-toast">
+      <div v-if="toast" class="digi-toast">{{ toast }}</div>
+    </Transition>
   </div>
 </template>
 
