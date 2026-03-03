@@ -45,6 +45,14 @@ onMounted(() => {
           </RouterLink>
         </li>
         <li>
+          <RouterLink to="/printed" aria-label="Printed" title="Printed">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM6 4h5v8l-2.5-1.5L6 12V4z" />
+            </svg>
+          </RouterLink>
+        </li>
+
+        <li>
           <a href="https://exhentai.org/" target="_blank" aria-label="ExHentai" title="ExHentai">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M14 3h7v7h-2V6.41l-9.29 9.3-1.42-1.42 9.3-9.29H14z" />
@@ -58,6 +66,7 @@ onMounted(() => {
     <ul class="nav-menu desktop-menu">
       <li><RouterLink to="/">Ex Home</RouterLink></li>
       <li><RouterLink to="/data">Data Analys</RouterLink></li>
+      <li><RouterLink to="/printed">Printed</RouterLink></li>
       <li><a href="https://exhentai.org/" target="_blank">ExHentai</a></li>
     </ul>
     

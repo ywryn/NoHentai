@@ -5,6 +5,8 @@ import Home from '@/components/Home.vue';
 import DataAnalys from '@/components/DataAnalys.vue';
 // @ts-ignore
 import GalleryDetail from '@/components/GalleryDetail.vue';
+// @ts-ignore
+import Printed from '@/components/Printed.vue';
 // 静态版本移除这些组件
 // // @ts-ignore
 // import Settings from '@/components/Settings.vue';
@@ -22,6 +24,11 @@ const routes = [
     path: '/data',
     name: 'DataAnalys',
     component: DataAnalys,
+  },
+  {
+    path: '/printed',
+    name: 'Printed',
+    component: Printed,
   },
   {
     path: '/gallery/:gid',  // ExHentai 动态路由

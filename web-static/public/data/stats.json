@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-03-03T02:57:07.023Z",
+  "generatedAt": "2026-03-03T06:05:22.813Z",
   "stats": {
-    "total_count": 3570,
+    "total_count": 3574,
     "categories": {
-      "Doujinshi": 1795,
-      "Manga": 1396,
+      "Doujinshi": 1797,
+      "Manga": 1398,
       "Artist CG": 78,
       "Game CG": 14,
       "Western": 66,
@@ -203,7 +203,7 @@
         "tag": "other:tankoubon",
         "namespace": "other",
         "value": "tankoubon",
-        "count": 892,
+        "count": 894,
         "tag_cn": "单行本",
         "intro": "单行本，源于日本，是指丛书的其中一本。常见于日本漫画或轻小说，即是合辑成书。例如轻小说于各媒体连载后，把内容从连载的刊物重印成为一本独立以一个作品为题材的书籍。一般漫画单行本由 6 至 10 回集结而成。",
         "links": ""
@@ -212,7 +212,7 @@
         "tag": "other:uncensored",
         "namespace": "other",
         "value": "uncensored",
-        "count": 812,
+        "count": 815,
         "tag_cn": "无修正",
         "intro": "发表时就无码或之后消码，图库没有任何修正点。不应使用于西方(western)分类的图库。",
         "links": ""
@@ -230,7 +230,7 @@
         "tag": "other:multi-work series",
         "namespace": "other",
         "value": "multi-work series",
-        "count": 561,
+        "count": 562,
         "tag_cn": "系列作品",
         "intro": "一个完整的作品，其故事跨多册书籍或发行版。不应与故事线(story arc)混淆。",
         "links": ""
@@ -353,6 +353,15 @@
         "links": ""
       },
       {
+        "tag": "other:soushuuhen",
+        "namespace": "other",
+        "value": "soushuuhen",
+        "count": 26,
+        "tag_cn": "总集篇",
+        "intro": "由单一作者自行出版，包含复数作品的书籍，主要为同人志(doujinshi)或者无H(non-h)图库.",
+        "links": ""
+      },
+      {
         "tag": "other:anthology",
         "namespace": "other",
         "value": "anthology",
@@ -369,15 +378,6 @@
         "tag_cn": "水印",
         "intro": "由带有水印的复制品组成的图库，为与内容的创作、扫描、着色或翻译无关的网站做广告。不用于相关方添加的水印。有关上述内容，参见扫描水印(scanmark)。",
         "links": ""
-      },
-      {
-        "tag": "other:soushuuhen",
-        "namespace": "other",
-        "value": "soushuuhen",
-        "count": 25,
-        "tag_cn": "总集篇",
-        "intro": "由单一作者自行出版，包含复数作品的书籍，主要为同人志(doujinshi)或者无H(non-h)图库.",
-        "links": ""
       }
     ],
     "female": [
@@ -385,7 +385,7 @@
         "tag": "female:big breasts",
         "namespace": "female",
         "value": "big breasts",
-        "count": 1430,
+        "count": 1433,
         "tag_cn": "巨乳",
         "intro": "一般的大乳房。每个乳房应至少应该和人的头部一样大。对于Cosplay这需要D杯或更大。是超乳(huge breasts)的前置标签。",
         "links": ""
@@ -394,7 +394,7 @@
         "tag": "female:blowjob",
         "namespace": "female",
         "value": "blowjob",
-        "count": 1315,
+        "count": 1317,
         "tag_cn": "口交",
         "intro": "涉及的嘴和阴茎的性行为。不要与吸球(ball sucking)混淆。是口交颜(blowjob face)、深喉(deepthroat)的前置标签。",
         "links": ""
@@ -403,7 +403,7 @@
         "tag": "female:sole female",
         "namespace": "female",
         "value": "sole female",
-        "count": 1289,
+        "count": 1290,
         "tag_cn": "单女主",
         "intro": "只有一个女性参与了整个图库的所有性爱或恋物癖活动。扶她(futanari)或人妖♂(shemale)不算在内。",
         "links": ""
@@ -412,7 +412,7 @@
         "tag": "female:nakadashi",
         "namespace": "female",
         "value": "nakadashi",
-        "count": 1271,
+        "count": 1273,
         "tag_cn": "中出",
         "intro": "射在里面，体外也可能有一个明显的精液池。",
         "links": ""
@@ -421,7 +421,7 @@
         "tag": "female:lolicon",
         "namespace": "female",
         "value": "lolicon",
-        "count": 1152,
+        "count": 1153,
         "tag_cn": "萝莉",
         "intro": "有性的情景或裸体的未成年少女。不与一般年轻女孩混淆；应该拥有未充分发育的的身体。标记时，只考虑外观。是巨乳萝莉(oppai loli)、低存在萝莉(low lolicon)的前置标签。\n图库只需要包含一张这种性质的图片就需要打上此标签。将发送图库到思念峡湾。",
         "links": ""
@@ -430,7 +430,7 @@
         "tag": "female:stockings",
         "namespace": "female",
         "value": "stockings",
-        "count": 1035,
+        "count": 1038,
         "tag_cn": "长筒袜",
         "intro": "一种通常透明的弹性衣服，覆盖足和腿的下部，但没到生殖器区域。需要至少达到膝盖以上。不应与连裤袜(pantyhose)和高筒靴(thigh high boots)标签混淆。",
         "links": ""
@@ -439,7 +439,7 @@
         "tag": "female:schoolgirl uniform",
         "namespace": "female",
         "value": "schoolgirl uniform",
-        "count": 1000,
+        "count": 1001,
         "tag_cn": "女生制服",
         "intro": "水手服或其他校服。格子或打褶的裙子本身不算。",
         "links": ""
@@ -448,7 +448,7 @@
         "tag": "female:anal",
         "namespace": "female",
         "value": "anal",
-        "count": 821,
+        "count": 822,
         "tag_cn": "爆肛",
         "intro": "插入肛门。任何方法都可以（性玩具(sex toys)，触手(tentacles)等）。",
         "links": ""
@@ -457,7 +457,7 @@
         "tag": "female:twintails",
         "namespace": "female",
         "value": "twintails",
-        "count": 793,
+        "count": 795,
         "tag_cn": "双马尾",
         "intro": "将大部分的头发往头部两侧集中，用胶圈或其它的可以扎发的装饰品，将辫子扎起来竖在半空中的造型。不应与马尾辫(ponytail)混淆。",
         "links": ""
@@ -466,7 +466,7 @@
         "tag": "female:x-ray",
         "namespace": "female",
         "value": "x-ray",
-        "count": 691,
+        "count": 693,
         "tag_cn": "透视",
         "intro": "内部器官通过皮肤或从内部可见。",
         "links": ""
@@ -475,7 +475,7 @@
         "tag": "female:defloration",
         "namespace": "female",
         "value": "defloration",
-        "count": 667,
+        "count": 670,
         "tag_cn": "破处",
         "intro": "女性失去了处女的过程。经常包括轻微出血。不应该与丧失童贞(virginity)标签混淆，因为此标签只用于男性。需要有足够的证据支持。",
         "links": ""
@@ -493,7 +493,7 @@
         "tag": "female:ahegao",
         "namespace": "female",
         "value": "ahegao",
-        "count": 599,
+        "count": 600,
         "tag_cn": "阿黑颜",
         "intro": "夸张的面部表情表示高兴，通常包括上瞟的白眼，张开大嘴，舌头伸出来。通常出现在性的高潮。如果此表现的来源是由疼痛引起，则不算。",
         "links": ""
@@ -511,7 +511,7 @@
         "tag": "female:milf",
         "namespace": "female",
         "value": "milf",
-        "count": 525,
+        "count": 526,
         "tag_cn": "熟女",
         "intro": "看上去像30-50岁的女性，不一定是母亲(mother)。不得与老女人(old lady)混淆。",
         "links": ""
@@ -538,7 +538,7 @@
         "tag": "female:paizuri",
         "namespace": "female",
         "value": "paizuri",
-        "count": 461,
+        "count": 462,
         "tag_cn": "乳交",
         "intro": "在乳房之间推动阴茎（或类似物体）的行为。不应与多重乳交(multiple paizuri)或乳穴性交(nipple fuck)混淆。",
         "links": ""
@@ -556,7 +556,7 @@
         "tag": "female:hairy",
         "namespace": "female",
         "value": "hairy",
-        "count": 425,
+        "count": 426,
         "tag_cn": "多毛",
         "intro": "引人注目的大量阴毛。不应与腋毛(hairy armpits)混淆。",
         "links": ""
@@ -567,7 +567,7 @@
         "tag": "male:sole male",
         "namespace": "male",
         "value": "sole male",
-        "count": 1280,
+        "count": 1281,
         "tag_cn": "单男主",
         "intro": "只有一个男性参与了整个图库的所有性爱或恋物癖活动。人妖♀(cuntboy)不算在内。",
         "links": ""
@@ -585,7 +585,7 @@
         "tag": "male:glasses",
         "namespace": "male",
         "value": "glasses",
-        "count": 574,
+        "count": 575,
         "tag_cn": "眼镜👓",
         "intro": "用于改善双眼的视力的透明框架眼镜。需要佩戴在眼前才能添加此标签。不应与太阳镜🕶(sunglasses)混淆。",
         "links": ""
@@ -612,7 +612,7 @@
         "tag": "male:condom",
         "namespace": "male",
         "value": "condom",
-        "count": 328,
+        "count": 329,
         "tag_cn": "避孕套",
         "intro": "塑料套，旨在保护使用者和其伙伴免受不必要的性病以及怀孕。",
         "links": ""
@@ -630,7 +630,7 @@
         "tag": "male:big penis",
         "namespace": "male",
         "value": "big penis",
-        "count": 290,
+        "count": 292,
         "tag_cn": "大根",
         "intro": "异常大的阴茎，至少要和其主人的前臂一样大。是巨根(huge penis)的前置标签。",
         "links": ""
@@ -931,7 +931,7 @@
         "tag": "parody:original",
         "namespace": "parody",
         "value": "original",
-        "count": 1121,
+        "count": 1123,
         "tag_cn": "原创",
         "intro": "适用于不包含任何已知媒体/系列中角色或内容的同人志(doujinshi)或画师CG(artistcg)。此标签不得用于同人志(doujinshi)或画师CG(artistcg)类别之外。",
         "links": ""
@@ -1402,7 +1402,7 @@
     },
     {
       "quarter": "2022-Q2",
-      "postedCount": 143,
+      "postedCount": 144,
       "favTimeCount": 304
     },
     {
@@ -1417,7 +1417,7 @@
     },
     {
       "quarter": "2023-Q1",
-      "postedCount": 115,
+      "postedCount": 116,
       "favTimeCount": 175
     },
     {
@@ -1477,8 +1477,8 @@
     },
     {
       "quarter": "2026-Q1",
-      "postedCount": 87,
-      "favTimeCount": 113
+      "postedCount": 89,
+      "favTimeCount": 117
     }
   ],
   "heatmap": {
@@ -3676,7 +3676,7 @@
       {
         "x": 52,
         "y": 1,
-        "v": 0,
+        "v": 4,
         "d": "2026-03-02"
       },
       {
