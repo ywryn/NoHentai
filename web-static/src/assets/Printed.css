@@ -41,16 +41,16 @@
 
 .digi-search-input {
   width: 100%;
-  max-width: 400px;
+  max-width: 560px;
   box-sizing: border-box;
-  padding: 7px 12px;
+  background-color: var(--surface-color);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  background: var(--surface-color);
   color: var(--text-color);
-  font-size: 13px;
+  padding: 10px 12px;
+  font-size: 14px;
   outline: none;
-  transition: border-color 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .digi-search-input::placeholder {
@@ -58,7 +58,19 @@
 }
 
 .digi-search-input:focus {
-  border-color: var(--primary-color, #e57aa7);
+  border-color: #4caf50;
+}
+
+.my-app-light .digi-search-input {
+  background-color: #ffffff;
+  border-color: #d6d3d1;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.my-app-light .digi-search-input:focus {
+  background-color: #ffffff;
+  border-color: #4caf50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
 }
 
 /* ── 空/错误状态 ── */
