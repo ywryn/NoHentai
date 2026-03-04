@@ -62,18 +62,66 @@ function clickCard(item) {
   }
 }
 
+// namespace 别名表（与 Home.vue 保持一致）
+const namespaceAliases = {
+  f: 'female', m: 'male', a: 'artist', p: 'parody',
+  c: 'character', l: 'language', g: 'group', o: 'other',
+  cos: 'cosplayer', x: 'mixed', r: 'reclass',
+}
+
+/**
+ * 对单条 gallery tags 数组做单个 query 词匹配。
+ * 支持：namespace:value（含别名）、tag$（精确）、纯文本（模糊）
+ */
+function matchTagsByQuery(tags, query) {
+  if (!Array.isArray(tags) || !tags.length) return false
+
+  if (query.includes(':')) {
+    const colonIdx = query.indexOf(':')
+    const nsRaw = query.slice(0, colonIdx)
+    const ns = namespaceAliases[nsRaw] || nsRaw
+    let val = query.slice(colonIdx + 1)
+    if (!val) return false
+    const exact = val.endsWith('$')
+    if (exact) val = val.slice(0, -1)
+
+    return tags.some((tag) => {
+      if (!tag.includes(':')) return false
+      const [tagNs, tagVal] = tag.toLowerCase().split(':', 2)
+      if (tagNs !== ns) return false
+      return exact ? tagVal === val : tagVal.includes(val)
+    })
+  }
+
+  // 纯文本：匹配任意 tag 的值部分（忽略 namespace 前缀）
+  const exact = query.endsWith('$')
+  const val = exact ? query.slice(0, -1) : query
+  return tags.some((tag) => {
+    const lower = tag.toLowerCase()
+    const tagVal = lower.includes(':') ? lower.split(':', 2)[1] : lower
+    return exact ? tagVal === val : tagVal.includes(val)
+  })
+}
+
 const filteredItems = computed(() => {
   const raw = searchQuery.value.trim().toLowerCase()
   if (!raw) return items.value
   // 保留原始输入，同时生成繁体版本，两者都用于匹配
   const queries = [...new Set([raw, toTraditional(raw).toLowerCase()])]
-  return items.value.filter((item) =>
-    [item.ID, item['书名'], item['日文名'], item.sid].some((v) => {
+
+  return items.value.filter((item) => {
+    // 1. 原有字段匹配（ID / 书名 / 日文名 / sid）
+    const fieldMatch = [item.ID, item['书名'], item['日文名'], item.sid].some((v) => {
       if (v == null) return false
       const field = String(v).toLowerCase()
       return queries.some((q) => field.includes(q))
     })
-  )
+    if (fieldMatch) return true
+
+    // 2. 关联 gallery 的 tags 匹配
+    const tags = galleryMap.value[String(item.sid)]?.tags
+    return queries.some((q) => matchTagsByQuery(tags, q))
+  })
 })
 </script>
 
@@ -96,7 +144,7 @@ const filteredItems = computed(() => {
       <input
         v-model="searchQuery"
         class="digi-search-input"
-        placeholder="搜索 ID / 书名 / 日文名 / sid"
+        placeholder="搜索 ID / 书名 / 日文名 / sid / tag（如 artist:xxx）"
         type="search"
       />
     </div>
