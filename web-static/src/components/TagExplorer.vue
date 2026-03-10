@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import ToggleSwitch from 'primevue/toggleswitch'
 
 const baseUrl = import.meta.env.BASE_URL
@@ -137,6 +137,38 @@ function nextPage() { if (currentPage.value < totalPages.value) currentPage.valu
 function displayLabel(tag) {
   return isChinese.value && tag.name ? tag.name : tag.key
 }
+
+// ── Tooltip ──────────────────────────────────────────
+const tooltip = ref({ visible: false, text: '', x: 0, y: 0 })
+const tooltipEl = ref(null)
+
+function showTooltip(event, tag) {
+  const text = [
+    `${tag.ns}:${tag.key}`,
+    tag.intro,
+    tag.freq ? `出现 ${tag.freq} 次` : '',
+  ].filter(Boolean).join('\n')
+  if (!text) return
+
+  tooltip.value = { visible: true, text, x: 0, y: 0 }
+
+  nextTick(() => {
+    const rect = event.currentTarget.getBoundingClientRect()
+    const el = tooltipEl.value
+    if (!el) return
+    const tipW = el.offsetWidth
+    const margin = 8
+    let x = rect.left + rect.width / 2 - tipW / 2
+    // 防止超出左右视口
+    x = Math.max(margin, Math.min(x, window.innerWidth - tipW - margin))
+    const y = rect.top + window.scrollY - el.offsetHeight - 6
+    tooltip.value = { visible: true, text, x, y }
+  })
+}
+
+function hideTooltip() {
+  tooltip.value.visible = false
+}
 </script>
 
 <template>
@@ -196,12 +228,21 @@ function displayLabel(tag) {
           :key="tag.ns + ':' + tag.key"
           class="tag-chip"
           :style="{ backgroundColor: nsColor(tag.ns).bg, color: nsColor(tag.ns).text }"
-          :title="[isChinese && tag.name ? tag.key : '', tag.intro, tag.freq ? `出现 ${tag.freq} 次` : ''].filter(Boolean).join('\n')"
+          @mouseenter="showTooltip($event, tag)"
+          @mouseleave="hideTooltip"
         >
           {{ displayLabel(tag) }}
           <span v-if="tag.freq" class="tag-freq">{{ tag.freq }}</span>
         </span>
       </div>
+
+      <!-- 全局 Tooltip -->
+      <div
+        v-show="tooltip.visible"
+        ref="tooltipEl"
+        class="tag-tooltip"
+        :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }"
+      >{{ tooltip.text }}</div>
 
       <!-- 底部分页 -->
       <div v-if="totalPages > 1" class="result-bar bottom-bar">
