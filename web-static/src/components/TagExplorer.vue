@@ -51,29 +51,31 @@ watch(searchQuery, () => { currentPage.value = 1 })
 
 // ── 颜色映射 ──────────────────────────────────────────
 const NS_COLOR = {
-  female:    { bg: '#f8c0d6', text: '#8b004a' },
-  male:      { bg: '#bdd7f8', text: '#003b8e' },
-  artist:    { bg: '#ffd9a0', text: '#7a3900' },
-  group:     { bg: '#d9c4f8', text: '#3d0080' },
-  parody:    { bg: '#b8f0d0', text: '#005c2e' },
-  character: { bg: '#b8ecf5', text: '#004f63' },
-  language:  { bg: '#dde3ea', text: '#3a4a5a' },
-  cosplayer: { bg: '#f8c0b8', text: '#7a1500' },
-  mixed:     { bg: '#fce4a8', text: '#6b4000' },
-  other:     { bg: '#cfd8e0', text: '#37474f' },
+  female:    { bg: '#f48fb1', text: '#880e4f' },  // 330° 玫瑰粉
+  cosplayer: { bg: '#ef9a9a', text: '#b71c1c' },  //   0° 红
+  artist:    { bg: '#ffcc80', text: '#e65100' },  //  30° 橙
+  mixed:     { bg: '#fff176', text: '#f57f17' },  //  55° 黄
+  parody:    { bg: '#c5e1a5', text: '#33691e' },  // 120° 绿
+  location:  { bg: '#80cbc4', text: '#00695c' },  // 175° 青绿
+  character: { bg: '#81d4fa', text: '#0277bd' },  // 195° 天蓝
+  male:      { bg: '#90caf9', text: '#1565c0' },  // 220° 蓝
+  group:     { bg: '#ce93d8', text: '#6a1b9a' },  // 270° 紫
+  language:  { bg: '#b0bec5', text: '#37474f' },  // neutral 蓝灰
+  other:     { bg: '#e0e0e0', text: '#424242' },  // neutral 灰
 }
 
 const NS_DARK_COLOR = {
-  female:    { bg: '#5a1a35', text: '#ffb3d1' },
-  male:      { bg: '#0d2e5a', text: '#90c4ff' },
-  artist:    { bg: '#4a2800', text: '#ffc07a' },
-  group:     { bg: '#2a0050', text: '#cca8ff' },
-  parody:    { bg: '#003d1e', text: '#7ef5b0' },
-  character: { bg: '#003042', text: '#7de8ff' },
-  language:  { bg: '#1e2630', text: '#aab8c8' },
-  cosplayer: { bg: '#4a0d00', text: '#ffaa95' },
-  mixed:     { bg: '#3d2600', text: '#ffd07a' },
-  other:     { bg: '#1c2830', text: '#90aab8' },
+  female:    { bg: '#4a1428', text: '#f48fb1' },
+  cosplayer: { bg: '#4a0f0f', text: '#ef9a9a' },
+  artist:    { bg: '#4a2800', text: '#ffcc80' },
+  mixed:     { bg: '#3d3000', text: '#fff176' },
+  parody:    { bg: '#1a3d0d', text: '#c5e1a5' },
+  location:  { bg: '#003330', text: '#80cbc4' },
+  character: { bg: '#003355', text: '#81d4fa' },
+  male:      { bg: '#0a2a55', text: '#90caf9' },
+  group:     { bg: '#30004a', text: '#ce93d8' },
+  language:  { bg: '#1c2530', text: '#b0bec5' },
+  other:     { bg: '#252525', text: '#e0e0e0' },
 }
 
 function nsColor(ns) {
