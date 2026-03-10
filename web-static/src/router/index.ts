@@ -7,6 +7,8 @@ import DataAnalys from '@/components/DataAnalys.vue';
 import GalleryDetail from '@/components/GalleryDetail.vue';
 // @ts-ignore
 import Printed from '@/components/Printed.vue';
+// @ts-ignore
+import TagExplorer from '@/components/TagExplorer.vue';
 // 静态版本移除这些组件
 // // @ts-ignore
 // import Settings from '@/components/Settings.vue';
@@ -29,6 +31,11 @@ const routes = [
     path: '/printed',
     name: 'Printed',
     component: Printed,
+  },
+  {
+    path: '/tags',
+    name: 'TagExplorer',
+    component: TagExplorer,
   },
   {
     path: '/gallery/:gid',  // ExHentai 动态路由

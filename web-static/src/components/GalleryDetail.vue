@@ -48,7 +48,6 @@
 
         <!-- EX Tags -->
         <div class="tags">
-          <ToggleSwitch v-model="isChinese" :onLabel="'中文'" :offLabel="'英文'" class="language-toggle" />
           <div v-for="(tags, group) in groupedTags" :key="group" class="tag-group">
             <strong>{{ group }}</strong>:
             <Tag
@@ -59,6 +58,7 @@
               severity="secondary"
             />
           </div>
+          <ToggleSwitch v-model="isChinese" :onLabel="'中文'" :offLabel="'英文'" class="language-toggle" />
         </div>
 
       </div>

@@ -254,7 +254,7 @@ body {
   cursor: pointer;
 }
 
-.active {
+.btn.active {
   border: 3px solid #ffffff;
   box-shadow: 0 0 10px 3px #ffffff;
   background-color: rgba(255, 255, 255, 0.2);
