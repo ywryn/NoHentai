@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-03-09T00:59:37.841433",
-  "count": 138,
+  "generatedAt": "2026-03-10T00:54:16.266230",
+  "count": 140,
   "data": [
     {
       "ID": "BED-011",
@@ -1493,8 +1493,8 @@
       "收价": null,
       "原价": null,
       "日文名": "[DOLL PLAY (黒巣ガタリ)] 聖華女学院高等部公認竿おじさん 総集編",
-      "sid": null,
-      "备注": null,
+      "sid": 3000648,
+      "备注": "封面图非对应图片，实际为3人版本封面",
       "URL": "https://18comic.vip/album/1224760/doll-play-%E9%BB%92%E5%B7%A3%E3%82%AC%E3%82%BF%E3%83%AA-%E8%81%96%E8%8F%AF%E5%A5%B3%E5%AD%A6%E9%99%A2%E9%AB%98%E7%AD%89%E9%83%A8%E5%85%AC%E8%AA%8D%E7%AB%BF%E3%81%8A%E3%81%98%E3%81%95%E3%82%93-%E7%B7%8F%E9%9B%86%E7%B7%A8-1-7-%E8%81%96%E8%8F%AF%E5%A5%B3%E5%AD%90%E5%AD%B8%E9%99%A2%E9%AB%98%E4%B8%AD%E9%83%A8%E8%AA%8D%E8%AD%89%E8%82%89%E6%A3%92%E5%A4%A7%E5%8F%94-%E7%B8%BD%E9%9B%86%E7%AF%87-%E4%B8%AD%E6%96%87-%E7%84%A1%E4%BF%AE%E6%AD%A3",
       "cover": null
     },
@@ -1516,6 +1516,28 @@
       "原价": null,
       "日文名": "搾精ダンジョン攻略に向かない地味子のS級ドスケベステータス",
       "sid": 1907568,
+      "备注": null,
+      "URL": null,
+      "cover": null
+    },
+    {
+      "ID": "日版",
+      "书名": "Sweet Snow",
+      "收价": null,
+      "原价": null,
+      "日文名": "Sweet Snow",
+      "sid": 2949085,
+      "备注": null,
+      "URL": null,
+      "cover": null
+    },
+    {
+      "ID": "日版",
+      "书名": "Secret Beach",
+      "收价": null,
+      "原价": null,
+      "日文名": "Secret Beach",
+      "sid": 1545797,
       "备注": null,
       "URL": null,
       "cover": null
