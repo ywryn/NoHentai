@@ -1,8 +1,10 @@
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import ToggleSwitch from 'primevue/toggleswitch'
+import { useTheme } from '@/composables/useTheme'
 
 const baseUrl = import.meta.env.BASE_URL
+const { isDark } = useTheme()
 
 // ── 数据 ──────────────────────────────────────────────
 const namespaces = ref([])
@@ -79,8 +81,7 @@ const NS_DARK_COLOR = {
 }
 
 function nsColor(ns) {
-  const isDark = document.documentElement.classList.contains('my-app-dark')
-  return (isDark ? NS_DARK_COLOR : NS_COLOR)[ns] || { bg: '#e0e0e0', text: '#333' }
+  return (isDark.value ? NS_DARK_COLOR : NS_COLOR)[ns] || { bg: '#e0e0e0', text: '#333' }
 }
 
 // ── 计算 ──────────────────────────────────────────────
