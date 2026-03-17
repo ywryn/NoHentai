@@ -153,24 +153,66 @@ export default {
     async fetchGalleryData() {
       this.loading = true;
       this.error = null;
-      
+
       try {
-        // 加载静态 JSON 数据
-        const [galleriesResponse, translationsResponse] = await Promise.all([
+        const source = this.$route.query.source;
+
+        if (source === 'daily') {
+          // 直接从 daily_search.json 读取，跳过 galleries.json
+          const [dailyResponse, translationsResponse] = await Promise.all([
+            fetch(`${baseUrl}data/daily_search.json`),
+            fetch(`${baseUrl}data/translations.json`),
+          ]);
+          this.translationData = await translationsResponse.json();
+          const dailyGroups = await dailyResponse.json();
+          let gallery = null;
+          if (Array.isArray(dailyGroups)) {
+            for (const group of dailyGroups) {
+              const found = (group.galleries || []).find(item =>
+                item.gid && item.gid.toString() === this.itemId.toString()
+              );
+              if (found) { gallery = found; break; }
+            }
+          }
+          if (gallery) {
+            const processedGallery = { ...gallery };
+            if (Array.isArray(gallery.tags)) {
+              processedGallery.tags = this.enrichTags(gallery.tags);
+            }
+            this.galleryData = processedGallery;
+          } else {
+            this.error = `Gallery with ID ${this.itemId} not found`;
+          }
+          return;
+        }
+
+        // 默认：从 galleries.json 读取，找不到再回退 daily_search.json
+        const [galleriesResponse, translationsResponse, dailyResponse] = await Promise.all([
           fetch(`${baseUrl}data/galleries.json`),
-          fetch(`${baseUrl}data/translations.json`)
+          fetch(`${baseUrl}data/translations.json`),
+          fetch(`${baseUrl}data/daily_search.json`),
         ]);
-        
+
         this.allGalleries = await galleriesResponse.json();
         this.translationData = await translationsResponse.json();
-        
-        // 查找对应的画廊数据
-        const gallery = this.allGalleries.find(item => 
+
+        let gallery = this.allGalleries.find(item =>
           item.gid && item.gid.toString() === this.itemId.toString()
         );
-        
+
+        if (!gallery && dailyResponse.ok) {
+          const dailyGroups = await dailyResponse.json();
+          if (Array.isArray(dailyGroups)) {
+            for (const group of dailyGroups) {
+              const found = (group.galleries || []).find(item =>
+                item.gid && item.gid.toString() === this.itemId.toString()
+              );
+              if (found) { gallery = found; break; }
+            }
+          }
+        }
+
         if (gallery) {
-          // 处理标签翻译
           const processedGallery = { ...gallery };
           if (Array.isArray(gallery.tags)) {
             processedGallery.tags = this.enrichTags(gallery.tags);
@@ -179,7 +221,7 @@ export default {
         } else {
           this.error = `Gallery with ID ${this.itemId} not found`;
         }
-        
+
       } catch (error) {
         console.error("Error fetching gallery data:", error);
         this.error = `Failed to load gallery data: ${error.message}`;

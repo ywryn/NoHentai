@@ -288,7 +288,7 @@ async function loadData() {
 }
 
 function navigateToGallery(gid) {
-  if (gid) router.push(`/gallery/${gid}/`)
+  if (gid) router.push(`/gallery/${gid}/?source=daily`)
 }
 
 function showPopover(event, item) {
