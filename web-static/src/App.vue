@@ -58,15 +58,15 @@ onMounted(() => {
             </svg>
           </RouterLink>
         </li>
-
         <li>
-          <a href="https://exhentai.org/" target="_blank" aria-label="ExHentai" title="ExHentai">
+          <RouterLink to="/daily" aria-label="Daily Search" title="Daily Search">
             <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M14 3h7v7h-2V6.41l-9.29 9.3-1.42-1.42 9.3-9.29H14z" />
-              <path d="M5 5h6v2H7v10h10v-4h2v6H5z" />
+              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.93V15a1 1 0 0 0-2 0v2.93A8 8 0 0 1 4.07 11H6a1 1 0 0 0 0-2H4.07A8 8 0 0 1 11 4.07V6a1 1 0 0 0 2 0V4.07A8 8 0 0 1 19.93 11H18a1 1 0 0 0 0 2h1.93A8 8 0 0 1 13 16.93zM12 10a2 2 0 1 0 2 2 2 2 0 0 0-2-2z"/>
             </svg>
-          </a>
+          </RouterLink>
         </li>
+
+
       </ul>
     </div>
     <!-- Desktop Navigation - 静态版本 -->
@@ -75,7 +75,7 @@ onMounted(() => {
       <li><RouterLink to="/data">Data Analys</RouterLink></li>
       <li><RouterLink to="/printed">Printed</RouterLink></li>
       <li><RouterLink to="/tags">Tags</RouterLink></li>
-      <li><a href="https://exhentai.org/" target="_blank">ExHentai</a></li>
+      <li><RouterLink to="/daily">Daily</RouterLink></li>
     </ul>
     
     <!-- Theme Toggle (always visible) -->

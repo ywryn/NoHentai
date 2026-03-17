@@ -9,6 +9,8 @@ import GalleryDetail from '@/components/GalleryDetail.vue';
 import Printed from '@/components/Printed.vue';
 // @ts-ignore
 import TagExplorer from '@/components/TagExplorer.vue';
+// @ts-ignore
+import DailySearch from '@/components/DailySearch.vue';
 // 静态版本移除这些组件
 // // @ts-ignore
 // import Settings from '@/components/Settings.vue';
@@ -36,6 +38,11 @@ const routes = [
     path: '/tags',
     name: 'TagExplorer',
     component: TagExplorer,
+  },
+  {
+    path: '/daily',
+    name: 'DailySearch',
+    component: DailySearch,
   },
   {
     path: '/gallery/:gid',  // ExHentai 动态路由
