@@ -70,7 +70,7 @@
     "filecount": "276",
     "filesize": 212635220,
     "expunged": false,
-    "rating": "4.51",
+    "rating": "4.52",
     "torrentcount": "1",
     "torrents": [
       {
@@ -411,7 +411,7 @@
     "filecount": "144",
     "filesize": 142312522,
     "expunged": false,
-    "rating": "4.56",
+    "rating": "4.58",
     "torrentcount": "1",
     "torrents": [
       {
@@ -467,7 +467,7 @@
     "filecount": "200",
     "filesize": 188086333,
     "expunged": false,
-    "rating": "4.47",
+    "rating": "4.53",
     "torrentcount": "1",
     "torrents": [
       {
@@ -506,7 +506,7 @@
     "filecount": "232",
     "filesize": 346879785,
     "expunged": false,
-    "rating": "4.67",
+    "rating": "4.69",
     "torrentcount": "1",
     "torrents": [
       {
@@ -522,6 +522,7 @@
       "language:translated",
       "artist:announ",
       "male:big penis",
+      "male:dilf",
       "male:glasses",
       "male:schoolboy uniform",
       "female:ahegao",
@@ -534,16 +535,19 @@
       "female:blowjob",
       "female:breast feeding",
       "female:clothed male nude female",
+      "female:clothed paizuri",
       "female:collar",
       "female:cunnilingus",
       "female:demon girl",
       "female:double penetration",
       "female:eyepatch",
       "female:fingering",
+      "female:garter belt",
       "female:gloves",
       "female:gyaru",
       "female:hair buns",
       "female:hairy",
+      "female:harem",
       "female:horns",
       "female:huge breasts",
       "female:kissing",
@@ -551,7 +555,9 @@
       "female:maid",
       "female:mind control",
       "female:nakadashi",
+      "female:nipple stimulation",
       "female:nun",
+      "female:paizuri",
       "female:pasties",
       "female:ponytail",
       "female:schoolgirl uniform",
@@ -561,9 +567,11 @@
       "female:tall girl",
       "female:tentacles",
       "female:thigh high boots",
+      "female:twintails",
       "female:x-ray",
       "mixed:ffm threesome",
       "mixed:group",
+      "other:story arc",
       "other:tankoubon"
     ],
     "favCategory": "待下载",
@@ -631,7 +639,7 @@
     "filecount": "81",
     "filesize": 731178415,
     "expunged": false,
-    "rating": "4.67",
+    "rating": "4.69",
     "torrentcount": "1",
     "torrents": [
       {
@@ -687,7 +695,7 @@
     "filecount": "208",
     "filesize": 109992983,
     "expunged": false,
-    "rating": "4.63",
+    "rating": "4.65",
     "torrentcount": "1",
     "torrents": [
       {
@@ -870,7 +878,7 @@
     "filecount": "130",
     "filesize": 78446494,
     "expunged": false,
-    "rating": "4.61",
+    "rating": "4.62",
     "torrentcount": "1",
     "torrents": [
       {
@@ -909,7 +917,7 @@
     "filecount": "27",
     "filesize": 47013022,
     "expunged": false,
-    "rating": "4.49",
+    "rating": "4.50",
     "torrentcount": "1",
     "torrents": [
       {
@@ -966,7 +974,7 @@
     "filecount": "22",
     "filesize": 120817064,
     "expunged": false,
-    "rating": "4.32",
+    "rating": "4.33",
     "torrentcount": "2",
     "torrents": [
       {
@@ -1028,7 +1036,7 @@
     "filecount": "84",
     "filesize": 88408456,
     "expunged": false,
-    "rating": "4.28",
+    "rating": "4.30",
     "torrentcount": "1",
     "torrents": [
       {
@@ -1067,7 +1075,7 @@
     "filecount": "66",
     "filesize": 122658259,
     "expunged": false,
-    "rating": "4.63",
+    "rating": "4.64",
     "torrentcount": "1",
     "torrents": [
       {
@@ -1127,20 +1135,28 @@
     "favTime": "2026-04-07 04:57"
   },
   {
-    "gid": 3876864,
-    "token": "693267a1bc",
+    "gid": 3886575,
+    "token": "eb3e432e56",
     "title": "[Mitari Gakuen (Nush)] Mitari no Sono Ep. 256- | 魅足之园 （256话-） [Chinese] [lex2022个人汉化]",
     "title_jpn": "[魅足学園 (ナッシュ)] 魅足の園 Ep. 256- [中国翻訳]",
     "category": "Doujinshi",
     "thumb": "https://ehgt.org/w/02/243/94133-m676japu.webp",
     "uploader": "lex2022",
-    "posted": "1775452281",
-    "filecount": "32",
-    "filesize": 160766334,
+    "posted": "1775988378",
+    "filecount": "51",
+    "filesize": 260428652,
     "expunged": false,
     "rating": "4.42",
-    "torrentcount": "0",
-    "torrents": [],
+    "torrentcount": "1",
+    "torrents": [
+      {
+        "hash": "90e30a7ceb2866c14cb460bde10ede5c5f992272",
+        "added": "1775990934",
+        "name": "[Mitari Gakuen (Nush)] Mitari no Sono Ep. 256-   魅足之园 （256话-） [Chinese] [lex2022个人汉化].zip",
+        "tsize": "20264",
+        "fsize": "260042227"
+      }
+    ],
     "tags": [
       "language:chinese",
       "language:translated",
@@ -1155,8 +1171,8 @@
       "female:pantyhose",
       "female:smell"
     ],
-    "parent_gid": "3782751",
-    "parent_key": "4d14a675c4",
+    "parent_gid": "3876864",
+    "parent_key": "693267a1bc",
     "first_gid": "3782751",
     "first_key": "4d14a675c4",
     "favCategory": "待下载",
@@ -1225,7 +1241,7 @@
     "filecount": "91",
     "filesize": 170365654,
     "expunged": false,
-    "rating": "4.68",
+    "rating": "4.67",
     "torrentcount": "1",
     "torrents": [
       {
@@ -1285,7 +1301,7 @@
     "filecount": "97",
     "filesize": 187150826,
     "expunged": false,
-    "rating": "4.34",
+    "rating": "4.35",
     "torrentcount": "1",
     "torrents": [
       {
@@ -1321,7 +1337,7 @@
     "filecount": "128",
     "filesize": 305345169,
     "expunged": false,
-    "rating": "4.32",
+    "rating": "4.31",
     "torrentcount": "1",
     "torrents": [
       {
@@ -1359,7 +1375,7 @@
     "filecount": "55",
     "filesize": 365047253,
     "expunged": false,
-    "rating": "4.18",
+    "rating": "4.21",
     "torrentcount": "1",
     "torrents": [
       {
@@ -1405,7 +1421,7 @@
     "filecount": "10",
     "filesize": 27863813,
     "expunged": false,
-    "rating": "4.50",
+    "rating": "4.49",
     "torrentcount": "1",
     "torrents": [
       {
@@ -1451,7 +1467,7 @@
     "filecount": "47",
     "filesize": 82271113,
     "expunged": false,
-    "rating": "4.32",
+    "rating": "4.34",
     "torrentcount": "1",
     "torrents": [
       {
@@ -1511,7 +1527,7 @@
     "filecount": "52",
     "filesize": 136794499,
     "expunged": false,
-    "rating": "4.68",
+    "rating": "4.66",
     "torrentcount": "1",
     "torrents": [
       {
@@ -1666,7 +1682,7 @@
     "filecount": "217",
     "filesize": 157234849,
     "expunged": false,
-    "rating": "4.53",
+    "rating": "4.54",
     "torrentcount": "2",
     "torrents": [
       {
@@ -1825,7 +1841,7 @@
     "filecount": "46",
     "filesize": 59243682,
     "expunged": false,
-    "rating": "4.64",
+    "rating": "4.63",
     "torrentcount": "1",
     "torrents": [
       {
@@ -2239,7 +2255,7 @@
     "filecount": "209",
     "filesize": 282523402,
     "expunged": false,
-    "rating": "4.66",
+    "rating": "4.67",
     "torrentcount": "2",
     "torrents": [
       {
@@ -3170,7 +3186,6 @@
       "female:big areolae",
       "female:big breasts",
       "female:bikini",
-      "female:blowjob",
       "female:clothed paizuri",
       "female:cowgirl",
       "female:huge breasts",
@@ -4466,7 +4481,6 @@
       "language:translated",
       "artist:mikiuchi shitei",
       "male:condom",
-      "male:cunnilingus",
       "male:schoolboy uniform",
       "male:tracksuit",
       "female:big breasts",
@@ -4896,7 +4910,7 @@
     "filecount": "114",
     "filesize": 436722621,
     "expunged": false,
-    "rating": "4.51",
+    "rating": "4.52",
     "torrentcount": "1",
     "torrents": [
       {
@@ -5537,7 +5551,7 @@
     "filecount": "45",
     "filesize": 219786598,
     "expunged": false,
-    "rating": "2.36",
+    "rating": "2.38",
     "torrentcount": "1",
     "torrents": [
       {
@@ -7741,7 +7755,7 @@
     "filecount": "31",
     "filesize": 24272351,
     "expunged": false,
-    "rating": "4.66",
+    "rating": "4.65",
     "torrentcount": "1",
     "torrents": [
       {
@@ -8168,7 +8182,7 @@
     "filecount": "232",
     "filesize": 1335065100,
     "expunged": false,
-    "rating": "4.36",
+    "rating": "4.34",
     "torrentcount": "1",
     "torrents": [
       {
@@ -11864,7 +11878,7 @@
     "filecount": "229",
     "filesize": 202096930,
     "expunged": false,
-    "rating": "4.71",
+    "rating": "4.72",
     "torrentcount": "1",
     "torrents": [
       {
@@ -13935,6 +13949,7 @@
       "female:x-ray",
       "mixed:ffm threesome",
       "mixed:group",
+      "mixed:mmf threesome",
       "other:tankoubon",
       "other:uncensored"
     ],
@@ -19285,6 +19300,7 @@
       "artist:fujimaru",
       "male:glasses",
       "male:schoolboy uniform",
+      "female:bear girl",
       "female:bikini",
       "female:dark skin",
       "female:exhibitionism",
@@ -19301,6 +19317,7 @@
       "female:twintails",
       "female:wet clothes",
       "mixed:ffm threesome",
+      "mixed:group",
       "other:tankoubon",
       "other:uncensored"
     ],
@@ -19843,7 +19860,7 @@
     "filecount": "215",
     "filesize": 198077172,
     "expunged": false,
-    "rating": "4.87",
+    "rating": "4.88",
     "torrentcount": "2",
     "torrents": [
       {
@@ -22937,18 +22954,28 @@
       "language:chinese",
       "language:translated",
       "artist:utu",
+      "male:blindfold",
       "male:cheating",
       "male:glasses",
+      "male:schoolboy uniform",
       "male:teacher",
       "female:big breasts",
+      "female:blowjob",
       "female:cheating",
       "female:cheerleader",
       "female:double penetration",
+      "female:filming",
+      "female:footjob",
       "female:glasses",
       "female:gyaru",
+      "female:hairy",
+      "female:hidden sex",
       "female:kimono",
+      "female:milf",
       "female:pantyhose",
       "female:schoolgirl uniform",
+      "female:sweating",
+      "female:teacher",
       "other:tankoubon",
       "other:uncensored"
     ],
@@ -23218,7 +23245,7 @@
     "filecount": "185",
     "filesize": 172333265,
     "expunged": false,
-    "rating": "4.71",
+    "rating": "4.70",
     "torrentcount": "1",
     "torrents": [
       {
@@ -23797,7 +23824,7 @@
     "filecount": "211",
     "filesize": 310235651,
     "expunged": false,
-    "rating": "4.48",
+    "rating": "4.49",
     "torrentcount": "1",
     "torrents": [
       {
@@ -28311,7 +28338,7 @@
     "filecount": "206",
     "filesize": 946912870,
     "expunged": false,
-    "rating": "4.47",
+    "rating": "4.48",
     "torrentcount": "2",
     "torrents": [
       {
@@ -28769,7 +28796,7 @@
     "filecount": "199",
     "filesize": 290721048,
     "expunged": false,
-    "rating": "4.54",
+    "rating": "4.55",
     "torrentcount": "1",
     "torrents": [
       {
@@ -35434,7 +35461,7 @@
     "filecount": "229",
     "filesize": 155741923,
     "expunged": false,
-    "rating": "4.71",
+    "rating": "4.72",
     "torrentcount": "1",
     "torrents": [
       {
@@ -35629,6 +35656,7 @@
       "female:bondage",
       "female:defloration",
       "female:drunk",
+      "female:hairy",
       "female:impregnation",
       "female:incest",
       "female:milf",
@@ -38417,7 +38445,7 @@
     "filecount": "118",
     "filesize": 630171825,
     "expunged": false,
-    "rating": "4.62",
+    "rating": "4.61",
     "torrentcount": "2",
     "torrents": [
       {
@@ -43795,6 +43823,7 @@
       "male:smegma",
       "male:smell",
       "male:swimsuit",
+      "male:virginity",
       "male:voyeurism",
       "female:ahegao",
       "female:anal",
@@ -43807,6 +43836,7 @@
       "female:bike shorts",
       "female:bikini",
       "female:blowjob",
+      "female:blowjob face",
       "female:bunny girl",
       "female:burping",
       "female:collar",
@@ -43816,6 +43846,7 @@
       "female:eye-covering bang",
       "female:facesitting",
       "female:footjob",
+      "female:gaping",
       "female:gyaru",
       "female:hair buns",
       "female:hairy",
@@ -45596,7 +45627,7 @@
     "filecount": "79",
     "filesize": 241955794,
     "expunged": false,
-    "rating": "4.79",
+    "rating": "4.78",
     "torrentcount": "1",
     "torrents": [
       {
@@ -56246,6 +56277,7 @@
     "tags": [
       "language:chinese",
       "language:translated",
+      "artist:takeda hiromitsu",
       "artist:yoshitora",
       "male:bondage",
       "male:condom",
@@ -56261,6 +56293,7 @@
       "female:big breasts",
       "female:bisexual",
       "female:blindfold",
+      "female:blowjob",
       "female:bondage",
       "female:cheating",
       "female:clamp",
@@ -56277,6 +56310,7 @@
       "female:lab coat",
       "female:lactation",
       "female:lingerie",
+      "female:masturbation",
       "female:milf",
       "female:nakadashi",
       "female:netorare",
@@ -58879,7 +58913,7 @@
     "filecount": "16",
     "filesize": 14478614,
     "expunged": false,
-    "rating": "4.55",
+    "rating": "4.56",
     "torrentcount": "1",
     "torrents": [
       {
@@ -63801,7 +63835,7 @@
     "filecount": "264",
     "filesize": 152896144,
     "expunged": false,
-    "rating": "4.71",
+    "rating": "4.72",
     "torrentcount": "2",
     "torrents": [
       {
@@ -68142,6 +68176,7 @@
       "mixed:ffm threesome",
       "mixed:group",
       "mixed:incest",
+      "mixed:mmf threesome",
       "other:tankoubon"
     ],
     "parent_gid": "1877066",
@@ -69830,6 +69865,7 @@
       "female:dougi",
       "female:exhibitionism",
       "female:glasses",
+      "female:impregnation",
       "female:milf",
       "female:nakadashi",
       "female:pantyhose",
@@ -89079,11 +89115,15 @@
       "female:bondage",
       "female:bukkake",
       "female:business suit",
+      "female:cunnilingus",
       "female:double vaginal",
       "female:exhibitionism",
+      "female:fingering",
       "female:footjob",
       "female:garter belt",
+      "female:handjob",
       "female:harem",
+      "female:kissing",
       "female:masturbation",
       "female:milf",
       "female:mother",
@@ -89103,6 +89143,7 @@
       "female:twintails",
       "female:urination",
       "female:wormhole",
+      "female:yuri",
       "mixed:ffm threesome",
       "mixed:group",
       "mixed:incest",
@@ -100628,7 +100669,7 @@
     "filecount": "21",
     "filesize": 14562826,
     "expunged": false,
-    "rating": "4.71",
+    "rating": "4.72",
     "torrentcount": "1",
     "torrents": [
       {
@@ -101717,7 +101758,7 @@
     "filecount": "43",
     "filesize": 15362225,
     "expunged": false,
-    "rating": "4.79",
+    "rating": "4.78",
     "torrentcount": "1",
     "torrents": [
       {
@@ -104110,7 +104151,7 @@
     "filecount": "244",
     "filesize": 148976298,
     "expunged": false,
-    "rating": "4.76",
+    "rating": "4.77",
     "torrentcount": "1",
     "torrents": [
       {
@@ -104687,7 +104728,7 @@
     "filecount": "244",
     "filesize": 921751350,
     "expunged": false,
-    "rating": "4.63",
+    "rating": "4.64",
     "torrentcount": "2",
     "torrents": [
       {
@@ -106617,7 +106658,7 @@
     "filecount": "23",
     "filesize": 17638642,
     "expunged": false,
-    "rating": "4.34",
+    "rating": "4.35",
     "torrentcount": "0",
     "torrents": [],
     "tags": [
@@ -107957,7 +107998,7 @@
     "filecount": "86",
     "filesize": 100235888,
     "expunged": false,
-    "rating": "4.75",
+    "rating": "4.76",
     "torrentcount": "0",
     "torrents": [],
     "tags": [
@@ -108121,7 +108162,7 @@
     "filecount": "22",
     "filesize": 24952405,
     "expunged": false,
-    "rating": "4.62",
+    "rating": "4.63",
     "torrentcount": "1",
     "torrents": [
       {
@@ -108770,7 +108811,7 @@
     "title_jpn": "",
     "category": "Doujinshi",
     "thumb": "https://ehgt.org/w/00/800/52616-subd7zqc.webp",
-    "uploader": "Brakiozor",
+    "uploader": "(Disowned)",
     "posted": "1589035634",
     "filecount": "8",
     "filesize": 97228268,
@@ -110909,7 +110950,7 @@
     "filecount": "30",
     "filesize": 7794111,
     "expunged": false,
-    "rating": "4.32",
+    "rating": "4.48",
     "torrentcount": "0",
     "torrents": [],
     "tags": [
@@ -112412,7 +112453,7 @@
     "filecount": "24",
     "filesize": 103338037,
     "expunged": false,
-    "rating": "4.36",
+    "rating": "4.37",
     "torrentcount": "0",
     "torrents": [],
     "tags": [
@@ -112757,7 +112798,7 @@
     "filecount": "23",
     "filesize": 55164525,
     "expunged": false,
-    "rating": "4.64",
+    "rating": "4.65",
     "torrentcount": "0",
     "torrents": [],
     "tags": [
@@ -113976,6 +114017,7 @@
       "female:big nipples",
       "female:bikini",
       "female:bloomers",
+      "female:breast feeding",
       "female:collar",
       "female:defloration",
       "female:double penetration",
@@ -113985,6 +114027,7 @@
       "female:leotard",
       "female:lingerie",
       "female:maid",
+      "female:nipple stimulation",
       "female:paizuri",
       "female:ponytail",
       "female:school swimsuit",
@@ -114847,7 +114890,7 @@
     "filecount": "18",
     "filesize": 98329659,
     "expunged": false,
-    "rating": "4.77",
+    "rating": "4.78",
     "torrentcount": "1",
     "torrents": [
       {
@@ -116843,7 +116886,7 @@
     "filecount": "46",
     "filesize": 23917846,
     "expunged": false,
-    "rating": "4.64",
+    "rating": "4.65",
     "torrentcount": "1",
     "torrents": [
       {
@@ -122854,7 +122897,7 @@
     "filecount": "212",
     "filesize": 256621952,
     "expunged": false,
-    "rating": "4.69",
+    "rating": "4.70",
     "torrentcount": "1",
     "torrents": [
       {
@@ -128545,7 +128588,7 @@
     "filecount": "25",
     "filesize": 37946346,
     "expunged": false,
-    "rating": "4.89",
+    "rating": "4.88",
     "torrentcount": "0",
     "torrents": [],
     "tags": [
@@ -152730,7 +152773,7 @@
     "filecount": "20",
     "filesize": 24036280,
     "expunged": false,
-    "rating": "4.44",
+    "rating": "4.45",
     "torrentcount": "2",
     "torrents": [
       {
