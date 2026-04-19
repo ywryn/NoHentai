@@ -1,47 +1,22 @@
 <template>
   <div class="gallery-detail-wrapper">
     <div v-if="galleryData" class="gallery-detail-page">
-      <section class="gallery-detail-hero">
-        <div class="cover-panel">
-          <div class="cover-shell">
-            <img :src="galleryData.thumb || galleryData.image || '/placeholder.png'" alt="Cover" />
-          </div>
-          <div class="cover-meta">
-            <span class="category-badge" :class="categoryClass">{{ getDisplayCategory() }}</span>
-            <dl class="cover-info-list">
-              <div class="cover-info-row">
-                <dt>Posted</dt>
-                <dd>{{ formatDate(galleryData.posted) || "Unknown" }}</dd>
-              </div>
-              <div class="cover-info-row">
-                <dt>Fav Time</dt>
-                <dd>{{ formatFavDate(galleryData.favTime) }}</dd>
-              </div>
-              <div class="cover-info-row">
-                <dt>Link</dt>
-                <dd>
-                  <a :href="externalLink" target="_blank" rel="noreferrer">{{ externalLink }}</a>
-                </dd>
-              </div>
-            </dl>
-            <a class="external-link mobile-link" :href="externalLink" target="_blank" rel="noreferrer">
-              Open ExHentai
-            </a>
-          </div>
-        </div>
 
-        <div class="hero-main">
-          <div class="hero-header">
-            <div class="hero-copy">
-              <div class="eyebrow">Gallery Detail</div>
-              <h1 class="title">{{ getDisplayTitle() }}</h1>
-              <p v-if="galleryData.title_jpn" class="subtitle">{{ galleryData.title_jpn }}</p>
+      <!-- ========== Desktop Layout (≥720px) ========== -->
+      <div class="layout-desktop">
+        <section class="gallery-detail-hero">
+          <div class="hero-copy">
+            <div class="eyebrow">Gallery Detail</div>
+            <h1 class="title">{{ getDisplayTitle() }}</h1>
+            <p v-if="galleryData.title_jpn" class="subtitle">{{ galleryData.title_jpn }}</p>
+          </div>
+
+          <div class="cover-panel">
+            <div class="cover-shell">
+              <img :src="galleryData.thumb || galleryData.image || '/placeholder.png'" alt="Cover" />
             </div>
-
-            <div class="hero-actions">
-              <a class="external-link desktop-link" :href="externalLink" target="_blank" rel="noreferrer">
-                Open ExHentai
-              </a>
+            <div class="cover-meta">
+              <span class="category-badge" :class="categoryClass">{{ getDisplayCategory() }}</span>
               <div class="rating-card">
                 <span class="rating-label">Rating</span>
                 <div class="rating-value">
@@ -49,82 +24,180 @@
                   <span class="rating-score">{{ galleryData.rating ?? "N/A" }}</span>
                 </div>
               </div>
+              <dl class="cover-info-list">
+                <div class="cover-info-row">
+                  <dt>Posted</dt>
+                  <dd>{{ formatDate(galleryData.posted) || "Unknown" }}</dd>
+                </div>
+                <div class="cover-info-row">
+                  <dt>Fav Time</dt>
+                  <dd>{{ formatFavDate(galleryData.favTime) }}</dd>
+                </div>
+              </dl>
+              <a class="external-link cover-ext-link" :href="externalLink" target="_blank" rel="noreferrer">Open ExHentai</a>
             </div>
           </div>
 
-          <div class="stats-grid">
-            <article v-for="stat in statsCards" :key="stat.label" class="stat-card">
-              <span class="stat-label">{{ stat.label }}</span>
-              <strong class="stat-value">{{ stat.value }}</strong>
-            </article>
-          </div>
-
-          <div class="detail-grid">
-            <section class="detail-panel tags-panel">
-              <div class="panel-header">
-                <div>
-                  <div class="panel-eyebrow">Taxonomy</div>
-                  <h2 class="panel-title">Tags</h2>
-                </div>
-                <div class="language-toggle-wrap">
-                  <span class="toggle-copy">{{ isChinese ? "中文" : "English" }}</span>
-                  <ToggleSwitch v-model="isChinese" :onLabel="'中文'" :offLabel="'英文'" class="language-toggle" />
-                </div>
-              </div>
-
-              <div class="tags">
-                <div v-for="(tags, group) in groupedTags" :key="group" class="tag-group">
-                  <strong>{{ group }}</strong>
-                  <div class="tag-list">
-                    <Tag
-                      v-for="(tag, index) in tags"
-                      :key="index"
-                      :value="isChinese ? (tag.tag_cn || tag.value) : tag.value"
-                      class="tag"
-                      severity="secondary"
-                    />
+          <div class="hero-main">
+            <div class="stats-grid">
+              <article v-for="stat in statsCards" :key="stat.label" class="stat-card">
+                <span class="stat-label">{{ stat.label }}</span>
+                <strong class="stat-value">{{ stat.value }}</strong>
+              </article>
+            </div>
+            <div class="detail-grid">
+              <section class="detail-panel tags-panel">
+                <div class="panel-header">
+                  <div>
+                    <div class="panel-eyebrow">Taxonomy</div>
+                    <h2 class="panel-title">Tags</h2>
+                  </div>
+                  <div class="language-toggle-wrap">
+                    <span class="toggle-copy">{{ isChinese ? "中文" : "English" }}</span>
+                    <ToggleSwitch v-model="isChinese" :onLabel="'中文'" :offLabel="'英文'" class="language-toggle" />
                   </div>
                 </div>
-              </div>
-            </section>
+                <div class="tags">
+                  <div v-for="(tags, group) in groupedTags" :key="group" class="tag-group">
+                    <strong>{{ group }}</strong>
+                    <div class="tag-list">
+                      <Tag v-for="(tag, index) in tags" :key="index"
+                        :value="isChinese ? (tag.tag_cn || tag.value) : tag.value"
+                        class="tag" severity="secondary" />
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section v-if="galleryData.torrents?.length" class="detail-panel torrents-panel">
-        <div class="panel-header">
-          <div>
-            <div class="panel-eyebrow">Downloads</div>
-            <h2 class="panel-title">Torrent Downloads</h2>
+        <section v-if="galleryData.torrents?.length" class="detail-panel torrents-panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-eyebrow">Downloads</div>
+              <h2 class="panel-title">Torrent Downloads</h2>
+            </div>
+          </div>
+          <div class="torrent-table-wrapper">
+            <table class="torrent-table">
+              <thead>
+                <tr>
+                  <th style="width:40%">Name</th>
+                  <th style="width:15%">Size</th>
+                  <th style="width:15%">Torrent Size</th>
+                  <th style="width:15%">Added</th>
+                  <th style="width:15%">Download</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(torrent, index) in galleryData.torrents" :key="index">
+                  <td>{{ torrent.name }}</td>
+                  <td>{{ formatFileSize(Number(torrent.fsize)) }}</td>
+                  <td>{{ formatFileSize(Number(torrent.tsize)) }}</td>
+                  <td>{{ formatDate(Number(torrent.added)) }}</td>
+                  <td><a :href="`https://exhentai.org/torrent/${itemId}/${torrent.hash}.torrent`" target="_blank" rel="noreferrer">Torrent</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- ========== Mobile Layout (<720px) ========== -->
+      <div class="layout-mobile">
+        <!-- 封面 -->
+        <div class="mob-cover">
+          <img :src="galleryData.thumb || galleryData.image || '/placeholder.png'" alt="Cover" />
+        </div>
+
+        <!-- 标题区 -->
+        <div class="mob-header">
+          <span class="category-badge" :class="categoryClass">{{ getDisplayCategory() }}</span>
+          <h1 class="mob-title">{{ getDisplayTitle() }}</h1>
+          <p v-if="galleryData.title_jpn" class="mob-subtitle">{{ galleryData.title_jpn }}</p>
+        </div>
+
+        <!-- 评分 + 按钮 -->
+        <div class="mob-quick">
+          <div class="mob-rating">
+            <Rating :modelValue="galleryData.rating" readonly />
+            <span class="mob-score">{{ galleryData.rating ?? "N/A" }}</span>
+          </div>
+          <a class="external-link" :href="externalLink" target="_blank" rel="noreferrer">Open ExHentai</a>
+        </div>
+
+        <!-- 基础信息 -->
+        <dl class="mob-info-list">
+          <div class="mob-info-row">
+            <dt>Posted</dt>
+            <dd>{{ formatDate(galleryData.posted) || "Unknown" }}</dd>
+          </div>
+          <div class="mob-info-row">
+            <dt>Fav Time</dt>
+            <dd>{{ formatFavDate(galleryData.favTime) }}</dd>
+          </div>
+        </dl>
+
+        <!-- 统计卡片 -->
+        <div class="mob-stats">
+          <article v-for="stat in statsCards" :key="stat.label" class="mob-stat-card">
+            <span class="stat-label">{{ stat.label }}</span>
+            <strong class="stat-value">{{ stat.value }}</strong>
+          </article>
+        </div>
+
+        <!-- 标签 -->
+        <div class="detail-panel mob-tags-panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-eyebrow">Taxonomy</div>
+              <h2 class="panel-title">Tags</h2>
+            </div>
+            <div class="language-toggle-wrap">
+              <span class="toggle-copy">{{ isChinese ? "中文" : "English" }}</span>
+              <ToggleSwitch v-model="isChinese" :onLabel="'中文'" :offLabel="'英文'" class="language-toggle" />
+            </div>
+          </div>
+          <div class="tags">
+            <div v-for="(tags, group) in groupedTags" :key="group" class="tag-group mob-tag-group">
+              <strong>{{ group }}</strong>
+              <div class="tag-list">
+                <Tag v-for="(tag, index) in tags" :key="index"
+                  :value="isChinese ? (tag.tag_cn || tag.value) : tag.value"
+                  class="tag" severity="secondary" />
+              </div>
+            </div>
           </div>
         </div>
-        <div class="torrent-table-wrapper">
-          <table class="torrent-table">
-            <thead>
-              <tr>
-                <th style="width: 40%;">Name</th>
-                <th style="width: 15%;">Size</th>
-                <th style="width: 15%;">Torrent Size</th>
-                <th style="width: 15%;">Added</th>
-                <th style="width: 15%;">Torrent Download</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(torrent, index) in galleryData.torrents" :key="index">
-                <td>{{ torrent.name }}</td>
-                <td>{{ formatFileSize(Number(torrent.fsize)) }}</td>
-                <td>{{ formatFileSize(Number(torrent.tsize)) }}</td>
-                <td>{{ formatDate(Number(torrent.added)) }}</td>
-                <td>
-                  <a :href="`https://exhentai.org/torrent/${itemId}/${torrent.hash}.torrent`" target="_blank" rel="noreferrer">
-                    Torrent
-                  </a>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+
+        <!-- Torrents -->
+        <section v-if="galleryData.torrents?.length" class="detail-panel torrents-panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-eyebrow">Downloads</div>
+              <h2 class="panel-title">Torrent Downloads</h2>
+            </div>
+          </div>
+          <div class="torrent-table-wrapper">
+            <table class="torrent-table">
+              <thead>
+                <tr>
+                  <th>Name</th><th>Size</th><th>Download</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(torrent, index) in galleryData.torrents" :key="index">
+                  <td>{{ torrent.name }}</td>
+                  <td>{{ formatFileSize(Number(torrent.fsize)) }}</td>
+                  <td><a :href="`https://exhentai.org/torrent/${itemId}/${torrent.hash}.torrent`" target="_blank" rel="noreferrer">Torrent</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
     </div>
 
     <div v-else-if="loading" class="loading">Loading...</div>
