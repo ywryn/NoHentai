@@ -16,8 +16,7 @@ const isReaderPage = computed(() => {
   return route.path.startsWith('/reader/')
 })
 
-const isHomePage = computed(() => route.path === '/')
-const shouldLockPageScroll = computed(() => isHomePage.value && !isReaderPage.value)
+const shouldLockPageScroll = computed(() => false)
 
 function applyPageScrollLock(locked: boolean) {
   const root = document.documentElement
@@ -41,7 +40,7 @@ onBeforeUnmount(() => {
 
 <template>
 
-  <div :class="['app-shell', { 'home-app-shell': isHomePage && !isReaderPage }]">
+  <div class="app-shell">
     <!-- Navigation Bar (hidden on reader pages) -->
     <div class="navigation-bar" v-show="!isReaderPage">
       <div class="nav-left">
@@ -101,7 +100,7 @@ onBeforeUnmount(() => {
         <ThemeToggle />
       </div>
     </div>
-    <div :class="['route-shell', { 'home-shell': isHomePage && !isReaderPage }]">
+    <div class="route-shell">
       <router-view></router-view> <!-- 路由出口 -->
     </div>
   </div>
@@ -123,13 +122,6 @@ onBeforeUnmount(() => {
 
 
   /* Navigation Bar Styles */
-  .app-shell.home-app-shell {
-    height: 100dvh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
   .navigation-bar {
     width: 100%;
     margin: 0;
@@ -273,12 +265,6 @@ onBeforeUnmount(() => {
     background: var(--border-color);
   }
 
-  .route-shell.home-shell {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-  }
-  
   @media (max-width: 900px) {
     .nav-menu.desktop-menu {
       display: none;

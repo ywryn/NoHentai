@@ -1,113 +1,100 @@
 <template>
-  <div class="container">
+  <div class="container home-page">
     <div class="seo-description">
       <h1>NoHentai – ExHentai & E-Hentai Favorites Backup and Gallery Browser</h1>
       <p>NoHentai is a backup and browsing platform designed for ExHentai and E-Hentai favorite galleries. It allows users to organize and browse doujinshi, manga, artist CG, game CG, and related gallery content with structured metadata. Features include advanced tag filtering, category browsing, keyword search, Japanese title support, tag translation, and detailed gallery information, enabling efficient archive management and discovery of ExHentai and E-Hentai collections.</p>
     </div>
 
-    <div class="home-layout">
-      <!-- Desktop Sidebar -->
-      <aside class="home-sidebar">
-        <div class="sb-search">
-          <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <circle cx="11" cy="11" r="7.5"/><line x1="20" y1="20" x2="15.5" y2="15.5"/>
-          </svg>
-          <input
-            v-model.trim="searchQuery"
-            class="sb-input"
-            placeholder="Search…"
-            @keyup.enter="performSearch"
-          />
-          <span
-            class="sb-help"
-            role="button"
-            tabindex="0"
-            @click="toggleSearchHelp"
-            @keyup.enter="toggleSearchHelp"
-          >?</span>
+    <div class="home-shell">
+      <div class="home-header-card">
+        <div class="home-header-main">
+          <div class="home-copy">
+            <div class="home-eyebrow">NoHentai · Showing {{ totalRecords }} {{ activeType || 'Galleries' }}</div>
+          </div>
         </div>
 
-        <div class="sb-section">Category</div>
-
-        <div
-          class="sb-item"
-          :class="{ active: !activeType }"
-          @click="toggleType(null)"
-        >
-          <span class="sb-dot" style="background:#334155"></span>
-          All
-        </div>
-        <div
-          v-for="type in exTypeList"
-          :key="type.name"
-          class="sb-item"
-          :class="{ active: activeType === type.name }"
-          @click="toggleType(type.name)"
-        >
-          <span class="sb-dot" :style="{ background: exTypeDotColors[type.name] }"></span>
-          {{ type.name }}
-        </div>
-      </aside>
-
-      <!-- Main Content -->
-      <div class="home-content">
-        <!-- Mobile Controls (hidden on desktop) -->
-        <div class="mobile-controls">
-          <div class="mob-search-row">
-            <div class="mob-search-wrap">
-              <svg class="mob-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <div class="home-filter-panel">
+          <div class="home-search-row">
+            <div class="home-search-wrap">
+              <svg class="home-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <circle cx="11" cy="11" r="7.5"/><line x1="20" y1="20" x2="15.5" y2="15.5"/>
               </svg>
               <input
                 v-model.trim="searchQuery"
-                class="mob-input"
+                class="home-search-input"
                 placeholder="Search…"
                 @keyup.enter="performSearch"
               />
               <span
-                class="mob-help"
+                class="home-search-help"
                 role="button"
                 tabindex="0"
                 @click="toggleSearchHelp"
                 @keyup.enter="toggleSearchHelp"
               >?</span>
             </div>
-            <button class="mob-search-btn" @click="performSearch">Search</button>
+            <button class="home-search-btn" @click="performSearch">Search</button>
+            <button class="home-clear-btn" @click="clearSearch">Clear</button>
           </div>
-          <div class="mob-pills">
+
+          <div class="home-filter-meta">
+            <div class="home-filter-copy">
+              <div class="home-filter-eyebrow">Categories</div>
+              <h2 class="home-filter-title">Refine Results</h2>
+            </div>
+          </div>
+
+          <div class="home-type-grid">
             <button
-              class="mob-pill all-pill"
+              class="home-type-pill all-pill"
               :class="{ active: !activeType }"
               @click="toggleType(null)"
-            >All</button>
+            >
+              <span class="home-type-dot" style="background:#334155"></span>
+              All
+            </button>
             <button
               v-for="type in exTypeList"
               :key="type.name"
-              class="mob-pill"
-              :class="[type.color, { active: activeType === type.name }]"
+              class="home-type-pill"
+              :class="{ active: activeType === type.name }"
               @click="toggleType(type.name)"
-            >{{ type.name }}</button>
+            >
+              <span class="home-type-dot" :style="{ background: exTypeDotColors[type.name] }"></span>
+              {{ type.name }}
+            </button>
           </div>
         </div>
+      </div>
 
-        <!-- Toolbar -->
+      <section class="home-content-panel">
         <div class="toolbar">
-          <div class="result-count">
-            Showing <strong>{{ totalRecords }}</strong> {{ activeType || 'Galleries' }}
-          </div>
-          <div class="paginator-mini" v-if="totalPages > 1">
-            <button class="pag-btn" :disabled="currentPage <= 1" @click="goToPage(1)">«</button>
-            <button class="pag-btn" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">‹</button>
-            <template v-for="(p, idx) in pagerPages" :key="idx">
-              <span v-if="p === '…'" class="pag-sep"></span>
-              <button v-else class="pag-btn" :class="{ active: p === currentPage }" @click="goToPage(Number(p))">{{ p }}</button>
-            </template>
-            <button class="pag-btn" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">›</button>
-            <button class="pag-btn" :disabled="currentPage >= totalPages" @click="goToPage(totalPages)">»</button>
+          <div class="pagination-control" v-if="totalPages > 1">
+            <div class="paginator-mini">
+              <button class="pag-btn" :disabled="currentPage <= 1" @click="goToPage(1)">«</button>
+              <button class="pag-btn" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">‹</button>
+              <template v-for="(p, idx) in pagerPages" :key="idx">
+                <span v-if="p === '…'" class="pag-sep"></span>
+                <button v-else class="pag-btn" :class="{ active: p === currentPage }" @click="goToPage(Number(p))">{{ p }}</button>
+              </template>
+              <button class="pag-btn" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">›</button>
+              <button class="pag-btn" :disabled="currentPage >= totalPages" @click="goToPage(totalPages)">»</button>
+            </div>
+            <label class="page-jump">
+              <input
+                v-model="pageJumpValue"
+                class="page-jump-input"
+                inputmode="numeric"
+                autocomplete="off"
+                spellcheck="false"
+                @keydown.enter.prevent="submitPageJump"
+              />
+              <span class="page-jump-total">/ {{ totalPages }}</span>
+              <button class="page-jump-btn" type="button" @click="submitPageJump">Go</button>
+            </label>
           </div>
         </div>
 
-        <!-- Gallery List -->
         <div class="gallery-list">
           <div v-if="loading" class="empty-state">Loading…</div>
           <div v-else-if="!mappedResults.length" class="empty-state">No data</div>
@@ -141,41 +128,56 @@
           </article>
         </div>
 
-        <!-- Bottom Paginator -->
-        <Paginator
-          :template="'CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown'"
-          :rows="perPage"
-          :totalRecords="totalRecords"
-          :first="firstIndex"
-          :pageLinkSize="3"
-          @page="onPageChange"
-        />
-
-        <!-- Popovers -->
-        <Popover ref="searchHelpPopover" class="search-help-popover">
-          <div class="search-help-content">
-            <div class="search-help-title">Search Syntax</div>
-            <div class="search-help-list">
-              <div>AND: space separated terms</div>
-              <div>Exclude: -term</div>
-              <div>OR: ~term (any ~term matches)</div>
-              <div>Phrase: "exact words"</div>
-              <div>Wildcard: term*</div>
-              <div>Exact tag: tag$</div>
-              <div>Fields: title:, uploader:, category:, gid:</div>
-              <div>Tags: tag:, f:/m:/a:/p:/c:/l:/g:/o:</div>
+        <div class="home-pagination-footer" v-if="totalPages > 1">
+          <div class="pagination-control">
+            <div class="paginator-mini">
+              <button class="pag-btn" :disabled="currentPage <= 1" @click="goToPage(1)">«</button>
+              <button class="pag-btn" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">‹</button>
+              <template v-for="(p, idx) in pagerPages" :key="`footer-${idx}`">
+                <span v-if="p === '…'" class="pag-sep"></span>
+                <button v-else class="pag-btn" :class="{ active: p === currentPage }" @click="goToPage(Number(p))">{{ p }}</button>
+              </template>
+              <button class="pag-btn" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">›</button>
+              <button class="pag-btn" :disabled="currentPage >= totalPages" @click="goToPage(totalPages)">»</button>
             </div>
+            <label class="page-jump">
+              <input
+                v-model="pageJumpValue"
+                class="page-jump-input"
+                inputmode="numeric"
+                autocomplete="off"
+                spellcheck="false"
+                @keydown.enter.prevent="submitPageJump"
+              />
+              <span class="page-jump-total">/ {{ totalPages }}</span>
+              <button class="page-jump-btn" type="button" @click="submitPageJump">Go</button>
+            </label>
           </div>
-        </Popover>
-      </div>
+        </div>
+      </section>
+
+      <Popover ref="searchHelpPopover" class="search-help-popover">
+        <div class="search-help-content">
+          <div class="search-help-title">Search Syntax</div>
+          <div class="search-help-list">
+            <div>AND: space separated terms</div>
+            <div>Exclude: -term</div>
+            <div>OR: ~term (any ~term matches)</div>
+            <div>Phrase: "exact words"</div>
+            <div>Wildcard: term*</div>
+            <div>Exact tag: tag$</div>
+            <div>Fields: title:, uploader:, category:, gid:</div>
+            <div>Tags: tag:, f:/m:/a:/p:/c:/l:/g:/o:</div>
+          </div>
+        </div>
+      </Popover>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import Paginator from 'primevue/paginator'
 import Rating from 'primevue/rating'
 import Popover from 'primevue/popover'
 
@@ -188,6 +190,7 @@ const perPage = ref(25)
 const totalRecords = ref(0)
 const activeType = ref(null)
 const loading = ref(false)
+const pageJumpValue = ref('1')
 
 const searchHelpPopover = ref()
 const baseUrl = import.meta.env.BASE_URL
@@ -222,10 +225,7 @@ const exTypeDotColors = {
 const exTypeClassMap = Object.fromEntries(exTypeList.map(t => [t.name, t.color]))
 const currentTypeClassMap = computed(() => exTypeClassMap)
 
-const firstIndex = computed(() => (currentPage.value - 1) * perPage.value)
-
 const totalPages = computed(() => Math.max(1, Math.ceil(totalRecords.value / perPage.value)))
-
 const pagerPages = computed(() => {
   const total = totalPages.value
   const cur = currentPage.value
@@ -372,9 +372,10 @@ function parseQuery(query) {
 }
 
 function matchText(text, term) {
-  const target = (text || '').toString().toLowerCase()
-  if (!target) return false
+  if (!text) return false
+  const target = String(text).toLowerCase()
   if (term.wildcard) return target.startsWith(term.value)
+  if (term.quoted) return target.includes(term.value)
   return target.includes(term.value)
 }
 
@@ -417,9 +418,9 @@ function filterAndPaginateData(page = 1, keyword = '', type = null) {
   if (query) {
     const parsed = parseQuery(query)
     filtered = filtered.filter(item => {
+      if (!parsed.include.every(term => matchTerm(item, term))) return false
       if (parsed.exclude.some(term => matchTerm(item, term))) return false
-      if (parsed.include.some(term => !matchTerm(item, term))) return false
-      if (parsed.orTerms.length && !parsed.orTerms.some(term => matchTerm(item, term))) return false
+      if (parsed.orTerms.length > 0 && !parsed.orTerms.some(term => matchTerm(item, term))) return false
       return true
     })
   }
@@ -437,9 +438,6 @@ function filterAndPaginateData(page = 1, keyword = '', type = null) {
 
 function performSearch() { filterAndPaginateData(1, searchQuery.value, activeType.value) }
 function clearSearch() { searchQuery.value = ''; activeType.value = null; filterAndPaginateData(1) }
-function onPageChange(e) {
-  filterAndPaginateData(Math.floor(e.first / e.rows) + 1, searchQuery.value, activeType.value)
-}
 function toggleType(type) {
   activeType.value = activeType.value === type ? null : type
   filterAndPaginateData(1, searchQuery.value, activeType.value)
@@ -447,11 +445,23 @@ function toggleType(type) {
 function navigateToGallery(id, gid) {
   if (gid) router.push(`/gallery/${gid}/`)
 }
+function submitPageJump() {
+  const normalized = pageJumpValue.value.replace(/[^\d]/g, '')
+  if (!normalized) {
+    pageJumpValue.value = String(currentPage.value)
+    return
+  }
+  goToPage(normalized)
+}
 function goToPage(page) {
   const p = Math.max(1, Math.min(totalPages.value, Number(page)))
   if (p !== currentPage.value) filterAndPaginateData(p, searchQuery.value, activeType.value)
 }
 function toggleSearchHelp(event) { searchHelpPopover.value?.toggle(event) }
+
+watch(currentPage, page => {
+  pageJumpValue.value = String(page)
+}, { immediate: true })
 
 onMounted(async () => {
   loading.value = true
