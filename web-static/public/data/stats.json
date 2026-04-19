@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-03-03T06:05:22.813Z",
+  "generatedAt": "2026-04-19T08:52:11.578Z",
   "stats": {
-    "total_count": 3574,
+    "total_count": 3710,
     "categories": {
-      "Doujinshi": 1797,
-      "Manga": 1398,
-      "Artist CG": 78,
+      "Doujinshi": 1861,
+      "Manga": 1461,
+      "Artist CG": 82,
       "Game CG": 14,
       "Western": 66,
       "Non-H": 23,
       "Image Set": 15,
-      "Cosplay": 146,
+      "Cosplay": 151,
       "Asian Porn": 0,
       "Misc": 34
     }
@@ -21,7 +21,7 @@
         "tag": "artist:tamano kedama",
         "namespace": "artist",
         "value": "tamano kedama",
-        "count": 95,
+        "count": 99,
         "tag_cn": "毛玉牛乳",
         "intro": "玉之けだま，漫画家，画师。以画萝莉(lolicon) 以及魅魔见长。\n以同人社团毛玉牛乳(kedama gyuunyuu)活动，由于这个社团名对于以中文为母语来的人来说更好记些，国内一般统称毛玉牛乳老师。\n\n作者推特头像\n\n单行本《僕は小さな淫魔のしもべ》",
         "links": "X pixiv H萌娘"
@@ -63,19 +63,10 @@
         "links": "pixiv"
       },
       {
-        "tag": "artist:malcorond",
-        "namespace": "artist",
-        "value": "malcorond",
-        "count": 42,
-        "tag_cn": "まるころんど",
-        "intro": "漫画家。作品主要以萝莉(lolicon)、晒痕(tanlines)为主。",
-        "links": "X pixiv Fc2Blog"
-      },
-      {
         "tag": "artist:takatsu",
         "namespace": "artist",
         "value": "takatsu",
-        "count": 42,
+        "count": 43,
         "tag_cn": "高津",
         "intro": "高津ケイタ 漫画家\n成人向漫画以高津为名发表。\n\n作者推特头像\n\n单行本《SはフラジールのS 》\n一部很甜的 正太(shotacon)×男同(yaoi) 作品。",
         "links": "X"
@@ -84,10 +75,19 @@
         "tag": "artist:takeda hiromitsu",
         "namespace": "artist",
         "value": "takeda hiromitsu",
-        "count": 41,
+        "count": 42,
         "tag_cn": "武田弘光",
         "intro": "",
         "links": ""
+      },
+      {
+        "tag": "artist:malcorond",
+        "namespace": "artist",
+        "value": "malcorond",
+        "count": 42,
+        "tag_cn": "まるころんど",
+        "intro": "漫画家。作品主要以萝莉(lolicon)、晒痕(tanlines)为主。",
+        "links": "X pixiv Fc2Blog"
       },
       {
         "tag": "artist:uousaoh",
@@ -102,10 +102,19 @@
         "tag": "artist:jairou",
         "namespace": "artist",
         "value": "jairou",
-        "count": 30,
+        "count": 31,
         "tag_cn": "ジャイロウ",
         "intro": "",
         "links": "pixiv Twitter (R18) Twitter (全年龄)"
+      },
+      {
+        "tag": "artist:okara",
+        "namespace": "artist",
+        "value": "okara",
+        "count": 30,
+        "tag_cn": "おから",
+        "intro": "",
+        "links": ""
       },
       {
         "tag": "artist:kanabun",
@@ -135,22 +144,22 @@
         "links": "X pixiv"
       },
       {
-        "tag": "artist:okara",
-        "namespace": "artist",
-        "value": "okara",
-        "count": 27,
-        "tag_cn": "おから",
-        "intro": "",
-        "links": ""
-      },
-      {
         "tag": "artist:menyoujan",
         "namespace": "artist",
         "value": "menyoujan",
-        "count": 24,
+        "count": 25,
         "tag_cn": "めんようじゃん",
         "intro": "全彩同人志漫画家。上色细腻为主要特点。\n经典作品：AZUS@TTACK（梓喵打酱油 - 萌娘百科）Exhentai内搜索",
         "links": ""
+      },
+      {
+        "tag": "artist:cle masahiro",
+        "namespace": "artist",
+        "value": "cle masahiro",
+        "count": 24,
+        "tag_cn": "吴マサヒロ",
+        "intro": "",
+        "links": "X pixiv"
       },
       {
         "tag": "artist:shiwasu no okina",
@@ -168,15 +177,6 @@
         "count": 23,
         "tag_cn": "朝凪",
         "intro": "纯爱画师，轻小说《半兽人英雄物语 忖度列传》插画作者，游戏《sin 七大罪～魔王崇拜～》人物设定。",
-        "links": "X pixiv"
-      },
-      {
-        "tag": "artist:cle masahiro",
-        "namespace": "artist",
-        "value": "cle masahiro",
-        "count": 23,
-        "tag_cn": "吴マサヒロ",
-        "intro": "",
         "links": "X pixiv"
       },
       {
@@ -203,7 +203,7 @@
         "tag": "other:tankoubon",
         "namespace": "other",
         "value": "tankoubon",
-        "count": 894,
+        "count": 948,
         "tag_cn": "单行本",
         "intro": "单行本，源于日本，是指丛书的其中一本。常见于日本漫画或轻小说，即是合辑成书。例如轻小说于各媒体连载后，把内容从连载的刊物重印成为一本独立以一个作品为题材的书籍。一般漫画单行本由 6 至 10 回集结而成。",
         "links": ""
@@ -212,7 +212,7 @@
         "tag": "other:uncensored",
         "namespace": "other",
         "value": "uncensored",
-        "count": 815,
+        "count": 844,
         "tag_cn": "无修正",
         "intro": "发表时就无码或之后消码，图库没有任何修正点。不应使用于西方(western)分类的图库。",
         "links": ""
@@ -221,7 +221,7 @@
         "tag": "other:full color",
         "namespace": "other",
         "value": "full color",
-        "count": 694,
+        "count": 710,
         "tag_cn": "全彩",
         "intro": "正文每一页都是彩色的。少数非故事页的非彩色图片不算在内。\n不用于非画集(artbook)CG 集（无论是否为西方(western)CG 集）、图集(imageset)和3D(3d)图库，因为非彩色图像很少出现。",
         "links": ""
@@ -230,7 +230,7 @@
         "tag": "other:multi-work series",
         "namespace": "other",
         "value": "multi-work series",
-        "count": 562,
+        "count": 586,
         "tag_cn": "系列作品",
         "intro": "一个完整的作品，其故事跨多册书籍或发行版。不应与故事线(story arc)混淆。",
         "links": ""
@@ -239,7 +239,7 @@
         "tag": "other:mosaic censorship",
         "namespace": "other",
         "value": "mosaic censorship",
-        "count": 474,
+        "count": 479,
         "tag_cn": "马赛克修正",
         "intro": "任何形式的马赛克修正，涵盖了几乎所有或个人所有的生殖器区域。同样水平的修正需要在整个图库完整实施。不应用于无H图库，因为对其进行修正是必须的。不应与完全修正(full censorship)混淆。",
         "links": ""
@@ -248,7 +248,7 @@
         "tag": "other:story arc",
         "namespace": "other",
         "value": "story arc",
-        "count": 385,
+        "count": 406,
         "tag_cn": "故事线",
         "intro": "在单个图库中的多个章节讲述同一个故事。需要至少 75 页或 4 章。 对于单行本(tankoubon)，50% 的内容需要符合条件。不应与系列作品(multi-work series)混淆。",
         "links": ""
@@ -257,7 +257,7 @@
         "tag": "other:extraneous ads",
         "namespace": "other",
         "value": "extraneous ads",
-        "count": 145,
+        "count": 146,
         "tag_cn": "外部广告",
         "intro": "未出现在原始作品中的一张或多张第三方广告/横幅。不应与水印(watermarked)或扫描水印(scanmark)混淆。与作品的上传/扫描/上色/去码相关的广告（捐赠链接、网站或委托链接）不符合条件。不适用于原始作品中本就包含的广告。",
         "links": ""
@@ -266,7 +266,7 @@
         "tag": "other:non-nude",
         "namespace": "other",
         "value": "non-nude",
-        "count": 111,
+        "count": 114,
         "tag_cn": "无露点",
         "intro": "没有展示乳头或性器的图库。仅用于 Cosplay 图库。",
         "links": ""
@@ -275,7 +275,7 @@
         "tag": "other:rough translation",
         "namespace": "other",
         "value": "rough translation",
-        "count": 63,
+        "count": 71,
         "tag_cn": "渣翻",
         "intro": "任何第三方翻译，包含一定数量的文本框／气泡翻译错误。要求数量：总翻译页数的 25%（四舍五入到最接近的整数）或 10，以较高数字为准。翻译错误包括缺失上下文、缺失作者意图、遗漏故事／情境相关文本或意思错误。\n图库评论必须详细说明错误，否则标签无效。评论需以建设性、尊重的方式撰写。改写(rewrite)不符合条件。不被标记在其他正确的替代翻译上。不应与语法差(rough grammar)混淆。",
         "links": ""
@@ -284,7 +284,7 @@
         "tag": "other:kodomo only",
         "namespace": "other",
         "value": "kodomo only",
-        "count": 60,
+        "count": 61,
         "tag_cn": "仅儿童",
         "intro": "整个图库中所有的性、恋物或亲密互动都仅限于儿童之间。需要至少两个孩子互相互动。需要正太(shotacon)或萝莉(lolicon)标签",
         "links": ""
@@ -295,14 +295,14 @@
         "value": "comic",
         "count": 52,
         "tag_cn": "西方漫画",
-        "intro": "一种西方色情作品，利用一系列格子来说明故事。通常包含文本气球。仅用于西方(western)作品，非色情内容不算。",
+        "intro": "一种西方色情作品，利用一系列格子来说明故事。通常包含文本气球。仅用于西方(western)与杂项(misc)作品，非色情内容不算。对于西方非色情内容，请使用西方无H(western non-h)。",
         "links": ""
       },
       {
         "tag": "other:compilation",
         "namespace": "other",
         "value": "compilation",
-        "count": 42,
+        "count": 46,
         "tag_cn": "汇编",
         "intro": "该图库是不允许在一起的作品的汇编。",
         "links": ""
@@ -320,27 +320,45 @@
         "tag": "other:full censorship",
         "namespace": "other",
         "value": "full censorship",
-        "count": 38,
+        "count": 40,
         "tag_cn": "完全修正",
         "intro": "任何形式的完全修正（全白色或黑色），涵盖了几乎所有或个人所有的生殖器区域。同样水平的修正需要在整个图库完整实施。不应用于无H图库，因为对其进行修正是必须的。不应与马赛克修正(mosaic censorship)混淆。",
-        "links": ""
-      },
-      {
-        "tag": "other:no penetration",
-        "namespace": "other",
-        "value": "no penetration",
-        "count": 34,
-        "tag_cn": "无插入",
-        "intro": "没有任何东西插入阴道，肛门或任何其他身体开口。嘴是唯一的例外。不用于无H(non-h)图库和仅裸体(nudity only)图库。",
         "links": ""
       },
       {
         "tag": "other:nudity only",
         "namespace": "other",
         "value": "nudity only",
-        "count": 34,
+        "count": 35,
         "tag_cn": "仅裸体",
         "intro": "整个图库中没有性行为，但有裸体图片。",
+        "links": ""
+      },
+      {
+        "tag": "other:no penetration",
+        "namespace": "other",
+        "value": "no penetration",
+        "count": 35,
+        "tag_cn": "无插入",
+        "intro": "没有任何东西插入阴道，肛门或任何其他身体开口。嘴是唯一的例外。不用于无H(non-h)图库和仅裸体(nudity only)图库。",
+        "links": ""
+      },
+      {
+        "tag": "other:soushuuhen",
+        "namespace": "other",
+        "value": "soushuuhen",
+        "count": 30,
+        "tag_cn": "总集篇",
+        "intro": "由单一作者自行出版，包含复数作品的书籍，主要为同人志(doujinshi)或者无H(non-h)图库.",
+        "links": ""
+      },
+      {
+        "tag": "other:watermarked",
+        "namespace": "other",
+        "value": "watermarked",
+        "count": 29,
+        "tag_cn": "水印",
+        "intro": "由带有水印的复制品组成的图库，为与内容的创作、扫描、着色或翻译无关的网站做广告。不用于相关方添加的水印。有关上述内容，参见扫描水印(scanmark)。",
         "links": ""
       },
       {
@@ -353,30 +371,12 @@
         "links": ""
       },
       {
-        "tag": "other:soushuuhen",
-        "namespace": "other",
-        "value": "soushuuhen",
-        "count": 26,
-        "tag_cn": "总集篇",
-        "intro": "由单一作者自行出版，包含复数作品的书籍，主要为同人志(doujinshi)或者无H(non-h)图库.",
-        "links": ""
-      },
-      {
         "tag": "other:anthology",
         "namespace": "other",
         "value": "anthology",
         "count": 26,
         "tag_cn": "选集",
         "intro": "多个作者共同完成的完整的书（杂志）。缺页(incomplete)的选集和画集(artbook)不算在内。",
-        "links": ""
-      },
-      {
-        "tag": "other:watermarked",
-        "namespace": "other",
-        "value": "watermarked",
-        "count": 26,
-        "tag_cn": "水印",
-        "intro": "由带有水印的复制品组成的图库，为与内容的创作、扫描、着色或翻译无关的网站做广告。不用于相关方添加的水印。有关上述内容，参见扫描水印(scanmark)。",
         "links": ""
       }
     ],
@@ -385,7 +385,7 @@
         "tag": "female:big breasts",
         "namespace": "female",
         "value": "big breasts",
-        "count": 1433,
+        "count": 1520,
         "tag_cn": "巨乳",
         "intro": "一般的大乳房。每个乳房应至少应该和人的头部一样大。对于Cosplay这需要D杯或更大。是超乳(huge breasts)的前置标签。",
         "links": ""
@@ -394,34 +394,34 @@
         "tag": "female:blowjob",
         "namespace": "female",
         "value": "blowjob",
-        "count": 1317,
+        "count": 1399,
         "tag_cn": "口交",
         "intro": "涉及的嘴和阴茎的性行为。不要与吸球(ball sucking)混淆。是口交颜(blowjob face)、深喉(deepthroat)的前置标签。",
-        "links": ""
-      },
-      {
-        "tag": "female:sole female",
-        "namespace": "female",
-        "value": "sole female",
-        "count": 1290,
-        "tag_cn": "单女主",
-        "intro": "只有一个女性参与了整个图库的所有性爱或恋物癖活动。扶她(futanari)或人妖♂(shemale)不算在内。",
         "links": ""
       },
       {
         "tag": "female:nakadashi",
         "namespace": "female",
         "value": "nakadashi",
-        "count": 1273,
+        "count": 1353,
         "tag_cn": "中出",
         "intro": "射在里面，体外也可能有一个明显的精液池。",
+        "links": ""
+      },
+      {
+        "tag": "female:sole female",
+        "namespace": "female",
+        "value": "sole female",
+        "count": 1329,
+        "tag_cn": "单女主",
+        "intro": "只有一个女性参与了整个图库的所有性爱或恋物癖活动。扶她(futanari)或人妖♂(shemale)不算在内。",
         "links": ""
       },
       {
         "tag": "female:lolicon",
         "namespace": "female",
         "value": "lolicon",
-        "count": 1153,
+        "count": 1180,
         "tag_cn": "萝莉",
         "intro": "有性的情景或裸体的未成年少女。不与一般年轻女孩混淆；应该拥有未充分发育的的身体。标记时，只考虑外观。是巨乳萝莉(oppai loli)、低存在萝莉(low lolicon)的前置标签。\n图库只需要包含一张这种性质的图片就需要打上此标签。将发送图库到思念峡湾。",
         "links": ""
@@ -430,7 +430,7 @@
         "tag": "female:stockings",
         "namespace": "female",
         "value": "stockings",
-        "count": 1038,
+        "count": 1083,
         "tag_cn": "长筒袜",
         "intro": "一种通常透明的弹性衣服，覆盖足和腿的下部，但没到生殖器区域。需要至少达到膝盖以上。不应与连裤袜(pantyhose)和高筒靴(thigh high boots)标签混淆。",
         "links": ""
@@ -439,7 +439,7 @@
         "tag": "female:schoolgirl uniform",
         "namespace": "female",
         "value": "schoolgirl uniform",
-        "count": 1001,
+        "count": 1059,
         "tag_cn": "女生制服",
         "intro": "水手服或其他校服。格子或打褶的裙子本身不算。",
         "links": ""
@@ -448,7 +448,7 @@
         "tag": "female:anal",
         "namespace": "female",
         "value": "anal",
-        "count": 822,
+        "count": 852,
         "tag_cn": "爆肛",
         "intro": "插入肛门。任何方法都可以（性玩具(sex toys)，触手(tentacles)等）。",
         "links": ""
@@ -457,7 +457,7 @@
         "tag": "female:twintails",
         "namespace": "female",
         "value": "twintails",
-        "count": 795,
+        "count": 831,
         "tag_cn": "双马尾",
         "intro": "将大部分的头发往头部两侧集中，用胶圈或其它的可以扎发的装饰品，将辫子扎起来竖在半空中的造型。不应与马尾辫(ponytail)混淆。",
         "links": ""
@@ -466,7 +466,7 @@
         "tag": "female:x-ray",
         "namespace": "female",
         "value": "x-ray",
-        "count": 693,
+        "count": 728,
         "tag_cn": "透视",
         "intro": "内部器官通过皮肤或从内部可见。",
         "links": ""
@@ -475,7 +475,7 @@
         "tag": "female:defloration",
         "namespace": "female",
         "value": "defloration",
-        "count": 670,
+        "count": 694,
         "tag_cn": "破处",
         "intro": "女性失去了处女的过程。经常包括轻微出血。不应该与丧失童贞(virginity)标签混淆，因为此标签只用于男性。需要有足够的证据支持。",
         "links": ""
@@ -484,7 +484,7 @@
         "tag": "female:ponytail",
         "namespace": "female",
         "value": "ponytail",
-        "count": 637,
+        "count": 665,
         "tag_cn": "马尾辫",
         "intro": "将大部分的头发往后集中，用一个胶圈或其它的可以扎发的装饰品，将辫子扎起来竖在半空中的造型。当有两条辫子时使用双马尾(twintails)。",
         "links": ""
@@ -493,7 +493,7 @@
         "tag": "female:ahegao",
         "namespace": "female",
         "value": "ahegao",
-        "count": 600,
+        "count": 654,
         "tag_cn": "阿黑颜",
         "intro": "夸张的面部表情表示高兴，通常包括上瞟的白眼，张开大嘴，舌头伸出来。通常出现在性的高潮。如果此表现的来源是由疼痛引起，则不算。",
         "links": ""
@@ -502,7 +502,7 @@
         "tag": "female:glasses",
         "namespace": "female",
         "value": "glasses",
-        "count": 531,
+        "count": 559,
         "tag_cn": "眼镜👓",
         "intro": "用于改善双眼的视力的透明框架眼镜。需要佩戴在眼前才能添加此标签。不应与太阳镜🕶(sunglasses)混淆。",
         "links": ""
@@ -511,43 +511,43 @@
         "tag": "female:milf",
         "namespace": "female",
         "value": "milf",
-        "count": 526,
+        "count": 553,
         "tag_cn": "熟女",
         "intro": "看上去像30-50岁的女性，不一定是母亲(mother)。不得与老女人(old lady)混淆。",
-        "links": ""
-      },
-      {
-        "tag": "female:double penetration",
-        "namespace": "female",
-        "value": "double penetration",
-        "count": 471,
-        "tag_cn": "双重插入",
-        "intro": "两个孔口（口腔、 阴道或肛门）同时被插入。有可能是乱交(group)的一环。是三重插入(triple penetration)的前置标签。",
-        "links": ""
-      },
-      {
-        "tag": "female:swimsuit",
-        "namespace": "female",
-        "value": "swimsuit",
-        "count": 470,
-        "tag_cn": "泳装",
-        "intro": "参加游泳时穿的特殊衣服。是比基尼👙(bikini)的前置标签。不应与紧身衣(leotard)或死库水(school swimsuit)混淆。",
         "links": ""
       },
       {
         "tag": "female:paizuri",
         "namespace": "female",
         "value": "paizuri",
-        "count": 462,
+        "count": 508,
         "tag_cn": "乳交",
         "intro": "在乳房之间推动阴茎（或类似物体）的行为。不应与多重乳交(multiple paizuri)或乳穴性交(nipple fuck)混淆。",
+        "links": ""
+      },
+      {
+        "tag": "female:swimsuit",
+        "namespace": "female",
+        "value": "swimsuit",
+        "count": 494,
+        "tag_cn": "泳装",
+        "intro": "参加游泳时穿的特殊衣服。是比基尼👙(bikini)的前置标签。不应与紧身衣(leotard)或死库水(school swimsuit)混淆。",
+        "links": ""
+      },
+      {
+        "tag": "female:double penetration",
+        "namespace": "female",
+        "value": "double penetration",
+        "count": 487,
+        "tag_cn": "双重插入",
+        "intro": "两个孔口（口腔、 阴道或肛门）同时被插入。有可能是乱交(group)的一环。是三重插入(triple penetration)的前置标签。",
         "links": ""
       },
       {
         "tag": "female:rape",
         "namespace": "female",
         "value": "rape",
-        "count": 452,
+        "count": 466,
         "tag_cn": "强奸",
         "intro": "强迫或非自愿性行为。",
         "links": ""
@@ -556,7 +556,7 @@
         "tag": "female:hairy",
         "namespace": "female",
         "value": "hairy",
-        "count": 426,
+        "count": 454,
         "tag_cn": "多毛",
         "intro": "引人注目的大量阴毛。不应与腋毛(hairy armpits)混淆。",
         "links": ""
@@ -567,7 +567,7 @@
         "tag": "male:sole male",
         "namespace": "male",
         "value": "sole male",
-        "count": 1281,
+        "count": 1329,
         "tag_cn": "单男主",
         "intro": "只有一个男性参与了整个图库的所有性爱或恋物癖活动。人妖♀(cuntboy)不算在内。",
         "links": ""
@@ -576,7 +576,7 @@
         "tag": "male:shotacon",
         "namespace": "male",
         "value": "shotacon",
-        "count": 655,
+        "count": 667,
         "tag_cn": "正太",
         "intro": "小男孩。",
         "links": ""
@@ -585,7 +585,7 @@
         "tag": "male:glasses",
         "namespace": "male",
         "value": "glasses",
-        "count": 575,
+        "count": 602,
         "tag_cn": "眼镜👓",
         "intro": "用于改善双眼的视力的透明框架眼镜。需要佩戴在眼前才能添加此标签。不应与太阳镜🕶(sunglasses)混淆。",
         "links": ""
@@ -594,34 +594,34 @@
         "tag": "male:dilf",
         "namespace": "male",
         "value": "dilf",
-        "count": 417,
+        "count": 428,
         "tag_cn": "熟男",
         "intro": "看上去像30-50岁的男性，不一定是父亲(father)。不得与老人(old man)混淆。",
-        "links": ""
-      },
-      {
-        "tag": "male:bbm",
-        "namespace": "male",
-        "value": "bbm",
-        "count": 338,
-        "tag_cn": "胖男人",
-        "intro": "胖男人，必须要有腹部褶皱。",
         "links": ""
       },
       {
         "tag": "male:condom",
         "namespace": "male",
         "value": "condom",
-        "count": 329,
+        "count": 346,
         "tag_cn": "避孕套",
         "intro": "塑料套，旨在保护使用者和其伙伴免受不必要的性病以及怀孕。",
+        "links": ""
+      },
+      {
+        "tag": "male:bbm",
+        "namespace": "male",
+        "value": "bbm",
+        "count": 345,
+        "tag_cn": "胖男人",
+        "intro": "胖男人，必须要有腹部褶皱。",
         "links": ""
       },
       {
         "tag": "male:schoolboy uniform",
         "namespace": "male",
         "value": "schoolboy uniform",
-        "count": 322,
+        "count": 343,
         "tag_cn": "男生制服",
         "intro": "女生制服(schoolgirl uniform)的男性版本。",
         "links": ""
@@ -630,7 +630,7 @@
         "tag": "male:big penis",
         "namespace": "male",
         "value": "big penis",
-        "count": 292,
+        "count": 307,
         "tag_cn": "大根",
         "intro": "异常大的阴茎，至少要和其主人的前臂一样大。是巨根(huge penis)的前置标签。",
         "links": ""
@@ -639,7 +639,7 @@
         "tag": "male:virginity",
         "namespace": "male",
         "value": "virginity",
-        "count": 264,
+        "count": 271,
         "tag_cn": "丧失童贞",
         "intro": "男性失去童贞，不得与女性的破处(defloration)混淆。",
         "links": ""
@@ -648,7 +648,7 @@
         "tag": "male:anal",
         "namespace": "male",
         "value": "anal",
-        "count": 239,
+        "count": 241,
         "tag_cn": "爆肛",
         "intro": "插入肛门。任何方法都可以（性玩具(sex toys)，触手(tentacles)等）。",
         "links": ""
@@ -657,34 +657,34 @@
         "tag": "male:teacher",
         "namespace": "male",
         "value": "teacher",
-        "count": 231,
+        "count": 240,
         "tag_cn": "教师",
         "intro": "角色作为教师参与。",
-        "links": ""
-      },
-      {
-        "tag": "male:tomgirl",
-        "namespace": "male",
-        "value": "tomgirl",
-        "count": 203,
-        "tag_cn": "伪娘",
-        "intro": "通常误认为是女性的男性。常与异性装(crossdressing)同时出现，不应与人妖♂(shemale)混淆。",
         "links": ""
       },
       {
         "tag": "male:dark skin",
         "namespace": "male",
         "value": "dark skin",
-        "count": 200,
+        "count": 208,
         "tag_cn": "黑皮",
         "intro": "棕色或黑色的肤色。不应与晒痕(tanlines)混淆。",
+        "links": ""
+      },
+      {
+        "tag": "male:tomgirl",
+        "namespace": "male",
+        "value": "tomgirl",
+        "count": 205,
+        "tag_cn": "伪娘",
+        "intro": "通常误认为是女性的男性。常与异性装(crossdressing)同时出现，不应与人妖♂(shemale)混淆。",
         "links": ""
       },
       {
         "tag": "male:yaoi",
         "namespace": "male",
         "value": "yaoi",
-        "count": 199,
+        "count": 201,
         "tag_cn": "男同",
         "intro": "やおい，至少两个男性之间的性行为。",
         "links": ""
@@ -693,7 +693,7 @@
         "tag": "male:muscle",
         "namespace": "male",
         "value": "muscle",
-        "count": 189,
+        "count": 199,
         "tag_cn": "肌肉",
         "intro": "肌肉发达的角色。",
         "links": ""
@@ -702,7 +702,7 @@
         "tag": "male:males only",
         "namespace": "male",
         "value": "males only",
-        "count": 166,
+        "count": 169,
         "tag_cn": "纯男性⚣",
         "intro": "在图库中的所有性行为、迷恋或亲密的性交互之间都严格限定为男性。要求至少两个男性进行交互。人妖♀(cuntboy)不算在内。",
         "links": ""
@@ -711,7 +711,7 @@
         "tag": "male:crossdressing",
         "namespace": "male",
         "value": "crossdressing",
-        "count": 153,
+        "count": 158,
         "tag_cn": "异性装",
         "intro": "男性女装。不应与性转换(gender change)混淆。",
         "links": ""
@@ -720,7 +720,7 @@
         "tag": "male:sweating",
         "namespace": "male",
         "value": "sweating",
-        "count": 148,
+        "count": 154,
         "tag_cn": "出汗",
         "intro": "可见的出汗。不应与颜射(bukkake)或油(oil)混淆。",
         "links": ""
@@ -729,7 +729,7 @@
         "tag": "male:anal intercourse",
         "namespace": "male",
         "value": "anal intercourse",
-        "count": 133,
+        "count": 136,
         "tag_cn": "肛交",
         "intro": "一个参与者使用阴茎或穿戴式阳具(strap-on)插入另一个参与者的肛门。需要爆肛(anal)标签。",
         "links": ""
@@ -738,7 +738,7 @@
         "tag": "male:bondage",
         "namespace": "male",
         "value": "bondage",
-        "count": 124,
+        "count": 127,
         "tag_cn": "束缚",
         "intro": "捆绑或束缚的行为和艺术。是枷具(pillory)、捆绑(shibari)、卡在墙上(stuck in wall)和木马(wooden horse)的前置标签。不需要为口塞(gag)或勾腿(leg lock)添加此标签。",
         "links": ""
@@ -749,19 +749,28 @@
         "tag": "character:mikoto misaka",
         "namespace": "character",
         "value": "mikoto misaka",
-        "count": 38,
+        "count": 40,
         "tag_cn": "御坂美琴",
-        "intro": "",
-        "links": ""
+        "intro": "所属作品：魔法禁书系列(toaru project)",
+        "links": "萌娘百科"
       },
       {
         "tag": "character:touma kamijou",
         "namespace": "character",
         "value": "touma kamijou",
-        "count": 29,
+        "count": 31,
         "tag_cn": "上条当麻",
-        "intro": "",
+        "intro": "所属作品：魔法禁书系列(toaru project)",
         "links": ""
+      },
+      {
+        "tag": "character:teitoku",
+        "namespace": "character",
+        "value": "teitoku",
+        "count": 25,
+        "tag_cn": "提督",
+        "intro": "",
+        "links": "战舰少女:提督"
       },
       {
         "tag": "character:hana uzaki",
@@ -769,17 +778,8 @@
         "value": "hana uzaki",
         "count": 24,
         "tag_cn": "宇崎花",
-        "intro": "",
+        "intro": "所属作品：宇崎酱想要玩耍！(uzaki-chan wa asobitai)",
         "links": ""
-      },
-      {
-        "tag": "character:teitoku",
-        "namespace": "character",
-        "value": "teitoku",
-        "count": 24,
-        "tag_cn": "提督",
-        "intro": "",
-        "links": "战舰少女:提督"
       },
       {
         "tag": "character:rito yuuki",
@@ -787,8 +787,8 @@
         "value": "rito yuuki",
         "count": 20,
         "tag_cn": "结城梨斗",
-        "intro": "",
-        "links": ""
+        "intro": "所属作品：出包王女(to love-ru)\n个性单纯、善良，待人真诚、温柔，关心他人，看起来虽然有些不可靠，关键时刻愿意为了他人挺身而出，拥有充满正义感和热血的一面，他的这份质朴和温柔也吸引了许多身边的女孩子。",
+        "links": "萌娘百科"
       },
       {
         "tag": "character:android 18",
@@ -796,15 +796,15 @@
         "value": "android 18",
         "count": 19,
         "tag_cn": "人造人18号",
-        "intro": "",
-        "links": ""
+        "intro": "人造人18号是鸟山明所创作的漫画《龙珠》及其衍生作品的登场角色。",
+        "links": "萌娘百科"
       },
       {
         "tag": "character:aether",
         "namespace": "character",
         "value": "aether",
         "count": 19,
-        "tag_cn": "空",
+        "tag_cn": "空（旅行者）",
         "intro": "《原神(genshin impact)》及其衍生作品的登场角色。可作为玩家的代入角色。",
         "links": "萌娘百科"
       },
@@ -814,7 +814,7 @@
         "value": "link",
         "count": 19,
         "tag_cn": "林克",
-        "intro": "",
+        "intro": "林克是任天堂旗下作品《塞尔达传说》系列的主要角色，在任天堂旗下的其他系列如《马力欧卡丁车系列》《任天堂明星大乱斗》等亦有出场。",
         "links": "萌娘百科"
       },
       {
@@ -841,8 +841,17 @@
         "value": "chi chi",
         "count": 17,
         "tag_cn": "琪琪",
-        "intro": "",
-        "links": ""
+        "intro": "出自作品：龙珠(dragon ball)\n\n琪琪（チチ、Chichi），女，日本漫画《龙珠》及其衍生作品中的角色。其首次登场于漫画《龙珠》第137话 。",
+        "links": "百度百科"
+      },
+      {
+        "tag": "character:gudao",
+        "namespace": "character",
+        "value": "gudao",
+        "count": 16,
+        "tag_cn": "咕哒男",
+        "intro": "藤丸立香/主人公是TYPE-MOON旗下的游戏《Fate/Grand Order(fate grand order)》及其衍生作品的登场角色，玩家视角的主角。本标签指的是男性的藤丸立香。\n咕哒子是FGO官方漫画中使用的昵称。已经成为官方默认的主人公昵称。在另一部型月作品Chibichuki!中，也直接以咕哒子之名出现。",
+        "links": "萌娘百科 Fandom"
       },
       {
         "tag": "character:kokkoro",
@@ -850,7 +859,7 @@
         "value": "kokkoro",
         "count": 16,
         "tag_cn": "可可萝",
-        "intro": "",
+        "intro": "所属作品：公主连结Re:Dive(princess connect)",
         "links": "萌娘百科"
       },
       {
@@ -867,18 +876,9 @@
         "namespace": "character",
         "value": "sensei",
         "count": 15,
-        "tag_cn": "老师",
-        "intro": "碧蓝档案玩家自己，即故事中的男主。",
+        "tag_cn": "老师（蔚蓝档案）",
+        "intro": "所属作品：蔚蓝档案(blue archive)\n由玩家扮演的角色。男性，就职于隶属学院都市基沃托斯的“联邦学生会”的特殊权利机构“沙勒”。",
         "links": "萌娘百科"
-      },
-      {
-        "tag": "character:gudao",
-        "namespace": "character",
-        "value": "gudao",
-        "count": 15,
-        "tag_cn": "咕哒男",
-        "intro": "藤丸立香/主人公是TYPE-MOON旗下的游戏《Fate/Grand Order(fate grand order)》及其衍生作品的登场角色，玩家视角的主角。\n咕哒子是FGO官方漫画中使用的昵称。已经成为官方默认的主人公昵称。在另一部型月作品Chibichuki!中，也直接以咕哒子之名出现。",
-        "links": "萌娘百科 Fandom"
       },
       {
         "tag": "character:ai haibara",
@@ -886,8 +886,8 @@
         "value": "ai haibara",
         "count": 15,
         "tag_cn": "灰原哀",
-        "intro": "",
-        "links": ""
+        "intro": "灰原哀是漫画《名侦探柯南(detective conan)》及其衍生作品的登场角色。原本是反派组织黑衣组织的科学家宫野志保，身体变小后化名为灰原哀，并成为少年侦探团的一员。",
+        "links": "萌娘百科\nFandom"
       },
       {
         "tag": "character:princess zelda",
@@ -895,8 +895,8 @@
         "value": "princess zelda",
         "count": 14,
         "tag_cn": "塞尔达公主",
-        "intro": "不是林克",
-        "links": "维基百科"
+        "intro": "出自作品：塞尔达传说(the legend of zelda)\n\n塞尔达公主是任天堂旗下作品《塞尔达传说》系列的登场角色。\n不是林克。",
+        "links": "萌娘百科 | 维基百科"
       },
       {
         "tag": "character:bulma briefs",
@@ -931,7 +931,7 @@
         "tag": "parody:original",
         "namespace": "parody",
         "value": "original",
-        "count": 1123,
+        "count": 1175,
         "tag_cn": "原创",
         "intro": "适用于不包含任何已知媒体/系列中角色或内容的同人志(doujinshi)或画师CG(artistcg)。此标签不得用于同人志(doujinshi)或画师CG(artistcg)类别之外。",
         "links": ""
@@ -942,14 +942,14 @@
         "value": "genshin impact",
         "count": 99,
         "tag_cn": "原神",
-        "intro": "《原神》是miHoYo研发的一款开放世界冒险游戏。",
+        "intro": "《原神》是游戏公司“米哈游”研发的一款开放世界冒险游戏。",
         "links": "官网  维基百科 萌娘百科"
       },
       {
         "tag": "parody:fate grand order",
         "namespace": "parody",
         "value": "fate grand order",
-        "count": 68,
+        "count": 70,
         "tag_cn": "Fate/Grand Order",
         "intro": "《Fate/Grand Order》（中文译名：命运-冠位指定，简称Fate/GO、FGO），是TYPE-MOON旗下，由（前）DELiGHTWORKS、（现）Lasengle开发，Aniplex发行的一款冒险卡牌收集类手机游戏，隶属于日本索尼音乐娱乐公司。\n为纪念《Fate/stay night》十周年而进行的企划。《Fate/Grand Order》大致继承Fate系列的设定，TYPE-MOON其他作品、旗下衍生音乐游戏的角色亦有登场。",
         "links": "维基百科\nFGO中文维基Mooncell"
@@ -958,7 +958,7 @@
         "tag": "parody:azur lane",
         "namespace": "parody",
         "value": "azur lane",
-        "count": 53,
+        "count": 55,
         "tag_cn": "碧蓝航线",
         "intro": "《碧蓝航线》是一款由中国上海蛮啾网络科技与厦门勇仕网络技术制作的智能手机游戏，于2017年5月25日开始运营。",
         "links": "萌娘百科 维基百科"
@@ -967,7 +967,7 @@
         "tag": "parody:toaru project",
         "namespace": "parody",
         "value": "toaru project",
-        "count": 45,
+        "count": 47,
         "tag_cn": "魔法禁书系列",
         "intro": "魔法禁书系列世界观下的作品，如《魔法禁书目录（とある魔術の禁書目録）》和《科学超电磁炮（とある科学の超電磁砲）》 。",
         "links": ""
@@ -976,10 +976,28 @@
         "tag": "parody:kantai collection",
         "namespace": "parody",
         "value": "kantai collection",
-        "count": 34,
+        "count": 35,
         "tag_cn": "舰队Collection",
         "intro": "《舰队Collection》（艦隊これくしょん -艦これ-，又译舰队收藏）是由日本同人社团C2机关开发运营、角川集团投资、由DMM.com提供游戏平台的主要以旧日本海军舰船拟人为题材的收集养成卡牌赌博类网页游戏。",
         "links": "官网地址 萌娘百科"
+      },
+      {
+        "tag": "parody:the idolmaster",
+        "namespace": "parody",
+        "value": "the idolmaster",
+        "count": 29,
+        "tag_cn": "偶像大师",
+        "intro": "官网贺图\n\n由南梦宫及之后的万代南梦宫所创的电子游戏系列，作品主要结合了养成模拟和节奏游戏元素。\n玩家多扮演制作人，带领艺人事务所偶像走向成名之路。自2005年首部作品在街机推出以来，\n系列已有包括社交游戏在内的多款游戏。",
+        "links": "萌娘百科 中文维基 HP"
+      },
+      {
+        "tag": "parody:to love-ru",
+        "namespace": "parody",
+        "value": "to love-ru",
+        "count": 29,
+        "tag_cn": "出包王女",
+        "intro": "由长谷见沙贵负责脚本、矢吹健太朗负责作画的一部漫画，并有动画、游戏等衍生作品。",
+        "links": "萌娘百科"
       },
       {
         "tag": "parody:k-on",
@@ -989,24 +1007,6 @@
         "tag_cn": "轻音少女",
         "intro": "",
         "links": ""
-      },
-      {
-        "tag": "parody:to love-ru",
-        "namespace": "parody",
-        "value": "to love-ru",
-        "count": 28,
-        "tag_cn": "出包王女",
-        "intro": "To LOVEる -とらぶる-",
-        "links": ""
-      },
-      {
-        "tag": "parody:the idolmaster",
-        "namespace": "parody",
-        "value": "the idolmaster",
-        "count": 27,
-        "tag_cn": "偶像大师",
-        "intro": "官网贺图\n\n由南梦宫及之后的万代南梦宫所创的电子游戏系列，作品主要结合了养成模拟和节奏游戏元素。\n玩家多扮演制作人，带领艺人事务所偶像走向成名之路。自2005年首部作品在街机推出以来，\n系列已有包括社交游戏在内的多款游戏。",
-        "links": "萌娘百科 中文维基 HP"
       },
       {
         "tag": "parody:uzaki-chan wa asobitai",
@@ -1036,10 +1036,19 @@
         "links": ""
       },
       {
+        "tag": "parody:touhou project",
+        "namespace": "parody",
+        "value": "touhou project",
+        "count": 20,
+        "tag_cn": "东方Project",
+        "intro": "乐园的可爱巫女\n\n不成熟的魔法使\n\n博丽神主",
+        "links": "东方维基 萌娘百科"
+      },
+      {
         "tag": "parody:blue archive",
         "namespace": "parody",
         "value": "blue archive",
-        "count": 19,
+        "count": 20,
         "tag_cn": "蔚蓝档案",
         "intro": "《蔚蓝档案Blue Archive》（国内常称“碧蓝档案”）是由韩国Nexon Korea旗下子公司NAT Games开发，日本Yostar发行营运的一3D美少女RPG养成游戏。\n\n青春×学园×战斗，作品以日式动画风格，描绘了一个未来学园都市般的故事舞台。玩家将作为”老师“，带领学生们解决在城市内发生的形形色色的事件。",
         "links": "简中服官网 萌娘百科 维基百科 gamekee百科"
@@ -1068,17 +1077,8 @@
         "value": "princess connect",
         "count": 17,
         "tag_cn": "公主连结Re:Dive",
-        "intro": "《公主连结 Re:Dive》（日语：プリンセスコネクト！Re:Dive）是一款由Cygames(cygames)所制作的奇幻风格角色扮演手机游戏，前身为2015年至2016年间营运的《公主连结》。本游戏除了在日本上市外，也计划与海外业者推出包含繁体中文、简体中文、韩文等版本。",
+        "intro": "《公主连结 Re:Dive》（日语：プリンセスコネクト！Re:Dive）是一款由Cygames(cygames)所制作的奇幻风格角色扮演手机游戏，前身为2015年至2016年间营运的《公主连结》。",
         "links": "维基百科 (*)"
-      },
-      {
-        "tag": "parody:touhou project",
-        "namespace": "parody",
-        "value": "touhou project",
-        "count": 17,
-        "tag_cn": "东方Project",
-        "intro": "乐园的可爱巫女\n\n不成熟的魔法使\n\n博丽神主",
-        "links": "东方维基 萌娘百科"
       },
       {
         "tag": "parody:kimetsu no yaiba",
@@ -1095,8 +1095,8 @@
         "value": "kaguya-sama wa kokurasetai",
         "count": 16,
         "tag_cn": "辉夜大小姐想让我告白",
-        "intro": "《辉夜大小姐想让我告白~天才们的恋爱头脑战~》（日语：かぐや様は告らせたい〜天才たちの恋愛頭脳戦〜）是日本漫画家赤坂アカ以恋爱喜剧为题材，创作的校园漫画作品，现于《周刊YOUNG JUMP》连载中。",
-        "links": "维基百科 (*)"
+        "intro": "《辉夜大小姐想让我告白~天才们的恋爱头脑战~》是日本漫画家赤坂アカ以恋爱喜剧为题材，创作的校园漫画作品。",
+        "links": "维基百科\n萌娘百科"
       },
       {
         "tag": "parody:detective conan",
@@ -1282,7 +1282,7 @@
     },
     {
       "quarter": "2016-Q2",
-      "postedCount": 16,
+      "postedCount": 17,
       "favTimeCount": 0
     },
     {
@@ -1297,7 +1297,7 @@
     },
     {
       "quarter": "2017-Q1",
-      "postedCount": 27,
+      "postedCount": 28,
       "favTimeCount": 0
     },
     {
@@ -1352,7 +1352,7 @@
     },
     {
       "quarter": "2019-Q4",
-      "postedCount": 55,
+      "postedCount": 56,
       "favTimeCount": 0
     },
     {
@@ -1367,7 +1367,7 @@
     },
     {
       "quarter": "2020-Q3",
-      "postedCount": 88,
+      "postedCount": 89,
       "favTimeCount": 0
     },
     {
@@ -1377,7 +1377,7 @@
     },
     {
       "quarter": "2021-Q1",
-      "postedCount": 128,
+      "postedCount": 130,
       "favTimeCount": 0
     },
     {
@@ -1387,12 +1387,12 @@
     },
     {
       "quarter": "2021-Q3",
-      "postedCount": 100,
+      "postedCount": 102,
       "favTimeCount": 104
     },
     {
       "quarter": "2021-Q4",
-      "postedCount": 126,
+      "postedCount": 127,
       "favTimeCount": 284
     },
     {
@@ -1412,7 +1412,7 @@
     },
     {
       "quarter": "2022-Q4",
-      "postedCount": 109,
+      "postedCount": 110,
       "favTimeCount": 204
     },
     {
@@ -1422,7 +1422,7 @@
     },
     {
       "quarter": "2023-Q2",
-      "postedCount": 87,
+      "postedCount": 88,
       "favTimeCount": 120
     },
     {
@@ -1437,17 +1437,17 @@
     },
     {
       "quarter": "2024-Q1",
-      "postedCount": 110,
+      "postedCount": 111,
       "favTimeCount": 94
     },
     {
       "quarter": "2024-Q2",
-      "postedCount": 83,
+      "postedCount": 85,
       "favTimeCount": 68
     },
     {
       "quarter": "2024-Q3",
-      "postedCount": 202,
+      "postedCount": 206,
       "favTimeCount": 102
     },
     {
@@ -1472,13 +1472,18 @@
     },
     {
       "quarter": "2025-Q4",
-      "postedCount": 111,
+      "postedCount": 109,
       "favTimeCount": 299
     },
     {
       "quarter": "2026-Q1",
-      "postedCount": 89,
-      "favTimeCount": 117
+      "postedCount": 162,
+      "favTimeCount": 212
+    },
+    {
+      "quarter": "2026-Q2",
+      "postedCount": 47,
+      "favTimeCount": 41
     }
   ],
   "heatmap": {
@@ -1487,2203 +1492,2233 @@
         "x": 0,
         "y": 0,
         "v": 0,
-        "d": "2025-03-02"
-      },
-      {
-        "x": 0,
-        "y": 1,
-        "v": 0,
-        "d": "2025-03-03"
-      },
-      {
-        "x": 0,
-        "y": 2,
-        "v": 0,
-        "d": "2025-03-04"
-      },
-      {
-        "x": 0,
-        "y": 3,
-        "v": 0,
-        "d": "2025-03-05"
-      },
-      {
-        "x": 0,
-        "y": 4,
-        "v": 1,
-        "d": "2025-03-06"
-      },
-      {
-        "x": 0,
-        "y": 5,
-        "v": 0,
-        "d": "2025-03-07"
-      },
-      {
-        "x": 0,
-        "y": 6,
-        "v": 0,
-        "d": "2025-03-08"
-      },
-      {
-        "x": 1,
-        "y": 0,
-        "v": 1,
-        "d": "2025-03-09"
-      },
-      {
-        "x": 1,
-        "y": 1,
-        "v": 1,
-        "d": "2025-03-10"
-      },
-      {
-        "x": 1,
-        "y": 2,
-        "v": 1,
-        "d": "2025-03-11"
-      },
-      {
-        "x": 1,
-        "y": 3,
-        "v": 2,
-        "d": "2025-03-12"
-      },
-      {
-        "x": 1,
-        "y": 4,
-        "v": 1,
-        "d": "2025-03-13"
-      },
-      {
-        "x": 1,
-        "y": 5,
-        "v": 1,
-        "d": "2025-03-14"
-      },
-      {
-        "x": 1,
-        "y": 6,
-        "v": 0,
-        "d": "2025-03-15"
-      },
-      {
-        "x": 2,
-        "y": 0,
-        "v": 2,
-        "d": "2025-03-16"
-      },
-      {
-        "x": 2,
-        "y": 1,
-        "v": 4,
-        "d": "2025-03-17"
-      },
-      {
-        "x": 2,
-        "y": 2,
-        "v": 1,
-        "d": "2025-03-18"
-      },
-      {
-        "x": 2,
-        "y": 3,
-        "v": 0,
-        "d": "2025-03-19"
-      },
-      {
-        "x": 2,
-        "y": 4,
-        "v": 0,
-        "d": "2025-03-20"
-      },
-      {
-        "x": 2,
-        "y": 5,
-        "v": 0,
-        "d": "2025-03-21"
-      },
-      {
-        "x": 2,
-        "y": 6,
-        "v": 2,
-        "d": "2025-03-22"
-      },
-      {
-        "x": 3,
-        "y": 0,
-        "v": 4,
-        "d": "2025-03-23"
-      },
-      {
-        "x": 3,
-        "y": 1,
-        "v": 0,
-        "d": "2025-03-24"
-      },
-      {
-        "x": 3,
-        "y": 2,
-        "v": 2,
-        "d": "2025-03-25"
-      },
-      {
-        "x": 3,
-        "y": 3,
-        "v": 4,
-        "d": "2025-03-26"
-      },
-      {
-        "x": 3,
-        "y": 4,
-        "v": 0,
-        "d": "2025-03-27"
-      },
-      {
-        "x": 3,
-        "y": 5,
-        "v": 1,
-        "d": "2025-03-28"
-      },
-      {
-        "x": 3,
-        "y": 6,
-        "v": 0,
-        "d": "2025-03-29"
-      },
-      {
-        "x": 4,
-        "y": 0,
-        "v": 0,
-        "d": "2025-03-30"
-      },
-      {
-        "x": 4,
-        "y": 1,
-        "v": 0,
-        "d": "2025-03-31"
-      },
-      {
-        "x": 4,
-        "y": 2,
-        "v": 1,
-        "d": "2025-04-01"
-      },
-      {
-        "x": 4,
-        "y": 3,
-        "v": 0,
-        "d": "2025-04-02"
-      },
-      {
-        "x": 4,
-        "y": 4,
-        "v": 2,
-        "d": "2025-04-03"
-      },
-      {
-        "x": 4,
-        "y": 5,
-        "v": 3,
-        "d": "2025-04-04"
-      },
-      {
-        "x": 4,
-        "y": 6,
-        "v": 2,
-        "d": "2025-04-05"
-      },
-      {
-        "x": 5,
-        "y": 0,
-        "v": 2,
-        "d": "2025-04-06"
-      },
-      {
-        "x": 5,
-        "y": 1,
-        "v": 1,
-        "d": "2025-04-07"
-      },
-      {
-        "x": 5,
-        "y": 2,
-        "v": 0,
-        "d": "2025-04-08"
-      },
-      {
-        "x": 5,
-        "y": 3,
-        "v": 2,
-        "d": "2025-04-09"
-      },
-      {
-        "x": 5,
-        "y": 4,
-        "v": 1,
-        "d": "2025-04-10"
-      },
-      {
-        "x": 5,
-        "y": 5,
-        "v": 0,
-        "d": "2025-04-11"
-      },
-      {
-        "x": 5,
-        "y": 6,
-        "v": 0,
-        "d": "2025-04-12"
-      },
-      {
-        "x": 6,
-        "y": 0,
-        "v": 0,
         "d": "2025-04-13"
       },
       {
-        "x": 6,
+        "x": 0,
         "y": 1,
         "v": 0,
         "d": "2025-04-14"
       },
       {
-        "x": 6,
+        "x": 0,
         "y": 2,
         "v": 0,
         "d": "2025-04-15"
       },
       {
-        "x": 6,
+        "x": 0,
         "y": 3,
         "v": 0,
         "d": "2025-04-16"
       },
       {
-        "x": 6,
+        "x": 0,
         "y": 4,
         "v": 0,
         "d": "2025-04-17"
       },
       {
-        "x": 6,
+        "x": 0,
         "y": 5,
         "v": 0,
         "d": "2025-04-18"
       },
       {
-        "x": 6,
+        "x": 0,
         "y": 6,
         "v": 3,
         "d": "2025-04-19"
       },
       {
-        "x": 7,
+        "x": 1,
         "y": 0,
         "v": 1,
         "d": "2025-04-20"
       },
       {
-        "x": 7,
+        "x": 1,
         "y": 1,
         "v": 1,
         "d": "2025-04-21"
       },
       {
-        "x": 7,
+        "x": 1,
         "y": 2,
         "v": 1,
         "d": "2025-04-22"
       },
       {
-        "x": 7,
+        "x": 1,
         "y": 3,
         "v": 0,
         "d": "2025-04-23"
       },
       {
-        "x": 7,
+        "x": 1,
         "y": 4,
         "v": 0,
         "d": "2025-04-24"
       },
       {
-        "x": 7,
+        "x": 1,
         "y": 5,
         "v": 1,
         "d": "2025-04-25"
       },
       {
-        "x": 7,
+        "x": 1,
         "y": 6,
         "v": 0,
         "d": "2025-04-26"
       },
       {
-        "x": 8,
+        "x": 2,
         "y": 0,
         "v": 1,
         "d": "2025-04-27"
       },
       {
-        "x": 8,
+        "x": 2,
         "y": 1,
         "v": 0,
         "d": "2025-04-28"
       },
       {
-        "x": 8,
+        "x": 2,
         "y": 2,
         "v": 0,
         "d": "2025-04-29"
       },
       {
-        "x": 8,
+        "x": 2,
         "y": 3,
         "v": 0,
         "d": "2025-04-30"
       },
       {
-        "x": 8,
+        "x": 2,
         "y": 4,
         "v": 2,
         "d": "2025-05-01"
       },
       {
-        "x": 8,
+        "x": 2,
         "y": 5,
         "v": 0,
         "d": "2025-05-02"
       },
       {
-        "x": 8,
+        "x": 2,
         "y": 6,
         "v": 1,
         "d": "2025-05-03"
       },
       {
-        "x": 9,
+        "x": 3,
         "y": 0,
         "v": 0,
         "d": "2025-05-04"
       },
       {
-        "x": 9,
+        "x": 3,
         "y": 1,
         "v": 0,
         "d": "2025-05-05"
       },
       {
-        "x": 9,
+        "x": 3,
         "y": 2,
         "v": 2,
         "d": "2025-05-06"
       },
       {
-        "x": 9,
+        "x": 3,
         "y": 3,
         "v": 0,
         "d": "2025-05-07"
       },
       {
-        "x": 9,
+        "x": 3,
         "y": 4,
         "v": 1,
         "d": "2025-05-08"
       },
       {
-        "x": 9,
+        "x": 3,
         "y": 5,
         "v": 0,
         "d": "2025-05-09"
       },
       {
-        "x": 9,
+        "x": 3,
         "y": 6,
         "v": 0,
         "d": "2025-05-10"
       },
       {
-        "x": 10,
+        "x": 4,
         "y": 0,
         "v": 2,
         "d": "2025-05-11"
       },
       {
-        "x": 10,
+        "x": 4,
         "y": 1,
         "v": 1,
         "d": "2025-05-12"
       },
       {
-        "x": 10,
+        "x": 4,
         "y": 2,
         "v": 0,
         "d": "2025-05-13"
       },
       {
-        "x": 10,
+        "x": 4,
         "y": 3,
         "v": 0,
         "d": "2025-05-14"
       },
       {
-        "x": 10,
+        "x": 4,
         "y": 4,
         "v": 1,
         "d": "2025-05-15"
       },
       {
-        "x": 10,
+        "x": 4,
         "y": 5,
         "v": 1,
         "d": "2025-05-16"
       },
       {
-        "x": 10,
+        "x": 4,
         "y": 6,
         "v": 2,
         "d": "2025-05-17"
       },
       {
-        "x": 11,
+        "x": 5,
         "y": 0,
         "v": 1,
         "d": "2025-05-18"
       },
       {
-        "x": 11,
+        "x": 5,
         "y": 1,
         "v": 1,
         "d": "2025-05-19"
       },
       {
-        "x": 11,
+        "x": 5,
         "y": 2,
         "v": 1,
         "d": "2025-05-20"
       },
       {
-        "x": 11,
+        "x": 5,
         "y": 3,
         "v": 0,
         "d": "2025-05-21"
       },
       {
-        "x": 11,
+        "x": 5,
         "y": 4,
         "v": 0,
         "d": "2025-05-22"
       },
       {
-        "x": 11,
+        "x": 5,
         "y": 5,
         "v": 5,
         "d": "2025-05-23"
       },
       {
-        "x": 11,
+        "x": 5,
         "y": 6,
         "v": 2,
         "d": "2025-05-24"
       },
       {
-        "x": 12,
+        "x": 6,
         "y": 0,
         "v": 4,
         "d": "2025-05-25"
       },
       {
-        "x": 12,
+        "x": 6,
         "y": 1,
         "v": 2,
         "d": "2025-05-26"
       },
       {
-        "x": 12,
+        "x": 6,
         "y": 2,
         "v": 3,
         "d": "2025-05-27"
       },
       {
-        "x": 12,
+        "x": 6,
         "y": 3,
         "v": 2,
         "d": "2025-05-28"
       },
       {
-        "x": 12,
+        "x": 6,
         "y": 4,
         "v": 1,
         "d": "2025-05-29"
       },
       {
-        "x": 12,
+        "x": 6,
         "y": 5,
         "v": 2,
         "d": "2025-05-30"
       },
       {
-        "x": 12,
+        "x": 6,
         "y": 6,
         "v": 0,
         "d": "2025-05-31"
       },
       {
-        "x": 13,
+        "x": 7,
         "y": 0,
         "v": 3,
         "d": "2025-06-01"
       },
       {
-        "x": 13,
+        "x": 7,
         "y": 1,
         "v": 0,
         "d": "2025-06-02"
       },
       {
-        "x": 13,
+        "x": 7,
         "y": 2,
         "v": 1,
         "d": "2025-06-03"
       },
       {
-        "x": 13,
+        "x": 7,
         "y": 3,
         "v": 0,
         "d": "2025-06-04"
       },
       {
-        "x": 13,
+        "x": 7,
         "y": 4,
         "v": 0,
         "d": "2025-06-05"
       },
       {
-        "x": 13,
+        "x": 7,
         "y": 5,
         "v": 3,
         "d": "2025-06-06"
       },
       {
-        "x": 13,
+        "x": 7,
         "y": 6,
         "v": 0,
         "d": "2025-06-07"
       },
       {
-        "x": 14,
+        "x": 8,
         "y": 0,
         "v": 0,
         "d": "2025-06-08"
       },
       {
-        "x": 14,
+        "x": 8,
         "y": 1,
         "v": 1,
         "d": "2025-06-09"
       },
       {
-        "x": 14,
+        "x": 8,
         "y": 2,
         "v": 1,
         "d": "2025-06-10"
       },
       {
-        "x": 14,
+        "x": 8,
         "y": 3,
         "v": 0,
         "d": "2025-06-11"
       },
       {
-        "x": 14,
+        "x": 8,
         "y": 4,
         "v": 0,
         "d": "2025-06-12"
       },
       {
-        "x": 14,
+        "x": 8,
         "y": 5,
         "v": 0,
         "d": "2025-06-13"
       },
       {
-        "x": 14,
+        "x": 8,
         "y": 6,
         "v": 0,
         "d": "2025-06-14"
       },
       {
-        "x": 15,
+        "x": 9,
         "y": 0,
         "v": 0,
         "d": "2025-06-15"
       },
       {
-        "x": 15,
+        "x": 9,
         "y": 1,
         "v": 0,
         "d": "2025-06-16"
       },
       {
-        "x": 15,
+        "x": 9,
         "y": 2,
         "v": 0,
         "d": "2025-06-17"
       },
       {
-        "x": 15,
+        "x": 9,
         "y": 3,
         "v": 2,
         "d": "2025-06-18"
       },
       {
-        "x": 15,
+        "x": 9,
         "y": 4,
         "v": 1,
         "d": "2025-06-19"
       },
       {
-        "x": 15,
+        "x": 9,
         "y": 5,
         "v": 0,
         "d": "2025-06-20"
       },
       {
-        "x": 15,
+        "x": 9,
         "y": 6,
         "v": 1,
         "d": "2025-06-21"
       },
       {
-        "x": 16,
+        "x": 10,
         "y": 0,
         "v": 0,
         "d": "2025-06-22"
       },
       {
-        "x": 16,
+        "x": 10,
         "y": 1,
         "v": 0,
         "d": "2025-06-23"
       },
       {
-        "x": 16,
+        "x": 10,
         "y": 2,
         "v": 2,
         "d": "2025-06-24"
       },
       {
-        "x": 16,
+        "x": 10,
         "y": 3,
         "v": 2,
         "d": "2025-06-25"
       },
       {
-        "x": 16,
+        "x": 10,
         "y": 4,
         "v": 4,
         "d": "2025-06-26"
       },
       {
-        "x": 16,
+        "x": 10,
         "y": 5,
         "v": 0,
         "d": "2025-06-27"
       },
       {
-        "x": 16,
+        "x": 10,
         "y": 6,
         "v": 2,
         "d": "2025-06-28"
       },
       {
-        "x": 17,
+        "x": 11,
         "y": 0,
         "v": 0,
         "d": "2025-06-29"
       },
       {
-        "x": 17,
+        "x": 11,
         "y": 1,
         "v": 0,
         "d": "2025-06-30"
       },
       {
-        "x": 17,
+        "x": 11,
         "y": 2,
         "v": 0,
         "d": "2025-07-01"
       },
       {
-        "x": 17,
+        "x": 11,
         "y": 3,
         "v": 0,
         "d": "2025-07-02"
       },
       {
-        "x": 17,
+        "x": 11,
         "y": 4,
         "v": 0,
         "d": "2025-07-03"
       },
       {
-        "x": 17,
+        "x": 11,
         "y": 5,
         "v": 3,
         "d": "2025-07-04"
       },
       {
-        "x": 17,
+        "x": 11,
         "y": 6,
         "v": 1,
         "d": "2025-07-05"
       },
       {
-        "x": 18,
+        "x": 12,
         "y": 0,
         "v": 0,
         "d": "2025-07-06"
       },
       {
-        "x": 18,
+        "x": 12,
         "y": 1,
         "v": 0,
         "d": "2025-07-07"
       },
       {
-        "x": 18,
+        "x": 12,
         "y": 2,
         "v": 0,
         "d": "2025-07-08"
       },
       {
-        "x": 18,
+        "x": 12,
         "y": 3,
         "v": 0,
         "d": "2025-07-09"
       },
       {
-        "x": 18,
+        "x": 12,
         "y": 4,
         "v": 0,
         "d": "2025-07-10"
       },
       {
-        "x": 18,
+        "x": 12,
         "y": 5,
         "v": 0,
         "d": "2025-07-11"
       },
       {
-        "x": 18,
+        "x": 12,
         "y": 6,
         "v": 0,
         "d": "2025-07-12"
       },
       {
-        "x": 19,
+        "x": 13,
         "y": 0,
         "v": 0,
         "d": "2025-07-13"
       },
       {
-        "x": 19,
+        "x": 13,
         "y": 1,
         "v": 2,
         "d": "2025-07-14"
       },
       {
-        "x": 19,
+        "x": 13,
         "y": 2,
         "v": 0,
         "d": "2025-07-15"
       },
       {
-        "x": 19,
+        "x": 13,
         "y": 3,
         "v": 0,
         "d": "2025-07-16"
       },
       {
-        "x": 19,
+        "x": 13,
         "y": 4,
         "v": 1,
         "d": "2025-07-17"
       },
       {
-        "x": 19,
+        "x": 13,
         "y": 5,
         "v": 0,
         "d": "2025-07-18"
       },
       {
-        "x": 19,
+        "x": 13,
         "y": 6,
         "v": 2,
         "d": "2025-07-19"
       },
       {
-        "x": 20,
+        "x": 14,
         "y": 0,
         "v": 0,
         "d": "2025-07-20"
       },
       {
-        "x": 20,
+        "x": 14,
         "y": 1,
         "v": 2,
         "d": "2025-07-21"
       },
       {
-        "x": 20,
+        "x": 14,
         "y": 2,
         "v": 7,
         "d": "2025-07-22"
       },
       {
-        "x": 20,
+        "x": 14,
         "y": 3,
         "v": 3,
         "d": "2025-07-23"
       },
       {
-        "x": 20,
+        "x": 14,
         "y": 4,
         "v": 4,
         "d": "2025-07-24"
       },
       {
-        "x": 20,
+        "x": 14,
         "y": 5,
         "v": 4,
         "d": "2025-07-25"
       },
       {
-        "x": 20,
+        "x": 14,
         "y": 6,
         "v": 0,
         "d": "2025-07-26"
       },
       {
-        "x": 21,
+        "x": 15,
         "y": 0,
         "v": 0,
         "d": "2025-07-27"
       },
       {
-        "x": 21,
+        "x": 15,
         "y": 1,
         "v": 1,
         "d": "2025-07-28"
       },
       {
-        "x": 21,
+        "x": 15,
         "y": 2,
         "v": 1,
         "d": "2025-07-29"
       },
       {
-        "x": 21,
+        "x": 15,
         "y": 3,
         "v": 2,
         "d": "2025-07-30"
       },
       {
-        "x": 21,
+        "x": 15,
         "y": 4,
         "v": 1,
         "d": "2025-07-31"
       },
       {
-        "x": 21,
+        "x": 15,
         "y": 5,
         "v": 2,
         "d": "2025-08-01"
       },
       {
-        "x": 21,
+        "x": 15,
         "y": 6,
         "v": 2,
         "d": "2025-08-02"
       },
       {
-        "x": 22,
+        "x": 16,
         "y": 0,
         "v": 5,
         "d": "2025-08-03"
       },
       {
-        "x": 22,
+        "x": 16,
         "y": 1,
         "v": 1,
         "d": "2025-08-04"
       },
       {
-        "x": 22,
+        "x": 16,
         "y": 2,
         "v": 4,
         "d": "2025-08-05"
       },
       {
-        "x": 22,
+        "x": 16,
         "y": 3,
         "v": 2,
         "d": "2025-08-06"
       },
       {
-        "x": 22,
+        "x": 16,
         "y": 4,
         "v": 3,
         "d": "2025-08-07"
       },
       {
-        "x": 22,
+        "x": 16,
         "y": 5,
         "v": 5,
         "d": "2025-08-08"
       },
       {
-        "x": 22,
+        "x": 16,
         "y": 6,
         "v": 0,
         "d": "2025-08-09"
       },
       {
-        "x": 23,
+        "x": 17,
         "y": 0,
         "v": 2,
         "d": "2025-08-10"
       },
       {
-        "x": 23,
+        "x": 17,
         "y": 1,
         "v": 1,
         "d": "2025-08-11"
       },
       {
-        "x": 23,
+        "x": 17,
         "y": 2,
         "v": 11,
         "d": "2025-08-12"
       },
       {
-        "x": 23,
+        "x": 17,
         "y": 3,
         "v": 0,
         "d": "2025-08-13"
       },
       {
-        "x": 23,
+        "x": 17,
         "y": 4,
         "v": 4,
         "d": "2025-08-14"
       },
       {
-        "x": 23,
+        "x": 17,
         "y": 5,
         "v": 7,
         "d": "2025-08-15"
       },
       {
-        "x": 23,
+        "x": 17,
         "y": 6,
         "v": 1,
         "d": "2025-08-16"
       },
       {
-        "x": 24,
+        "x": 18,
         "y": 0,
         "v": 1,
         "d": "2025-08-17"
       },
       {
-        "x": 24,
+        "x": 18,
         "y": 1,
         "v": 3,
         "d": "2025-08-18"
       },
       {
-        "x": 24,
+        "x": 18,
         "y": 2,
         "v": 1,
         "d": "2025-08-19"
       },
       {
-        "x": 24,
+        "x": 18,
         "y": 3,
         "v": 1,
         "d": "2025-08-20"
       },
       {
-        "x": 24,
+        "x": 18,
         "y": 4,
         "v": 1,
         "d": "2025-08-21"
       },
       {
-        "x": 24,
+        "x": 18,
         "y": 5,
         "v": 4,
         "d": "2025-08-22"
       },
       {
-        "x": 24,
+        "x": 18,
         "y": 6,
         "v": 1,
         "d": "2025-08-23"
       },
       {
-        "x": 25,
+        "x": 19,
         "y": 0,
         "v": 0,
         "d": "2025-08-24"
       },
       {
-        "x": 25,
+        "x": 19,
         "y": 1,
         "v": 2,
         "d": "2025-08-25"
       },
       {
-        "x": 25,
+        "x": 19,
         "y": 2,
         "v": 0,
         "d": "2025-08-26"
       },
       {
-        "x": 25,
+        "x": 19,
         "y": 3,
         "v": 0,
         "d": "2025-08-27"
       },
       {
-        "x": 25,
+        "x": 19,
         "y": 4,
         "v": 0,
         "d": "2025-08-28"
       },
       {
-        "x": 25,
+        "x": 19,
         "y": 5,
         "v": 4,
         "d": "2025-08-29"
       },
       {
-        "x": 25,
+        "x": 19,
         "y": 6,
         "v": 1,
         "d": "2025-08-30"
       },
       {
-        "x": 26,
+        "x": 20,
         "y": 0,
         "v": 1,
         "d": "2025-08-31"
       },
       {
-        "x": 26,
+        "x": 20,
         "y": 1,
         "v": 4,
         "d": "2025-09-01"
       },
       {
-        "x": 26,
+        "x": 20,
         "y": 2,
         "v": 3,
         "d": "2025-09-02"
       },
       {
-        "x": 26,
+        "x": 20,
         "y": 3,
         "v": 0,
         "d": "2025-09-03"
       },
       {
-        "x": 26,
+        "x": 20,
         "y": 4,
         "v": 4,
         "d": "2025-09-04"
       },
       {
-        "x": 26,
+        "x": 20,
         "y": 5,
         "v": 1,
         "d": "2025-09-05"
       },
       {
-        "x": 26,
+        "x": 20,
         "y": 6,
         "v": 1,
         "d": "2025-09-06"
       },
       {
-        "x": 27,
+        "x": 21,
         "y": 0,
         "v": 9,
         "d": "2025-09-07"
       },
       {
-        "x": 27,
+        "x": 21,
         "y": 1,
         "v": 1,
         "d": "2025-09-08"
       },
       {
-        "x": 27,
+        "x": 21,
         "y": 2,
         "v": 5,
         "d": "2025-09-09"
       },
       {
-        "x": 27,
+        "x": 21,
         "y": 3,
         "v": 1,
         "d": "2025-09-10"
       },
       {
-        "x": 27,
+        "x": 21,
         "y": 4,
         "v": 8,
         "d": "2025-09-11"
       },
       {
-        "x": 27,
+        "x": 21,
         "y": 5,
         "v": 2,
         "d": "2025-09-12"
       },
       {
-        "x": 27,
+        "x": 21,
         "y": 6,
         "v": 0,
         "d": "2025-09-13"
       },
       {
-        "x": 28,
+        "x": 22,
         "y": 0,
         "v": 9,
         "d": "2025-09-14"
       },
       {
-        "x": 28,
+        "x": 22,
         "y": 1,
         "v": 0,
         "d": "2025-09-15"
       },
       {
-        "x": 28,
+        "x": 22,
         "y": 2,
         "v": 1,
         "d": "2025-09-16"
       },
       {
-        "x": 28,
+        "x": 22,
         "y": 3,
         "v": 0,
         "d": "2025-09-17"
       },
       {
-        "x": 28,
+        "x": 22,
         "y": 4,
         "v": 4,
         "d": "2025-09-18"
       },
       {
-        "x": 28,
+        "x": 22,
         "y": 5,
         "v": 22,
         "d": "2025-09-19"
       },
       {
-        "x": 28,
+        "x": 22,
         "y": 6,
         "v": 0,
         "d": "2025-09-20"
       },
       {
-        "x": 29,
+        "x": 23,
         "y": 0,
         "v": 0,
         "d": "2025-09-21"
       },
       {
-        "x": 29,
+        "x": 23,
         "y": 1,
         "v": 0,
         "d": "2025-09-22"
       },
       {
-        "x": 29,
+        "x": 23,
         "y": 2,
         "v": 67,
         "d": "2025-09-23"
       },
       {
-        "x": 29,
+        "x": 23,
         "y": 3,
         "v": 17,
         "d": "2025-09-24"
       },
       {
-        "x": 29,
+        "x": 23,
         "y": 4,
         "v": 29,
         "d": "2025-09-25"
       },
       {
-        "x": 29,
+        "x": 23,
         "y": 5,
         "v": 11,
         "d": "2025-09-26"
       },
       {
-        "x": 29,
+        "x": 23,
         "y": 6,
         "v": 0,
         "d": "2025-09-27"
       },
       {
-        "x": 30,
+        "x": 24,
         "y": 0,
         "v": 1,
         "d": "2025-09-28"
       },
       {
-        "x": 30,
+        "x": 24,
         "y": 1,
         "v": 1,
         "d": "2025-09-29"
       },
       {
-        "x": 30,
+        "x": 24,
         "y": 2,
         "v": 34,
         "d": "2025-09-30"
       },
       {
-        "x": 30,
+        "x": 24,
         "y": 3,
         "v": 0,
         "d": "2025-10-01"
       },
       {
-        "x": 30,
+        "x": 24,
         "y": 4,
         "v": 0,
         "d": "2025-10-02"
       },
       {
-        "x": 30,
+        "x": 24,
         "y": 5,
         "v": 0,
         "d": "2025-10-03"
       },
       {
-        "x": 30,
+        "x": 24,
         "y": 6,
         "v": 1,
         "d": "2025-10-04"
       },
       {
-        "x": 31,
+        "x": 25,
         "y": 0,
         "v": 3,
         "d": "2025-10-05"
       },
       {
-        "x": 31,
+        "x": 25,
         "y": 1,
         "v": 2,
         "d": "2025-10-06"
       },
       {
-        "x": 31,
+        "x": 25,
         "y": 2,
         "v": 0,
         "d": "2025-10-07"
       },
       {
-        "x": 31,
+        "x": 25,
         "y": 3,
         "v": 2,
         "d": "2025-10-08"
       },
       {
-        "x": 31,
+        "x": 25,
         "y": 4,
         "v": 29,
         "d": "2025-10-09"
       },
       {
-        "x": 31,
+        "x": 25,
         "y": 5,
         "v": 16,
         "d": "2025-10-10"
       },
       {
-        "x": 31,
+        "x": 25,
         "y": 6,
         "v": 22,
         "d": "2025-10-11"
       },
       {
-        "x": 32,
+        "x": 26,
         "y": 0,
         "v": 2,
         "d": "2025-10-12"
       },
       {
-        "x": 32,
+        "x": 26,
         "y": 1,
         "v": 1,
         "d": "2025-10-13"
       },
       {
-        "x": 32,
+        "x": 26,
         "y": 2,
         "v": 0,
         "d": "2025-10-14"
       },
       {
-        "x": 32,
+        "x": 26,
         "y": 3,
         "v": 6,
         "d": "2025-10-15"
       },
       {
-        "x": 32,
+        "x": 26,
         "y": 4,
         "v": 0,
         "d": "2025-10-16"
       },
       {
-        "x": 32,
+        "x": 26,
         "y": 5,
         "v": 2,
         "d": "2025-10-17"
       },
       {
-        "x": 32,
+        "x": 26,
         "y": 6,
         "v": 1,
         "d": "2025-10-18"
       },
       {
-        "x": 33,
+        "x": 27,
         "y": 0,
         "v": 0,
         "d": "2025-10-19"
       },
       {
-        "x": 33,
+        "x": 27,
         "y": 1,
         "v": 0,
         "d": "2025-10-20"
       },
       {
-        "x": 33,
+        "x": 27,
         "y": 2,
         "v": 5,
         "d": "2025-10-21"
       },
       {
-        "x": 33,
+        "x": 27,
         "y": 3,
         "v": 8,
         "d": "2025-10-22"
       },
       {
-        "x": 33,
+        "x": 27,
         "y": 4,
         "v": 3,
         "d": "2025-10-23"
       },
       {
-        "x": 33,
+        "x": 27,
         "y": 5,
         "v": 2,
         "d": "2025-10-24"
       },
       {
-        "x": 33,
+        "x": 27,
         "y": 6,
         "v": 4,
         "d": "2025-10-25"
       },
       {
-        "x": 34,
+        "x": 28,
         "y": 0,
         "v": 0,
         "d": "2025-10-26"
       },
       {
-        "x": 34,
+        "x": 28,
         "y": 1,
         "v": 0,
         "d": "2025-10-27"
       },
       {
-        "x": 34,
+        "x": 28,
         "y": 2,
         "v": 5,
         "d": "2025-10-28"
       },
       {
-        "x": 34,
+        "x": 28,
         "y": 3,
         "v": 2,
         "d": "2025-10-29"
       },
       {
-        "x": 34,
+        "x": 28,
         "y": 4,
         "v": 5,
         "d": "2025-10-30"
       },
       {
-        "x": 34,
+        "x": 28,
         "y": 5,
         "v": 28,
         "d": "2025-10-31"
       },
       {
-        "x": 34,
+        "x": 28,
         "y": 6,
         "v": 0,
         "d": "2025-11-01"
       },
       {
-        "x": 35,
+        "x": 29,
         "y": 0,
         "v": 5,
         "d": "2025-11-02"
       },
       {
-        "x": 35,
+        "x": 29,
         "y": 1,
         "v": 18,
         "d": "2025-11-03"
       },
       {
-        "x": 35,
+        "x": 29,
         "y": 2,
         "v": 3,
         "d": "2025-11-04"
       },
       {
-        "x": 35,
+        "x": 29,
         "y": 3,
         "v": 8,
         "d": "2025-11-05"
       },
       {
-        "x": 35,
+        "x": 29,
         "y": 4,
         "v": 2,
         "d": "2025-11-06"
       },
       {
-        "x": 35,
+        "x": 29,
         "y": 5,
         "v": 1,
         "d": "2025-11-07"
       },
       {
-        "x": 35,
+        "x": 29,
         "y": 6,
         "v": 0,
         "d": "2025-11-08"
       },
       {
-        "x": 36,
+        "x": 30,
         "y": 0,
         "v": 1,
         "d": "2025-11-09"
       },
       {
-        "x": 36,
+        "x": 30,
         "y": 1,
         "v": 26,
         "d": "2025-11-10"
       },
       {
-        "x": 36,
+        "x": 30,
         "y": 2,
         "v": 8,
         "d": "2025-11-11"
       },
       {
-        "x": 36,
+        "x": 30,
         "y": 3,
         "v": 0,
         "d": "2025-11-12"
       },
       {
-        "x": 36,
+        "x": 30,
         "y": 4,
         "v": 0,
         "d": "2025-11-13"
       },
       {
-        "x": 36,
+        "x": 30,
         "y": 5,
         "v": 0,
         "d": "2025-11-14"
       },
       {
-        "x": 36,
+        "x": 30,
         "y": 6,
         "v": 0,
         "d": "2025-11-15"
       },
       {
-        "x": 37,
+        "x": 31,
         "y": 0,
         "v": 1,
         "d": "2025-11-16"
       },
       {
-        "x": 37,
+        "x": 31,
         "y": 1,
         "v": 1,
         "d": "2025-11-17"
       },
       {
-        "x": 37,
+        "x": 31,
         "y": 2,
         "v": 0,
         "d": "2025-11-18"
       },
       {
-        "x": 37,
+        "x": 31,
         "y": 3,
         "v": 0,
         "d": "2025-11-19"
       },
       {
-        "x": 37,
+        "x": 31,
         "y": 4,
         "v": 8,
         "d": "2025-11-20"
       },
       {
-        "x": 37,
+        "x": 31,
         "y": 5,
         "v": 13,
         "d": "2025-11-21"
       },
       {
-        "x": 37,
+        "x": 31,
         "y": 6,
         "v": 0,
         "d": "2025-11-22"
       },
       {
-        "x": 38,
+        "x": 32,
         "y": 0,
         "v": 0,
         "d": "2025-11-23"
       },
       {
-        "x": 38,
+        "x": 32,
         "y": 1,
         "v": 1,
         "d": "2025-11-24"
       },
       {
-        "x": 38,
+        "x": 32,
         "y": 2,
         "v": 1,
         "d": "2025-11-25"
       },
       {
-        "x": 38,
+        "x": 32,
         "y": 3,
         "v": 1,
         "d": "2025-11-26"
       },
       {
-        "x": 38,
+        "x": 32,
         "y": 4,
         "v": 8,
         "d": "2025-11-27"
       },
       {
-        "x": 38,
+        "x": 32,
         "y": 5,
         "v": 0,
         "d": "2025-11-28"
       },
       {
-        "x": 38,
+        "x": 32,
         "y": 6,
         "v": 0,
         "d": "2025-11-29"
       },
       {
-        "x": 39,
+        "x": 33,
         "y": 0,
         "v": 7,
         "d": "2025-11-30"
       },
       {
-        "x": 39,
+        "x": 33,
         "y": 1,
         "v": 2,
         "d": "2025-12-01"
       },
       {
-        "x": 39,
+        "x": 33,
         "y": 2,
         "v": 0,
         "d": "2025-12-02"
       },
       {
-        "x": 39,
+        "x": 33,
         "y": 3,
         "v": 4,
         "d": "2025-12-03"
       },
       {
-        "x": 39,
+        "x": 33,
         "y": 4,
         "v": 0,
         "d": "2025-12-04"
       },
       {
-        "x": 39,
+        "x": 33,
         "y": 5,
         "v": 2,
         "d": "2025-12-05"
       },
       {
-        "x": 39,
+        "x": 33,
         "y": 6,
         "v": 0,
         "d": "2025-12-06"
       },
       {
-        "x": 40,
+        "x": 34,
         "y": 0,
         "v": 0,
         "d": "2025-12-07"
       },
       {
-        "x": 40,
+        "x": 34,
         "y": 1,
         "v": 1,
         "d": "2025-12-08"
       },
       {
-        "x": 40,
+        "x": 34,
         "y": 2,
         "v": 1,
         "d": "2025-12-09"
       },
       {
-        "x": 40,
+        "x": 34,
         "y": 3,
         "v": 0,
         "d": "2025-12-10"
       },
       {
-        "x": 40,
+        "x": 34,
         "y": 4,
         "v": 2,
         "d": "2025-12-11"
       },
       {
-        "x": 40,
+        "x": 34,
         "y": 5,
         "v": 0,
         "d": "2025-12-12"
       },
       {
-        "x": 40,
+        "x": 34,
         "y": 6,
         "v": 0,
         "d": "2025-12-13"
       },
       {
-        "x": 41,
+        "x": 35,
         "y": 0,
         "v": 1,
         "d": "2025-12-14"
       },
       {
-        "x": 41,
+        "x": 35,
         "y": 1,
         "v": 0,
         "d": "2025-12-15"
       },
       {
-        "x": 41,
+        "x": 35,
         "y": 2,
         "v": 0,
         "d": "2025-12-16"
       },
       {
-        "x": 41,
+        "x": 35,
         "y": 3,
         "v": 0,
         "d": "2025-12-17"
       },
       {
-        "x": 41,
+        "x": 35,
         "y": 4,
         "v": 0,
         "d": "2025-12-18"
       },
       {
-        "x": 41,
+        "x": 35,
         "y": 5,
         "v": 4,
         "d": "2025-12-19"
       },
       {
-        "x": 41,
+        "x": 35,
         "y": 6,
         "v": 3,
         "d": "2025-12-20"
       },
       {
-        "x": 42,
+        "x": 36,
         "y": 0,
         "v": 0,
         "d": "2025-12-21"
       },
       {
-        "x": 42,
+        "x": 36,
         "y": 1,
         "v": 1,
         "d": "2025-12-22"
       },
       {
-        "x": 42,
+        "x": 36,
         "y": 2,
         "v": 4,
         "d": "2025-12-23"
       },
       {
-        "x": 42,
+        "x": 36,
         "y": 3,
         "v": 2,
         "d": "2025-12-24"
       },
       {
-        "x": 42,
+        "x": 36,
         "y": 4,
         "v": 1,
         "d": "2025-12-25"
       },
       {
-        "x": 42,
+        "x": 36,
         "y": 5,
         "v": 0,
         "d": "2025-12-26"
       },
       {
-        "x": 42,
+        "x": 36,
         "y": 6,
         "v": 1,
         "d": "2025-12-27"
       },
       {
-        "x": 43,
+        "x": 37,
         "y": 0,
         "v": 0,
         "d": "2025-12-28"
       },
       {
-        "x": 43,
+        "x": 37,
         "y": 1,
         "v": 2,
         "d": "2025-12-29"
       },
       {
-        "x": 43,
+        "x": 37,
         "y": 2,
         "v": 2,
         "d": "2025-12-30"
       },
       {
-        "x": 43,
+        "x": 37,
         "y": 3,
         "v": 4,
         "d": "2025-12-31"
       },
       {
-        "x": 43,
+        "x": 37,
         "y": 4,
         "v": 5,
         "d": "2026-01-01"
       },
       {
-        "x": 43,
+        "x": 37,
         "y": 5,
         "v": 1,
         "d": "2026-01-02"
       },
       {
-        "x": 43,
+        "x": 37,
         "y": 6,
         "v": 4,
         "d": "2026-01-03"
       },
       {
-        "x": 44,
+        "x": 38,
         "y": 0,
         "v": 1,
         "d": "2026-01-04"
       },
       {
-        "x": 44,
+        "x": 38,
         "y": 1,
         "v": 0,
         "d": "2026-01-05"
       },
       {
-        "x": 44,
+        "x": 38,
         "y": 2,
         "v": 0,
         "d": "2026-01-06"
       },
       {
-        "x": 44,
+        "x": 38,
         "y": 3,
         "v": 0,
         "d": "2026-01-07"
       },
       {
-        "x": 44,
+        "x": 38,
         "y": 4,
         "v": 4,
         "d": "2026-01-08"
       },
       {
-        "x": 44,
+        "x": 38,
         "y": 5,
         "v": 7,
         "d": "2026-01-09"
       },
       {
-        "x": 44,
+        "x": 38,
         "y": 6,
         "v": 0,
         "d": "2026-01-10"
       },
       {
-        "x": 45,
+        "x": 39,
         "y": 0,
         "v": 5,
         "d": "2026-01-11"
       },
       {
-        "x": 45,
+        "x": 39,
         "y": 1,
         "v": 0,
         "d": "2026-01-12"
       },
       {
-        "x": 45,
+        "x": 39,
         "y": 2,
         "v": 7,
         "d": "2026-01-13"
       },
       {
-        "x": 45,
+        "x": 39,
         "y": 3,
         "v": 3,
         "d": "2026-01-14"
       },
       {
-        "x": 45,
+        "x": 39,
         "y": 4,
         "v": 1,
         "d": "2026-01-15"
       },
       {
-        "x": 45,
+        "x": 39,
         "y": 5,
         "v": 14,
         "d": "2026-01-16"
       },
       {
-        "x": 45,
+        "x": 39,
         "y": 6,
         "v": 2,
         "d": "2026-01-17"
       },
       {
-        "x": 46,
+        "x": 40,
         "y": 0,
         "v": 1,
         "d": "2026-01-18"
       },
       {
-        "x": 46,
+        "x": 40,
         "y": 1,
         "v": 0,
         "d": "2026-01-19"
       },
       {
-        "x": 46,
+        "x": 40,
         "y": 2,
         "v": 1,
         "d": "2026-01-20"
       },
       {
-        "x": 46,
+        "x": 40,
         "y": 3,
         "v": 9,
         "d": "2026-01-21"
       },
       {
-        "x": 46,
+        "x": 40,
         "y": 4,
         "v": 0,
         "d": "2026-01-22"
       },
       {
-        "x": 46,
+        "x": 40,
         "y": 5,
         "v": 0,
         "d": "2026-01-23"
       },
       {
-        "x": 46,
+        "x": 40,
         "y": 6,
         "v": 2,
         "d": "2026-01-24"
       },
       {
-        "x": 47,
+        "x": 41,
         "y": 0,
         "v": 1,
         "d": "2026-01-25"
       },
       {
-        "x": 47,
+        "x": 41,
         "y": 1,
         "v": 0,
         "d": "2026-01-26"
       },
       {
-        "x": 47,
+        "x": 41,
         "y": 2,
         "v": 5,
         "d": "2026-01-27"
       },
       {
-        "x": 47,
+        "x": 41,
         "y": 3,
         "v": 0,
         "d": "2026-01-28"
       },
       {
-        "x": 47,
+        "x": 41,
         "y": 4,
         "v": 0,
         "d": "2026-01-29"
       },
       {
-        "x": 47,
+        "x": 41,
         "y": 5,
         "v": 2,
         "d": "2026-01-30"
       },
       {
-        "x": 47,
+        "x": 41,
         "y": 6,
         "v": 11,
         "d": "2026-01-31"
       },
       {
-        "x": 48,
+        "x": 42,
         "y": 0,
         "v": 0,
         "d": "2026-02-01"
       },
       {
-        "x": 48,
+        "x": 42,
         "y": 1,
         "v": 0,
         "d": "2026-02-02"
       },
       {
-        "x": 48,
+        "x": 42,
         "y": 2,
         "v": 0,
         "d": "2026-02-03"
       },
       {
-        "x": 48,
+        "x": 42,
         "y": 3,
         "v": 0,
         "d": "2026-02-04"
       },
       {
-        "x": 48,
+        "x": 42,
         "y": 4,
         "v": 0,
         "d": "2026-02-05"
       },
       {
-        "x": 48,
+        "x": 42,
         "y": 5,
         "v": 0,
         "d": "2026-02-06"
       },
       {
-        "x": 48,
+        "x": 42,
         "y": 6,
         "v": 1,
         "d": "2026-02-07"
       },
       {
-        "x": 49,
+        "x": 43,
         "y": 0,
         "v": 0,
         "d": "2026-02-08"
       },
       {
-        "x": 49,
+        "x": 43,
         "y": 1,
         "v": 0,
         "d": "2026-02-09"
       },
       {
-        "x": 49,
+        "x": 43,
         "y": 2,
         "v": 1,
         "d": "2026-02-10"
       },
       {
-        "x": 49,
+        "x": 43,
         "y": 3,
         "v": 0,
         "d": "2026-02-11"
       },
       {
-        "x": 49,
+        "x": 43,
         "y": 4,
         "v": 0,
         "d": "2026-02-12"
       },
       {
-        "x": 49,
+        "x": 43,
         "y": 5,
         "v": 1,
         "d": "2026-02-13"
       },
       {
-        "x": 49,
+        "x": 43,
         "y": 6,
         "v": 0,
         "d": "2026-02-14"
       },
       {
-        "x": 50,
+        "x": 44,
         "y": 0,
         "v": 3,
         "d": "2026-02-15"
       },
       {
-        "x": 50,
+        "x": 44,
         "y": 1,
         "v": 2,
         "d": "2026-02-16"
       },
       {
-        "x": 50,
+        "x": 44,
         "y": 2,
         "v": 0,
         "d": "2026-02-17"
       },
       {
-        "x": 50,
+        "x": 44,
         "y": 3,
         "v": 0,
         "d": "2026-02-18"
       },
       {
-        "x": 50,
+        "x": 44,
         "y": 4,
         "v": 0,
         "d": "2026-02-19"
       },
       {
-        "x": 50,
+        "x": 44,
         "y": 5,
         "v": 1,
         "d": "2026-02-20"
       },
       {
-        "x": 50,
+        "x": 44,
         "y": 6,
         "v": 5,
         "d": "2026-02-21"
       },
       {
-        "x": 51,
+        "x": 45,
         "y": 0,
         "v": 1,
         "d": "2026-02-22"
       },
       {
-        "x": 51,
+        "x": 45,
         "y": 1,
         "v": 0,
         "d": "2026-02-23"
       },
       {
-        "x": 51,
+        "x": 45,
         "y": 2,
         "v": 1,
         "d": "2026-02-24"
       },
       {
-        "x": 51,
+        "x": 45,
         "y": 3,
         "v": 0,
         "d": "2026-02-25"
       },
       {
-        "x": 51,
+        "x": 45,
         "y": 4,
         "v": 8,
         "d": "2026-02-26"
       },
       {
-        "x": 51,
+        "x": 45,
         "y": 5,
         "v": 3,
         "d": "2026-02-27"
       },
       {
-        "x": 51,
+        "x": 45,
         "y": 6,
         "v": 0,
         "d": "2026-02-28"
       },
       {
-        "x": 52,
+        "x": 46,
         "y": 0,
         "v": 0,
         "d": "2026-03-01"
       },
       {
-        "x": 52,
+        "x": 46,
         "y": 1,
         "v": 4,
         "d": "2026-03-02"
       },
       {
+        "x": 46,
+        "y": 2,
+        "v": 7,
+        "d": "2026-03-03"
+      },
+      {
+        "x": 46,
+        "y": 3,
+        "v": 2,
+        "d": "2026-03-04"
+      },
+      {
+        "x": 46,
+        "y": 4,
+        "v": 2,
+        "d": "2026-03-05"
+      },
+      {
+        "x": 46,
+        "y": 5,
+        "v": 2,
+        "d": "2026-03-06"
+      },
+      {
+        "x": 46,
+        "y": 6,
+        "v": 4,
+        "d": "2026-03-07"
+      },
+      {
+        "x": 47,
+        "y": 0,
+        "v": 2,
+        "d": "2026-03-08"
+      },
+      {
+        "x": 47,
+        "y": 1,
+        "v": 1,
+        "d": "2026-03-09"
+      },
+      {
+        "x": 47,
+        "y": 2,
+        "v": 24,
+        "d": "2026-03-10"
+      },
+      {
+        "x": 47,
+        "y": 3,
+        "v": 0,
+        "d": "2026-03-11"
+      },
+      {
+        "x": 47,
+        "y": 4,
+        "v": 9,
+        "d": "2026-03-12"
+      },
+      {
+        "x": 47,
+        "y": 5,
+        "v": 2,
+        "d": "2026-03-13"
+      },
+      {
+        "x": 47,
+        "y": 6,
+        "v": 0,
+        "d": "2026-03-14"
+      },
+      {
+        "x": 48,
+        "y": 0,
+        "v": 2,
+        "d": "2026-03-15"
+      },
+      {
+        "x": 48,
+        "y": 1,
+        "v": 21,
+        "d": "2026-03-16"
+      },
+      {
+        "x": 48,
+        "y": 2,
+        "v": 4,
+        "d": "2026-03-17"
+      },
+      {
+        "x": 48,
+        "y": 3,
+        "v": 0,
+        "d": "2026-03-18"
+      },
+      {
+        "x": 48,
+        "y": 4,
+        "v": 1,
+        "d": "2026-03-19"
+      },
+      {
+        "x": 48,
+        "y": 5,
+        "v": 4,
+        "d": "2026-03-20"
+      },
+      {
+        "x": 48,
+        "y": 6,
+        "v": 0,
+        "d": "2026-03-21"
+      },
+      {
+        "x": 49,
+        "y": 0,
+        "v": 0,
+        "d": "2026-03-22"
+      },
+      {
+        "x": 49,
+        "y": 1,
+        "v": 0,
+        "d": "2026-03-23"
+      },
+      {
+        "x": 49,
+        "y": 2,
+        "v": 3,
+        "d": "2026-03-24"
+      },
+      {
+        "x": 49,
+        "y": 3,
+        "v": 1,
+        "d": "2026-03-25"
+      },
+      {
+        "x": 49,
+        "y": 4,
+        "v": 0,
+        "d": "2026-03-26"
+      },
+      {
+        "x": 49,
+        "y": 5,
+        "v": 0,
+        "d": "2026-03-27"
+      },
+      {
+        "x": 49,
+        "y": 6,
+        "v": 1,
+        "d": "2026-03-28"
+      },
+      {
+        "x": 50,
+        "y": 0,
+        "v": 0,
+        "d": "2026-03-29"
+      },
+      {
+        "x": 50,
+        "y": 1,
+        "v": 2,
+        "d": "2026-03-30"
+      },
+      {
+        "x": 50,
+        "y": 2,
+        "v": 1,
+        "d": "2026-03-31"
+      },
+      {
+        "x": 50,
+        "y": 3,
+        "v": 0,
+        "d": "2026-04-01"
+      },
+      {
+        "x": 50,
+        "y": 4,
+        "v": 2,
+        "d": "2026-04-02"
+      },
+      {
+        "x": 50,
+        "y": 5,
+        "v": 1,
+        "d": "2026-04-03"
+      },
+      {
+        "x": 50,
+        "y": 6,
+        "v": 0,
+        "d": "2026-04-04"
+      },
+      {
+        "x": 51,
+        "y": 0,
+        "v": 0,
+        "d": "2026-04-05"
+      },
+      {
+        "x": 51,
+        "y": 1,
+        "v": 5,
+        "d": "2026-04-06"
+      },
+      {
+        "x": 51,
+        "y": 2,
+        "v": 9,
+        "d": "2026-04-07"
+      },
+      {
+        "x": 51,
+        "y": 3,
+        "v": 3,
+        "d": "2026-04-08"
+      },
+      {
+        "x": 51,
+        "y": 4,
+        "v": 0,
+        "d": "2026-04-09"
+      },
+      {
+        "x": 51,
+        "y": 5,
+        "v": 12,
+        "d": "2026-04-10"
+      },
+      {
+        "x": 51,
+        "y": 6,
+        "v": 0,
+        "d": "2026-04-11"
+      },
+      {
+        "x": 52,
+        "y": 0,
+        "v": 0,
+        "d": "2026-04-12"
+      },
+      {
+        "x": 52,
+        "y": 1,
+        "v": 2,
+        "d": "2026-04-13"
+      },
+      {
         "x": 52,
         "y": 2,
+        "v": 2,
+        "d": "2026-04-14"
+      },
+      {
+        "x": 52,
+        "y": 3,
         "v": 0,
-        "d": "2026-03-03"
+        "d": "2026-04-15"
+      },
+      {
+        "x": 52,
+        "y": 4,
+        "v": 5,
+        "d": "2026-04-16"
+      },
+      {
+        "x": 52,
+        "y": 5,
+        "v": 0,
+        "d": "2026-04-17"
+      },
+      {
+        "x": 52,
+        "y": 6,
+        "v": 0,
+        "d": "2026-04-18"
+      },
+      {
+        "x": 53,
+        "y": 0,
+        "v": 0,
+        "d": "2026-04-19"
       }
     ],
     "maxValue": 67
