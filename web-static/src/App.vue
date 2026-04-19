@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, computed } from 'vue'
+import { onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMomMode } from '@/composables/useMomMode'
 import ThemeToggle from '@/components/ThemeToggle.vue'
@@ -16,76 +16,95 @@ const isReaderPage = computed(() => {
   return route.path.startsWith('/reader/')
 })
 
+const isHomePage = computed(() => route.path === '/')
+const shouldLockPageScroll = computed(() => isHomePage.value && !isReaderPage.value)
+
+function applyPageScrollLock(locked: boolean) {
+  const root = document.documentElement
+  const body = document.body
+  root.classList.toggle('home-scroll-locked', locked)
+  body.classList.toggle('home-scroll-locked', locked)
+}
+
+watch(shouldLockPageScroll, (locked) => {
+  applyPageScrollLock(locked)
+}, { immediate: true })
+
 onMounted(() => {
   initMomMode()
+})
+
+onBeforeUnmount(() => {
+  applyPageScrollLock(false)
 })
 </script>
 
 <template>
 
-  <!-- Navigation Bar (hidden on reader pages) -->
-  <div class="navigation-bar" v-show="!isReaderPage">
-    <div class="nav-left">
-      <RouterLink class="brand-logo" to="/" aria-label="NoHentai">
-        の
-      </RouterLink>
-      <ul class="icon-nav">
-        <li>
-          <RouterLink to="/" aria-label="Ex Home" title="Ex Home">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M3 10.5l9-7 9 7V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z" />
-            </svg>
-          </RouterLink>
-        </li>
-        <li>
-          <RouterLink to="/data" aria-label="Data Analys" title="Data Analys">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 19h16v2H4zM6 10h3v7H6zM11 6h3v11h-3zM16 12h3v5h-3z" />
-            </svg>
-          </RouterLink>
-        </li>
-        <li>
-          <RouterLink to="/printed" aria-label="Printed" title="Printed">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M18 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM6 4h5v8l-2.5-1.5L6 12V4z" />
-            </svg>
-          </RouterLink>
-        </li>
-        <li>
-          <RouterLink to="/tags" aria-label="Tags" title="Tags">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M21.41 11.58l-9-9A2 2 0 0 0 11 2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 .59 1.42l9 9A2 2 0 0 0 13 22a2 2 0 0 0 1.41-.59l7-7A2 2 0 0 0 22 13a2 2 0 0 0-.59-1.42zM5.5 7A1.5 1.5 0 1 1 7 5.5 1.5 1.5 0 0 1 5.5 7z"/>
-            </svg>
-          </RouterLink>
-        </li>
-        <li>
-          <RouterLink to="/daily" aria-label="Daily Search" title="Daily Search">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.93V15a1 1 0 0 0-2 0v2.93A8 8 0 0 1 4.07 11H6a1 1 0 0 0 0-2H4.07A8 8 0 0 1 11 4.07V6a1 1 0 0 0 2 0V4.07A8 8 0 0 1 19.93 11H18a1 1 0 0 0 0 2h1.93A8 8 0 0 1 13 16.93zM12 10a2 2 0 1 0 2 2 2 2 0 0 0-2-2z"/>
-            </svg>
-          </RouterLink>
-        </li>
-
-
+  <div :class="['app-shell', { 'home-app-shell': isHomePage && !isReaderPage }]">
+    <!-- Navigation Bar (hidden on reader pages) -->
+    <div class="navigation-bar" v-show="!isReaderPage">
+      <div class="nav-left">
+        <RouterLink class="brand-logo" to="/" aria-label="NoHentai">
+          の
+        </RouterLink>
+        <ul class="icon-nav">
+          <li>
+            <RouterLink to="/" aria-label="Ex Home" title="Ex Home">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 10.5l9-7 9 7V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z" />
+              </svg>
+            </RouterLink>
+          </li>
+          <li>
+            <RouterLink to="/data" aria-label="Data Analys" title="Data Analys">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 19h16v2H4zM6 10h3v7H6zM11 6h3v11h-3zM16 12h3v5h-3z" />
+              </svg>
+            </RouterLink>
+          </li>
+          <li>
+            <RouterLink to="/printed" aria-label="Printed" title="Printed">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM6 4h5v8l-2.5-1.5L6 12V4z" />
+              </svg>
+            </RouterLink>
+          </li>
+          <li>
+            <RouterLink to="/tags" aria-label="Tags" title="Tags">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21.41 11.58l-9-9A2 2 0 0 0 11 2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 .59 1.42l9 9A2 2 0 0 0 13 22a2 2 0 0 0 1.41-.59l7-7A2 2 0 0 0 22 13a2 2 0 0 0-.59-1.42zM5.5 7A1.5 1.5 0 1 1 7 5.5 1.5 1.5 0 0 1 5.5 7z"/>
+              </svg>
+            </RouterLink>
+          </li>
+          <li>
+            <RouterLink to="/daily" aria-label="Daily Search" title="Daily Search">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.93V15a1 1 0 0 0-2 0v2.93A8 8 0 0 1 4.07 11H6a1 1 0 0 0 0-2H4.07A8 8 0 0 1 11 4.07V6a1 1 0 0 0 2 0V4.07A8 8 0 0 1 19.93 11H18a1 1 0 0 0 0 2h1.93A8 8 0 0 1 13 16.93zM12 10a2 2 0 1 0 2 2 2 2 0 0 0-2-2z"/>
+              </svg>
+            </RouterLink>
+          </li>
+        </ul>
+      </div>
+      <!-- Desktop Navigation - 静态版本 -->
+      <ul class="nav-menu desktop-menu">
+        <li><RouterLink to="/">Ex Home</RouterLink></li>
+        <li><RouterLink to="/data">Data Analys</RouterLink></li>
+        <li><RouterLink to="/printed">Printed</RouterLink></li>
+        <li><RouterLink to="/tags">Tags</RouterLink></li>
+        <li><RouterLink to="/daily">Daily</RouterLink></li>
       </ul>
+      
+      <!-- Theme Toggle (always visible) -->
+      <div class="theme-toggle-nav">
+        <MomModeToggle />
+        <ThemeToggle />
+      </div>
     </div>
-    <!-- Desktop Navigation - 静态版本 -->
-    <ul class="nav-menu desktop-menu">
-      <li><RouterLink to="/">Ex Home</RouterLink></li>
-      <li><RouterLink to="/data">Data Analys</RouterLink></li>
-      <li><RouterLink to="/printed">Printed</RouterLink></li>
-      <li><RouterLink to="/tags">Tags</RouterLink></li>
-      <li><RouterLink to="/daily">Daily</RouterLink></li>
-    </ul>
-    
-    <!-- Theme Toggle (always visible) -->
-    <div class="theme-toggle-nav">
-      <MomModeToggle />
-      <ThemeToggle />
+    <div :class="['route-shell', { 'home-shell': isHomePage && !isReaderPage }]">
+      <router-view></router-view> <!-- 路由出口 -->
     </div>
-    
   </div>
-  <router-view></router-view> <!-- 路由出口 -->
 </template>
 
 <style scoped>
@@ -104,19 +123,25 @@ onMounted(() => {
 
 
   /* Navigation Bar Styles */
+  .app-shell.home-app-shell {
+    height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
   .navigation-bar {
-    max-width: 1300px;
-    margin: 0 auto 10px auto;
-    padding: 10px 15px;
+    width: 100%;
+    margin: 0;
+    padding: 8px 16px;
+    min-height: var(--app-nav-height, 53px);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 100%;
     box-sizing: border-box;
     position: relative;
-    background: var(--surface-color);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    background: var(--row-bg, #131f2e);
+    border-bottom: 1px solid var(--row-border, #1e293b);
     gap: 10px;
   }
 
@@ -247,6 +272,12 @@ onMounted(() => {
     height: 60%;
     background: var(--border-color);
   }
+
+  .route-shell.home-shell {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
   
   @media (max-width: 900px) {
     .nav-menu.desktop-menu {
@@ -265,7 +296,6 @@ onMounted(() => {
   @media (max-width: 600px) {
     .navigation-bar {
       padding: 8px 10px;
-      border-radius: 6px;
     }
 
     .icon-nav a {

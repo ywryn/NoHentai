@@ -11,8 +11,21 @@
   /* 共用变量 */
   --primary-color: #646cff;
   --primary-color-hover: #535bf2;
-  
-  /* 主题变量将由类设置，不在root设置默认值以避免闪烁 */
+
+  /* 布局变量默认值（深色），由主题类覆盖 */
+  --row-bg: #131f2e;
+  --row-border: #1e293b;
+  --row-hover-bg: #172234;
+  --sidebar-bg: #0d1929;
+  --toolbar-border: #1e293b;
+  --muted-color: #475569;
+  --title-color: #cbd5e1;
+  --tag-bg: rgba(51, 65, 85, 0.6);
+  --tag-border: #334155;
+  --tag-color: #94a3b8;
+  --scrollbar-track: rgba(15, 23, 42, 0.35);
+  --scrollbar-thumb: rgba(71, 85, 105, 0.8);
+  --scrollbar-thumb-hover: rgba(100, 116, 139, 0.95);
 }
 
 /* HTML 根元素也需要设置背景色和过渡效果 */
@@ -20,6 +33,13 @@ html {
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html.home-scroll-locked,
+body.home-scroll-locked {
+  overflow: hidden;
+  overscroll-behavior: none;
+  height: 100%;
 }
 
 /* 浅色主题 - 护眼暖米色调 */
@@ -30,6 +50,19 @@ html {
   --surface-color: #f1ede7;
   --border-color: #d6d3d1;
   --shadow-color: rgba(0, 0, 0, 0.06);
+  --row-bg: #ffffff;
+  --row-border: #e2ddd8;
+  --row-hover-bg: #f5f0ea;
+  --sidebar-bg: #eee9e2;
+  --toolbar-border: #d6d3d1;
+  --muted-color: #64748b;
+  --title-color: #2d3748;
+  --tag-bg: rgba(210, 205, 195, 0.6);
+  --tag-border: #c5bfb7;
+  --tag-color: #64748b;
+  --scrollbar-track: rgba(214, 211, 209, 0.45);
+  --scrollbar-thumb: rgba(148, 163, 184, 0.95);
+  --scrollbar-thumb-hover: rgba(100, 116, 139, 1);
 }
 
 /* 深色主题 */
@@ -40,6 +73,19 @@ html {
   --surface-color: #1e293b;
   --border-color: #334155;
   --shadow-color: rgba(0, 0, 0, 0.3);
+  --row-bg: #131f2e;
+  --row-border: #1e293b;
+  --row-hover-bg: #172234;
+  --sidebar-bg: #0d1929;
+  --toolbar-border: #1e293b;
+  --muted-color: #475569;
+  --title-color: #cbd5e1;
+  --tag-bg: rgba(51, 65, 85, 0.6);
+  --tag-border: #334155;
+  --tag-color: #94a3b8;
+  --scrollbar-track: rgba(15, 23, 42, 0.35);
+  --scrollbar-thumb: rgba(71, 85, 105, 0.8);
+  --scrollbar-thumb-hover: rgba(100, 116, 139, 0.95);
 }
 
 /* 妈妈模式 - 图片毛玻璃特效（排除缩略图和大图查看器元素，避免与遮罩层冲突） */
@@ -184,4 +230,3 @@ img {
   height: auto;
   display: block;
 }
-

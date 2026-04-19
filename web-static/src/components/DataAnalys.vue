@@ -1,67 +1,97 @@
 <template>
-    <div class="container">
-
-        <!-- 网站说明 -->
-        <div class="site-description">
-            <p><span class="site-name">NoHentai</span>：ExHentai/E-Hentai 个人收藏&同步网站。支持数据分析（包括分类分布、季度趋势以及不同命名空间下的热门标签统计）、Gallery高级检索、E/Ex数据源同步。</p>
-        </div>
-
-        <!-- 收藏活动热力图 -->
-        <div class="heatmap-section">
-            <div class="heatmap-content">
-                <h2 class="section-title">Favorite Activity</h2>
-                <div class="heatmap-chart-container">
-                    <Chart type="matrix" :data="heatmapChartData" :options="heatmapChartOptions" class="heatmap-chart" />
-                </div>
+    <div class="data-container">
+        <div class="data-page-header">
+            <div class="page-copy">
+                <div class="page-eyebrow">Analytics</div>
+                <h1 class="page-title">Gallery Statistics</h1>
+                <p class="page-subtitle">Collection trends, category distribution, tag breakdowns, and favorite activity across the archive.</p>
+            </div>
+            <div class="summary-card">
+                <span class="summary-label">Total Galleries</span>
+                <strong class="summary-value">{{ stats.total_count }}</strong>
             </div>
         </div>
 
-        <!-- 顶部行：Statistics (左) 和 Categories (右) -->
+        <div class="site-description data-panel">
+            <p><span class="site-name">NoHentai</span>：ExHentai/E-Hentai 个人收藏&同步网站。支持数据分析（包括分类分布、季度趋势以及不同命名空间下的热门标签统计）、Gallery高级检索、E/Ex数据源同步。</p>
+        </div>
+
+        <section class="data-panel heatmap-section">
+            <div class="panel-header">
+                <div>
+                    <div class="panel-eyebrow">Activity</div>
+                    <h2 class="section-title">Favorite Activity</h2>
+                </div>
+            </div>
+            <div class="heatmap-chart-container">
+                <Chart type="matrix" :data="heatmapChartData" :options="heatmapChartOptions" class="heatmap-chart" />
+            </div>
+        </section>
+
         <div class="stats-row">
-            <div class="stats-left">
-                <h1 class="section-title-large">Gallery Statistics</h1>
-                <div class="stats-row-inline">
-                    <p class="stats-text">
-                        Total Galleries: {{ stats.total_count }}
-                    </p>
+            <section class="data-panel stats-left">
+                <div class="panel-header panel-header-spread">
+                    <div>
+                        <div class="panel-eyebrow">Trend</div>
+                        <h2 class="section-title-large">Quarterly Growth</h2>
+                    </div>
                     <div class="toggle-wrapper">
                         <span class="toggle-label">Show All</span>
                         <ToggleSwitch v-model="showFullData" @change="toggleFullData" />
                     </div>
                 </div>
+                <p class="stats-text">Total Galleries: {{ stats.total_count }}</p>
                 <div class="line-chart-container">
-                    <Chart type="line" :data="quarterlyLineData" :options="quarterlyLineOptions"
-                        class="chart-full" />
+                    <Chart type="line" :data="quarterlyLineData" :options="quarterlyLineOptions" class="chart-full" />
                 </div>
-            </div>
-            <div class="stats-right">
+            </section>
+            <section class="data-panel stats-right">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-eyebrow">Distribution</div>
+                        <h2 class="section-title">Categories</h2>
+                    </div>
+                </div>
                 <h2 class="section-title">Categories</h2>
                 <div class="chart-container">
                     <Chart type="pie" :data="chartData" :options="chartOptions" class="chart-responsive" />
                 </div>
-            </div>
+            </section>
         </div>
 
-        <!-- 中间行：Female Tags (左) 和 Male Tags (右) -->
         <div class="tags-row">
-            <div class="tags-section-half">
-                <h2 class="section-title">Female Tags</h2>
+            <section class="data-panel tags-section-half">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-eyebrow">Tags</div>
+                        <h2 class="section-title">Female Tags</h2>
+                    </div>
+                </div>
                 <div class="chart-container">
                     <Chart type="bar" :data="femaleChartData" :options="barChartOptions" class="chart-responsive" />
                 </div>
-            </div>
-            <div class="tags-section-half">
-                <h2 class="section-title">Male Tags</h2>
+            </section>
+            <section class="data-panel tags-section-half">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-eyebrow">Tags</div>
+                        <h2 class="section-title">Male Tags</h2>
+                    </div>
+                </div>
                 <div class="chart-container">
                     <Chart type="bar" :data="maleChartData" :options="barChartOptions" class="chart-responsive" />
                 </div>
-            </div>
+            </section>
         </div>
 
-        <!-- 底部行 -->
         <div class="bottom-row">
-            <div class="bottom-section">
-                <h2 class="section-title">Other</h2>
+            <section class="data-panel bottom-section">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-eyebrow">Namespace</div>
+                        <h2 class="section-title">Other</h2>
+                    </div>
+                </div>
                 <table class="data-table">
                     <colgroup>
                         <col class="tag-col">
@@ -88,10 +118,15 @@
                         </tr>
                     </tbody>
                 </table>
-            </div>
+            </section>
             
-            <div class="bottom-section">
-                <h2 class="section-title">Artist</h2>
+            <section class="data-panel bottom-section">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-eyebrow">Namespace</div>
+                        <h2 class="section-title">Artist</h2>
+                    </div>
+                </div>
                 <table class="data-table">
                     <colgroup>
                         <col class="tag-col">
@@ -116,10 +151,15 @@
                         </tr>
                     </tbody>
                 </table>
-            </div>
+            </section>
             
-            <div class="bottom-section">
-                <h2 class="section-title">Parody</h2>
+            <section class="data-panel bottom-section">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-eyebrow">Namespace</div>
+                        <h2 class="section-title">Parody</h2>
+                    </div>
+                </div>
                 <table class="data-table">
                     <colgroup>
                         <col class="tag-col">
@@ -144,10 +184,15 @@
                         </tr>
                     </tbody>
                 </table>
-            </div>
+            </section>
             
-            <div class="bottom-section">
-                <h2 class="section-title">Character</h2>
+            <section class="data-panel bottom-section">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-eyebrow">Namespace</div>
+                        <h2 class="section-title">Character</h2>
+                    </div>
+                </div>
                 <table class="data-table">
                     <colgroup>
                         <col class="tag-col">
@@ -172,7 +217,7 @@
                         </tr>
                     </tbody>
                 </table>
-            </div>
+            </section>
         </div>
 
     </div>

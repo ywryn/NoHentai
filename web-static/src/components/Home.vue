@@ -1,249 +1,198 @@
 <template>
   <div class="container">
-    <!-- SEO文字块，对搜索引擎可见但对用户隐藏 -->
     <div class="seo-description">
       <h1>NoHentai – ExHentai & E-Hentai Favorites Backup and Gallery Browser</h1>
       <p>NoHentai is a backup and browsing platform designed for ExHentai and E-Hentai favorite galleries. It allows users to organize and browse doujinshi, manga, artist CG, game CG, and related gallery content with structured metadata. Features include advanced tag filtering, category browsing, keyword search, Japanese title support, tag translation, and detailed gallery information, enabling efficient archive management and discovery of ExHentai and E-Hentai collections.</p>
     </div>
 
-    <div class="control-panel">
-      <!-- 类型筛选 -->
-      <div class="button-group desktop-types">
-        <Button
-          v-for="type in currentTypeList"
-          :key="type.name"
-          :label="type.name"
-          :class="['btn', type.color, 'type-btn', { active: activeType === type.name }]"
-          @click="toggleType(type.name)"
-          aria-label="Filter by type"
-        />
-      </div>
-      <div class="type-scroller">
-        <button
-          class="type-pill"
-          :class="{ active: !activeType }"
-          @click="toggleType(null)"
-          aria-label="Show all types"
-        >
-          All
-        </button>
-        <button
-          v-for="type in currentTypeList"
-          :key="type.name"
-          class="type-pill"
-          :class="[type.color, { active: activeType === type.name }]"
-          @click="toggleType(type.name)"
-          :aria-label="`Filter by ${type.name}`"
-        >
-          {{ type.name }}
-        </button>
-      </div>
-
-      <!-- 搜索条 -->
-      <div class="search-bar">
-        <div class="search-input-wrap">
-          <InputText
+    <div class="home-layout">
+      <!-- Desktop Sidebar -->
+      <aside class="home-sidebar">
+        <div class="sb-search">
+          <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="11" cy="11" r="7.5"/><line x1="20" y1="20" x2="15.5" y2="15.5"/>
+          </svg>
+          <input
             v-model.trim="searchQuery"
-            placeholder="Search Keywords"
-            class="custom-input"
+            class="sb-input"
+            placeholder="Search…"
             @keyup.enter="performSearch"
-            aria-label="Search keywords"
           />
           <span
-            class="search-help-link"
+            class="sb-help"
             role="button"
             tabindex="0"
-            aria-label="Search syntax help"
             @click="toggleSearchHelp"
             @keyup.enter="toggleSearchHelp"
           >?</span>
         </div>
-        <Button
-          label="Search"
-          class="btn search-btn"
-          @click="performSearch"
-          severity="secondary"
-          :loading="loading"
-        />
-        <Button
-          label="Clear"
-          class="btn clear-btn"
-          @click="clearSearch"
-          severity="secondary"
-          :disabled="loading && !searchQuery && !activeType"
-        />
-      </div>
-    </div>
 
-    <!-- 顶部分页器 -->
-    <Paginator
-      :template="'CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown'"
-      :rows="perPage"
-      :totalRecords="totalRecords"
-      :first="firstIndex"
-      :pageLinkSize="3"
-      @page="onPageChange"
-    />
+        <div class="sb-section">Category</div>
 
-    <!-- 表格展示 -->
-    <div class="results-table">
-      <div class="results-cards">
-        <div v-if="!loading && results.length" class="card-grid">
-          <article v-for="item in results" :key="item.gid" class="gallery-card" @click="navigateToGallery(item.id, item.gid)">
-            <div class="card-thumb">
-              <img :src="item.thumb || '/placeholder.png'" alt="thumb" />
+        <div
+          class="sb-item"
+          :class="{ active: !activeType }"
+          @click="toggleType(null)"
+        >
+          <span class="sb-dot" style="background:#334155"></span>
+          All
+        </div>
+        <div
+          v-for="type in exTypeList"
+          :key="type.name"
+          class="sb-item"
+          :class="{ active: activeType === type.name }"
+          @click="toggleType(type.name)"
+        >
+          <span class="sb-dot" :style="{ background: exTypeDotColors[type.name] }"></span>
+          {{ type.name }}
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <div class="home-content">
+        <!-- Mobile Controls (hidden on desktop) -->
+        <div class="mobile-controls">
+          <div class="mob-search-row">
+            <div class="mob-search-wrap">
+              <svg class="mob-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="11" cy="11" r="7.5"/><line x1="20" y1="20" x2="15.5" y2="15.5"/>
+              </svg>
+              <input
+                v-model.trim="searchQuery"
+                class="mob-input"
+                placeholder="Search…"
+                @keyup.enter="performSearch"
+              />
+              <span
+                class="mob-help"
+                role="button"
+                tabindex="0"
+                @click="toggleSearchHelp"
+                @keyup.enter="toggleSearchHelp"
+              >?</span>
             </div>
-            <div class="card-body">
-              <div class="card-title">{{ item.title_jpn || item.title }}</div>
-              <div v-if="item.tags && item.tags.length" class="card-tags">
-                {{ item.tags.map(t => t.tag_cn || t.tag).join(' · ') }}
+            <button class="mob-search-btn" @click="performSearch">Search</button>
+          </div>
+          <div class="mob-pills">
+            <button
+              class="mob-pill all-pill"
+              :class="{ active: !activeType }"
+              @click="toggleType(null)"
+            >All</button>
+            <button
+              v-for="type in exTypeList"
+              :key="type.name"
+              class="mob-pill"
+              :class="[type.color, { active: activeType === type.name }]"
+              @click="toggleType(type.name)"
+            >{{ type.name }}</button>
+          </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+          <div class="result-count">
+            Showing <strong>{{ totalRecords }}</strong> {{ activeType || 'Galleries' }}
+          </div>
+          <div class="paginator-mini" v-if="totalPages > 1">
+            <button class="pag-btn" :disabled="currentPage <= 1" @click="goToPage(1)">«</button>
+            <button class="pag-btn" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">‹</button>
+            <template v-for="(p, idx) in pagerPages" :key="idx">
+              <span v-if="p === '…'" class="pag-sep"></span>
+              <button v-else class="pag-btn" :class="{ active: p === currentPage }" @click="goToPage(Number(p))">{{ p }}</button>
+            </template>
+            <button class="pag-btn" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">›</button>
+            <button class="pag-btn" :disabled="currentPage >= totalPages" @click="goToPage(totalPages)">»</button>
+          </div>
+        </div>
+
+        <!-- Gallery List -->
+        <div class="gallery-list">
+          <div v-if="loading" class="empty-state">Loading…</div>
+          <div v-else-if="!mappedResults.length" class="empty-state">No data</div>
+          <article
+            v-else
+            v-for="item in mappedResults"
+            :key="item.gid"
+            class="gallery-row"
+            @click="navigateToGallery(null, item.gid)"
+          >
+            <div class="gr-thumb">
+              <img :src="item.thumb || ''" :alt="item.type" loading="lazy" />
+            </div>
+            <div class="gr-body">
+              <div class="gr-top">
+                <span class="gr-badge" :class="item.typeClass">{{ item.type }}</span>
+                <span class="gr-title">{{ item.title_jpn || item.title }}</span>
               </div>
-              <div class="card-meta">
-                <span class="card-type">{{ item.category }}</span>
-                <span class="card-pages" v-if="item.filecount">{{ item.filecount }} pages</span>
+              <div class="gr-tags" v-if="item.tags.length">
+                <span v-for="(tag, i) in item.tags.slice(0, 8)" :key="i" class="gr-tag">
+                  {{ tag.tag_cn || tag.value }}
+                </span>
               </div>
-              <div class="card-sub">
-                <span class="card-fav-time">{{ item.favTime }}</span>
-                <span class="card-fav-category">{{ item.favCategory }}</span>
+              <div class="gr-meta">
+                <Rating :modelValue="item.rating" readonly class="gr-rating" />
+                <span class="gr-pages" v-if="item.filecount">{{ item.filecount }}</span>
+                <span class="gr-date">{{ item.published }}</span>
+                <span class="gr-fav" v-if="item.favCategory">♥ {{ item.favCategory }}</span>
               </div>
             </div>
           </article>
         </div>
-        <div v-else-if="loading" class="empty-state">Loading…</div>
-        <div v-else class="empty-state">No data</div>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Type</th>
-            <th>Title</th>
-            <th style="width: 150px;">Published</th>
-            <th>Favorite Info</th>
-          </tr>
-        </thead>
 
-        <tbody v-if="!loading && paddedResults.length">
-          <tr
-            v-for="item in paddedResults"
-            :key="item.gid ?? 'placeholder-' + item.__placeholderId"
-            :class="{ 'is-placeholder': item.__placeholder }"
-          >
-            <td>
-              <span v-if="!item.__placeholder" :class="'badge ' + item.typeClass">{{ item.type }}</span>
-            </td>
-            <td
-              v-if="!item.__placeholder"
-              class="title-cell"
-              @click="navigateToGallery(item.id, item.gid)"
-              @mouseenter="showPopover($event, item)"
-              @mouseleave="hidePopover"
-            >
-              <div class="title-container">
-                {{ item.title_jpn || item.title }}
-              </div>
-              <div class="tags-container" v-if="item.tags && item.tags.length">
-                <Tag
-                  v-for="(tag, tIdx) in item.tags"
-                  :key="tIdx"
-                  :value="tag.tag_cn || tag.tag"
-                  class="tag"
-                  severity="secondary"
-                />
-              </div>
-            </td>
-            <td v-else class="title-cell"></td>
-            <td>
-              <div class="cell-content" v-if="!item.__placeholder">
-                <div>{{ item.published }}</div>
-                <div v-if="item.rating != null">
-                  <Rating :modelValue="item.rating" readonly />
-                </div>
-              </div>
-            </td>
-            <td v-if="!item.__placeholder">
-              <div class="fav-info">
-                <div class="fav-time">{{ item.favTime }}</div>
-                <div class="fav-category">{{ item.favCategory }}</div>
-              </div>
-            </td>
-            <td v-else></td>
-          </tr>
-        </tbody>
+        <!-- Bottom Paginator -->
+        <Paginator
+          :template="'CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown'"
+          :rows="perPage"
+          :totalRecords="totalRecords"
+          :first="firstIndex"
+          :pageLinkSize="3"
+          @page="onPageChange"
+        />
 
-        <tbody v-else-if="loading">
-          <tr>
-            <td colspan="4" class="empty-state">Loading…</td>
-          </tr>
-        </tbody>
-
-        <tbody v-else>
-          <tr>
-            <td colspan="4" class="empty-state">No data</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <Popover ref="popover" class="image-popover">
-        <img v-if="popoverData?.thumb" :src="popoverData.thumb" alt="thumbnail" />
-        <div v-else>No Image Available</div>
-      </Popover>
-      <Popover ref="searchHelpPopover" class="search-help-popover">
-        <div class="search-help-content">
-          <div class="search-help-title">Search Syntax</div>
-          <div class="search-help-list">
-            <div>AND: space separated terms</div>
-            <div>Exclude: -term</div>
-            <div>OR: ~term (any ~term matches)</div>
-            <div>Phrase: "exact words"</div>
-            <div>Wildcard: term*</div>
-            <div>Exact tag: tag$</div>
-            <div>Fields: title:, uploader:, category:, gid:</div>
-            <div>Tags: tag:, f:/m:/a:/p:/c:/l:/g:/o:</div>
+        <!-- Popovers -->
+        <Popover ref="searchHelpPopover" class="search-help-popover">
+          <div class="search-help-content">
+            <div class="search-help-title">Search Syntax</div>
+            <div class="search-help-list">
+              <div>AND: space separated terms</div>
+              <div>Exclude: -term</div>
+              <div>OR: ~term (any ~term matches)</div>
+              <div>Phrase: "exact words"</div>
+              <div>Wildcard: term*</div>
+              <div>Exact tag: tag$</div>
+              <div>Fields: title:, uploader:, category:, gid:</div>
+              <div>Tags: tag:, f:/m:/a:/p:/c:/l:/g:/o:</div>
+            </div>
           </div>
-        </div>
-      </Popover>
+        </Popover>
+      </div>
     </div>
-
-    <!-- 底部分页器 -->
-    <Paginator
-      :template="'CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown'"
-      :rows="perPage"
-      :totalRecords="totalRecords"
-      :first="firstIndex"
-      :pageLinkSize="3"
-      @page="onPageChange"
-    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import Button from 'primevue/button'
-import InputText from 'primevue/inputtext'
 import Paginator from 'primevue/paginator'
-import Tag from 'primevue/tag'
 import Rating from 'primevue/rating'
 import Popover from 'primevue/popover'
 
-/** ========= 常量与状态 ========= */
 const searchQuery = ref('')
 const results = ref([])
-const allGalleries = ref([])  // 存储所有画廊数据
-const translationData = ref(null)  // 标签翻译数据
+const allGalleries = ref([])
+const translationData = ref(null)
 const currentPage = ref(1)
 const perPage = ref(25)
 const totalRecords = ref(0)
 const activeType = ref(null)
 const loading = ref(false)
 
-const popover = ref()
-const popoverData = ref(null)
 const searchHelpPopover = ref()
 const baseUrl = import.meta.env.BASE_URL
 const router = useRouter()
 
-// EX 类型配置
 const exTypeList = [
   { name: 'Doujinshi',  color: 'red' },
   { name: 'Manga',      color: 'orange' },
@@ -257,253 +206,168 @@ const exTypeList = [
   { name: 'Misc',       color: 'gray' }
 ]
 
-// 预计算类型->颜色映射
-const exTypeClassMap = Object.fromEntries(exTypeList.map(t => [t.name, t.color]))
+const exTypeDotColors = {
+  'Doujinshi': '#a22',
+  'Manga': '#d67e22',
+  'Artist CG': '#d6a922',
+  'Game CG': '#4caf50',
+  'Western': '#d4af37',
+  'Non-H': '#4ca3dd',
+  'Image Set': '#2a78d6',
+  'Cosplay': '#7e57c2',
+  'Asian Porn': '#d81b60',
+  'Misc': '#757575',
+}
 
-// ExHentai专用类型列表和映射
-const currentTypeList = computed(() => exTypeList)
+const exTypeClassMap = Object.fromEntries(exTypeList.map(t => [t.name, t.color]))
 const currentTypeClassMap = computed(() => exTypeClassMap)
 
-/** ========= 工具计算 ========= */
 const firstIndex = computed(() => (currentPage.value - 1) * perPage.value)
 
-// 时间戳转换为 年-月-日 格式
+const totalPages = computed(() => Math.max(1, Math.ceil(totalRecords.value / perPage.value)))
+
+const pagerPages = computed(() => {
+  const total = totalPages.value
+  const cur = currentPage.value
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const set = new Set([1, total])
+  for (let i = Math.max(1, cur - 1); i <= Math.min(total, cur + 1); i++) set.add(i)
+  const sorted = [...set].sort((a, b) => a - b)
+  const result = []
+  let prev = 0
+  for (const p of sorted) {
+    if (p - prev > 1) result.push('…')
+    result.push(p)
+    prev = p
+  }
+  return result
+})
+
+const mappedResults = computed(() => results.value.map(item => ({
+  type: item.category,
+  typeClass: currentTypeClassMap.value[item.category] || 'default',
+  title: item.title,
+  title_jpn: item.title_jpn,
+  published: item.posted ? formatTimestamp(item.posted) : '',
+  gid: item.gid,
+  filecount: item.filecount ? `${item.filecount}p` : '',
+  tags: Array.isArray(item.tags) ? item.tags : [],
+  rating: item.rating,
+  thumb: item.thumb,
+  favTime: formatFavDate(item.favTime),
+  favCategory: item.favCategory || '',
+})))
+
 function formatTimestamp(timestamp) {
   if (!timestamp) return ''
-  
-  // 处理字符串或数字时间戳
   const ts = typeof timestamp === 'string' ? parseInt(timestamp) : timestamp
   if (isNaN(ts)) return ''
-  
-  // 如果时间戳看起来像是秒级时间戳（10位数），则乘以1000转为毫秒
   const date = ts.toString().length === 10 ? new Date(ts * 1000) : new Date(ts)
-  
   if (isNaN(date.getTime())) return ''
-  
   return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
+    year: 'numeric', month: '2-digit', day: '2-digit'
   }).replace(/\//g, '-')
 }
+
 function formatFavDate(value) {
-  if (!value) return 'Unknown'
+  if (!value) return ''
   const str = String(value)
   const match = str.match(/\d{4}-\d{2}-\d{2}/)
   return match ? match[0] : str
 }
 
-
-// ExHentai数据映射和填充逻辑
-const paddedResults = computed(() => {
-  const mapped = results.value.map(item => {
-    return {
-      type: item.category,
-      typeClass: currentTypeClassMap.value[item.category] || 'default',
-      title: item.title,
-      title_jpn: item.title_jpn,
-      published: item.posted ? formatTimestamp(item.posted) : '',
-      gid: item.gid,
-      id: null,
-      uploader: item.uploader,
-      filecount: item.filecount ? `${item.filecount} pages` : '',
-      tags: Array.isArray(item.tags) ? item.tags : [],
-      rating: item.rating,
-      thumb: item.thumb,
-      favTime: formatFavDate(item.favTime),
-      favCategory: item.favCategory || 'Unknown',
-      category: item.category
-    }
-  })
-
-  const fillCount = Math.max(0, perPage.value - mapped.length)
-  if (fillCount === 0) return mapped
-
-  const placeholders = Array.from({ length: fillCount }, (_, i) => ({
-    __placeholder: true,
-    __placeholderId: i
-  }))
-
-  return [...mapped, ...placeholders]
-})
-
-/** ========= 数据加载和处理 ========= */
-
-// 加载静态 JSON 数据
 async function loadGalleriesData() {
   try {
     const response = await fetch(`${baseUrl}data/galleries.json`)
     allGalleries.value = await response.json()
-    console.log(`Loaded ${allGalleries.value.length} galleries from static data`)
-  } catch (error) {
-    console.error('Error loading galleries data:', error)
+  } catch {
     allGalleries.value = []
   }
 }
 
-// 加载标签翻译数据
 async function loadTranslationData() {
   try {
     const response = await fetch(`${baseUrl}data/translations.json`)
     translationData.value = await response.json()
-    console.log('Loaded translation data')
-  } catch (error) {
-    console.error('Error loading translation data:', error)
+  } catch {
     translationData.value = null
   }
 }
 
-// 标签翻译函数
 function enrichTags(tags) {
   if (!translationData.value || !Array.isArray(tags)) return []
-  
   const enrichedTags = []
   for (const tag of tags) {
     if (typeof tag !== 'string' || !tag.includes(':')) continue
-    
     const [namespace, value] = tag.split(':', 2)
     try {
       const tagDetail = translationData.value.data
         .find(item => item.namespace === namespace)?.data?.[value]
-      
-      if (tagDetail) {
-        enrichedTags.push({
-          tag: tag,
-          namespace: namespace,
-          value: value,
-          tag_cn: tagDetail.name || '',
-          intro: tagDetail.intro || '',
-          links: tagDetail.links || ''
-        })
-      } else {
-        // 如果没有翻译，保留原标签
-        enrichedTags.push({
-          tag: tag,
-          namespace: namespace,
-          value: value,
-          tag_cn: '',
-          intro: '',
-          links: ''
-        })
-      }
-    } catch (error) {
-      // 解析错误，跳过该标签
+      enrichedTags.push({
+        tag, namespace, value,
+        tag_cn: tagDetail?.name || '',
+        intro: tagDetail?.intro || '',
+        links: tagDetail?.links || ''
+      })
+    } catch {
       continue
     }
   }
   return enrichedTags
 }
 
-// 简化搜索解析（静态版）
 const namespaceAliases = {
-  f: 'female',
-  m: 'male',
-  a: 'artist',
-  p: 'parody',
-  c: 'character',
-  l: 'language',
-  g: 'group',
-  o: 'other',
-  cos: 'cosplayer',
-  x: 'mixed',
-  r: 'reclass'
+  f: 'female', m: 'male', a: 'artist', p: 'parody',
+  c: 'character', l: 'language', g: 'group', o: 'other',
+  cos: 'cosplayer', x: 'mixed', r: 'reclass'
 }
 
 function tokenizeQuery(query) {
   const tokens = []
-  let buffer = ''
-  let inQuote = false
-  let wasQuoted = false
-
+  let buffer = '', inQuote = false, wasQuoted = false
   for (const ch of query) {
-    if (ch === '"') {
-      inQuote = !inQuote
-      wasQuoted = true
-      continue
-    }
+    if (ch === '"') { inQuote = !inQuote; wasQuoted = true; continue }
     if (!inQuote && (ch === ' ' || ch === ',')) {
-      if (buffer) {
-        tokens.push({ text: buffer, quoted: wasQuoted })
-        buffer = ''
-        wasQuoted = false
-      }
+      if (buffer) { tokens.push({ text: buffer, quoted: wasQuoted }); buffer = ''; wasQuoted = false }
       continue
     }
     buffer += ch
   }
-  if (buffer) {
-    tokens.push({ text: buffer, quoted: wasQuoted })
-  }
+  if (buffer) tokens.push({ text: buffer, quoted: wasQuoted })
   return tokens
 }
 
 function parseQuery(query) {
-  const include = []
-  const exclude = []
-  const orTerms = []
-
-  const tokens = tokenizeQuery(query)
-  for (const token of tokens) {
+  const include = [], exclude = [], orTerms = []
+  for (const token of tokenizeQuery(query)) {
     let raw = token.text.trim()
     if (!raw) continue
-
     let mode = 'include'
-    if (raw.startsWith('-')) {
-      mode = 'exclude'
-      raw = raw.slice(1)
-    } else if (raw.startsWith('~')) {
-      mode = 'or'
-      raw = raw.slice(1)
-    }
-
+    if (raw.startsWith('-')) { mode = 'exclude'; raw = raw.slice(1) }
+    else if (raw.startsWith('~')) { mode = 'or'; raw = raw.slice(1) }
     raw = raw.replace(/_/g, ' ').trim()
     if (!raw) continue
-
     let exactTag = false
-    if (raw.endsWith('$')) {
-      exactTag = true
-      raw = raw.slice(0, -1)
-    }
-
+    if (raw.endsWith('$')) { exactTag = true; raw = raw.slice(0, -1) }
     let wildcard = false
-    if (raw.endsWith('*') || raw.endsWith('%')) {
-      wildcard = true
-      raw = raw.slice(0, -1)
-    }
-
-    let field = 'any'
-    let namespace = null
-    let value = raw
-
+    if (raw.endsWith('*') || raw.endsWith('%')) { wildcard = true; raw = raw.slice(0, -1) }
+    let field = 'any', namespace = null, value = raw
     if (raw.includes(':')) {
       const [prefixRaw, rest] = raw.split(':', 2)
       const prefix = prefixRaw.toLowerCase()
-      const restValue = rest || ''
-
       if (['title', 'uploader', 'category', 'gid', 'tag'].includes(prefix)) {
-        field = prefix
-        value = restValue
+        field = prefix; value = rest || ''
       } else {
-        const ns = namespaceAliases[prefix] || prefix
-        field = 'tag'
-        namespace = ns
-        value = restValue
+        field = 'tag'; namespace = namespaceAliases[prefix] || prefix; value = rest || ''
       }
     }
-
     value = value.trim().toLowerCase()
     if (!value) continue
-
     const term = { field, value, wildcard, exactTag, namespace, quoted: token.quoted }
-    if (mode === 'exclude') {
-      exclude.push(term)
-    } else if (mode === 'or') {
-      orTerms.push(term)
-    } else {
-      include.push(term)
-    }
+    if (mode === 'exclude') exclude.push(term)
+    else if (mode === 'or') orTerms.push(term)
+    else include.push(term)
   }
-
   return { include, exclude, orTerms }
 }
 
@@ -516,73 +380,39 @@ function matchText(text, term) {
 
 function matchTagList(tags, term) {
   if (!Array.isArray(tags)) return false
-
   for (const tag of tags) {
     if (typeof tag !== 'string') continue
     const tagLower = tag.toLowerCase()
-
     if (term.namespace) {
       if (!tagLower.startsWith(`${term.namespace}:`)) continue
       const tagValue = tagLower.slice(term.namespace.length + 1)
-      if (term.exactTag) {
-        if (tagValue === term.value) return true
-      } else if (term.wildcard) {
-        if (tagValue.startsWith(term.value)) return true
-      } else if (tagValue.includes(term.value)) {
-        return true
-      }
+      if (term.exactTag) { if (tagValue === term.value) return true }
+      else if (term.wildcard) { if (tagValue.startsWith(term.value)) return true }
+      else if (tagValue.includes(term.value)) return true
     } else {
       const tagValue = tagLower.includes(':') ? tagLower.split(':', 2)[1] : tagLower
-      if (term.exactTag) {
-        if (tagValue === term.value) return true
-      } else if (term.wildcard) {
-        if (tagValue.startsWith(term.value)) return true
-      } else if (tagLower.includes(term.value)) {
-        return true
-      }
+      if (term.exactTag) { if (tagValue === term.value) return true }
+      else if (term.wildcard) { if (tagValue.startsWith(term.value)) return true }
+      else if (tagLower.includes(term.value)) return true
     }
   }
-
   return false
 }
 
 function matchTerm(item, term) {
-  if (term.field === 'gid') {
-    return String(item.gid || '') === term.value
-  }
-
-  if (term.field === 'title') {
-    return matchText(item.title, term) || matchText(item.title_jpn, term)
-  }
-
-  if (term.field === 'uploader') {
-    return matchText(item.uploader, term)
-  }
-
-  if (term.field === 'category') {
-    return matchText(item.category, term)
-  }
-
-  if (term.field === 'tag') {
-    return matchTagList(item.tags, term)
-  }
-
-  return (
-    matchText(item.title, term) ||
-    matchText(item.title_jpn, term) ||
-    matchText(item.uploader, term) ||
-    matchText(item.category, term) ||
+  if (term.field === 'gid') return String(item.gid || '') === term.value
+  if (term.field === 'title') return matchText(item.title, term) || matchText(item.title_jpn, term)
+  if (term.field === 'uploader') return matchText(item.uploader, term)
+  if (term.field === 'category') return matchText(item.category, term)
+  if (term.field === 'tag') return matchTagList(item.tags, term)
+  return matchText(item.title, term) || matchText(item.title_jpn, term) ||
+    matchText(item.uploader, term) || matchText(item.category, term) ||
     matchTagList(item.tags, term)
-  )
 }
 
-// 数据过滤和分页函数
 function filterAndPaginateData(page = 1, keyword = '', type = null) {
   loading.value = true
-  
   let filtered = [...allGalleries.value]
-  
-  // 关键词搜索（简化语法）
   const query = keyword.trim()
   if (query) {
     const parsed = parseQuery(query)
@@ -593,94 +423,40 @@ function filterAndPaginateData(page = 1, keyword = '', type = null) {
       return true
     })
   }
-  
-  // 类型过滤
-  if (type) {
-    filtered = filtered.filter(item => item.category === type)
-  }
-  
-  // 更新总数
+  if (type) filtered = filtered.filter(item => item.category === type)
   totalRecords.value = filtered.length
-  
-  // 分页
   const start = (page - 1) * perPage.value
-  const end = start + perPage.value
-  const pageData = filtered.slice(start, end)
-  
-  // 处理标签翻译
-  const processedData = pageData.map(item => {
-    const itemCopy = { ...item }
-    if (Array.isArray(item.tags)) {
-      itemCopy.tags = enrichTags(item.tags)
-    }
-    return itemCopy
+  results.value = filtered.slice(start, start + perPage.value).map(item => {
+    const copy = { ...item }
+    if (Array.isArray(item.tags)) copy.tags = enrichTags(item.tags)
+    return copy
   })
-  
-  results.value = processedData
   currentPage.value = page
-  
-  setTimeout(() => {
-    loading.value = false
-  }, 100) // 短暂延迟以显示loading状态
+  setTimeout(() => { loading.value = false }, 100)
 }
 
-function performSearch () {
-  filterAndPaginateData(1, searchQuery.value, activeType.value)
+function performSearch() { filterAndPaginateData(1, searchQuery.value, activeType.value) }
+function clearSearch() { searchQuery.value = ''; activeType.value = null; filterAndPaginateData(1) }
+function onPageChange(e) {
+  filterAndPaginateData(Math.floor(e.first / e.rows) + 1, searchQuery.value, activeType.value)
 }
-
-function clearSearch () {
-  searchQuery.value = ''
-  activeType.value = null
-  filterAndPaginateData(1)
-}
-
-function onPageChange (e) {
-  // PrimeVue onPage: { page, first, rows, pageCount }
-  const page = Math.floor(e.first / e.rows) + 1
-  filterAndPaginateData(page, searchQuery.value, activeType.value)
-}
-
-function toggleType (type) {
+function toggleType(type) {
   activeType.value = activeType.value === type ? null : type
   filterAndPaginateData(1, searchQuery.value, activeType.value)
 }
-
-
-function navigateToGallery (id, gid) {
-  if (gid) {
-    router.push(`/gallery/${gid}/`)
-  }
+function navigateToGallery(id, gid) {
+  if (gid) router.push(`/gallery/${gid}/`)
 }
-
-function showPopover (event, item) {
-  if (!item?.title) return
-  popoverData.value = item
-  popover.value?.show(event)
+function goToPage(page) {
+  const p = Math.max(1, Math.min(totalPages.value, Number(page)))
+  if (p !== currentPage.value) filterAndPaginateData(p, searchQuery.value, activeType.value)
 }
-
-function hidePopover () {
-  popover.value?.hide()
-}
-
-function toggleSearchHelp(event) {
-  searchHelpPopover.value?.toggle(event)
-}
+function toggleSearchHelp(event) { searchHelpPopover.value?.toggle(event) }
 
 onMounted(async () => {
   loading.value = true
-  
-  // 并行加载数据
-  await Promise.all([
-    loadGalleriesData(),
-    loadTranslationData()
-  ])
-  
-  // 初始化显示第一页数据
+  await Promise.all([loadGalleriesData(), loadTranslationData()])
   filterAndPaginateData(1)
-})
-
-onBeforeUnmount(() => {
-  // 清理资源
 })
 </script>
 

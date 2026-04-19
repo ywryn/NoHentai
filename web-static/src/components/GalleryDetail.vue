@@ -1,112 +1,138 @@
 <template>
   <div class="gallery-detail-wrapper">
-    <div v-if="galleryData" class="gallery-detail-container">
-    <!-- 数据源指示器已移除 -->
-
-    <!-- 左侧封面 -->
-    <div class="cover">
-      <img :src="galleryData.thumb || galleryData.image || '/placeholder.png'" alt="Cover" />
-      <div class="category">
-        <span>{{ getDisplayCategory() }}</span>
-      </div>
-    </div>
-
-    <!-- 右侧信息 -->
-    <div class="details">
-      <h3 class="title">
-        {{ getDisplayTitle() }}
-        <br />
-        <small v-if="galleryData.title_jpn">{{ galleryData.title_jpn }}</small>
-      </h3>
-
-      <div class="info-tags">
-        <!-- EX 数据信息列表 -->
-        <ul class="info-list">
-          <li><strong>Uploader:</strong> {{ galleryData.uploader }}</li>
-          <li><strong>Posted:</strong> {{ formatDate(galleryData.posted) }}</li>
-          <li><strong>Fav Time:</strong> {{ formatFavDate(galleryData.favTime) }}</li>
-          <li><strong>Fav Category:</strong> {{ galleryData.favCategory || 'Unknown' }}</li>
-          <li><strong>File Size:</strong> {{ formatFileSize(galleryData.filesize) }}</li>
-          <li><strong>Length:</strong> {{ galleryData.filecount }} pages</li>
-          <li>
-            <strong>Rating:</strong>
-            <span style="display:inline-flex;align-items:center;">
-              <Rating v-model="galleryData.rating" readonly style="margin: 0 10px;" />
-              {{ galleryData.rating }}
-            </span>
-          </li>
-          <li>
-            <strong>Link:</strong>
-            <a :href="`https://exhentai.org/g/${itemId}/${galleryData.token}`" target="_blank">
-              https://exhentai.org/g/{{ itemId }}/{{ galleryData.token }}
-            </a>
-          </li>
-        </ul>
-
-
-        <Divider layout="vertical" class="detail-separator" />
-
-        <!-- EX Tags -->
-        <div class="tags">
-          <div v-for="(tags, group) in groupedTags" :key="group" class="tag-group">
-            <strong>{{ group }}</strong>:
-            <Tag
-              v-for="(tag, index) in tags"
-              :key="index"
-              :value="isChinese ? (tag.tag_cn || tag.value) : tag.value"
-              class="tag"
-              severity="secondary"
-            />
+    <div v-if="galleryData" class="gallery-detail-page">
+      <section class="gallery-detail-hero">
+        <div class="cover-panel">
+          <div class="cover-shell">
+            <img :src="galleryData.thumb || galleryData.image || '/placeholder.png'" alt="Cover" />
           </div>
-          <ToggleSwitch v-model="isChinese" :onLabel="'中文'" :offLabel="'英文'" class="language-toggle" />
+          <div class="cover-meta">
+            <span class="category-badge" :class="categoryClass">{{ getDisplayCategory() }}</span>
+            <dl class="cover-info-list">
+              <div class="cover-info-row">
+                <dt>Posted</dt>
+                <dd>{{ formatDate(galleryData.posted) || "Unknown" }}</dd>
+              </div>
+              <div class="cover-info-row">
+                <dt>Fav Time</dt>
+                <dd>{{ formatFavDate(galleryData.favTime) }}</dd>
+              </div>
+              <div class="cover-info-row">
+                <dt>Link</dt>
+                <dd>
+                  <a :href="externalLink" target="_blank" rel="noreferrer">{{ externalLink }}</a>
+                </dd>
+              </div>
+            </dl>
+            <a class="external-link mobile-link" :href="externalLink" target="_blank" rel="noreferrer">
+              Open ExHentai
+            </a>
+          </div>
         </div>
 
-      </div>
-    </div>
+        <div class="hero-main">
+          <div class="hero-header">
+            <div class="hero-copy">
+              <div class="eyebrow">Gallery Detail</div>
+              <h1 class="title">{{ getDisplayTitle() }}</h1>
+              <p v-if="galleryData.title_jpn" class="subtitle">{{ galleryData.title_jpn }}</p>
+            </div>
+
+            <div class="hero-actions">
+              <a class="external-link desktop-link" :href="externalLink" target="_blank" rel="noreferrer">
+                Open ExHentai
+              </a>
+              <div class="rating-card">
+                <span class="rating-label">Rating</span>
+                <div class="rating-value">
+                  <Rating :modelValue="galleryData.rating" readonly />
+                  <span class="rating-score">{{ galleryData.rating ?? "N/A" }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <article v-for="stat in statsCards" :key="stat.label" class="stat-card">
+              <span class="stat-label">{{ stat.label }}</span>
+              <strong class="stat-value">{{ stat.value }}</strong>
+            </article>
+          </div>
+
+          <div class="detail-grid">
+            <section class="detail-panel tags-panel">
+              <div class="panel-header">
+                <div>
+                  <div class="panel-eyebrow">Taxonomy</div>
+                  <h2 class="panel-title">Tags</h2>
+                </div>
+                <div class="language-toggle-wrap">
+                  <span class="toggle-copy">{{ isChinese ? "中文" : "English" }}</span>
+                  <ToggleSwitch v-model="isChinese" :onLabel="'中文'" :offLabel="'英文'" class="language-toggle" />
+                </div>
+              </div>
+
+              <div class="tags">
+                <div v-for="(tags, group) in groupedTags" :key="group" class="tag-group">
+                  <strong>{{ group }}</strong>
+                  <div class="tag-list">
+                    <Tag
+                      v-for="(tag, index) in tags"
+                      :key="index"
+                      :value="isChinese ? (tag.tag_cn || tag.value) : tag.value"
+                      class="tag"
+                      severity="secondary"
+                    />
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section v-if="galleryData.torrents?.length" class="detail-panel torrents-panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-eyebrow">Downloads</div>
+            <h2 class="panel-title">Torrent Downloads</h2>
+          </div>
+        </div>
+        <div class="torrent-table-wrapper">
+          <table class="torrent-table">
+            <thead>
+              <tr>
+                <th style="width: 40%;">Name</th>
+                <th style="width: 15%;">Size</th>
+                <th style="width: 15%;">Torrent Size</th>
+                <th style="width: 15%;">Added</th>
+                <th style="width: 15%;">Torrent Download</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(torrent, index) in galleryData.torrents" :key="index">
+                <td>{{ torrent.name }}</td>
+                <td>{{ formatFileSize(Number(torrent.fsize)) }}</td>
+                <td>{{ formatFileSize(Number(torrent.tsize)) }}</td>
+                <td>{{ formatDate(Number(torrent.added)) }}</td>
+                <td>
+                  <a :href="`https://exhentai.org/torrent/${itemId}/${torrent.hash}.torrent`" target="_blank" rel="noreferrer">
+                    Torrent
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
 
-    <!-- EX Torrents Section -->
-  <section v-if="galleryData.torrents?.length" class="torrents">
-    <h4>Torrent Downloads</h4>
-    <div class="torrent-table-wrapper">
-      <table class="torrent-table">
-        <thead>
-          <tr>
-            <th style="width: 40%;">Name</th>
-            <th style="width: 15%;">Size</th>
-            <th style="width: 15%;">Torrent Size</th>
-            <th style="width: 15%;">Added</th>
-            <th style="width: 15%;">Torrent Download</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(torrent, index) in galleryData.torrents" :key="index">
-            <td>{{ torrent.name }}</td>
-            <td>{{ formatFileSize(Number(torrent.fsize)) }}</td>
-            <td>{{ formatFileSize(Number(torrent.tsize)) }}</td>
-            <td>{{ formatDate(Number(torrent.added)) }}</td>
-            <td>
-              <a :href="`https://exhentai.org/torrent/${itemId}/${torrent.hash}.torrent`" target="_blank">Torrent</a>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-
-  <!-- 静态版本移除 Gallery Preview 部分 -->
-  <!-- <section class="thumbnail-gallery">
-    <h4>Gallery Preview</h4>
-    <p class="preview-disabled">静态版本暂不支持图片预览功能</p>
-  </section> -->
     <div v-else-if="loading" class="loading">Loading...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
   </div>
 </template>
 
 <script>
-import Divider from "primevue/divider";
 import Tag from "primevue/tag";
 import Rating from "primevue/rating";
 import ToggleSwitch from "primevue/toggleswitch";
@@ -115,7 +141,7 @@ const baseUrl = import.meta.env.BASE_URL;
 
 export default {
   name: "GalleryDetail",
-  components: { Divider, Tag, Rating, ToggleSwitch },
+  components: { Tag, Rating, ToggleSwitch },
   data() {
     return {
       itemId: null,
@@ -123,9 +149,8 @@ export default {
       isChinese: true,
       loading: true,
       error: null,
-      // 静态版本移除缩略图相关数据
-      allGalleries: [], // 存储所有画廊数据
-      translationData: null, // 标签翻译数据
+      allGalleries: [],
+      translationData: null,
     };
   },
   created() {
@@ -144,9 +169,7 @@ export default {
   },
   methods: {
     initializeFromRoute() {
-      // 只支持ExHentai路由格式：/gallery/:gid
       const params = this.$route.params;
-      
       this.itemId = params.gid;
     },
 
@@ -158,7 +181,6 @@ export default {
         const source = this.$route.query.source;
 
         if (source === 'daily') {
-          // 直接从 daily_search.json 读取，跳过 galleries.json
           const [dailyResponse, translationsResponse] = await Promise.all([
             fetch(`${baseUrl}data/daily_search.json`),
             fetch(`${baseUrl}data/translations.json`),
@@ -186,7 +208,6 @@ export default {
           return;
         }
 
-        // 默认：从 galleries.json 读取，找不到再回退 daily_search.json
         const [galleriesResponse, translationsResponse, dailyResponse] = await Promise.all([
           fetch(`${baseUrl}data/galleries.json`),
           fetch(`${baseUrl}data/translations.json`),
@@ -221,7 +242,6 @@ export default {
         } else {
           this.error = `Gallery with ID ${this.itemId} not found`;
         }
-
       } catch (error) {
         console.error("Error fetching gallery data:", error);
         this.error = `Failed to load gallery data: ${error.message}`;
@@ -229,20 +249,19 @@ export default {
         this.loading = false;
       }
     },
-    
-    // 标签翻译函数
+
     enrichTags(tags) {
       if (!this.translationData || !Array.isArray(tags)) return [];
-      
+
       const enrichedTags = [];
       for (const tag of tags) {
         if (typeof tag !== 'string' || !tag.includes(':')) continue;
-        
+
         const [namespace, value] = tag.split(':', 2);
         try {
           const tagDetail = this.translationData.data
             .find(item => item.namespace === namespace)?.data?.[value];
-          
+
           enrichedTags.push({
             tag: tag,
             namespace: namespace,
@@ -251,8 +270,7 @@ export default {
             intro: tagDetail?.intro || '',
             links: tagDetail?.links || ''
           });
-        } catch (error) {
-          // 解析错误，跳过该标签
+        } catch {
           continue;
         }
       }
@@ -273,8 +291,6 @@ export default {
       return date.toISOString().slice(0, 10);
     },
 
-
-
     formatFavDate(value) {
       if (!value) return 'Unknown';
       const str = String(value);
@@ -283,23 +299,39 @@ export default {
     },
 
     formatFileSize(bytes) {
-      if (bytes === 0) return "0 B";
+      if (!bytes) return "0 B";
       const sizes = ["B", "KB", "MB", "GB", "TB"];
       const i = Math.floor(Math.log(bytes) / Math.log(1024));
       return (bytes / Math.pow(1024, i)).toFixed(2) + " " + sizes[i];
     },
-
-    formatNumber(num) {
-      if (!num) return '0';
-      return parseInt(num).toLocaleString();
-    },
-
-    // 静态版本移除缩略图相关方法
-    // loadThumbnails, openReader, handlePageJump 等方法已移除
-
-
   },
   computed: {
+    externalLink() {
+      return `https://exhentai.org/g/${this.itemId}/${this.galleryData?.token || ''}`;
+    },
+    categoryClass() {
+      const map = {
+        'Doujinshi': 'red',
+        'Manga': 'orange',
+        'Artist CG': 'yellow',
+        'Game CG': 'green',
+        'Western': 'gold',
+        'Non-H': 'lightblue',
+        'Image Set': 'blue',
+        'Cosplay': 'purple',
+        'Asian Porn': 'pink',
+        'Misc': 'gray',
+      };
+      return map[this.getDisplayCategory()] || 'default';
+    },
+    statsCards() {
+      return [
+        { label: 'Length', value: `${this.galleryData?.filecount || 0} pages` },
+        { label: 'File Size', value: this.formatFileSize(this.galleryData?.filesize || 0) },
+        { label: 'Favorite Category', value: this.galleryData?.favCategory || 'Unknown' },
+        { label: 'Uploader', value: this.galleryData?.uploader || 'Unknown' },
+      ];
+    },
     groupedTags() {
       if (!this.galleryData?.tags) {
         return {};
@@ -318,12 +350,12 @@ export default {
         character: [],
         other_tags: [],
       };
-      
+
       this.galleryData.tags.forEach(tag => {
         const ns = tag.namespace?.toLowerCase() || 'other_tags';
         (groups[ns] ?? groups.other_tags).push(tag);
       });
-      
+
       return Object.fromEntries(Object.entries(groups).filter(([, v]) => v.length > 0));
     },
   },
