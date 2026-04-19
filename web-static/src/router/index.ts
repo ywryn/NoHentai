@@ -8,8 +8,6 @@ import GalleryDetail from '@/components/GalleryDetail.vue';
 // @ts-ignore
 import Printed from '@/components/Printed.vue';
 // @ts-ignore
-import TagExplorer from '@/components/TagExplorer.vue';
-// @ts-ignore
 import DailySearch from '@/components/DailySearch.vue';
 // 静态版本移除这些组件
 // // @ts-ignore
@@ -33,11 +31,6 @@ const routes = [
     path: '/printed',
     name: 'Printed',
     component: Printed,
-  },
-  {
-    path: '/tags',
-    name: 'TagExplorer',
-    component: TagExplorer,
   },
   {
     path: '/daily',

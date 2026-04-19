@@ -9,7 +9,7 @@
       <div class="home-header-card">
         <div class="home-header-main">
           <div class="home-copy">
-            <div class="home-eyebrow">NoHentai · Showing {{ totalRecords }} {{ activeType || 'Galleries' }}</div>
+            <div class="home-eyebrow">NoHentai · {{ totalRecords }} {{ activeType || 'Galleries' }}</div>
           </div>
         </div>
 
@@ -40,7 +40,6 @@
           <div class="home-filter-meta">
             <div class="home-filter-copy">
               <div class="home-filter-eyebrow">Categories</div>
-              <h2 class="home-filter-title">Refine Results</h2>
             </div>
           </div>
 
@@ -71,27 +70,22 @@
         <div class="toolbar">
           <div class="pagination-control" v-if="totalPages > 1">
             <div class="paginator-mini">
-              <button class="pag-btn" :disabled="currentPage <= 1" @click="goToPage(1)">«</button>
-              <button class="pag-btn" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">‹</button>
-              <template v-for="(p, idx) in pagerPages" :key="idx">
-                <span v-if="p === '…'" class="pag-sep"></span>
-                <button v-else class="pag-btn" :class="{ active: p === currentPage }" @click="goToPage(Number(p))">{{ p }}</button>
-              </template>
-              <button class="pag-btn" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">›</button>
-              <button class="pag-btn" :disabled="currentPage >= totalPages" @click="goToPage(totalPages)">»</button>
+              <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(1)">«</button>
+              <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">‹</button>
+              <label class="pag-jump-inline">
+                <input
+                  v-model="pageJumpValue"
+                  class="pag-jump-input"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  spellcheck="false"
+                  @keydown.enter.prevent="submitPageJump"
+                />
+                <span class="pag-jump-total">/ {{ totalPages }}</span>
+              </label>
+              <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">›</button>
+              <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(totalPages)">»</button>
             </div>
-            <label class="page-jump">
-              <input
-                v-model="pageJumpValue"
-                class="page-jump-input"
-                inputmode="numeric"
-                autocomplete="off"
-                spellcheck="false"
-                @keydown.enter.prevent="submitPageJump"
-              />
-              <span class="page-jump-total">/ {{ totalPages }}</span>
-              <button class="page-jump-btn" type="button" @click="submitPageJump">Go</button>
-            </label>
           </div>
         </div>
 
@@ -131,27 +125,22 @@
         <div class="home-pagination-footer" v-if="totalPages > 1">
           <div class="pagination-control">
             <div class="paginator-mini">
-              <button class="pag-btn" :disabled="currentPage <= 1" @click="goToPage(1)">«</button>
-              <button class="pag-btn" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">‹</button>
-              <template v-for="(p, idx) in pagerPages" :key="`footer-${idx}`">
-                <span v-if="p === '…'" class="pag-sep"></span>
-                <button v-else class="pag-btn" :class="{ active: p === currentPage }" @click="goToPage(Number(p))">{{ p }}</button>
-              </template>
-              <button class="pag-btn" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">›</button>
-              <button class="pag-btn" :disabled="currentPage >= totalPages" @click="goToPage(totalPages)">»</button>
+              <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(1)">«</button>
+              <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">‹</button>
+              <label class="pag-jump-inline">
+                <input
+                  v-model="pageJumpValue"
+                  class="pag-jump-input"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  spellcheck="false"
+                  @keydown.enter.prevent="submitPageJump"
+                />
+                <span class="pag-jump-total">/ {{ totalPages }}</span>
+              </label>
+              <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">›</button>
+              <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(totalPages)">»</button>
             </div>
-            <label class="page-jump">
-              <input
-                v-model="pageJumpValue"
-                class="page-jump-input"
-                inputmode="numeric"
-                autocomplete="off"
-                spellcheck="false"
-                @keydown.enter.prevent="submitPageJump"
-              />
-              <span class="page-jump-total">/ {{ totalPages }}</span>
-              <button class="page-jump-btn" type="button" @click="submitPageJump">Go</button>
-            </label>
           </div>
         </div>
       </section>

@@ -70,13 +70,6 @@ onBeforeUnmount(() => {
             </RouterLink>
           </li>
           <li>
-            <RouterLink to="/tags" aria-label="Tags" title="Tags">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M21.41 11.58l-9-9A2 2 0 0 0 11 2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 .59 1.42l9 9A2 2 0 0 0 13 22a2 2 0 0 0 1.41-.59l7-7A2 2 0 0 0 22 13a2 2 0 0 0-.59-1.42zM5.5 7A1.5 1.5 0 1 1 7 5.5 1.5 1.5 0 0 1 5.5 7z"/>
-              </svg>
-            </RouterLink>
-          </li>
-          <li>
             <RouterLink to="/daily" aria-label="Daily Search" title="Daily Search">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.93V15a1 1 0 0 0-2 0v2.93A8 8 0 0 1 4.07 11H6a1 1 0 0 0 0-2H4.07A8 8 0 0 1 11 4.07V6a1 1 0 0 0 2 0V4.07A8 8 0 0 1 19.93 11H18a1 1 0 0 0 0 2h1.93A8 8 0 0 1 13 16.93zM12 10a2 2 0 1 0 2 2 2 2 0 0 0-2-2z"/>
@@ -90,7 +83,6 @@ onBeforeUnmount(() => {
         <li><RouterLink to="/">Ex Home</RouterLink></li>
         <li><RouterLink to="/data">Data Analys</RouterLink></li>
         <li><RouterLink to="/printed">Printed</RouterLink></li>
-        <li><RouterLink to="/tags">Tags</RouterLink></li>
         <li><RouterLink to="/daily">Daily</RouterLink></li>
       </ul>
       

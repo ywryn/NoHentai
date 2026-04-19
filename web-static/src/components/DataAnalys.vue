@@ -12,10 +12,6 @@
             </div>
         </div>
 
-        <div class="site-description data-panel">
-            <p><span class="site-name">NoHentai</span>：ExHentai/E-Hentai 个人收藏&同步网站。支持数据分析（包括分类分布、季度趋势以及不同命名空间下的热门标签统计）、Gallery高级检索、E/Ex数据源同步。</p>
-        </div>
-
         <section class="data-panel heatmap-section">
             <div class="panel-header">
                 <div>
@@ -52,7 +48,6 @@
                         <h2 class="section-title">Categories</h2>
                     </div>
                 </div>
-                <h2 class="section-title">Categories</h2>
                 <div class="chart-container">
                     <Chart type="pie" :data="chartData" :options="chartOptions" class="chart-responsive" />
                 </div>
