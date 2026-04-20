@@ -2,20 +2,6 @@
   <div class="container daily-page">
     <section class="daily-shell">
       <div class="daily-header-card">
-        <div class="daily-header-main">
-          <div class="daily-copy">
-            <div class="daily-eyebrow">Daily Search</div>
-            <h1 class="daily-page-title">Recent Matches</h1>
-            <p class="daily-page-subtitle">Grouped snapshots of newly matched galleries based on saved daily search filters.</p>
-          </div>
-
-          <div class="daily-summary-card">
-            <span class="daily-summary-label">Current Group</span>
-            <strong class="daily-summary-value">Group {{ currentGroupIndex + 1 }}</strong>
-            <span class="daily-summary-sub" v-if="groups.length > 1">{{ currentGroupIndex + 1 }} / {{ groups.length }}</span>
-          </div>
-        </div>
-
         <div class="daily-controls">
           <div class="daily-group-selector" v-if="groups.length">
             <div class="daily-group-selector-header">
@@ -23,7 +9,6 @@
                 <div class="daily-filters-eyebrow">Groups</div>
                 <h2 class="daily-filters-title">Choose Snapshot</h2>
               </div>
-              <div class="daily-filters-count">{{ groups.length }} groups</div>
             </div>
             <div class="daily-group-strip">
               <button
