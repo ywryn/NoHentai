@@ -76,6 +76,13 @@ onBeforeUnmount(() => {
               </svg>
             </RouterLink>
           </li>
+          <li>
+            <RouterLink to="/telegram" aria-label="Telegram Feed" title="Telegram Feed">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8-1.7 8.02c-.12.57-.46.71-.93.44l-2.58-1.9-1.24 1.19c-.14.14-.26.26-.52.26l.19-2.64 4.83-4.36c.21-.19-.05-.29-.32-.1L7.9 14.46l-2.55-.8c-.55-.17-.56-.55.12-.82l9.96-3.84c.46-.17.86.11.71.8z"/>
+              </svg>
+            </RouterLink>
+          </li>
         </ul>
       </div>
       <!-- Desktop Navigation - 静态版本 -->
@@ -84,6 +91,7 @@ onBeforeUnmount(() => {
         <li><RouterLink to="/data">Data Analys</RouterLink></li>
         <li><RouterLink to="/printed">Printed</RouterLink></li>
         <li><RouterLink to="/daily">Daily</RouterLink></li>
+        <li><RouterLink to="/telegram">Telegram</RouterLink></li>
       </ul>
       
       <!-- Theme Toggle (always visible) -->

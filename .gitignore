@@ -57,6 +57,9 @@ Thumbs.db
 # 固定数据
 app/data/
 
+# Telegram 媒体文件（通过 GitHub Releases 管理，不进 git）
+web-static/public/data/telegram_media/
+
 # 测试脚本
 app/scripts/
 

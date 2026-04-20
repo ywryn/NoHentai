@@ -1,8 +1,6 @@
-name: Sync Data and Deploy
+name: Sync Telegram and Deploy
 
 on:
-  schedule:
-    - cron: '0 20 * * *'   # 每天 UTC 20:00（北京时间 04:00）
   workflow_dispatch:
 
 permissions:
@@ -28,29 +26,6 @@ jobs:
 
       - name: Install Python dependencies
         run: pip install -r app/requirements.txt
-
-      - name: Write .env from secrets
-        run: |
-          cat > .env <<EOF
-          EXHENTAI_BASE_URL=${{ secrets.EXHENTAI_BASE_URL }}
-          EXHENTAI_COOKIE_MEMBER_ID=${{ secrets.EXHENTAI_COOKIE_MEMBER_ID }}
-          EXHENTAI_COOKIE_PASS_HASH=${{ secrets.EXHENTAI_COOKIE_PASS_HASH }}
-          EXHENTAI_COOKIE_IGNEOUS=${{ secrets.EXHENTAI_COOKIE_IGNEOUS }}
-          EOF
-
-      - name: Run sync script
-        run: python app/sync_script.py
-
-      - name: Run Google Sheets sync script
-        env:
-          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
-        run: python app/sync_sheets.py
-
-      - name: Sync EhTagTranslation Database
-        run: python app/sync_translations.py
-
-      - name: Run Daily Search sync
-        run: python app/sync_daily_search.py
 
       - name: Ensure media release exists
         env:
@@ -99,13 +74,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add web-static/public/data/galleries.json \
-                  web-static/public/data/backup_data/ \
-                  web-static/public/data/future_digi.json \
-                  web-static/public/data/translations.json \
-                  web-static/public/data/daily_search.json \
-                  web-static/public/data/telegram_forwards.json
-          git diff --staged --quiet || git commit -m "常规数据更新 [skip ci]"
+          git add web-static/public/data/telegram_forwards.json
+          git diff --staged --quiet || git commit -m "Telegram 数据更新 [skip ci]"
           git push
 
   build:
@@ -141,7 +111,7 @@ jobs:
 
       - name: Build
         working-directory: web-static
-        run: npm run build     # prebuild 自动触发 generate-stats.js
+        run: npm run build
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

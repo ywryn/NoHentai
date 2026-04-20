@@ -3,3 +3,5 @@ beautifulsoup4
 python-dotenv
 gspread
 google-auth
+Pillow
+cryptography
