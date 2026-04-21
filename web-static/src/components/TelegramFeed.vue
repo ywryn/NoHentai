@@ -57,6 +57,8 @@ async function tryRestoreKey() {
 }
 
 // ── Sources ────────────────────────────────────────────────────────────────
+const ALL_ID      = '__all__'
+const PAGE_SIZE   = 10
 const searchQuery    = ref('')
 const activeSourceId = ref(null)
 const mobileView     = ref('list')   // 'list' | 'chat'
@@ -82,18 +84,29 @@ const sources = computed(() => {
   return [...map.values()].sort((a, b) => b.latestDate - a.latestDate)
 })
 
+// 虚拟"全部消息"收藏夹
+const allSource = computed(() => ({
+  id: ALL_ID,
+  title: '全部消息',
+  username: null,
+  msgs: messages.value,
+  latestDate: messages.value.reduce((m, msg) => Math.max(m, msg.date), 0),
+  preview: `共 ${messages.value.length} 条消息`
+}))
+
 const filteredSources = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
   if (!q) return sources.value
   return sources.value.filter(s => s.title.toLowerCase().includes(q) || s.username?.toLowerCase().includes(q))
 })
 
-const activeSource = computed(() =>
-  sources.value.find(s => s.id === activeSourceId.value) ?? sources.value[0] ?? null
-)
+const activeSource = computed(() => {
+  if (activeSourceId.value === ALL_ID) return allSource.value
+  return sources.value.find(s => s.id === activeSourceId.value) ?? null
+})
 
 watch(sources, val => {
-  if (!activeSourceId.value && val.length > 0) activeSourceId.value = val[0].id
+  if (!activeSourceId.value && val.length > 0) activeSourceId.value = ALL_ID
 }, { immediate: true })
 
 watch(() => activeSource.value, async () => {
@@ -102,6 +115,7 @@ watch(() => activeSource.value, async () => {
 })
 
 async function selectSource(src) {
+  if (src.id === ALL_ID) allPage.value = 1
   activeSourceId.value = src.id
   mobileView.value = 'chat'
   await nextTick()
@@ -110,9 +124,8 @@ async function selectSource(src) {
 }
 
 // ── Message groups ─────────────────────────────────────────────────────────
-const activeGroups = computed(() => {
-  if (!activeSource.value) return []
-  const sorted = [...activeSource.value.msgs].sort((a, b) => a.date - b.date)
+function buildGroups(msgs) {
+  const sorted = [...msgs].sort((a, b) => a.date - b.date)
   const groups = []
   const seen = new Map()
   for (const msg of sorted) {
@@ -129,7 +142,49 @@ const activeGroups = computed(() => {
     }
   }
   return groups
+}
+
+// 全部消息的完整分组（计算一次，供分页切片用）
+const allGroupsAll = computed(() => buildGroups(messages.value))
+
+// 收藏夹分页状态
+const allPage    = ref(1)
+const allLoading = ref(false)
+const allHasMore = computed(() => allGroupsAll.value.length > allPage.value * PAGE_SIZE)
+
+const activeGroups = computed(() => {
+  if (activeSourceId.value === ALL_ID) {
+    const all = allGroupsAll.value
+    return all.slice(Math.max(0, all.length - allPage.value * PAGE_SIZE))
+  }
+  if (!activeSource.value) return []
+  return buildGroups(activeSource.value.msgs)
 })
+
+// 上滑到顶部触发加载
+async function loadMoreAll() {
+  if (allLoading.value || !allHasMore.value) return
+  allLoading.value = true
+  const el = chatBodyEl.value
+  const prevH = el ? el.scrollHeight : 0
+  await new Promise(r => setTimeout(r, 380))   // 加载动效停留
+  allPage.value++
+  await nextTick()
+  if (el) el.scrollTop = el.scrollHeight - prevH  // 保持视图位置不跳动
+  allLoading.value = false
+  if (keyReady.value) {
+    // 解密新载入的那批媒体
+    const all = allGroupsAll.value
+    const newStart = Math.max(0, all.length - allPage.value * PAGE_SIZE)
+    const oldStart = Math.max(0, all.length - (allPage.value - 1) * PAGE_SIZE)
+    for (const g of all.slice(newStart, oldStart)) loadGroup(g)
+  }
+}
+
+function onChatScroll(e) {
+  if (activeSourceId.value !== ALL_ID) return
+  if (e.target.scrollTop <= 60) loadMoreAll()
+}
 
 const chatTimeline = computed(() => {
   const out = []
@@ -289,21 +344,34 @@ function fmtSize(b) { return b < 1048576 ? `${(b/1024).toFixed(0)} KB` : `${(b/1
         <div class="tg-source-list">
           <div v-if="loading" class="tg-list-hint">加载中…</div>
           <div v-else-if="error" class="tg-list-hint tg-list-err">{{ error }}</div>
-          <div v-else-if="filteredSources.length === 0" class="tg-list-hint">无匹配频道</div>
-          <div v-else
-            v-for="src in filteredSources" :key="src.id"
-            class="tg-source-item" :class="{ 'is-active': activeSource?.id === src.id }"
-            @click="selectSource(src)"
-          >
-            <div class="tg-avatar" :style="{ background: avatarColor(src) }">{{ srcInitial(src) }}</div>
-            <div class="tg-src-body">
-              <div class="tg-src-row">
-                <span class="tg-src-name">{{ src.title }}</span>
-                <span class="tg-src-time">{{ fmtPreviewDate(src.latestDate) }}</span>
+          <template v-else>
+            <!-- 固定收藏夹入口 -->
+            <div class="tg-source-item tg-all-item" :class="{ 'is-active': activeSourceId === ALL_ID }" @click="selectSource(allSource)">
+              <div class="tg-avatar tg-all-avatar">☆</div>
+              <div class="tg-src-body">
+                <div class="tg-src-row">
+                  <span class="tg-src-name">全部消息</span>
+                  <span class="tg-src-time">{{ fmtPreviewDate(allSource.latestDate) }}</span>
+                </div>
+                <div class="tg-src-preview">共 {{ messages.length }} 条消息</div>
               </div>
-              <div class="tg-src-preview">{{ src.preview }}</div>
             </div>
-          </div>
+            <div v-if="filteredSources.length === 0" class="tg-list-hint">无匹配频道</div>
+            <div v-else
+              v-for="src in filteredSources" :key="src.id"
+              class="tg-source-item" :class="{ 'is-active': activeSource?.id === src.id }"
+              @click="selectSource(src)"
+            >
+              <div class="tg-avatar" :style="{ background: avatarColor(src) }">{{ srcInitial(src) }}</div>
+              <div class="tg-src-body">
+                <div class="tg-src-row">
+                  <span class="tg-src-name">{{ src.title }}</span>
+                  <span class="tg-src-time">{{ fmtPreviewDate(src.latestDate) }}</span>
+                </div>
+                <div class="tg-src-preview">{{ src.preview }}</div>
+              </div>
+            </div>
+          </template>
         </div>
       </aside>
 
@@ -332,7 +400,20 @@ function fmtSize(b) { return b < 1048576 ? `${(b/1024).toFixed(0)} KB` : `${(b/1
           </div>
 
           <!-- Messages -->
-          <div class="tg-messages" ref="chatBodyEl">
+          <div class="tg-messages" ref="chatBodyEl" @scroll="onChatScroll">
+
+            <!-- 收藏夹顶部加载区 -->
+            <div v-if="activeSourceId === ALL_ID" class="tg-top-loader">
+              <template v-if="allHasMore">
+                <div v-if="allLoading" class="tg-top-loading">
+                  <div class="tg-spin tg-spin-sm"/>
+                  <span>加载更多…</span>
+                </div>
+                <div v-else class="tg-top-hint">↑ 上滑加载更多</div>
+              </template>
+              <div v-else class="tg-top-done">已显示全部 {{ allGroupsAll.length }} 组消息</div>
+            </div>
+
             <template v-for="item in chatTimeline" :key="item.key">
 
               <!-- Date pill -->
@@ -584,6 +665,9 @@ html.my-app-dark { --tg-chat-bg: #0d1117; }
 .tg-list-hint   { padding: 24px; text-align: center; font-size: 13px; color: var(--text-color); opacity: 0.38; }
 .tg-list-err    { color: #e28a8a; opacity: 1; }
 
+/* 收藏夹特殊项 */
+.tg-all-avatar { background: #4a7fa5; font-size: 20px; }
+
 .tg-source-item {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 14px;
@@ -753,8 +837,28 @@ html.my-app-dark { --tg-chat-bg: #0d1117; }
   border-top-color: var(--primary-color);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
 }
+.tg-spin-sm { width: 14px; height: 14px; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* 收藏夹顶部加载指示器 */
+.tg-top-loader {
+  display: flex; justify-content: center;
+  padding: 10px 0 4px;
+}
+.tg-top-loading {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; color: var(--text-color); opacity: 0.55;
+}
+.tg-top-hint {
+  font-size: 12px; color: var(--text-color); opacity: 0.3;
+  user-select: none;
+}
+.tg-top-done {
+  font-size: 12px; color: var(--text-color); opacity: 0.28;
+  user-select: none;
+}
 
 /* Extra overlay */
 .tg-extra {
