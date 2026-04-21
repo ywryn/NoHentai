@@ -141,13 +141,21 @@ def compress_image(raw: bytes, target_kb: int = TARGET_KB) -> bytes:
 
 # ── Telegram API ───────────────────────────────────────────────────────────
 def get_updates(offset: int) -> list:
-    r = requests.post(
-        f"{TELEGRAM_API}/getUpdates",
-        json={"offset": offset, "limit": 100, "timeout": 0},
-        timeout=30,
-    )
-    r.raise_for_status()
-    return r.json().get("result", [])
+    """循环拉取直到无新 update，突破单次 100 条限制。"""
+    all_updates = []
+    while True:
+        r = requests.post(
+            f"{TELEGRAM_API}/getUpdates",
+            json={"offset": offset, "limit": 100, "timeout": 0},
+            timeout=30,
+        )
+        r.raise_for_status()
+        batch = r.json().get("result", [])
+        if not batch:
+            break
+        all_updates.extend(batch)
+        offset = batch[-1]["update_id"] + 1
+    return all_updates
 
 
 def get_file_path(file_id: str) -> str | None:
