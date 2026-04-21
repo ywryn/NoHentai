@@ -412,7 +412,7 @@ function fmtSize(b) { return b < 1048576 ? `${(b/1024).toFixed(0)} KB` : `${(b/1
                       @click="openLightbox(item.group.items[0].media_meta?.file_unique_id)">
                       <img v-if="isLoaded(item.group.items[0].media_meta?.file_unique_id)"
                         :src="urlCache[item.group.items[0].media_meta.file_unique_id]"
-                        class="tg-nat-img" loading="lazy" />
+                        class="tg-single-img" loading="lazy" />
                       <div v-else class="tg-ph tg-ph-tall" :class="slotPhClass(item.group.items[0].media_meta?.file_unique_id)">
                         <div v-if="keyReady && urlCache[item.group.items[0].media_meta?.file_unique_id] !== 'error'" class="tg-spin"/>
                         <svg v-else viewBox="0 0 24 24"><path d="M18 8h-1V6A5 5 0 0 0 7 6v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2z" fill="currentColor"/></svg>
@@ -427,7 +427,7 @@ function fmtSize(b) { return b < 1048576 ? `${(b/1024).toFixed(0)} KB` : `${(b/1
                       <div class="tg-vid-cover">
                         <img v-if="item.group.items[0].media_file && isLoaded(item.group.items[0].media_meta?.file_unique_id)"
                           :src="urlCache[item.group.items[0].media_meta.file_unique_id]"
-                          class="tg-nat-img" />
+                          class="tg-single-img" />
                         <div v-else class="tg-ph tg-ph-tall" :class="slotPhClass(item.group.items[0].media_meta?.file_unique_id)">
                           <div v-if="keyReady" class="tg-spin"/>
                           <svg v-else viewBox="0 0 24 24"><path d="M18 8h-1V6A5 5 0 0 0 7 6v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2z" fill="currentColor"/></svg>
@@ -726,9 +726,10 @@ html.my-app-dark { --tg-chat-bg: #0d1117; }
 .tg-alb-inner > .tg-extra { position: absolute; inset: 0; width: 100%; height: 100%; }
 
 /* Photos */
-.tg-nat-img   { display: block; max-width: 100%; max-height: 480px; width: auto; height: auto; }
-.tg-fill-img  { width: 100%; height: 100%; object-fit: cover; display: block; }
-.tg-bub-photo { line-height: 0; position: relative; width: 100%; }
+.tg-nat-img    { display: block; max-width: 100%; max-height: 480px; width: auto; height: auto; }
+.tg-fill-img   { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tg-single-img { display: block; width: 100%; height: auto; }
+.tg-bub-photo  { line-height: 0; position: relative; width: 100%; overflow: hidden; }
 
 /* Placeholder */
 .tg-ph {
