@@ -172,7 +172,9 @@ function slotPhClass(uid) {
 // ── Album layout ───────────────────────────────────────────────────────────
 function getAR(msg) {
   const w = msg.media_meta?.width, h = msg.media_meta?.height
-  return (w && h && h > 0) ? w / h : 4 / 3
+  const r = (w && h && h > 0) ? w / h : 4 / 3
+  // 竖图 flex 最小值 0.65，避免在多图行中被压得过窄
+  return Math.max(r, 0.65)
 }
 
 function computeAlbumRows(group) {
@@ -347,14 +349,15 @@ function fmtSize(b) { return b < 1048576 ? `${(b/1024).toFixed(0)} KB` : `${(b/1
                     <div class="tg-bub-album">
                       <div v-for="(row, ri) in computeAlbumRows(item.group)" :key="ri" class="tg-alb-row">
 
-                        <!-- Single-image row -->
+                        <!-- Single-image row：用 padding-bottom 撑满全宽，与图片比例一致 -->
                         <template v-if="row.isSingle">
                           <div class="tg-alb-single"
                             :class="{ 'tg-click': isLoaded(row.items[0].msg.media_meta?.file_unique_id) }"
                             @click="openLightbox(row.items[0].msg.media_meta?.file_unique_id)">
+                            <div class="tg-alb-inner" :style="{ paddingBottom: (100/getAR(row.items[0].msg)) + '%' }">
                             <img v-if="isLoaded(row.items[0].msg.media_meta?.file_unique_id)"
                               :src="urlCache[row.items[0].msg.media_meta.file_unique_id]"
-                              class="tg-nat-img" loading="lazy" />
+                              class="tg-fill-img" loading="lazy" />
                             <div v-else class="tg-ph" :class="slotPhClass(row.items[0].msg.media_meta?.file_unique_id)">
                               <div v-if="keyReady && urlCache[row.items[0].msg.media_meta?.file_unique_id] !== 'error'" class="tg-spin"/>
                               <svg v-else viewBox="0 0 24 24"><path d="M18 8h-1V6A5 5 0 0 0 7 6v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2z" fill="currentColor"/></svg>
@@ -368,6 +371,7 @@ function fmtSize(b) { return b < 1048576 ? `${(b/1024).toFixed(0)} KB` : `${(b/1
                               </div>
                             </template>
                             <div v-if="row.items[0].extra > 0" class="tg-extra">+{{ row.items[0].extra }}</div>
+                            </div><!-- /tg-alb-inner -->
                           </div>
                         </template>
 
@@ -670,8 +674,7 @@ html.my-app-dark { --tg-chat-bg: #0d1117; }
 .tg-bubble-wrap { display: flex; justify-content: flex-start; margin-bottom: 2px; }
 
 .tg-bubble {
-  max-width: 72%;
-  min-width: 100px;
+  width: 72%;
   background: var(--surface-color);
   border-radius: 4px 12px 12px 12px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.1);
@@ -712,9 +715,8 @@ html.my-app-dark { --tg-chat-bg: #0d1117; }
 .tg-alb-row + .tg-alb-row { margin-top: 2px; }
 
 .tg-alb-single {
-  width: 100%; line-height: 0;
+  width: 100%;
   position: relative; overflow: hidden;
-  display: flex; justify-content: center;
   background: var(--bg-color);
 }
 .tg-alb-slot { min-width: 0; overflow: hidden; background: var(--bg-color); }
@@ -879,6 +881,6 @@ html.my-app-dark { --tg-chat-bg: #0d1117; }
   .view-chat .tg-chat    { transform: translateX(0); }
 
   .tg-back-btn { display: flex; align-items: center; justify-content: center; }
-  .tg-bubble   { max-width: 90%; }
+  .tg-bubble   { width: 90%; }
 }
 </style>
