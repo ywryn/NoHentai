@@ -1,7 +1,7 @@
 {
-  "offset": 287187795,
-  "generatedAt": "2026-04-21T06:32:18.054061+00:00",
-  "count": 59,
+  "offset": 287187895,
+  "generatedAt": "2026-04-21T09:30:32.256635+00:00",
+  "count": 129,
   "messages": [
     {
       "message_id": 267,
@@ -2537,6 +2537,3022 @@
         "local_path": "telegram_media/photos/AQADybMxG5ccSVR-.webp.enc",
         "original_size": 109241,
         "compressed_size": 74048
+      }
+    },
+    {
+      "message_id": 326,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 227,
+        "date": 1749567247
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 227,
+      "forward_date": 1749567247,
+      "media_group_id": null,
+      "caption": "#兔牙喵喵喵 全视频大合集 评论区\n露脸+原相机，真实感拉满！可惜，留下的作品数量非常有限，耐不住作品质量确实吊打现在很多福利姬，经典永不过时系列了算是，毕竟出道很早，知名度当年也挺大的了\n\n【点击一次性加入【妙妙屋】全系频道及群组】",
+      "caption_entities": [
+        {
+          "offset": 0,
+          "length": 6,
+          "type": "hashtag"
+        },
+        {
+          "offset": 96,
+          "length": 21,
+          "type": "text_link",
+          "url": "https://t.me/addlist/cUYzBEjmFhNjZjU1"
+        },
+        {
+          "offset": 96,
+          "length": 21,
+          "type": "bold"
+        }
+      ],
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADc8cxG773SFZ-",
+        "width": 714,
+        "height": 1116,
+        "file_size": 86479
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADc8cxG773SFZ-.webp.enc",
+        "original_size": 86479,
+        "compressed_size": 66072
+      }
+    },
+    {
+      "message_id": 327,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 977,
+        "date": 1752158612
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 977,
+      "forward_date": 1752158612,
+      "media_group_id": "14214103904956617",
+      "caption": "#Kiri_Amari #更新大合集  评论区\n这位我是真喜欢，作品拍摄质量都很高，之前发过，这次是补充了一些新的作品整合成的更全的合集，女主颜值不错，主要是真的骚，随便看个一两个作品就知道了\n\n【点击一次性加入【妙妙屋】全系频道及群组】",
+      "caption_entities": [
+        {
+          "offset": 0,
+          "length": 11,
+          "type": "hashtag"
+        },
+        {
+          "offset": 12,
+          "length": 6,
+          "type": "hashtag"
+        },
+        {
+          "offset": 98,
+          "length": 21,
+          "type": "text_link",
+          "url": "https://t.me/addlist/cUYzBEjmFhNjZjU1"
+        }
+      ],
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADpsMxG0FcgFd-",
+        "width": 718,
+        "height": 1280,
+        "file_size": 96227
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADpsMxG0FcgFd-.webp.enc",
+        "original_size": 96227,
+        "compressed_size": 68160
+      }
+    },
+    {
+      "message_id": 328,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 978,
+        "date": 1752158612
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 978,
+      "forward_date": 1752158612,
+      "media_group_id": "14214103904956617",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADp8MxG0FcgFd-",
+        "width": 719,
+        "height": 1280,
+        "file_size": 97189
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADp8MxG0FcgFd-.webp.enc",
+        "original_size": 97189,
+        "compressed_size": 75124
+      }
+    },
+    {
+      "message_id": 329,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 979,
+        "date": 1752158612
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 979,
+      "forward_date": 1752158612,
+      "media_group_id": "14214103904956617",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADqMMxG0FcgFd-",
+        "width": 720,
+        "height": 1280,
+        "file_size": 104033
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADqMMxG0FcgFd-.webp.enc",
+        "original_size": 104033,
+        "compressed_size": 67602
+      }
+    },
+    {
+      "message_id": 330,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 980,
+        "date": 1752158612
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 980,
+      "forward_date": 1752158612,
+      "media_group_id": "14214103904956617",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADqcMxG0FcgFd-",
+        "width": 858,
+        "height": 1280,
+        "file_size": 78443
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADqcMxG0FcgFd-.webp.enc",
+        "original_size": 78443,
+        "compressed_size": 50778
+      }
+    },
+    {
+      "message_id": 331,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 981,
+        "date": 1752158613
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 981,
+      "forward_date": 1752158613,
+      "media_group_id": "14214103904956617",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADQ8YxG2VngFd-",
+        "width": 769,
+        "height": 1280,
+        "file_size": 128064
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADQ8YxG2VngFd-.webp.enc",
+        "original_size": 128064,
+        "compressed_size": 87986
+      }
+    },
+    {
+      "message_id": 332,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 982,
+        "date": 1752158613
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 982,
+      "forward_date": 1752158613,
+      "media_group_id": "14214103904956617",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADqsMxG0FcgFd-",
+        "width": 714,
+        "height": 1280,
+        "file_size": 91204
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADqsMxG0FcgFd-.webp.enc",
+        "original_size": 91204,
+        "compressed_size": 69996
+      }
+    },
+    {
+      "message_id": 333,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002639655199,
+          "title": "萌咸COS福利姬写真资源库",
+          "type": "channel"
+        },
+        "message_id": 16120,
+        "date": 1751508603
+      },
+      "forward_from_chat": {
+        "id": -1002639655199,
+        "title": "萌咸COS福利姬写真资源库",
+        "type": "channel"
+      },
+      "forward_from_message_id": 16120,
+      "forward_date": 1751508603,
+      "media_group_id": "14214103904956625",
+      "caption": "#浆果儿 最新流出4v合集\n资源转载自https://t.me/Alicemyxj520",
+      "caption_entities": [
+        {
+          "offset": 0,
+          "length": 4,
+          "type": "hashtag"
+        },
+        {
+          "offset": 14,
+          "length": 30,
+          "type": "blockquote"
+        },
+        {
+          "offset": 19,
+          "length": 25,
+          "type": "url"
+        }
+      ],
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADkBQAAhAOMFc",
+        "width": 720,
+        "height": 1280,
+        "duration": 1236,
+        "file_size": 871494024,
+        "mime_type": "video/mp4",
+        "file_name": "document_6282637143651129987.mp4"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADkBQAAhAOMFdy.webp.enc",
+        "original_size": 19004,
+        "compressed_size": 20972
+      }
+    },
+    {
+      "message_id": 334,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002639655199,
+          "title": "萌咸COS福利姬写真资源库",
+          "type": "channel"
+        },
+        "message_id": 16121,
+        "date": 1751508603
+      },
+      "forward_from_chat": {
+        "id": -1002639655199,
+        "title": "萌咸COS福利姬写真资源库",
+        "type": "channel"
+      },
+      "forward_from_message_id": 16121,
+      "forward_date": 1751508603,
+      "media_group_id": "14214103904956625",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADkRQAAhAOMFc",
+        "width": 1280,
+        "height": 720,
+        "duration": 1100,
+        "file_size": 611294707,
+        "mime_type": "video/mp4",
+        "file_name": "document_6282637143651129922.mp4"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADkRQAAhAOMFdy.webp.enc",
+        "original_size": 9362,
+        "compressed_size": 8578
+      }
+    },
+    {
+      "message_id": 335,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002639655199,
+          "title": "萌咸COS福利姬写真资源库",
+          "type": "channel"
+        },
+        "message_id": 16122,
+        "date": 1751508603
+      },
+      "forward_from_chat": {
+        "id": -1002639655199,
+        "title": "萌咸COS福利姬写真资源库",
+        "type": "channel"
+      },
+      "forward_from_message_id": 16122,
+      "forward_date": 1751508603,
+      "media_group_id": "14214103904956625",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADkhQAAhAOMFc",
+        "width": 1280,
+        "height": 720,
+        "duration": 705,
+        "file_size": 416558498,
+        "mime_type": "video/mp4",
+        "file_name": "document_6282637143651129933.mp4"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADkhQAAhAOMFdy.webp.enc",
+        "original_size": 10054,
+        "compressed_size": 9660
+      }
+    },
+    {
+      "message_id": 336,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002639655199,
+          "title": "萌咸COS福利姬写真资源库",
+          "type": "channel"
+        },
+        "message_id": 16123,
+        "date": 1751508603
+      },
+      "forward_from_chat": {
+        "id": -1002639655199,
+        "title": "萌咸COS福利姬写真资源库",
+        "type": "channel"
+      },
+      "forward_from_message_id": 16123,
+      "forward_date": 1751508603,
+      "media_group_id": "14214103904956625",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADkxQAAhAOMFc",
+        "width": 1280,
+        "height": 720,
+        "duration": 1778,
+        "file_size": 1051048415,
+        "mime_type": "video/mp4",
+        "file_name": "document_6282637143651129975.mp4"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADkxQAAhAOMFdy.webp.enc",
+        "original_size": 7121,
+        "compressed_size": 6712
+      }
+    },
+    {
+      "message_id": 337,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "chat",
+        "sender_chat": {
+          "id": -1002710583661,
+          "title": "jse",
+          "type": "channel"
+        },
+        "date": 1753270067
+      },
+      "forward_from_chat": {
+        "id": -1002710583661,
+        "title": "jse",
+        "type": "channel"
+      },
+      "forward_from_message_id": null,
+      "forward_date": 1753270067,
+      "media_group_id": null,
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADqBcAAvLmCVQ",
+        "width": 848,
+        "height": 464,
+        "duration": 120,
+        "file_size": 100178460,
+        "mime_type": "video/mp4",
+        "file_name": "IMG_2508.MOV"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADqBcAAvLmCVRy.webp.enc",
+        "original_size": 12342,
+        "compressed_size": 11330
+      }
+    },
+    {
+      "message_id": 338,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1001724500658,
+          "title": "推特抖音网红福利",
+          "type": "channel"
+        },
+        "message_id": 13447,
+        "date": 1751558495
+      },
+      "forward_from_chat": {
+        "id": -1001724500658,
+        "title": "推特抖音网红福利",
+        "type": "channel"
+      },
+      "forward_from_message_id": 13447,
+      "forward_date": 1751558495,
+      "media_group_id": "14214103904956641",
+      "caption": "推特网红双马尾萝莉嫩妹【浆果儿】直接开干 让大哥压在身下爆草表情骚",
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADmgQAAhUTMUc",
+        "width": 1280,
+        "height": 720,
+        "duration": 504,
+        "file_size": 133655198,
+        "mime_type": "video/mp4",
+        "file_name": "最新流出作品【浆果儿】21分钟～直接开干_2.mp4"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADmgQAAhUTMUdy.webp.enc",
+        "original_size": 9128,
+        "compressed_size": 8298
+      }
+    },
+    {
+      "message_id": 339,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1001724500658,
+          "title": "推特抖音网红福利",
+          "type": "channel"
+        },
+        "message_id": 13448,
+        "date": 1751558495
+      },
+      "forward_from_chat": {
+        "id": -1001724500658,
+        "title": "推特抖音网红福利",
+        "type": "channel"
+      },
+      "forward_from_message_id": 13448,
+      "forward_date": 1751558495,
+      "media_group_id": "14214103904956641",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADmwQAAhUTMUc",
+        "width": 400,
+        "height": 720,
+        "duration": 453,
+        "file_size": 119768809,
+        "mime_type": "video/mp4",
+        "file_name": "最新流出作品【浆果儿】21分钟～直接开干_3.mp4"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADmwQAAhUTMUdy.webp.enc",
+        "original_size": 9337,
+        "compressed_size": 7848
+      }
+    },
+    {
+      "message_id": 340,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1001724500658,
+          "title": "推特抖音网红福利",
+          "type": "channel"
+        },
+        "message_id": 13449,
+        "date": 1751558495
+      },
+      "forward_from_chat": {
+        "id": -1001724500658,
+        "title": "推特抖音网红福利",
+        "type": "channel"
+      },
+      "forward_from_message_id": 13449,
+      "forward_date": 1751558495,
+      "media_group_id": "14214103904956641",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADnAQAAhUTMUc",
+        "width": 400,
+        "height": 720,
+        "duration": 320,
+        "file_size": 84765836,
+        "mime_type": "video/mp4",
+        "file_name": "最新流出作品【浆果儿】21分钟～直接开干.mp4"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADnAQAAhUTMUdy.webp.enc",
+        "original_size": 9498,
+        "compressed_size": 8426
+      }
+    },
+    {
+      "message_id": 341,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1001397985196,
+          "title": "老色批庇护所😍",
+          "username": "mimimi0791",
+          "type": "channel"
+        },
+        "message_id": 40448,
+        "date": 1752598099
+      },
+      "forward_from_chat": {
+        "id": -1001397985196,
+        "title": "老色批庇护所😍",
+        "username": "mimimi0791",
+        "type": "channel"
+      },
+      "forward_from_message_id": 40448,
+      "forward_date": 1752598099,
+      "media_group_id": "14214103904956649",
+      "caption": "#LonelyMeow #瑶瑶",
+      "caption_entities": [
+        {
+          "offset": 0,
+          "length": 11,
+          "type": "hashtag"
+        },
+        {
+          "offset": 12,
+          "length": 3,
+          "type": "hashtag"
+        }
+      ],
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADrgoAAqXCwVY",
+        "width": 3840,
+        "height": 2160,
+        "duration": 723,
+        "file_size": 1074725854,
+        "mime_type": "video/mp4",
+        "file_name": "The_Sex_Story_n8_full_4Kburning_dancer__hd2160.mp4.mp4"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADrgoAAqXCwVZy.webp.enc",
+        "original_size": 13512,
+        "compressed_size": 13736
+      }
+    },
+    {
+      "message_id": 342,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1001397985196,
+          "title": "老色批庇护所😍",
+          "username": "mimimi0791",
+          "type": "channel"
+        },
+        "message_id": 40449,
+        "date": 1752598100
+      },
+      "forward_from_chat": {
+        "id": -1001397985196,
+        "title": "老色批庇护所😍",
+        "username": "mimimi0791",
+        "type": "channel"
+      },
+      "forward_from_message_id": 40449,
+      "forward_date": 1752598100,
+      "media_group_id": "14214103904956649",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADrwoAAqXCwVY",
+        "width": 3840,
+        "height": 2160,
+        "duration": 1485,
+        "file_size": 1351552670,
+        "mime_type": "video/mp4",
+        "file_name": "P站网红『LonelyMeow』新年第一发4K佳作跳蛋自慰淫水打湿了沙发大鸡巴无套猛操才满足了.mp4"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADrwoAAqXCwVZy.webp.enc",
+        "original_size": 10614,
+        "compressed_size": 9912
+      }
+    },
+    {
+      "message_id": 343,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1001397985196,
+          "title": "老色批庇护所😍",
+          "username": "mimimi0791",
+          "type": "channel"
+        },
+        "message_id": 40450,
+        "date": 1752598100
+      },
+      "forward_from_chat": {
+        "id": -1001397985196,
+        "title": "老色批庇护所😍",
+        "username": "mimimi0791",
+        "type": "channel"
+      },
+      "forward_from_message_id": 40450,
+      "forward_date": 1752598100,
+      "media_group_id": "14214103904956649",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADsAoAAqXCwVY",
+        "width": 3840,
+        "height": 2160,
+        "duration": 912,
+        "file_size": 572928877,
+        "mime_type": "video/mp4",
+        "file_name": "P站网红频道『LonelyMeow』你的圣诞礼物请查收_高清4P精彩推荐.mp4"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADsAoAAqXCwVZy.webp.enc",
+        "original_size": 11991,
+        "compressed_size": 11542
+      }
+    },
+    {
+      "message_id": 344,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1001397985196,
+          "title": "老色批庇护所😍",
+          "username": "mimimi0791",
+          "type": "channel"
+        },
+        "message_id": 40451,
+        "date": 1752598100
+      },
+      "forward_from_chat": {
+        "id": -1001397985196,
+        "title": "老色批庇护所😍",
+        "username": "mimimi0791",
+        "type": "channel"
+      },
+      "forward_from_message_id": 40451,
+      "forward_date": 1752598100,
+      "media_group_id": "14214103904956649",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADsgoAAqXCwVY",
+        "width": 3840,
+        "height": 2160,
+        "duration": 1405,
+        "file_size": 2273707922,
+        "mime_type": "video/mp4",
+        "file_name": "SPECIALGIFTNEKOBESTFETISHVIDEOFULLUNCUT.mp4"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADsgoAAqXCwVZy.webp.enc",
+        "original_size": 13018,
+        "compressed_size": 12618
+      }
+    },
+    {
+      "message_id": 345,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1001397985196,
+          "title": "老色批庇护所😍",
+          "username": "mimimi0791",
+          "type": "channel"
+        },
+        "message_id": 40452,
+        "date": 1752598100
+      },
+      "forward_from_chat": {
+        "id": -1001397985196,
+        "title": "老色批庇护所😍",
+        "username": "mimimi0791",
+        "type": "channel"
+      },
+      "forward_from_message_id": 40452,
+      "forward_date": 1752598100,
+      "media_group_id": "14214103904956649",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADswoAAqXCwVY",
+        "width": 3840,
+        "height": 2160,
+        "duration": 801,
+        "file_size": 1192882662,
+        "mime_type": "video/mp4",
+        "file_name": "The_Sex_Story_n3_full_4K_Beijing__hd2160.mp4.mp4"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADswoAAqXCwVZy.webp.enc",
+        "original_size": 14673,
+        "compressed_size": 16030
+      }
+    },
+    {
+      "message_id": 346,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1001397985196,
+          "title": "老色批庇护所😍",
+          "username": "mimimi0791",
+          "type": "channel"
+        },
+        "message_id": 40453,
+        "date": 1752598100
+      },
+      "forward_from_chat": {
+        "id": -1001397985196,
+        "title": "老色批庇护所😍",
+        "username": "mimimi0791",
+        "type": "channel"
+      },
+      "forward_from_message_id": 40453,
+      "forward_date": 1752598100,
+      "media_group_id": "14214103904956649",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADtAoAAqXCwVY",
+        "width": 3840,
+        "height": 2160,
+        "duration": 1601,
+        "file_size": 2351866606,
+        "mime_type": "video/mp4",
+        "file_name": "The_Sex_Story_n6_full_4K_The_door__hd2160.mp4"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADtAoAAqXCwVZy.webp.enc",
+        "original_size": 8711,
+        "compressed_size": 7364
+      }
+    },
+    {
+      "message_id": 347,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1001397985196,
+          "title": "老色批庇护所😍",
+          "username": "mimimi0791",
+          "type": "channel"
+        },
+        "message_id": 40454,
+        "date": 1752598100
+      },
+      "forward_from_chat": {
+        "id": -1001397985196,
+        "title": "老色批庇护所😍",
+        "username": "mimimi0791",
+        "type": "channel"
+      },
+      "forward_from_message_id": 40454,
+      "forward_date": 1752598100,
+      "media_group_id": "14214103904956649",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADtQoAAqXCwVY",
+        "width": 3840,
+        "height": 2160,
+        "duration": 1297,
+        "file_size": 2107257407,
+        "mime_type": "video/mp4",
+        "file_name": "The_Sex_Story_n7_full_4K_kitchen__hd2160.mp4.mp4"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADtQoAAqXCwVZy.webp.enc",
+        "original_size": 7916,
+        "compressed_size": 6396
+      }
+    },
+    {
+      "message_id": 348,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 1303,
+        "date": 1754054054
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1303,
+      "forward_date": 1754054054,
+      "media_group_id": "14214103904956657",
+      "caption": "#孙禾颐 #jennypinky #至7月最新合集 评论区\n咱们心爱的孙老师又更新了，本次合集是从头更新到今年7月份的所有视频合集，专业演员出生降维打击福利姬圈，科班出生的就是好啊！所以也积攒了相当多的知名度和热度\n\n【点击一次性加入【妙妙屋】全系频道及群组】",
+      "caption_entities": [
+        {
+          "offset": 0,
+          "length": 4,
+          "type": "hashtag"
+        },
+        {
+          "offset": 5,
+          "length": 11,
+          "type": "hashtag"
+        },
+        {
+          "offset": 17,
+          "length": 8,
+          "type": "hashtag"
+        },
+        {
+          "offset": 109,
+          "length": 21,
+          "type": "text_link",
+          "url": "https://t.me/addlist/cUYzBEjmFhNjZjU1"
+        },
+        {
+          "offset": 109,
+          "length": 21,
+          "type": "bold"
+        }
+      ],
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADRccxGzgfaVR-",
+        "width": 718,
+        "height": 1280,
+        "file_size": 94472
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADRccxGzgfaVR-.webp.enc",
+        "original_size": 94472,
+        "compressed_size": 70126
+      }
+    },
+    {
+      "message_id": 349,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 1304,
+        "date": 1754054055
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1304,
+      "forward_date": 1754054055,
+      "media_group_id": "14214103904956657",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADR8cxGzgfaVR-",
+        "width": 717,
+        "height": 1280,
+        "file_size": 102433
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADR8cxGzgfaVR-.webp.enc",
+        "original_size": 102433,
+        "compressed_size": 64028
+      }
+    },
+    {
+      "message_id": 350,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 1305,
+        "date": 1754054055
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1305,
+      "forward_date": 1754054055,
+      "media_group_id": "14214103904956657",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADRscxGzgfaVR-",
+        "width": 717,
+        "height": 1280,
+        "file_size": 106097
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADRscxGzgfaVR-.webp.enc",
+        "original_size": 106097,
+        "compressed_size": 71404
+      }
+    },
+    {
+      "message_id": 351,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 1306,
+        "date": 1754054055
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1306,
+      "forward_date": 1754054055,
+      "media_group_id": "14214103904956657",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADSccxGzgfaVR-",
+        "width": 794,
+        "height": 1280,
+        "file_size": 106886
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADSccxGzgfaVR-.webp.enc",
+        "original_size": 106886,
+        "compressed_size": 70616
+      }
+    },
+    {
+      "message_id": 352,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 1307,
+        "date": 1754054055
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1307,
+      "forward_date": 1754054055,
+      "media_group_id": "14214103904956657",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADSMcxGzgfaVR-",
+        "width": 719,
+        "height": 1280,
+        "file_size": 93973
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADSMcxGzgfaVR-.webp.enc",
+        "original_size": 93973,
+        "compressed_size": 70786
+      }
+    },
+    {
+      "message_id": 353,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 1308,
+        "date": 1754054055
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1308,
+      "forward_date": 1754054055,
+      "media_group_id": "14214103904956657",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADSscxGzgfaVR-",
+        "width": 781,
+        "height": 1280,
+        "file_size": 85687
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADSscxGzgfaVR-.webp.enc",
+        "original_size": 85687,
+        "compressed_size": 60410
+      }
+    },
+    {
+      "message_id": 354,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 1370,
+        "date": 1754573954
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1370,
+      "forward_date": 1754573954,
+      "media_group_id": "14214103904956665",
+      "caption": "#pupu #噗噗 #pupuwaifu 至8月大合集 评论区\n好的，很多人都求的一位，拍摄质量都还是不错的，除了颜值略差点意思，别的从骚气程度，到剧情，到演技，都还是非常不错的\n本次合集已经尽可能找了，截至8.1之前的基本都收集全了，共计300+V，可能有少量重复吧",
+      "caption_entities": [
+        {
+          "offset": 0,
+          "length": 5,
+          "type": "hashtag"
+        },
+        {
+          "offset": 6,
+          "length": 3,
+          "type": "hashtag"
+        },
+        {
+          "offset": 10,
+          "length": 10,
+          "type": "hashtag"
+        }
+      ],
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADbMgxG8KaqVR-",
+        "width": 714,
+        "height": 1280,
+        "file_size": 79997
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADbMgxG8KaqVR-.webp.enc",
+        "original_size": 79997,
+        "compressed_size": 55212
+      }
+    },
+    {
+      "message_id": 355,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 1371,
+        "date": 1754573954
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1371,
+      "forward_date": 1754573954,
+      "media_group_id": "14214103904956665",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADbcgxG8KaqVR-",
+        "width": 720,
+        "height": 1278,
+        "file_size": 131429
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADbcgxG8KaqVR-.webp.enc",
+        "original_size": 131429,
+        "compressed_size": 99508
+      }
+    },
+    {
+      "message_id": 356,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 1372,
+        "date": 1754573954
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1372,
+      "forward_date": 1754573954,
+      "media_group_id": "14214103904956665",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADbsgxG8KaqVR-",
+        "width": 720,
+        "height": 1278,
+        "file_size": 82467
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADbsgxG8KaqVR-.webp.enc",
+        "original_size": 82467,
+        "compressed_size": 59150
+      }
+    },
+    {
+      "message_id": 357,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 1373,
+        "date": 1754573954
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1373,
+      "forward_date": 1754573954,
+      "media_group_id": "14214103904956665",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADb8gxG8KaqVR-",
+        "width": 716,
+        "height": 1280,
+        "file_size": 82482
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADb8gxG8KaqVR-.webp.enc",
+        "original_size": 82482,
+        "compressed_size": 56454
+      }
+    },
+    {
+      "message_id": 358,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 1374,
+        "date": 1754573954
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1374,
+      "forward_date": 1754573954,
+      "media_group_id": "14214103904956665",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADcMgxG8KaqVR-",
+        "width": 702,
+        "height": 1215,
+        "file_size": 75303
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADcMgxG8KaqVR-.webp.enc",
+        "original_size": 75303,
+        "compressed_size": 52092
+      }
+    },
+    {
+      "message_id": 359,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 1375,
+        "date": 1754573954
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1375,
+      "forward_date": 1754573954,
+      "media_group_id": "14214103904956665",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADccgxG8KaqVR-",
+        "width": 720,
+        "height": 1278,
+        "file_size": 83490
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADccgxG8KaqVR-.webp.enc",
+        "original_size": 83490,
+        "compressed_size": 59912
+      }
+    },
+    {
+      "message_id": 360,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1001584158807,
+          "title": "【反差】店长臻选",
+          "type": "channel"
+        },
+        "message_id": 12199,
+        "date": 1754332553
+      },
+      "forward_from_chat": {
+        "id": -1001584158807,
+        "title": "【反差】店长臻选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 12199,
+      "forward_date": 1754332553,
+      "media_group_id": "14214103904956673",
+      "caption": "#QINGQING66 \n超清完整版合集，高颜值反差大学生纯素颜出镜，极品中的极品，在cb站的直播，目前很难找到新作，奶子绝对是万里挑一，有全裸 口舌 各种诱惑\n\n【8V】评论区查看",
+      "caption_entities": [
+        {
+          "offset": 0,
+          "length": 11,
+          "type": "hashtag"
+        },
+        {
+          "offset": 0,
+          "length": 11,
+          "type": "bold"
+        },
+        {
+          "offset": 11,
+          "length": 69,
+          "type": "bold"
+        },
+        {
+          "offset": 82,
+          "length": 9,
+          "type": "bold"
+        }
+      ],
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQAD2sgxG5FtiVR-",
+        "width": 961,
+        "height": 1280,
+        "file_size": 59002
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQAD2sgxG5FtiVR-.webp.enc",
+        "original_size": 59002,
+        "compressed_size": 52142
+      }
+    },
+    {
+      "message_id": 361,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1001584158807,
+          "title": "【反差】店长臻选",
+          "type": "channel"
+        },
+        "message_id": 12200,
+        "date": 1754332554
+      },
+      "forward_from_chat": {
+        "id": -1001584158807,
+        "title": "【反差】店长臻选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 12200,
+      "forward_date": 1754332554,
+      "media_group_id": "14214103904956673",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQAD28gxG5FtiVR-",
+        "width": 971,
+        "height": 1280,
+        "file_size": 60563
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQAD28gxG5FtiVR-.webp.enc",
+        "original_size": 60563,
+        "compressed_size": 54160
+      }
+    },
+    {
+      "message_id": 362,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1001584158807,
+          "title": "【反差】店长臻选",
+          "type": "channel"
+        },
+        "message_id": 12201,
+        "date": 1754332554
+      },
+      "forward_from_chat": {
+        "id": -1001584158807,
+        "title": "【反差】店长臻选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 12201,
+      "forward_date": 1754332554,
+      "media_group_id": "14214103904956673",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQAD3MgxG5FtiVR-",
+        "width": 964,
+        "height": 1280,
+        "file_size": 57752
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQAD3MgxG5FtiVR-.webp.enc",
+        "original_size": 57752,
+        "compressed_size": 54006
+      }
+    },
+    {
+      "message_id": 363,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 238,
+        "date": 1749653676
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 238,
+      "forward_date": 1749653676,
+      "media_group_id": "14214103904956681",
+      "caption": "#池田 #chitian1 全视频合集 评论区\n广州福利姬，也是线下开课的老师，颜值不算高，但是确实懂运营，花活儿实在是多，什么咬爆打火机，上吊潮喷，口活儿也是牛，真的太会整了，看来弥补颜值不够的方法除了超厚粉底，还有超绝整活哈哈",
+      "caption_entities": [
+        {
+          "offset": 0,
+          "length": 3,
+          "type": "hashtag"
+        },
+        {
+          "offset": 4,
+          "length": 9,
+          "type": "hashtag"
+        }
+      ],
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADscsxG0MzUFZ-",
+        "width": 710,
+        "height": 1280,
+        "file_size": 125138
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADscsxG0MzUFZ-.webp.enc",
+        "original_size": 125138,
+        "compressed_size": 90264
+      }
+    },
+    {
+      "message_id": 364,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 239,
+        "date": 1749653676
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 239,
+      "forward_date": 1749653676,
+      "media_group_id": "14214103904956681",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADsssxG0MzUFZ-",
+        "width": 717,
+        "height": 1280,
+        "file_size": 97457
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADsssxG0MzUFZ-.webp.enc",
+        "original_size": 97457,
+        "compressed_size": 75916
+      }
+    },
+    {
+      "message_id": 365,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002178924582,
+          "title": "王者原神cos （cos 崩铁 写真）",
+          "type": "channel"
+        },
+        "message_id": 15965,
+        "date": 1756321182
+      },
+      "forward_from_chat": {
+        "id": -1002178924582,
+        "title": "王者原神cos （cos 崩铁 写真）",
+        "type": "channel"
+      },
+      "forward_from_message_id": 15965,
+      "forward_date": 1756321182,
+      "media_group_id": "14214103904956689",
+      "caption": "浵卡 芙露德莉斯cos 卡提希娅cos \nCartethyia x Fleurdelys - Wuthering Waves \n\n#cos #芙露德莉斯 #卡提希娅 #鸣潮 #浵卡 #Tokar #onlyfans #口交",
+      "caption_entities": [
+        {
+          "offset": 0,
+          "length": 111,
+          "type": "blockquote"
+        },
+        {
+          "offset": 65,
+          "length": 4,
+          "type": "hashtag"
+        },
+        {
+          "offset": 70,
+          "length": 6,
+          "type": "hashtag"
+        },
+        {
+          "offset": 77,
+          "length": 5,
+          "type": "hashtag"
+        },
+        {
+          "offset": 83,
+          "length": 3,
+          "type": "hashtag"
+        },
+        {
+          "offset": 87,
+          "length": 3,
+          "type": "hashtag"
+        },
+        {
+          "offset": 91,
+          "length": 6,
+          "type": "hashtag"
+        },
+        {
+          "offset": 98,
+          "length": 9,
+          "type": "hashtag"
+        },
+        {
+          "offset": 108,
+          "length": 3,
+          "type": "hashtag"
+        }
+      ],
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgAD-hUAAhgweVU",
+        "width": 1920,
+        "height": 1080,
+        "duration": 414,
+        "file_size": 477598438,
+        "mime_type": "video/mp4",
+        "file_name": "王者原神cos.mp4"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQAD-hUAAhgweVVy.webp.enc",
+        "original_size": 13793,
+        "compressed_size": 14146
+      }
+    },
+    {
+      "message_id": 366,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002178924582,
+          "title": "王者原神cos （cos 崩铁 写真）",
+          "type": "channel"
+        },
+        "message_id": 15966,
+        "date": 1756321182
+      },
+      "forward_from_chat": {
+        "id": -1002178924582,
+        "title": "王者原神cos （cos 崩铁 写真）",
+        "type": "channel"
+      },
+      "forward_from_message_id": 15966,
+      "forward_date": 1756321182,
+      "media_group_id": "14214103904956689",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQAD38UxGxgweVV-",
+        "width": 1280,
+        "height": 720,
+        "file_size": 100995
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQAD38UxGxgweVV-.webp.enc",
+        "original_size": 100995,
+        "compressed_size": 84228
+      }
+    },
+    {
+      "message_id": 367,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002178924582,
+          "title": "王者原神cos （cos 崩铁 写真）",
+          "type": "channel"
+        },
+        "message_id": 15967,
+        "date": 1756321182
+      },
+      "forward_from_chat": {
+        "id": -1002178924582,
+        "title": "王者原神cos （cos 崩铁 写真）",
+        "type": "channel"
+      },
+      "forward_from_message_id": 15967,
+      "forward_date": 1756321182,
+      "media_group_id": "14214103904956689",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQAD3sUxGxgweVV-",
+        "width": 1280,
+        "height": 720,
+        "file_size": 81152
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQAD3sUxGxgweVV-.webp.enc",
+        "original_size": 81152,
+        "compressed_size": 62548
+      }
+    },
+    {
+      "message_id": 368,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002178924582,
+          "title": "王者原神cos （cos 崩铁 写真）",
+          "type": "channel"
+        },
+        "message_id": 15968,
+        "date": 1756321182
+      },
+      "forward_from_chat": {
+        "id": -1002178924582,
+        "title": "王者原神cos （cos 崩铁 写真）",
+        "type": "channel"
+      },
+      "forward_from_message_id": 15968,
+      "forward_date": 1756321182,
+      "media_group_id": "14214103904956689",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQAD3cUxGxgweVV-",
+        "width": 1280,
+        "height": 720,
+        "file_size": 109251
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQAD3cUxGxgweVV-.webp.enc",
+        "original_size": 109251,
+        "compressed_size": 79678
+      }
+    },
+    {
+      "message_id": 369,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "hidden_user",
+        "sender_user_name": "Deleted Account",
+        "date": 1758462934
+      },
+      "forward_from_chat": null,
+      "forward_from_message_id": null,
+      "forward_date": 1758462934,
+      "media_group_id": null,
+      "caption": "#朵朵",
+      "caption_entities": [
+        {
+          "offset": 0,
+          "length": 3,
+          "type": "hashtag"
+        }
+      ],
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADUBoAAtseeFY",
+        "width": 2474,
+        "height": 1080,
+        "duration": 94,
+        "file_size": 225154588,
+        "mime_type": "video/mp4",
+        "file_name": "012.mp4"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADUBoAAtseeFZy.webp.enc",
+        "original_size": 8205,
+        "compressed_size": 7520
+      }
+    },
+    {
+      "message_id": 370,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 2199,
+        "date": 1760533757
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 2199,
+      "forward_date": 1760533757,
+      "media_group_id": "14214103904956705",
+      "caption": "#pupu #噗噗 #最新大合集 更新至10.15 评论区获取\n噗噗老师可以说是最近兴起的新势力，话题度和热度都堪称现象级的一个新人，大有长江后浪推前浪之势\n本次更新为全合集共整理到10月最新，新增内容放在前面了\n\n【点击查看妙妙屋更多精彩福利】",
+      "caption_entities": [
+        {
+          "offset": 0,
+          "length": 5,
+          "type": "hashtag"
+        },
+        {
+          "offset": 6,
+          "length": 3,
+          "type": "hashtag"
+        },
+        {
+          "offset": 10,
+          "length": 6,
+          "type": "hashtag"
+        },
+        {
+          "offset": 108,
+          "length": 15,
+          "type": "text_link",
+          "url": "https://t.me/miaomiaowu3333"
+        },
+        {
+          "offset": 108,
+          "length": 15,
+          "type": "bold"
+        }
+      ],
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADNw1rGz-IgFd-",
+        "width": 712,
+        "height": 1280,
+        "file_size": 188451
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADNw1rGz-IgFd-.webp.enc",
+        "original_size": 188451,
+        "compressed_size": 100778
+      }
+    },
+    {
+      "message_id": 371,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 2200,
+        "date": 1760533757
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 2200,
+      "forward_date": 1760533757,
+      "media_group_id": "14214103904956705",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADPw1rGz-IgFd-",
+        "width": 713,
+        "height": 1280,
+        "file_size": 100831
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADPw1rGz-IgFd-.webp.enc",
+        "original_size": 100831,
+        "compressed_size": 79100
+      }
+    },
+    {
+      "message_id": 372,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 2201,
+        "date": 1760533757
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 2201,
+      "forward_date": 1760533757,
+      "media_group_id": "14214103904956705",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADPg1rGz-IgFd-",
+        "width": 712,
+        "height": 1280,
+        "file_size": 156190
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADPg1rGz-IgFd-.webp.enc",
+        "original_size": 156190,
+        "compressed_size": 101982
+      }
+    },
+    {
+      "message_id": 373,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 2202,
+        "date": 1760533757
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 2202,
+      "forward_date": 1760533757,
+      "media_group_id": "14214103904956705",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADOg1rGz-IgFd-",
+        "width": 718,
+        "height": 1280,
+        "file_size": 170536
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADOg1rGz-IgFd-.webp.enc",
+        "original_size": 170536,
+        "compressed_size": 101916
+      }
+    },
+    {
+      "message_id": 374,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 2203,
+        "date": 1760533757
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 2203,
+      "forward_date": 1760533757,
+      "media_group_id": "14214103904956705",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADOw1rGz-IgFd-",
+        "width": 715,
+        "height": 1280,
+        "file_size": 143301
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADOw1rGz-IgFd-.webp.enc",
+        "original_size": 143301,
+        "compressed_size": 98010
+      }
+    },
+    {
+      "message_id": 375,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 2204,
+        "date": 1760533757
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 2204,
+      "forward_date": 1760533757,
+      "media_group_id": "14214103904956705",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADPA1rGz-IgFd-",
+        "width": 715,
+        "height": 1280,
+        "file_size": 122569
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADPA1rGz-IgFd-.webp.enc",
+        "original_size": 122569,
+        "compressed_size": 86654
+      }
+    },
+    {
+      "message_id": 377,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "hidden_user",
+        "sender_user_name": "Footjob🦶（主页）",
+        "date": 1695721578
+      },
+      "forward_from_chat": null,
+      "forward_from_message_id": null,
+      "forward_date": 1695721578,
+      "media_group_id": "14214103904956721",
+      "caption": "#摇摇乐  #摇摇乐yoyo  #软妹摇摇乐  #軟妹搖搖樂  #萝莉  #足控  #丝足  #cos  \n推特cos写真萝莉 软妹摇摇乐/摇摇乐yoyo 视图合集68套，一位活泼可爱，脸和脚都有点胖嘟嘟萝莉，cos和套图露点尺度不大，喜欢秀足，精油玩足 入群联系\n@EchoWu521",
+      "caption_entities": [
+        {
+          "offset": 0,
+          "length": 4,
+          "type": "hashtag"
+        },
+        {
+          "offset": 6,
+          "length": 8,
+          "type": "hashtag"
+        },
+        {
+          "offset": 16,
+          "length": 6,
+          "type": "hashtag"
+        },
+        {
+          "offset": 24,
+          "length": 6,
+          "type": "hashtag"
+        },
+        {
+          "offset": 32,
+          "length": 3,
+          "type": "hashtag"
+        },
+        {
+          "offset": 37,
+          "length": 3,
+          "type": "hashtag"
+        },
+        {
+          "offset": 42,
+          "length": 3,
+          "type": "hashtag"
+        },
+        {
+          "offset": 47,
+          "length": 4,
+          "type": "hashtag"
+        },
+        {
+          "offset": 133,
+          "length": 10,
+          "type": "mention"
+        }
+      ],
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADdgsAAty7mFQ",
+        "width": 1080,
+        "height": 1920,
+        "duration": 79,
+        "file_size": 66560817,
+        "mime_type": "video/quicktime",
+        "file_name": "1682414908_5648_IMG_20220905_201726_441.mov"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADdgsAAty7mFRy.webp.enc",
+        "original_size": 9892,
+        "compressed_size": 8990
+      }
+    },
+    {
+      "message_id": 378,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "hidden_user",
+        "sender_user_name": "Footjob🦶（主页）",
+        "date": 1695721578
+      },
+      "forward_from_chat": null,
+      "forward_from_message_id": null,
+      "forward_date": 1695721578,
+      "media_group_id": "14214103904956721",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADdwsAAty7mFQ",
+        "width": 1080,
+        "height": 1920,
+        "duration": 11,
+        "file_size": 9422283,
+        "mime_type": "video/quicktime",
+        "file_name": "1682414908_5649_IMG_20220905_201729_480.mov"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADdwsAAty7mFRy.webp.enc",
+        "original_size": 12371,
+        "compressed_size": 12128
+      }
+    },
+    {
+      "message_id": 379,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "hidden_user",
+        "sender_user_name": "Footjob🦶（主页）",
+        "date": 1695721578
+      },
+      "forward_from_chat": null,
+      "forward_from_message_id": null,
+      "forward_date": 1695721578,
+      "media_group_id": "14214103904956721",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADegsAAty7mFQ",
+        "width": 1080,
+        "height": 1920,
+        "duration": 132,
+        "file_size": 112980866,
+        "mime_type": "video/quicktime",
+        "file_name": "1682414908_5650_IMG_20220905_201732_729.mov"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADegsAAty7mFRy.webp.enc",
+        "original_size": 8958,
+        "compressed_size": 7970
+      }
+    },
+    {
+      "message_id": 380,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "hidden_user",
+        "sender_user_name": "Footjob🦶（主页）",
+        "date": 1695721578
+      },
+      "forward_from_chat": null,
+      "forward_from_message_id": null,
+      "forward_date": 1695721578,
+      "media_group_id": "14214103904956721",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADfQsAAty7mFQ",
+        "width": 1080,
+        "height": 1920,
+        "duration": 53,
+        "file_size": 43924724,
+        "mime_type": "video/quicktime",
+        "file_name": "1682414908_5651_IMG_20220905_201734_170.mov"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADfQsAAty7mFRy.webp.enc",
+        "original_size": 12672,
+        "compressed_size": 12424
+      }
+    },
+    {
+      "message_id": 381,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "hidden_user",
+        "sender_user_name": "Footjob🦶（主页）",
+        "date": 1695721578
+      },
+      "forward_from_chat": null,
+      "forward_from_message_id": null,
+      "forward_date": 1695721578,
+      "media_group_id": "14214103904956721",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADfgsAAty7mFQ",
+        "width": 1080,
+        "height": 1920,
+        "duration": 38,
+        "file_size": 32336082,
+        "mime_type": "video/quicktime",
+        "file_name": "1682414908_5652_IMG_20220905_201725_052.mov"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADfgsAAty7mFRy.webp.enc",
+        "original_size": 11761,
+        "compressed_size": 11332
+      }
+    },
+    {
+      "message_id": 392,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002279928905,
+          "title": "🔞瑟瑟分享(pikpak网盘)",
+          "username": "qvodc",
+          "type": "channel"
+        },
+        "message_id": 5207,
+        "date": 1764252667
+      },
+      "forward_from_chat": {
+        "id": -1002279928905,
+        "title": "🔞瑟瑟分享(pikpak网盘)",
+        "username": "qvodc",
+        "type": "channel"
+      },
+      "forward_from_message_id": 5207,
+      "forward_date": 1764252667,
+      "media_group_id": "14214103904956753",
+      "caption": "#高清无码 #高挑身材 #后入\nアフター 6～好色極上美人 OL～ - 波多野結衣\n番号: HEYZO-1048\n製作：HEYZO\n系列:  アフター 6\n日本 AV 女优：枢木みかん\n系列: カリビアンコム 加勒比 ほんとにあった H な話\n知名女优， 美脚， 美乳， 雪白皮肤， 颜面骑乘， 69， 中出， 骑乘位 \nPikPak 网盘高清视频在线观看\n=======================\n文件（1v）大小：2.15 g\n=======================\nPikPak 网盘下载链接放评论区：",
+      "caption_entities": [
+        {
+          "offset": 0,
+          "length": 5,
+          "type": "hashtag"
+        },
+        {
+          "offset": 6,
+          "length": 5,
+          "type": "hashtag"
+        },
+        {
+          "offset": 12,
+          "length": 3,
+          "type": "hashtag"
+        },
+        {
+          "offset": 122,
+          "length": 38,
+          "type": "blockquote"
+        }
+      ],
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADXQtrGzUmSVV-",
+        "width": 1280,
+        "height": 720,
+        "file_size": 75379
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADXQtrGzUmSVV-.webp.enc",
+        "original_size": 75379,
+        "compressed_size": 55614
+      }
+    },
+    {
+      "message_id": 393,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002279928905,
+          "title": "🔞瑟瑟分享(pikpak网盘)",
+          "username": "qvodc",
+          "type": "channel"
+        },
+        "message_id": 5208,
+        "date": 1764252667
+      },
+      "forward_from_chat": {
+        "id": -1002279928905,
+        "title": "🔞瑟瑟分享(pikpak网盘)",
+        "username": "qvodc",
+        "type": "channel"
+      },
+      "forward_from_message_id": 5208,
+      "forward_date": 1764252667,
+      "media_group_id": "14214103904956753",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADdx8AAjUmSVU",
+        "width": 1920,
+        "height": 1080,
+        "duration": 3571,
+        "file_size": 2316644008,
+        "mime_type": "video/mp4",
+        "file_name": "HEYZO-1048.mp4"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADdx8AAjUmSVVy.webp.enc",
+        "original_size": 14787,
+        "compressed_size": 15720
+      }
+    },
+    {
+      "message_id": 394,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 1757,
+        "date": 1757250812
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1757,
+      "forward_date": 1757250812,
+      "media_group_id": "14214103904956761",
+      "caption": "#jennypinky #孙禾颐 重磅全视频合集 评论区\n全新的孙老师大合集，更新至8.27的新资源，并在之前的基础上做了手动去重处理，本次合集总数量来到679V，比老版本合集多出100多V，此合集应该是TG内最为完善的合集了，前200条内为25年资源，后面的均为25年之前的\n孙禾颐不愧是专业演员，视频品质没得说\n\n【点击一次性加入【妙妙屋】全系频道及群组】",
+      "caption_entities": [
+        {
+          "offset": 0,
+          "length": 11,
+          "type": "hashtag"
+        },
+        {
+          "offset": 12,
+          "length": 4,
+          "type": "hashtag"
+        },
+        {
+          "offset": 16,
+          "length": 12,
+          "type": "bold"
+        },
+        {
+          "offset": 159,
+          "length": 21,
+          "type": "text_link",
+          "url": "https://t.me/addlist/cUYzBEjmFhNjZjU1"
+        },
+        {
+          "offset": 159,
+          "length": 21,
+          "type": "bold"
+        }
+      ],
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADkscxG-DC6FV-",
+        "width": 719,
+        "height": 1280,
+        "file_size": 73427
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADkscxG-DC6FV-.webp.enc",
+        "original_size": 73427,
+        "compressed_size": 53650
+      }
+    },
+    {
+      "message_id": 395,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 1758,
+        "date": 1757250812
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1758,
+      "forward_date": 1757250812,
+      "media_group_id": "14214103904956761",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADk8cxG-DC6FV-",
+        "width": 719,
+        "height": 1280,
+        "file_size": 90426
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADk8cxG-DC6FV-.webp.enc",
+        "original_size": 90426,
+        "compressed_size": 67006
+      }
+    },
+    {
+      "message_id": 396,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 1759,
+        "date": 1757250812
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1759,
+      "forward_date": 1757250812,
+      "media_group_id": "14214103904956761",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADlMcxG-DC6FV-",
+        "width": 719,
+        "height": 1280,
+        "file_size": 87279
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADlMcxG-DC6FV-.webp.enc",
+        "original_size": 87279,
+        "compressed_size": 68208
+      }
+    },
+    {
+      "message_id": 397,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 1760,
+        "date": 1757250812
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1760,
+      "forward_date": 1757250812,
+      "media_group_id": "14214103904956761",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADlscxG-DC6FV-",
+        "width": 719,
+        "height": 1280,
+        "file_size": 112273
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADlscxG-DC6FV-.webp.enc",
+        "original_size": 112273,
+        "compressed_size": 79678
+      }
+    },
+    {
+      "message_id": 398,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 1761,
+        "date": 1757250812
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1761,
+      "forward_date": 1757250812,
+      "media_group_id": "14214103904956761",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADlccxG-DC6FV-",
+        "width": 719,
+        "height": 1280,
+        "file_size": 105629
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADlccxG-DC6FV-.webp.enc",
+        "original_size": 105629,
+        "compressed_size": 74620
+      }
+    },
+    {
+      "message_id": 399,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002395963049,
+          "title": "妙妙屋-【严】选",
+          "type": "channel"
+        },
+        "message_id": 1762,
+        "date": 1757250812
+      },
+      "forward_from_chat": {
+        "id": -1002395963049,
+        "title": "妙妙屋-【严】选",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1762,
+      "forward_date": 1757250812,
+      "media_group_id": "14214103904956761",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADl8cxG-DC6FV-",
+        "width": 719,
+        "height": 1280,
+        "file_size": 141067
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADl8cxG-DC6FV-.webp.enc",
+        "original_size": 141067,
+        "compressed_size": 98974
+      }
+    },
+    {
+      "message_id": 415,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002821348128,
+          "title": "【大婊姐精选】最爱无码Av",
+          "username": "biaojie128",
+          "type": "channel"
+        },
+        "message_id": 1314,
+        "date": 1770529972
+      },
+      "forward_from_chat": {
+        "id": -1002821348128,
+        "title": "【大婊姐精选】最爱无码Av",
+        "username": "biaojie128",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1314,
+      "forward_date": 1770529972,
+      "media_group_id": "14214103904956793",
+      "caption": "20岁小萝莉，会一字马，玩的姿势哪叫一个多，解锁N种姿势爆操，全程高能， #无码 #精神小妹  #fc2  #反差",
+      "caption_entities": [
+        {
+          "offset": 37,
+          "length": 3,
+          "type": "hashtag"
+        },
+        {
+          "offset": 41,
+          "length": 5,
+          "type": "hashtag"
+        },
+        {
+          "offset": 48,
+          "length": 4,
+          "type": "hashtag"
+        },
+        {
+          "offset": 54,
+          "length": 3,
+          "type": "hashtag"
+        }
+      ],
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADvQxrGyNaOUR-",
+        "width": 1280,
+        "height": 710,
+        "file_size": 68762
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADvQxrGyNaOUR-.webp.enc",
+        "original_size": 68762,
+        "compressed_size": 78700
+      }
+    },
+    {
+      "message_id": 416,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002821348128,
+          "title": "【大婊姐精选】最爱无码Av",
+          "username": "biaojie128",
+          "type": "channel"
+        },
+        "message_id": 1315,
+        "date": 1770529972
+      },
+      "forward_from_chat": {
+        "id": -1002821348128,
+        "title": "【大婊姐精选】最爱无码Av",
+        "username": "biaojie128",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1315,
+      "forward_date": 1770529972,
+      "media_group_id": "14214103904956793",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADvgxrGyNaOUR-",
+        "width": 1280,
+        "height": 717,
+        "file_size": 65117
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADvgxrGyNaOUR-.webp.enc",
+        "original_size": 65117,
+        "compressed_size": 70660
+      }
+    },
+    {
+      "message_id": 417,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002821348128,
+          "title": "【大婊姐精选】最爱无码Av",
+          "username": "biaojie128",
+          "type": "channel"
+        },
+        "message_id": 1316,
+        "date": 1770529972
+      },
+      "forward_from_chat": {
+        "id": -1002821348128,
+        "title": "【大婊姐精选】最爱无码Av",
+        "username": "biaojie128",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1316,
+      "forward_date": 1770529972,
+      "media_group_id": "14214103904956793",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADvwxrGyNaOUR-",
+        "width": 1280,
+        "height": 717,
+        "file_size": 50605
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADvwxrGyNaOUR-.webp.enc",
+        "original_size": 50605,
+        "compressed_size": 50276
+      }
+    },
+    {
+      "message_id": 418,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002821348128,
+          "title": "【大婊姐精选】最爱无码Av",
+          "username": "biaojie128",
+          "type": "channel"
+        },
+        "message_id": 1317,
+        "date": 1770529972
+      },
+      "forward_from_chat": {
+        "id": -1002821348128,
+        "title": "【大婊姐精选】最爱无码Av",
+        "username": "biaojie128",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1317,
+      "forward_date": 1770529972,
+      "media_group_id": "14214103904956793",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "photo",
+      "media_meta": {
+        "file_unique_id": "AQADwAxrGyNaOUR-",
+        "width": 1280,
+        "height": 713,
+        "file_size": 39091
+      },
+      "media_file": {
+        "local_path": "telegram_media/photos/AQADwAxrGyNaOUR-.webp.enc",
+        "original_size": 39091,
+        "compressed_size": 39196
+      }
+    },
+    {
+      "message_id": 419,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002821348128,
+          "title": "【大婊姐精选】最爱无码Av",
+          "username": "biaojie128",
+          "type": "channel"
+        },
+        "message_id": 1318,
+        "date": 1770529972
+      },
+      "forward_from_chat": {
+        "id": -1002821348128,
+        "title": "【大婊姐精选】最爱无码Av",
+        "username": "biaojie128",
+        "type": "channel"
+      },
+      "forward_from_message_id": 1318,
+      "forward_date": 1770529972,
+      "media_group_id": "14214103904956793",
+      "caption": null,
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADVwoAAiNaOUQ",
+        "width": 848,
+        "height": 464,
+        "duration": 1888,
+        "file_size": 720617978,
+        "mime_type": "video/mp4",
+        "file_name": "IMG_6187.MOV"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADVwoAAiNaOURy.webp.enc",
+        "original_size": 9541,
+        "compressed_size": 8176
+      }
+    },
+    {
+      "message_id": 420,
+      "date": 1776762988,
+      "forward_origin": {
+        "type": "user",
+        "sender_user": {
+          "id": 7833788425,
+          "is_bot": true,
+          "first_name": "下载助手",
+          "username": "XiaZaiZhuShouBot"
+        },
+        "date": 1773245619
+      },
+      "forward_from_chat": null,
+      "forward_from_message_id": null,
+      "forward_date": 1773245619,
+      "media_group_id": null,
+      "caption": "虽然经常被黑但是有她是真给啊 先冲了各位",
+      "caption_entities": null,
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADgwoAApTalVE",
+        "width": 720,
+        "height": 1288,
+        "duration": 21,
+        "file_size": 2587289,
+        "mime_type": "video/mp4",
+        "file_name": "9-uvqy8RSp60egyp.mp4"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADgwoAApTalVFy.webp.enc",
+        "original_size": 11788,
+        "compressed_size": 10588
+      }
+    },
+    {
+      "message_id": 425,
+      "date": 1776763077,
+      "forward_origin": {
+        "type": "channel",
+        "chat": {
+          "id": -1002327498462,
+          "title": "Onlyfans就得看合集",
+          "type": "channel"
+        },
+        "message_id": 643,
+        "date": 1728576540
+      },
+      "forward_from_chat": {
+        "id": -1002327498462,
+        "title": "Onlyfans就得看合集",
+        "type": "channel"
+      },
+      "forward_from_message_id": 643,
+      "forward_date": 1728576540,
+      "media_group_id": "14214104623384377",
+      "caption": "作者：#孙禾颐 #jennypinky\n标签：#美穴 #美乳 #白虎 #自慰\ntips:TG各处广告请谨慎对待. 小心上当受骗\n一共230V 剩余视频与图片请看评论区⤵️⤵️⤵️",
+      "caption_entities": [
+        {
+          "offset": 3,
+          "length": 4,
+          "type": "hashtag"
+        },
+        {
+          "offset": 8,
+          "length": 11,
+          "type": "hashtag"
+        },
+        {
+          "offset": 23,
+          "length": 3,
+          "type": "hashtag"
+        },
+        {
+          "offset": 27,
+          "length": 3,
+          "type": "hashtag"
+        },
+        {
+          "offset": 31,
+          "length": 3,
+          "type": "hashtag"
+        },
+        {
+          "offset": 35,
+          "length": 3,
+          "type": "hashtag"
+        },
+        {
+          "offset": 83,
+          "length": 2,
+          "type": "custom_emoji",
+          "custom_emoji_id": "5197474438970363734"
+        },
+        {
+          "offset": 85,
+          "length": 2,
+          "type": "custom_emoji",
+          "custom_emoji_id": "5197474438970363734"
+        },
+        {
+          "offset": 87,
+          "length": 2,
+          "type": "custom_emoji",
+          "custom_emoji_id": "5197474438970363734"
+        }
+      ],
+      "text": null,
+      "type": "video",
+      "media_meta": {
+        "file_unique_id": "AgADCwYAAt9IQUQ",
+        "width": 1080,
+        "height": 1920,
+        "duration": 439,
+        "file_size": 272662376,
+        "mime_type": "video/mp4",
+        "file_name": "33245.mp4"
+      },
+      "media_file": {
+        "local_path": "telegram_media/thumbnails/AQADCwYAAt9IQURy.webp.enc",
+        "original_size": 11326,
+        "compressed_size": 10874
       }
     }
   ]
