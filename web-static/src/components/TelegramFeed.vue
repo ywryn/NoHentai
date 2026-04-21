@@ -228,16 +228,19 @@ function slotPhClass(uid) {
 function getAR(msg) {
   const w = msg.media_meta?.width, h = msg.media_meta?.height
   const r = (w && h && h > 0) ? w / h : 4 / 3
-  // 竖图 flex 最小值 0.65，避免在多图行中被压得过窄
   return Math.max(r, 0.65)
 }
 
-function computeAlbumRows(group) {
-  const items = group.items.filter(m => m.media_file)
-  if (!items.length) return []
-  const visible = items.slice(0, 9)
-  const extra = Math.max(0, items.length - 9)
-  const vn = visible.length
+// 每个相册当前已展开的页数（每页 9 张）
+const albumPages = ref({})
+
+async function expandAlbum(group) {
+  albumPages.value[group.key] = (albumPages.value[group.key] ?? 1) + 1
+  if (keyReady.value) await loadGroup(group)
+}
+
+function layoutBlock(block, extra) {
+  const vn = block.length
   let rg
   if      (vn === 1) rg = [[0]]
   else if (vn === 2) rg = [[0,1]]
@@ -251,10 +254,43 @@ function computeAlbumRows(group) {
   return rg.map((indices, ri) => ({
     isSingle: indices.length === 1,
     items: indices.map((idx, ii) => ({
-      msg: visible[idx],
+      msg: block[idx],
       extra: ri === rg.length - 1 && ii === indices.length - 1 ? extra : 0,
     })),
   }))
+}
+
+function computeAlbumRows(group) {
+  const items = group.items.filter(m => m.media_file)
+  if (!items.length) return []
+  const pages = albumPages.value[group.key] ?? 1
+  const maxVisible = pages * 9
+  const visible = items.slice(0, maxVisible)
+  const remaining = Math.max(0, items.length - maxVisible)
+  const rows = []
+  for (let b = 0; b < visible.length; b += 9) {
+    const block = visible.slice(b, b + 9)
+    const isLast = b + block.length >= visible.length
+    rows.push(...layoutBlock(block, isLast ? remaining : 0))
+  }
+  return rows
+}
+
+function getSourceUrl(group) {
+  const msg = group.items[0]
+  const chat = msg.forward_from_chat ?? msg.forward_origin?.chat
+  const msgId = msg.forward_from_message_id ?? msg.forward_origin?.message_id
+  if (!chat) return null
+  if (chat.username) {
+    // 有消息 ID 精确跳转，否则降级到频道主页
+    return msgId ? `https://t.me/${chat.username}/${msgId}` : `https://t.me/${chat.username}`
+  }
+  // 私有频道（无 username）：需要 msgId 才能构造链接
+  if (msgId) {
+    const absId = String(Math.abs(chat.id))
+    if (absId.startsWith('100')) return `https://t.me/c/${absId.slice(3)}/${msgId}`
+  }
+  return null
 }
 
 function hasMedia(group) {
@@ -263,7 +299,27 @@ function hasMedia(group) {
   return (m.type === 'photo' && m.media_file) || m.type === 'video' || m.type === 'animation'
 }
 function hasMediaNoCaption(group) {
-  return hasMedia(group) && !group.caption && !group.items[0].text
+  const m = group.items[0]
+  // 视频有文件名时视为有文字内容，时间行不叠加在媒体上
+  if (m.type === 'video' && m.media_meta?.file_name) return false
+  return hasMedia(group) && !group.caption && !m.text
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+const toastMsg     = ref('')
+const toastVisible = ref(false)
+let toastTimer = null
+function showToast(msg) {
+  toastMsg.value = msg
+  toastVisible.value = true
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => { toastVisible.value = false }, 1600)
+}
+
+function openSource(group) {
+  const url = getSourceUrl(group)
+  if (url) { window.open(url, '_blank', 'noopener') }
+  else { showToast('无法获取原贴链接') }
 }
 
 // ── Lightbox ───────────────────────────────────────────────────────────────
@@ -425,34 +481,34 @@ function fmtSize(b) { return b < 1048576 ? `${(b/1024).toFixed(0)} KB` : `${(b/1
               <div v-else class="tg-bubble-wrap" @vue:mounted="loadGroup(item.group)">
                 <div class="tg-bubble" :class="{ 'bubble-no-caption': hasMediaNoCaption(item.group) }">
 
+
                   <!-- Album -->
                   <template v-if="item.group.isAlbum">
                     <div class="tg-bub-album">
                       <div v-for="(row, ri) in computeAlbumRows(item.group)" :key="ri" class="tg-alb-row">
 
-                        <!-- Single-image row：用 padding-bottom 撑满全宽，与图片比例一致 -->
+                        <!-- Single-image row -->
                         <template v-if="row.isSingle">
                           <div class="tg-alb-single"
-                            :class="{ 'tg-click': isLoaded(row.items[0].msg.media_meta?.file_unique_id) }"
-                            @click="openLightbox(row.items[0].msg.media_meta?.file_unique_id)">
+                            :class="{ 'tg-click': isLoaded(row.items[0].msg.media_meta?.file_unique_id) && !row.items[0].extra }"
+                            @click="row.items[0].extra ? expandAlbum(item.group) : openLightbox(row.items[0].msg.media_meta?.file_unique_id)">
                             <div class="tg-alb-inner" :style="{ paddingBottom: (100/getAR(row.items[0].msg)) + '%' }">
-                            <img v-if="isLoaded(row.items[0].msg.media_meta?.file_unique_id)"
-                              :src="urlCache[row.items[0].msg.media_meta.file_unique_id]"
-                              class="tg-fill-img" loading="lazy" />
-                            <div v-else class="tg-ph" :class="slotPhClass(row.items[0].msg.media_meta?.file_unique_id)">
-                              <div v-if="keyReady && urlCache[row.items[0].msg.media_meta?.file_unique_id] !== 'error'" class="tg-spin"/>
-                              <svg v-else viewBox="0 0 24 24"><path d="M18 8h-1V6A5 5 0 0 0 7 6v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2z" fill="currentColor"/></svg>
-                            </div>
-                            <template v-if="row.items[0].msg.type === 'video' && isLoaded(row.items[0].msg.media_meta?.file_unique_id)">
-                              <div class="tg-vid-play-overlay"><div class="tg-vid-play-btn"><svg viewBox="0 0 24 24" style="fill:#fff;width:22px;height:22px;margin-left:2px"><path d="M8 5v14l11-7z"/></svg></div></div>
-                              <div class="tg-vid-badges">
-                                <span class="tg-vid-badge tg-vid-type">VIDEO</span>
-                                <span v-if="row.items[0].msg.media_meta?.duration" class="tg-vid-badge">{{ fmtDuration(row.items[0].msg.media_meta.duration) }}</span>
-                                <span v-if="row.items[0].msg.media_meta?.file_size" class="tg-vid-badge tg-vid-size">{{ fmtSize(row.items[0].msg.media_meta.file_size) }}</span>
+                              <img v-if="isLoaded(row.items[0].msg.media_meta?.file_unique_id)"
+                                :src="urlCache[row.items[0].msg.media_meta.file_unique_id]"
+                                class="tg-fill-img" loading="lazy" />
+                              <div v-else class="tg-ph" :class="slotPhClass(row.items[0].msg.media_meta?.file_unique_id)">
+                                <div v-if="keyReady && urlCache[row.items[0].msg.media_meta?.file_unique_id] !== 'error'" class="tg-spin"/>
+                                <svg v-else viewBox="0 0 24 24"><path d="M18 8h-1V6A5 5 0 0 0 7 6v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2z" fill="currentColor"/></svg>
                               </div>
-                            </template>
-                            <div v-if="row.items[0].extra > 0" class="tg-extra">+{{ row.items[0].extra }}</div>
-                            </div><!-- /tg-alb-inner -->
+                              <template v-if="row.items[0].msg.type === 'video' && isLoaded(row.items[0].msg.media_meta?.file_unique_id)">
+                                <div class="tg-vid-badges">
+                                  <span class="tg-vid-badge tg-vid-type">VIDEO</span>
+                                  <span v-if="row.items[0].msg.media_meta?.duration" class="tg-vid-badge tg-badge-detail">{{ fmtDuration(row.items[0].msg.media_meta.duration) }}</span>
+                                  <span v-if="row.items[0].msg.media_meta?.file_size" class="tg-vid-badge tg-vid-size tg-badge-detail">{{ fmtSize(row.items[0].msg.media_meta.file_size) }}</span>
+                                </div>
+                              </template>
+                              <div v-if="row.items[0].extra > 0" class="tg-extra tg-extra-expand">+{{ row.items[0].extra }}</div>
+                            </div>
                           </div>
                         </template>
 
@@ -460,8 +516,8 @@ function fmtSize(b) { return b < 1048576 ? `${(b/1024).toFixed(0)} KB` : `${(b/1
                         <template v-else>
                           <div v-for="slot in row.items" :key="slot.msg.message_id"
                             class="tg-alb-slot" :style="{ flex: getAR(slot.msg) }"
-                            :class="{ 'tg-click': isLoaded(slot.msg.media_meta?.file_unique_id) }"
-                            @click="openLightbox(slot.msg.media_meta?.file_unique_id)">
+                            :class="{ 'tg-click': isLoaded(slot.msg.media_meta?.file_unique_id) && !slot.extra }"
+                            @click="slot.extra ? expandAlbum(item.group) : openLightbox(slot.msg.media_meta?.file_unique_id)">
                             <div class="tg-alb-inner" :style="{ paddingBottom: (100/getAR(slot.msg)) + '%' }">
                               <img v-if="isLoaded(slot.msg.media_meta?.file_unique_id)"
                                 :src="urlCache[slot.msg.media_meta.file_unique_id]"
@@ -471,13 +527,12 @@ function fmtSize(b) { return b < 1048576 ? `${(b/1024).toFixed(0)} KB` : `${(b/1
                                 <svg v-else viewBox="0 0 24 24"><path d="M18 8h-1V6A5 5 0 0 0 7 6v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2z" fill="currentColor"/></svg>
                               </div>
                               <template v-if="slot.msg.type === 'video' && isLoaded(slot.msg.media_meta?.file_unique_id)">
-                                <div class="tg-vid-play-overlay"><div class="tg-vid-play-btn tg-vid-play-sm"><svg viewBox="0 0 24 24" style="fill:#fff;width:16px;height:16px;margin-left:2px"><path d="M8 5v14l11-7z"/></svg></div></div>
                                 <div class="tg-vid-badges">
                                   <span class="tg-vid-badge tg-vid-type">VIDEO</span>
-                                  <span v-if="slot.msg.media_meta?.duration" class="tg-vid-badge">{{ fmtDuration(slot.msg.media_meta.duration) }}</span>
+                                  <span v-if="slot.msg.media_meta?.duration" class="tg-vid-badge tg-badge-detail">{{ fmtDuration(slot.msg.media_meta.duration) }}</span>
                                 </div>
                               </template>
-                              <div v-if="slot.extra > 0" class="tg-extra">+{{ slot.extra }}</div>
+                              <div v-if="slot.extra > 0" class="tg-extra tg-extra-expand">+{{ slot.extra }}</div>
                             </div>
                           </div>
                         </template>
@@ -509,24 +564,18 @@ function fmtSize(b) { return b < 1048576 ? `${(b/1024).toFixed(0)} KB` : `${(b/1
                       <div class="tg-vid-cover" :style="{ aspectRatio: getAR(item.group.items[0]) }">
                         <img v-if="item.group.items[0].media_file && isLoaded(item.group.items[0].media_meta?.file_unique_id)"
                           :src="urlCache[item.group.items[0].media_meta.file_unique_id]"
-                          class="tg-fill-img" />
+                          class="tg-fill-img" loading="lazy" />
                         <div v-else class="tg-ph" :class="slotPhClass(item.group.items[0].media_meta?.file_unique_id)">
                           <div v-if="keyReady" class="tg-spin"/>
                           <svg v-else viewBox="0 0 24 24"><path d="M18 8h-1V6A5 5 0 0 0 7 6v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2z" fill="currentColor"/></svg>
                         </div>
-                        <!-- play button -->
-                        <div class="tg-vid-play-overlay">
-                          <div class="tg-vid-play-btn">
-                            <svg viewBox="0 0 24 24" style="fill:#fff;width:22px;height:22px;margin-left:2px"><path d="M8 5v14l11-7z"/></svg>
-                          </div>
-                        </div>
                         <!-- badges -->
                         <div class="tg-vid-badges">
                           <span class="tg-vid-badge tg-vid-type">VIDEO</span>
-                          <span v-if="item.group.items[0].media_meta?.duration" class="tg-vid-badge">
+                          <span v-if="item.group.items[0].media_meta?.duration" class="tg-vid-badge tg-badge-detail">
                             {{ fmtDuration(item.group.items[0].media_meta.duration) }}
                           </span>
-                          <span v-if="item.group.items[0].media_meta?.file_size" class="tg-vid-badge tg-vid-size">
+                          <span v-if="item.group.items[0].media_meta?.file_size" class="tg-vid-badge tg-vid-size tg-badge-detail">
                             {{ fmtSize(item.group.items[0].media_meta.file_size) }}
                           </span>
                         </div>
@@ -542,8 +591,20 @@ function fmtSize(b) { return b < 1048576 ? `${(b/1024).toFixed(0)} KB` : `${(b/1
                   <div v-if="item.group.caption || (!item.group.isAlbum && item.group.items[0].text)"
                     class="tg-bub-text">{{ item.group.caption || item.group.items[0].text }}</div>
 
-                  <!-- Time -->
-                  <div class="tg-bub-time">{{ fmtTime(item.group.date) }}</div>
+                  <!-- Time + 原贴跳转 -->
+                  <div class="tg-bub-time">
+                    <!-- 有文字/标题时按钮在时间行内 -->
+                    <button v-if="!hasMediaNoCaption(item.group)"
+                       class="tg-src-btn" @click="openSource(item.group)">
+                      查看原贴
+                    </button>
+                    <span class="tg-bub-time-text">{{ fmtTime(item.group.date) }}</span>
+                  </div>
+                  <!-- 纯媒体（无文字）时按钮叠加在媒体左下角 -->
+                  <button v-if="hasMediaNoCaption(item.group)"
+                     class="tg-src-btn tg-src-btn-overlay" @click="openSource(item.group)">
+                    查看原贴
+                  </button>
                 </div>
               </div>
 
@@ -566,6 +627,13 @@ function fmtSize(b) { return b < 1048576 ? `${(b/1024).toFixed(0)} KB` : `${(b/1
       </div>
     </div>
   </div>
+
+  <!-- Toast -->
+  <Teleport to="body">
+    <Transition name="tg-toast">
+      <div v-if="toastVisible" class="tg-toast">{{ toastMsg }}</div>
+    </Transition>
+  </Teleport>
 
   <!-- Lightbox -->
   <Teleport to="body">
@@ -764,7 +832,7 @@ html.my-app-dark { --tg-chat-bg: #0d1117; }
   border-radius: 4px 12px 12px 12px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.1);
   overflow: hidden;
-  position: relative;
+  position: relative; /* 锚定 tg-src-btn-overlay */
 }
 
 .tg-bub-text {
@@ -777,21 +845,42 @@ html.my-app-dark { --tg-chat-bg: #0d1117; }
 }
 
 .tg-bub-time {
-  font-size: 11px;
-  color: var(--text-color);
-  opacity: 0.42;
-  text-align: right;
+  display: flex; align-items: center; justify-content: flex-end; gap: 6px;
+  font-size: 11px; color: var(--text-color);
   padding: 3px 8px 6px;
 }
+/* 只让时间文字淡显，不影响兄弟按钮的 opacity */
+.tg-bub-time-text { opacity: 0.42; }
 
 /* When media only (no caption), time overlays on image */
 .bubble-no-caption .tg-bub-time {
   position: absolute; bottom: 0; right: 0;
   background: rgba(0,0,0,0.42);
-  color: #fff; opacity: 1;
+  color: #fff;
   border-radius: 8px 0 0 0;
   padding: 2px 6px 3px;
   font-size: 10px;
+}
+.bubble-no-caption .tg-bub-time-text { opacity: 0.9; }
+
+/* 时间行内跳转按钮（有文字时） */
+.tg-src-btn {
+  display: flex; align-items: center; gap: 3px;
+  color: inherit; text-decoration: none; font-size: inherit;
+  opacity: 0.5; cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap; flex-shrink: 0;
+  background: none; border: none; padding: 0; margin: 0; font-family: inherit;
+}
+.tg-src-btn:hover { opacity: 1; }
+
+/* 纯媒体时叠加在左下角 */
+.tg-src-btn-overlay {
+  position: absolute; bottom: 0; left: 0;
+  background: rgba(0,0,0,0.45); backdrop-filter: blur(4px);
+  color: #fff; font-size: 11px;
+  padding: 3px 8px 3px 6px;
+  border-radius: 0 8px 0 0;
 }
 
 /* Album in bubble */
@@ -866,6 +955,8 @@ html.my-app-dark { --tg-chat-bg: #0d1117; }
   font-size: 20px; font-weight: 800; color: #fff;
   background: rgba(0,0,0,0.42);
 }
+.tg-extra-expand { cursor: pointer; }
+.tg-extra-expand:hover { background: rgba(0,0,0,0.58); }
 
 /* Video */
 .tg-bub-video { overflow: hidden; }
@@ -948,6 +1039,17 @@ html.my-app-dark { --tg-chat-bg: #0d1117; }
   justify-content: center;
 }
 
+/* ─── Toast ──────────────────────────────────────────────────────────────── */
+.tg-toast {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.75); color: #fff;
+  font-size: 13px; padding: 8px 18px; border-radius: 20px;
+  pointer-events: none; z-index: 99999; white-space: nowrap;
+  backdrop-filter: blur(4px);
+}
+.tg-toast-enter-active, .tg-toast-leave-active { transition: opacity 0.25s; }
+.tg-toast-enter-from, .tg-toast-leave-to { opacity: 0; }
+
 /* ─── Lightbox ───────────────────────────────────────────────────────────── */
 .tg-lightbox {
   position: fixed; inset: 0; z-index: 9999;
@@ -990,7 +1092,8 @@ html.my-app-dark { --tg-chat-bg: #0d1117; }
   .view-chat .tg-sidebar { transform: translateX(-100%); }
   .view-chat .tg-chat    { transform: translateX(0); }
 
-  .tg-back-btn { display: flex; align-items: center; justify-content: center; }
-  .tg-bubble   { width: 90%; }
+  .tg-back-btn    { display: flex; align-items: center; justify-content: center; }
+  .tg-bubble      { width: 90%; }
+  .tg-badge-detail { display: none; }
 }
 </style>
