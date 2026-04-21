@@ -9,6 +9,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read
 
 concurrency:
   group: pages
@@ -20,6 +21,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Download media archive
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download telegram-media-archive \
+            --pattern "telegram_media.zip" \
+            --dir web-static/public/data/ 2>/dev/null || true
+          if [ -f web-static/public/data/telegram_media.zip ]; then
+            unzip -q -o web-static/public/data/telegram_media.zip \
+              -d web-static/public/data/
+            rm web-static/public/data/telegram_media.zip
+          fi
 
       - name: Setup Node
         uses: actions/setup-node@v4
