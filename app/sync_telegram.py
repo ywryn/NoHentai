@@ -318,6 +318,12 @@ def main() -> None:
         archive.update(saved)
         archive.setdefault("offset", 0)  # 兼容无 offset 字段的旧文件
     existing_ids = {m["message_id"] for m in archive["messages"]}
+    # (来源频道ID, 原始消息ID) 组合去重，防止同一原始消息多次转发重复保存
+    existing_origins = {
+        (m["forward_from_chat"]["id"], m["forward_from_message_id"])
+        for m in archive["messages"]
+        if m.get("forward_from_chat") and m.get("forward_from_message_id")
+    }
 
     key = derive_key(ENCRYPTION_PASSWORD)
     updates = get_updates(archive["offset"])
@@ -329,9 +335,20 @@ def main() -> None:
         msg = update.get("message") or update.get("channel_post")
         if not msg or msg["message_id"] in existing_ids:
             continue
+        # 原始来源去重
+        origin_key = None
+        chat = msg.get("forward_from_chat")
+        fwd_msg_id = msg.get("forward_from_message_id")
+        if chat and fwd_msg_id:
+            origin_key = (chat["id"], fwd_msg_id)
+            if origin_key in existing_origins:
+                logger.info("跳过重复转发 chat_id=%s fwd_msg_id=%s", chat["id"], fwd_msg_id)
+                continue
         record = parse_message(msg, key)
         if record:
             new_records.append(record)
+            if origin_key:
+                existing_origins.add(origin_key)
             logger.info("已归档 message_id=%d type=%s", record["message_id"], record["type"])
 
     if new_records:
