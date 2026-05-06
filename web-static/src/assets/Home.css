@@ -275,9 +275,6 @@ body {
   align-items: center;
   min-height: 30px;
   padding: 3px 4px;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  background: var(--surface-color);
 }
 
 .pagination-control {
