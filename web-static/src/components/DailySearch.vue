@@ -71,9 +71,6 @@
       </div>
 
       <div class="toolbar">
-        <div class="result-count">
-          Showing <strong>{{ totalRecords }}</strong> Galleries
-        </div>
         <div class="paginator-mini" v-if="totalPages > 1">
           <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(1)">«</button>
           <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">‹</button>

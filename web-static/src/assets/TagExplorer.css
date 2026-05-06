@@ -118,12 +118,6 @@
   justify-content: center;
 }
 
-.result-count {
-  font-size: 13px;
-  color: var(--text-color);
-  opacity: 0.7;
-}
-
 .pagination {
   display: flex;
   align-items: center;
