@@ -69,6 +69,4 @@ temp/
 Thumbs.db
 Desktop.ini
 
-# Lock files (keep one type)
-package-lock.json
 yarn.lock
