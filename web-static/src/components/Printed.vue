@@ -209,15 +209,14 @@ const filteredItems = computed(() => {
               class="gr-badge"
               :class="typeClassMap[getGallery(item.sid).category] || 'default'"
             >{{ getGallery(item.sid).category }}</span>
-            <span class="vm-card-title">{{ item['书名'] }}</span>
+            <span class="vm-card-title">{{ item['书名'] || item['日文名'] }}</span>
           </div>
-          <div v-if="item['日文名']" class="vm-card-subtitle">{{ item['日文名'] }}</div>
           <template v-if="getGallery(item.sid)">
             <div v-if="getTagValues(getGallery(item.sid).tags).length" class="vm-card-tags">
               <span v-for="tag in getTagValues(getGallery(item.sid).tags)" :key="tag" class="vm-card-tag">{{ tag }}</span>
             </div>
             <div class="vm-card-meta">
-              <Rating :modelValue="getGallery(item.sid).rating" readonly />
+              <Rating :modelValue="getGallery(item.sid).rating" readonly class="gr-rating" />
               <span v-if="getGallery(item.sid).filecount" class="vm-card-pages">{{ getGallery(item.sid).filecount }}p</span>
               <span class="vm-card-id">#{{ item.ID }}</span>
             </div>
