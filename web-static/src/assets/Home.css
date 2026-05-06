@@ -67,12 +67,10 @@ body {
 .home-header-card,
 .home-filter-panel,
 .home-content-panel {
-  background: var(--row-bg);
   border-radius: 8px;
 }
 
-.home-header-card,
-.home-content-panel {
+.home-header-card {
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
 }
 
