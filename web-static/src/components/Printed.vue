@@ -18,10 +18,16 @@ function getGallery(sid) {
   return galleryMap.value[String(sid)] ?? null
 }
 
+const SKIP_NAMESPACES = new Set(['language', 'other'])
+
 function getTagValues(tags) {
   if (!Array.isArray(tags)) return []
   return tags
-    .map(t => (t.includes(':') ? t.split(':', 2)[1] : t))
+    .filter(t => {
+      if (!t.includes(':')) return true
+      const ns = t.split(':', 2)[0]
+      return !SKIP_NAMESPACES.has(ns)
+    })
     .slice(0, 6)
 }
 
@@ -198,7 +204,6 @@ const filteredItems = computed(() => {
         </div>
         <div class="vm-card-body">
           <div class="vm-card-top">
-            <span class="vm-card-id">{{ item.ID }}</span>
             <span
               v-if="getGallery(item.sid)"
               class="gr-badge"
@@ -214,9 +219,13 @@ const filteredItems = computed(() => {
             <div class="vm-card-meta">
               <Rating :modelValue="getGallery(item.sid).rating" readonly />
               <span v-if="getGallery(item.sid).filecount" class="vm-card-pages">{{ getGallery(item.sid).filecount }}p</span>
+              <span class="vm-card-id">#{{ item.ID }}</span>
             </div>
           </template>
-          <div v-else class="vm-card-empty">— 暂无匹配元数据 —</div>
+          <div v-else class="vm-card-empty">
+            <span>— 暂无匹配元数据 —</span>
+            <span class="vm-card-id">#{{ item.ID }}</span>
+          </div>
         </div>
       </article>
     </div>
