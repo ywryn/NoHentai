@@ -75,14 +75,14 @@
           Showing <strong>{{ totalRecords }}</strong> Galleries
         </div>
         <div class="paginator-mini" v-if="totalPages > 1">
-          <button class="pag-btn" :disabled="currentPage <= 1" @click="goToPage(1)">«</button>
-          <button class="pag-btn" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">‹</button>
-          <template v-for="(p, idx) in pagerPages" :key="idx">
-            <span v-if="p === '…'" class="pag-sep"></span>
-            <button v-else class="pag-btn" :class="{ active: p === currentPage }" @click="goToPage(Number(p))">{{ p }}</button>
-          </template>
-          <button class="pag-btn" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">›</button>
-          <button class="pag-btn" :disabled="currentPage >= totalPages" @click="goToPage(totalPages)">»</button>
+          <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(1)">«</button>
+          <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">‹</button>
+          <label class="pag-jump-inline">
+            <input v-model="pageJumpValue" class="pag-jump-input" inputmode="numeric" autocomplete="off" spellcheck="false" @keydown.enter.prevent="submitPageJump" />
+            <span class="pag-jump-total">/ {{ totalPages }}</span>
+          </label>
+          <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">›</button>
+          <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(totalPages)">»</button>
         </div>
       </div>
 
@@ -143,14 +143,18 @@
         </div>
       </div>
 
-      <Paginator
-        :template="'CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown'"
-        :rows="perPage"
-        :totalRecords="totalRecords"
-        :first="firstIndex"
-        :pageLinkSize="3"
-        @page="onPageChange"
-      />
+      <div v-if="totalPages > 1" class="toolbar">
+        <div class="paginator-mini">
+          <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(1)">«</button>
+          <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">‹</button>
+          <label class="pag-jump-inline">
+            <input v-model="pageJumpValue" class="pag-jump-input" inputmode="numeric" autocomplete="off" spellcheck="false" @keydown.enter.prevent="submitPageJump" />
+            <span class="pag-jump-total">/ {{ totalPages }}</span>
+          </label>
+          <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">›</button>
+          <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(totalPages)">»</button>
+        </div>
+      </div>
     </section>
   </div>
 </template>
@@ -158,7 +162,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import Paginator from 'primevue/paginator'
 import Rating from 'primevue/rating'
 import { useViewMode } from '@/composables/useViewMode'
 
@@ -187,25 +190,8 @@ const typeClassMap = {
   'Image Set': 'blue', 'Cosplay': 'purple', 'Asian Porn': 'pink', 'Misc': 'gray',
 }
 
-const firstIndex = computed(() => (currentPage.value - 1) * perPage.value)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalRecords.value / perPage.value)))
-
-const pagerPages = computed(() => {
-  const total = totalPages.value
-  const cur = currentPage.value
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
-  const set = new Set([1, total])
-  for (let i = Math.max(1, cur - 1); i <= Math.min(total, cur + 1); i++) set.add(i)
-  const sorted = [...set].sort((a, b) => a - b)
-  const result = []
-  let prev = 0
-  for (const p of sorted) {
-    if (p - prev > 1) result.push('…')
-    result.push(p)
-    prev = p
-  }
-  return result
-})
+const pageJumpValue = ref('1')
 
 function formatTimestamp(timestamp) {
   if (!timestamp) return ''
@@ -254,19 +240,22 @@ function paginate(page = 1) {
   currentPage.value = page
 }
 
-function onPageChange(e) {
-  paginate(Math.floor(e.first / e.rows) + 1)
-}
-
 function goToPage(page) {
   const p = Math.max(1, Math.min(totalPages.value, Number(page)))
   if (p !== currentPage.value) paginate(p)
+  pageJumpValue.value = String(p)
+}
+
+function submitPageJump() {
+  const n = parseInt(pageJumpValue.value)
+  if (!isNaN(n)) goToPage(n)
 }
 
 function switchGroup(index) {
   if (index < 0 || index >= groups.value.length) return
   currentGroupIndex.value = index
   paginate(1)
+  pageJumpValue.value = '1'
 }
 
 async function loadData() {
