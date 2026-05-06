@@ -81,6 +81,12 @@
   font-size: 14px;
 }
 
+.digi-pagination {
+  display: flex;
+  justify-content: center;
+  padding: 10px 14px;
+}
+
 .digi-error {
   color: #f87171;
 }

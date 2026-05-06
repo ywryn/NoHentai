@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import * as OpenCC from 'opencc-js'
 import Rating from 'primevue/rating'
@@ -161,6 +161,35 @@ const filteredItems = computed(() => {
     return queries.some((q) => matchTagsByQuery(tags, q))
   })
 })
+
+const currentPage = ref(1)
+const perPage = ref(25)
+const pageJumpValue = ref('1')
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredItems.value.length / perPage.value)))
+
+const pagedItems = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value
+  return filteredItems.value.slice(start, start + perPage.value)
+})
+
+watch(filteredItems, () => {
+  currentPage.value = 1
+  pageJumpValue.value = '1'
+})
+
+watch(currentPage, (v) => {
+  pageJumpValue.value = String(v)
+})
+
+function goToPage(page) {
+  currentPage.value = Math.max(1, Math.min(totalPages.value, page))
+}
+
+function submitPageJump() {
+  const n = parseInt(pageJumpValue.value)
+  if (!isNaN(n)) goToPage(n)
+}
 </script>
 
 <template>
@@ -191,53 +220,83 @@ const filteredItems = computed(() => {
     <div v-else-if="error" class="digi-empty digi-error">{{ error }}</div>
     <div v-else-if="!filteredItems.length" class="digi-empty">No results</div>
 
-    <!-- Cover mode -->
-    <div v-else-if="viewMode === 'cover'" class="vm-cover-grid">
-      <article v-for="(item, index) in filteredItems" :key="index" class="vm-cover-card" @click="clickCard(item)">
-        <div class="vm-cover-img">
-          <img v-if="getThumb(item.sid)" :src="getThumb(item.sid)" :alt="item['书名']" loading="lazy" />
-          <div v-else class="vm-cover-no-img">📚</div>
+    <template v-else>
+      <!-- Top paginator -->
+      <div v-if="totalPages > 1" class="digi-pagination">
+        <div class="paginator-mini">
+          <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(1)">«</button>
+          <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">‹</button>
+          <label class="pag-jump-inline">
+            <input v-model="pageJumpValue" class="pag-jump-input" inputmode="numeric" autocomplete="off" spellcheck="false" @keydown.enter.prevent="submitPageJump" />
+            <span class="pag-jump-total">/ {{ totalPages }}</span>
+          </label>
+          <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">›</button>
+          <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(totalPages)">»</button>
         </div>
-        <div class="vm-cover-info">
-          <div class="vm-cover-id">{{ item.ID }}</div>
-          <div class="vm-cover-title">{{ item['书名'] }}</div>
-        </div>
-      </article>
-    </div>
+      </div>
 
-    <!-- Card mode -->
-    <div v-else class="vm-card-list">
-      <article v-for="(item, index) in filteredItems" :key="index" class="vm-card-row" @click="clickCard(item)">
-        <div class="vm-card-thumb">
-          <img v-if="getThumb(item.sid)" :src="getThumb(item.sid)" :alt="item['书名']" loading="lazy" />
-          <div v-else class="vm-card-no-thumb">📚</div>
-        </div>
-        <div class="vm-card-body">
-          <div class="vm-card-top">
-            <span
-              v-if="getGallery(item.sid)"
-              class="gr-badge"
-              :class="typeClassMap[getGallery(item.sid).category] || 'default'"
-            >{{ getGallery(item.sid).category }}</span>
-            <span class="vm-card-title">{{ item['书名'] || item['日文名'] }}</span>
+      <!-- Cover mode -->
+      <div v-if="viewMode === 'cover'" class="vm-cover-grid">
+        <article v-for="(item, index) in pagedItems" :key="index" class="vm-cover-card" @click="clickCard(item)">
+          <div class="vm-cover-img">
+            <img v-if="getThumb(item.sid)" :src="getThumb(item.sid)" :alt="item['书名']" loading="lazy" />
+            <div v-else class="vm-cover-no-img">📚</div>
           </div>
-          <template v-if="getGallery(item.sid)">
-            <div v-if="getTagValues(getGallery(item.sid).tags).length" class="vm-card-tags">
-              <span v-for="tag in getTagValues(getGallery(item.sid).tags)" :key="tag" class="vm-card-tag">{{ tag }}</span>
+          <div class="vm-cover-info">
+            <div class="vm-cover-id">{{ item.ID }}</div>
+            <div class="vm-cover-title">{{ item['书名'] }}</div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Card mode -->
+      <div v-else class="vm-card-list">
+        <article v-for="(item, index) in pagedItems" :key="index" class="vm-card-row" @click="clickCard(item)">
+          <div class="vm-card-thumb">
+            <img v-if="getThumb(item.sid)" :src="getThumb(item.sid)" :alt="item['书名']" loading="lazy" />
+            <div v-else class="vm-card-no-thumb">📚</div>
+          </div>
+          <div class="vm-card-body">
+            <div class="vm-card-top">
+              <span
+                v-if="getGallery(item.sid)"
+                class="gr-badge"
+                :class="typeClassMap[getGallery(item.sid).category] || 'default'"
+              >{{ getGallery(item.sid).category }}</span>
+              <span class="vm-card-title">{{ item['书名'] || item['日文名'] }}</span>
             </div>
-            <div class="vm-card-meta">
-              <Rating :modelValue="getGallery(item.sid).rating" readonly class="gr-rating" />
-              <span v-if="getGallery(item.sid).filecount" class="vm-card-pages">{{ getGallery(item.sid).filecount }}p</span>
+            <template v-if="getGallery(item.sid)">
+              <div v-if="getTagValues(getGallery(item.sid).tags).length" class="vm-card-tags">
+                <span v-for="tag in getTagValues(getGallery(item.sid).tags)" :key="tag" class="vm-card-tag">{{ tag }}</span>
+              </div>
+              <div class="vm-card-meta">
+                <Rating :modelValue="getGallery(item.sid).rating" readonly class="gr-rating" />
+                <span v-if="getGallery(item.sid).filecount" class="vm-card-pages">{{ getGallery(item.sid).filecount }}p</span>
+                <span class="vm-card-id">#{{ item.ID }}</span>
+              </div>
+            </template>
+            <div v-else class="vm-card-empty">
+              <span>— 暂无匹配元数据 —</span>
               <span class="vm-card-id">#{{ item.ID }}</span>
             </div>
-          </template>
-          <div v-else class="vm-card-empty">
-            <span>— 暂无匹配元数据 —</span>
-            <span class="vm-card-id">#{{ item.ID }}</span>
           </div>
+        </article>
+      </div>
+
+      <!-- Bottom paginator -->
+      <div v-if="totalPages > 1" class="digi-pagination">
+        <div class="paginator-mini">
+          <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(1)">«</button>
+          <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">‹</button>
+          <label class="pag-jump-inline">
+            <input v-model="pageJumpValue" class="pag-jump-input" inputmode="numeric" autocomplete="off" spellcheck="false" @keydown.enter.prevent="submitPageJump" />
+            <span class="pag-jump-total">/ {{ totalPages }}</span>
+          </label>
+          <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">›</button>
+          <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(totalPages)">»</button>
         </div>
-      </article>
-    </div>
+      </div>
+    </template>
 
     <Transition name="digi-toast">
       <div v-if="toast" class="digi-toast">{{ toast }}</div>
