@@ -2,6 +2,28 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import * as OpenCC from 'opencc-js'
+import Rating from 'primevue/rating'
+import { useViewMode } from '@/composables/useViewMode'
+
+const { viewMode } = useViewMode()
+
+const typeClassMap = {
+  'Doujinshi': 'red', 'Manga': 'orange', 'Artist CG': 'yellow',
+  'Game CG': 'green', 'Western': 'gold', 'Non-H': 'lightblue',
+  'Image Set': 'blue', 'Cosplay': 'purple', 'Asian Porn': 'pink', 'Misc': 'gray',
+}
+
+function getGallery(sid) {
+  if (sid == null || sid === '') return null
+  return galleryMap.value[String(sid)] ?? null
+}
+
+function getTagValues(tags) {
+  if (!Array.isArray(tags)) return []
+  return tags
+    .map(t => (t.includes(':') ? t.split(':', 2)[1] : t))
+    .slice(0, 6)
+}
 
 const router = useRouter()
 
@@ -152,26 +174,49 @@ const filteredItems = computed(() => {
     <div v-if="loading" class="digi-empty">Loading…</div>
     <div v-else-if="error" class="digi-empty digi-error">{{ error }}</div>
     <div v-else-if="!filteredItems.length" class="digi-empty">No results</div>
-    <div v-else class="digi-grid">
-      <article v-for="(item, index) in filteredItems" :key="index" class="digi-card" @click="clickCard(item)">
-        <!-- 封面 -->
-        <div class="digi-thumb">
-          <img
-            v-if="getThumb(item.sid)"
-            :src="getThumb(item.sid)"
-            :alt="item['书名']"
-            loading="lazy"
-          />
-          <div v-else class="digi-no-cover">
-            <span>{{ item.ID }}</span>
-          </div>
-        </div>
 
-        <!-- 信息 -->
-        <div class="digi-body">
-          <span class="digi-id">{{ item.ID }}</span>
-          <div class="digi-book-title">{{ item['书名'] }}</div>
-          <div v-if="item['备注']" class="digi-remark">{{ item['备注'] }}</div>
+    <!-- Cover mode -->
+    <div v-else-if="viewMode === 'cover'" class="vm-cover-grid">
+      <article v-for="(item, index) in filteredItems" :key="index" class="vm-cover-card" @click="clickCard(item)">
+        <div class="vm-cover-img">
+          <img v-if="getThumb(item.sid)" :src="getThumb(item.sid)" :alt="item['书名']" loading="lazy" />
+          <div v-else class="vm-cover-no-img">📚</div>
+        </div>
+        <div class="vm-cover-info">
+          <div class="vm-cover-id">{{ item.ID }}</div>
+          <div class="vm-cover-title">{{ item['书名'] }}</div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Card mode -->
+    <div v-else class="vm-card-list">
+      <article v-for="(item, index) in filteredItems" :key="index" class="vm-card-row" @click="clickCard(item)">
+        <div class="vm-card-thumb">
+          <img v-if="getThumb(item.sid)" :src="getThumb(item.sid)" :alt="item['书名']" loading="lazy" />
+          <div v-else class="vm-card-no-thumb">📚</div>
+        </div>
+        <div class="vm-card-body">
+          <div class="vm-card-top">
+            <span class="vm-card-id">{{ item.ID }}</span>
+            <span
+              v-if="getGallery(item.sid)"
+              class="gr-badge"
+              :class="typeClassMap[getGallery(item.sid).category] || 'default'"
+            >{{ getGallery(item.sid).category }}</span>
+            <span class="vm-card-title">{{ item['书名'] }}</span>
+          </div>
+          <div v-if="item['日文名']" class="vm-card-subtitle">{{ item['日文名'] }}</div>
+          <template v-if="getGallery(item.sid)">
+            <div v-if="getTagValues(getGallery(item.sid).tags).length" class="vm-card-tags">
+              <span v-for="tag in getTagValues(getGallery(item.sid).tags)" :key="tag" class="vm-card-tag">{{ tag }}</span>
+            </div>
+            <div class="vm-card-meta">
+              <Rating :modelValue="getGallery(item.sid).rating" readonly />
+              <span v-if="getGallery(item.sid).filecount" class="vm-card-pages">{{ getGallery(item.sid).filecount }}p</span>
+            </div>
+          </template>
+          <div v-else class="vm-card-empty">— 暂无匹配元数据 —</div>
         </div>
       </article>
     </div>

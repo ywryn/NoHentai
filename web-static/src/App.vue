@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useMomMode } from '@/composables/useMomMode'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import MomModeToggle from '@/components/MomModeToggle.vue'
+import ViewModeToggle from '@/components/ViewModeToggle.vue'
 
 // 初始化主题和妈妈模式
 const { initMomMode } = useMomMode()
@@ -96,6 +97,7 @@ onBeforeUnmount(() => {
       
       <!-- Theme Toggle (always visible) -->
       <div class="theme-toggle-nav">
+        <ViewModeToggle />
         <MomModeToggle />
         <ThemeToggle />
       </div>

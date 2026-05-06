@@ -86,7 +86,8 @@
         </div>
       </div>
 
-      <div class="gallery-list daily-gallery-list">
+      <!-- Card mode -->
+      <div v-if="viewMode === 'card'" class="gallery-list daily-gallery-list">
         <div v-if="loading" class="empty-state">Loading…</div>
         <div v-else-if="!results.length" class="empty-state">No data</div>
         <article
@@ -118,6 +119,30 @@
         </article>
       </div>
 
+      <!-- Cover mode -->
+      <div v-else class="vm-cover-grid">
+        <div v-if="loading" class="empty-state" style="grid-column:1/-1">Loading…</div>
+        <div v-else-if="!results.length" class="empty-state" style="grid-column:1/-1">No data</div>
+        <div
+          v-else
+          v-for="item in results"
+          :key="item.gid"
+          class="vm-cover-card"
+          @click="navigateToGallery(item.gid)"
+        >
+          <div class="vm-cover-img">
+            <img :src="item.thumb || ''" :alt="item.type" loading="lazy" />
+          </div>
+          <div class="vm-cover-info">
+            <div class="vm-cover-meta">
+              <span class="gr-badge" :class="item.typeClass">{{ item.type }}</span>
+              <span class="vm-cover-pages">{{ item.filecount }}p</span>
+            </div>
+            <div class="vm-cover-title">{{ item.title_jpn || item.title }}</div>
+          </div>
+        </div>
+      </div>
+
       <Paginator
         :template="'CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown'"
         :rows="perPage"
@@ -135,6 +160,9 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Paginator from 'primevue/paginator'
 import Rating from 'primevue/rating'
+import { useViewMode } from '@/composables/useViewMode'
+
+const { viewMode } = useViewMode()
 
 const router = useRouter()
 const baseUrl = import.meta.env.BASE_URL
