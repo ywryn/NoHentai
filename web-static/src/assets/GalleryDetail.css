@@ -19,6 +19,7 @@
 .gallery-detail-hero {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
   grid-template-areas:
     "cover copy"
     "cover main";
@@ -27,7 +28,7 @@
 
 .gallery-detail-hero > .hero-copy   { grid-area: copy; align-self: start; }
 .gallery-detail-hero > .cover-panel { grid-area: cover; align-self: stretch; }
-.gallery-detail-hero > .hero-main   { grid-area: main; align-self: start; }
+.gallery-detail-hero > .hero-main   { grid-area: main; align-self: stretch; }
 
 /* ===== Shared panel base ===== */
 .cover-panel,
