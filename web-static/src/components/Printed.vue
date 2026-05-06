@@ -29,6 +29,13 @@ function getTagValues(tags) {
       return !SKIP_NAMESPACES.has(ns)
     })
     .slice(0, 6)
+    .map(t => {
+      if (!t.includes(':') || !translationData.value) return t
+      const [ns, val] = t.split(':', 2)
+      const cn = translationData.value.data
+        ?.find(item => item.namespace === ns)?.data?.[val]?.name
+      return cn || val
+    })
 }
 
 const router = useRouter()
@@ -38,14 +45,16 @@ const toTraditional = OpenCC.Converter({ from: 'cn', to: 'tw' })
 
 const items = ref([])
 const galleryMap = ref({})
+const translationData = ref(null)
 const loading = ref(true)
 const error = ref('')
 
 onMounted(async () => {
   try {
-    const [digeRes, galRes] = await Promise.all([
+    const [digeRes, galRes, transRes] = await Promise.all([
       fetch('/data/future_digi.json'),
       fetch('/data/galleries.json'),
+      fetch('/data/translations.json'),
     ])
     if (!digeRes.ok) throw new Error('future_digi.json not found')
     const digeData = await digeRes.json()
@@ -55,6 +64,7 @@ onMounted(async () => {
     galleryMap.value = Object.fromEntries(
       galleries.map((g) => [String(g.gid), g])
     )
+    if (transRes.ok) translationData.value = await transRes.json()
   } catch (e) {
     error.value = '数据加载失败：' + e.message
   } finally {
