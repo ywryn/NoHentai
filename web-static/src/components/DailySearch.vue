@@ -172,7 +172,7 @@ const currentGroupIndex = ref(0)
 const translationData = ref(null)
 const loading = ref(false)
 const currentPage = ref(1)
-const perPage = ref(25)
+const perPage = computed(() => viewMode.value === 'cover' ? 30 : 25)
 const totalRecords = ref(0)
 const results = ref([])
 
@@ -254,6 +254,8 @@ function switchGroup(index) {
   paginate(1)
   pageJumpValue.value = '1'
 }
+
+watch(viewMode, () => { paginate(1) })
 
 async function loadData() {
   try {

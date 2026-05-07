@@ -235,12 +235,21 @@ img {
    View Mode — shared cover grid & Printed card row
    ═══════════════════════════════════════ */
 
-/* Cover grid (Home / Daily / Printed cover mode) */
+/* Cover grid (Home / Daily / Printed cover mode) — 2/3/5/6 cols */
 .vm-cover-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   padding: 10px 14px;
+}
+@media (min-width: 480px) {
+  .vm-cover-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 768px) {
+  .vm-cover-grid { grid-template-columns: repeat(5, 1fr); }
+}
+@media (min-width: 1100px) {
+  .vm-cover-grid { grid-template-columns: repeat(6, 1fr); }
 }
 
 .vm-cover-card {

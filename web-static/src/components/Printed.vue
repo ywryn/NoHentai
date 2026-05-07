@@ -163,7 +163,7 @@ const filteredItems = computed(() => {
 })
 
 const currentPage = ref(1)
-const perPage = ref(25)
+const perPage = computed(() => viewMode.value === 'cover' ? 30 : 25)
 const pageJumpValue = ref('1')
 
 const totalPages = computed(() => Math.max(1, Math.ceil(filteredItems.value.length / perPage.value)))
@@ -174,6 +174,11 @@ const pagedItems = computed(() => {
 })
 
 watch(filteredItems, () => {
+  currentPage.value = 1
+  pageJumpValue.value = '1'
+})
+
+watch(viewMode, () => {
   currentPage.value = 1
   pageJumpValue.value = '1'
 })

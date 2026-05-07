@@ -203,7 +203,7 @@ const results = ref([])
 const allGalleries = ref([])
 const translationData = ref(null)
 const currentPage = ref(1)
-const perPage = ref(25)
+const perPage = computed(() => viewMode.value === 'cover' ? 30 : 25)
 const totalRecords = ref(0)
 const activeType = ref(null)
 const loading = ref(false)
@@ -479,6 +479,10 @@ function toggleSearchHelp(event) { searchHelpPopover.value?.toggle(event) }
 watch(currentPage, page => {
   pageJumpValue.value = String(page)
 }, { immediate: true })
+
+watch(viewMode, () => {
+  filterAndPaginateData(1, searchQuery.value, activeType.value)
+})
 
 onMounted(async () => {
   loading.value = true
