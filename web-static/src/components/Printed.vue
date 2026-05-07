@@ -2,8 +2,8 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import * as OpenCC from 'opencc-js'
-import Rating from 'primevue/rating'
 import { useViewMode } from '@/composables/useViewMode'
+import GalleryList from '@/components/GalleryList.vue'
 
 const { viewMode } = useViewMode()
 
@@ -97,10 +97,29 @@ function showToast(msg) {
   toastTimer = setTimeout(() => { toast.value = '' }, 2500)
 }
 
-function clickCard(item) {
-  const sid = item.sid
-  if (sid != null && sid !== '' && galleryMap.value[String(sid)]) {
-    router.push(`/gallery/${sid}/`)
+const normalizedItems = computed(() => pagedItems.value.map(item => {
+  const gallery = getGallery(item.sid)
+  return {
+    key: item.ID,
+    gid: gallery ? String(item.sid) : null,
+    thumb: getThumb(item.sid),
+    title: item['书名'] || item['日文名'],
+    badge: gallery?.category ?? null,
+    badgeClass: gallery ? (typeClassMap[gallery.category] || 'default') : null,
+    tags: gallery ? getTagValues(gallery.tags) : [],
+    pages: gallery?.filecount ? `${gallery.filecount}p` : null,
+    date: null,
+    rating: gallery?.rating ?? null,
+    fav: null,
+    refId: `#${item.ID}`,
+    noMeta: !gallery,
+    noMetaText: '— 暂无匹配元数据 —',
+  }
+}))
+
+function handleGalleryClick(item) {
+  if (item.gid) {
+    router.push(`/gallery/${item.gid}/`)
   } else {
     showToast('未匹配元数据')
   }
@@ -247,53 +266,7 @@ function submitPageJump() {
         </div>
       </div>
 
-      <!-- Cover mode -->
-      <div v-if="viewMode === 'cover'" class="vm-cover-grid">
-        <article v-for="(item, index) in pagedItems" :key="index" class="vm-cover-card" @click="clickCard(item)">
-          <div class="vm-cover-img">
-            <img v-if="getThumb(item.sid)" :src="getThumb(item.sid)" :alt="item['书名']" loading="lazy" />
-            <div v-else class="vm-cover-no-img">📚</div>
-          </div>
-          <div class="vm-cover-info">
-            <div class="vm-cover-id">{{ item.ID }}</div>
-            <div class="vm-cover-title">{{ item['书名'] }}</div>
-          </div>
-        </article>
-      </div>
-
-      <!-- Card mode -->
-      <div v-else class="vm-card-list">
-        <article v-for="(item, index) in pagedItems" :key="index" class="vm-card-row" @click="clickCard(item)">
-          <div class="vm-card-thumb">
-            <img v-if="getThumb(item.sid)" :src="getThumb(item.sid)" :alt="item['书名']" loading="lazy" />
-            <div v-else class="vm-card-no-thumb">📚</div>
-          </div>
-          <div class="vm-card-body">
-            <div class="vm-card-top">
-              <span
-                v-if="getGallery(item.sid)"
-                class="gr-badge"
-                :class="typeClassMap[getGallery(item.sid).category] || 'default'"
-              >{{ getGallery(item.sid).category }}</span>
-              <span class="vm-card-title">{{ item['书名'] || item['日文名'] }}</span>
-            </div>
-            <template v-if="getGallery(item.sid)">
-              <div v-if="getTagValues(getGallery(item.sid).tags).length" class="vm-card-tags">
-                <span v-for="tag in getTagValues(getGallery(item.sid).tags)" :key="tag" class="vm-card-tag">{{ tag }}</span>
-              </div>
-              <div class="vm-card-meta">
-                <Rating :modelValue="getGallery(item.sid).rating" readonly class="gr-rating" />
-                <span v-if="getGallery(item.sid).filecount" class="vm-card-pages">{{ getGallery(item.sid).filecount }}p</span>
-                <span class="vm-card-id">#{{ item.ID }}</span>
-              </div>
-            </template>
-            <div v-else class="vm-card-empty">
-              <span>— 暂无匹配元数据 —</span>
-              <span class="vm-card-id">#{{ item.ID }}</span>
-            </div>
-          </div>
-        </article>
-      </div>
+      <GalleryList :items="normalizedItems" @click="handleGalleryClick" />
 
       <!-- Bottom paginator -->
       <div v-if="totalPages > 1" class="digi-pagination">

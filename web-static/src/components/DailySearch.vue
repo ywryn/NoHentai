@@ -83,62 +83,7 @@
         </div>
       </div>
 
-      <!-- Card mode -->
-      <div v-if="viewMode === 'card'" class="gallery-list daily-gallery-list">
-        <div v-if="loading" class="empty-state">Loading…</div>
-        <div v-else-if="!results.length" class="empty-state">No data</div>
-        <article
-          v-else
-          v-for="item in results"
-          :key="item.gid"
-          class="gallery-row"
-          @click="navigateToGallery(item.gid)"
-        >
-          <div class="gr-thumb">
-            <img :src="item.thumb || ''" :alt="item.type" loading="lazy" />
-          </div>
-          <div class="gr-body">
-            <div class="gr-top">
-              <span class="gr-badge" :class="item.typeClass">{{ item.type }}</span>
-              <span class="gr-title">{{ item.title_jpn || item.title }}</span>
-            </div>
-            <div class="gr-tags" v-if="item.tags.length">
-              <span v-for="(tag, i) in item.tags.slice(0, 8)" :key="i" class="gr-tag">
-                {{ tag.tag_cn || tag.value }}
-              </span>
-            </div>
-            <div class="gr-meta">
-              <Rating :modelValue="item.rating" readonly class="gr-rating" />
-              <span class="gr-pages" v-if="item.filecount">{{ item.filecount }}p</span>
-              <span class="gr-date">{{ item.published }}</span>
-            </div>
-          </div>
-        </article>
-      </div>
-
-      <!-- Cover mode -->
-      <div v-else class="vm-cover-grid">
-        <div v-if="loading" class="empty-state" style="grid-column:1/-1">Loading…</div>
-        <div v-else-if="!results.length" class="empty-state" style="grid-column:1/-1">No data</div>
-        <div
-          v-else
-          v-for="item in results"
-          :key="item.gid"
-          class="vm-cover-card"
-          @click="navigateToGallery(item.gid)"
-        >
-          <div class="vm-cover-img">
-            <img :src="item.thumb || ''" :alt="item.type" loading="lazy" />
-          </div>
-          <div class="vm-cover-info">
-            <div class="vm-cover-meta">
-              <span class="gr-badge" :class="item.typeClass">{{ item.type }}</span>
-              <span class="vm-cover-pages">{{ item.filecount }}p</span>
-            </div>
-            <div class="vm-cover-title">{{ item.title_jpn || item.title }}</div>
-          </div>
-        </div>
-      </div>
+      <GalleryList :items="normalizedItems" :loading="loading" @click="handleGalleryClick" />
 
       <div v-if="totalPages > 1" class="toolbar">
         <div class="paginator-mini">
@@ -159,8 +104,8 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import Rating from 'primevue/rating'
 import { useViewMode } from '@/composables/useViewMode'
+import GalleryList from '@/components/GalleryList.vue'
 
 const { viewMode } = useViewMode()
 
@@ -281,8 +226,25 @@ async function loadData() {
   }
 }
 
-function navigateToGallery(gid) {
-  if (gid) router.push(`/gallery/${gid}/?source=daily`)
+const normalizedItems = computed(() => results.value.map(item => ({
+  key: item.gid,
+  gid: item.gid,
+  thumb: item.thumb,
+  title: item.title_jpn || item.title,
+  badge: item.type,
+  badgeClass: item.typeClass,
+  tags: item.tags.slice(0, 8).map(t => t.tag_cn || t.value),
+  pages: item.filecount ? `${item.filecount}p` : null,
+  date: item.published || null,
+  rating: item.rating,
+  fav: null,
+  refId: null,
+  noMeta: false,
+  noMetaText: null,
+})))
+
+function handleGalleryClick(item) {
+  if (item.gid) router.push(`/gallery/${item.gid}/?source=daily`)
 }
 
 onMounted(async () => {
