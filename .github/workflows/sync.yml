@@ -3,8 +3,6 @@ name: Sync Data and Deploy
 on:
   schedule:
     - cron: '0 20 * * *'   # 每天 UTC 20:00（北京时间 04:00）全量同步
-    - cron: '0 4 * * *'    # 每天 UTC 04:00（北京时间 12:00）Telegram 增量同步
-    - cron: '0 12 * * *'   # 每天 UTC 12:00（北京时间 20:00）Telegram 增量同步
   workflow_dispatch:
 
 permissions:
@@ -32,7 +30,6 @@ jobs:
         run: pip install -r app/requirements.txt
 
       - name: Write .env from secrets
-        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 20 * * *'
         run: |
           cat > .env <<EOF
           EXHENTAI_BASE_URL=${{ secrets.EXHENTAI_BASE_URL }}
@@ -42,21 +39,17 @@ jobs:
           EOF
 
       - name: Run sync script
-        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 20 * * *'
         run: python app/sync_script.py
 
       - name: Run Google Sheets sync script
-        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 20 * * *'
         env:
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
         run: python app/sync_sheets.py
 
       - name: Sync EhTagTranslation Database
-        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 20 * * *'
         run: python app/sync_translations.py
 
       - name: Run Daily Search sync
-        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 20 * * *'
         run: python app/sync_daily_search.py
 
       - name: Ensure media release exists
@@ -106,18 +99,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event.schedule }}" = "0 20 * * *" ]; then
-            git add web-static/public/data/galleries.json \
-                    web-static/public/data/backup_data/ \
-                    web-static/public/data/future_digi.json \
-                    web-static/public/data/translations.json \
-                    web-static/public/data/daily_search.json \
-                    web-static/public/data/telegram_forwards.json
-            git diff --staged --quiet || git commit -m "常规数据更新 [skip ci]"
-          else
-            git add web-static/public/data/telegram_forwards.json
-            git diff --staged --quiet || git commit -m "Telegram 数据更新 [skip ci]"
-          fi
+          git add web-static/public/data/galleries.json \
+                  web-static/public/data/backup_data/ \
+                  web-static/public/data/future_digi.json \
+                  web-static/public/data/translations.json \
+                  web-static/public/data/daily_search.json \
+                  web-static/public/data/telegram_forwards.json
+          git diff --staged --quiet || git commit -m "常规数据更新 [skip ci]"
           git push
 
   build:
