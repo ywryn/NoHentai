@@ -172,7 +172,7 @@ const currentGroupIndex = ref(0)
 const translationData = ref(null)
 const loading = ref(false)
 const currentPage = ref(1)
-const perPage = computed(() => viewMode.value === 'cover' ? 30 : 25)
+const perPage = ref(30)
 const totalRecords = ref(0)
 const results = ref([])
 
