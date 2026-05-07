@@ -191,7 +191,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import Rating from 'primevue/rating'
 import Popover from 'primevue/popover'
 import { useViewMode } from '@/composables/useViewMode'
@@ -212,6 +212,7 @@ const pageJumpValue = ref('1')
 const searchHelpPopover = ref()
 const baseUrl = import.meta.env.BASE_URL
 const router = useRouter()
+const route = useRoute()
 
 const exTypeList = [
   { name: 'Doujinshi',  color: 'red' },
@@ -478,7 +479,8 @@ function toggleSearchHelp(event) { searchHelpPopover.value?.toggle(event) }
 
 watch(currentPage, page => {
   pageJumpValue.value = String(page)
-}, { immediate: true })
+  router.replace({ query: page > 1 ? { page: String(page) } : {} })
+})
 
 watch(viewMode, () => {
   filterAndPaginateData(1, searchQuery.value, activeType.value)
@@ -487,7 +489,8 @@ watch(viewMode, () => {
 onMounted(async () => {
   loading.value = true
   await Promise.all([loadGalleriesData(), loadTranslationData()])
-  filterAndPaginateData(1)
+  const pageFromUrl = parseInt(route.query.page) || 1
+  filterAndPaginateData(pageFromUrl)
 })
 </script>
 

@@ -157,14 +157,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import Rating from 'primevue/rating'
 import { useViewMode } from '@/composables/useViewMode'
 
 const { viewMode } = useViewMode()
 
 const router = useRouter()
+const route = useRoute()
 const baseUrl = import.meta.env.BASE_URL
 
 const groups = ref([])
@@ -255,6 +256,11 @@ function switchGroup(index) {
   pageJumpValue.value = '1'
 }
 
+watch(currentPage, page => {
+  pageJumpValue.value = String(page)
+  router.replace({ query: page > 1 ? { page: String(page) } : {} })
+})
+
 watch(viewMode, () => { paginate(1) })
 
 async function loadData() {
@@ -282,7 +288,8 @@ function navigateToGallery(gid) {
 onMounted(async () => {
   loading.value = true
   await loadData()
-  paginate(1)
+  const pageFromUrl = parseInt(route.query.page) || 1
+  paginate(pageFromUrl)
   loading.value = false
 })
 </script>

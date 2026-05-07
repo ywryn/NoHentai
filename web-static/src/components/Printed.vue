@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import * as OpenCC from 'opencc-js'
 import Rating from 'primevue/rating'
 import { useViewMode } from '@/composables/useViewMode'
@@ -39,6 +39,7 @@ function getTagValues(tags) {
 }
 
 const router = useRouter()
+const route = useRoute()
 
 // 将输入转为繁体，与原始输入一起作为查询词（字段不转换）
 const toTraditional = OpenCC.Converter({ from: 'cn', to: 'tw' })
@@ -65,6 +66,11 @@ onMounted(async () => {
       galleries.map((g) => [String(g.gid), g])
     )
     if (transRes.ok) translationData.value = await transRes.json()
+    const pageFromUrl = parseInt(route.query.page) || 1
+    if (pageFromUrl > 1) {
+      currentPage.value = pageFromUrl
+      pageJumpValue.value = String(pageFromUrl)
+    }
   } catch (e) {
     error.value = '数据加载失败：' + e.message
   } finally {
@@ -185,6 +191,7 @@ watch(viewMode, () => {
 
 watch(currentPage, (v) => {
   pageJumpValue.value = String(v)
+  router.replace({ query: v > 1 ? { page: String(v) } : {} })
 })
 
 function goToPage(page) {
