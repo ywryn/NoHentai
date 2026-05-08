@@ -1,0 +1,8 @@
+{
+  "name": "nohentai-api",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "node-html-parser": "^6.1.13"
+  }
+}
