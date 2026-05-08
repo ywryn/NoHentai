@@ -128,10 +128,14 @@ export default async function handler(req, res) {
         return res.status(403).json({ error: 'exhentai_blocked', message: 'ExHentai-exclusive gallery: no credentials configured' })
       }
       const exUrl = `${EXHENTAI}/g/${gid}/${token}/`
+      const exFirst = await fetchPage(`${exUrl}?nw=always`, cookie)
       result = await fetchAllPages(exUrl, cookie)
       if (!result) {
-        // ExHentai Cloudflare blocks datacenter IPs even with valid cookies
-        return res.status(403).json({ error: 'exhentai_blocked', message: 'ExHentai-exclusive gallery cannot be accessed from cloud servers due to Cloudflare IP restrictions' })
+        return res.status(403).json({
+          error: 'exhentai_blocked',
+          htmlLength: exFirst?.html?.length ?? -1,
+          htmlPreview: exFirst?.html?.slice(0, 500) ?? null,
+        })
       }
     }
 
