@@ -128,14 +128,9 @@ export default async function handler(req, res) {
         return res.status(403).json({ error: 'exhentai_blocked', message: 'ExHentai-exclusive gallery: no credentials configured' })
       }
       const exUrl = `${EXHENTAI}/g/${gid}/${token}/`
-      const exFirst = await fetchPage(`${exUrl}?nw=always`, cookie)
       result = await fetchAllPages(exUrl, cookie)
       if (!result) {
-        return res.status(403).json({
-          error: 'exhentai_blocked',
-          htmlLength: exFirst?.html?.length ?? -1,
-          htmlPreview: exFirst?.html?.slice(0, 500) ?? null,
-        })
+        return res.status(403).json({ error: 'exhentai_blocked', message: 'ExHentai-exclusive gallery: access denied' })
       }
     }
 
