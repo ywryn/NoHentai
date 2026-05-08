@@ -26,7 +26,7 @@ const { viewMode } = useViewMode()
     >
       <div class="vm-cover-img">
         <img v-if="item.thumb" :src="item.thumb" loading="lazy" />
-        <div v-else class="vm-cover-no-img">📚</div>
+        <div v-else class="vm-cover-placeholder">{{ item.title?.[0] }}</div>
       </div>
       <div class="vm-cover-info">
         <div v-if="item.badge" class="vm-cover-meta">
@@ -52,7 +52,7 @@ const { viewMode } = useViewMode()
     >
       <div class="gr-thumb">
         <img v-if="item.thumb" :src="item.thumb" loading="lazy" />
-        <div v-else class="vm-cover-no-img">📚</div>
+        <div v-else class="gr-thumb-placeholder">{{ item.title?.[0] }}</div>
       </div>
       <div class="gr-body">
         <template v-if="!item.noMeta">
@@ -71,9 +71,14 @@ const { viewMode } = useViewMode()
             <span v-if="item.refId" class="gr-ref-id">{{ item.refId }}</span>
           </div>
         </template>
-        <div v-else class="vm-card-empty">
-          <span>{{ item.noMetaText }}</span>
-          <span v-if="item.refId" class="vm-card-id">{{ item.refId }}</span>
+        <div v-else>
+          <div class="gr-top">
+            <span class="gr-title">{{ item.title }}</span>
+          </div>
+          <div class="vm-card-empty">
+            <span>{{ item.noMetaText }}</span>
+            <span v-if="item.refId" class="vm-card-id">{{ item.refId }}</span>
+          </div>
         </div>
       </div>
     </article>
