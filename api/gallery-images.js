@@ -96,9 +96,13 @@ async function fetchAllPages(baseUrl, cookie) {
     if (!isNaN(n)) pageNums.push(n)
   }
   const lastPage = pageNums.length ? Math.max(...pageNums) : 1
+  console.log(`[gallery-images] page 1 htmlLen=${firstHtml.length} total=${firstPage.total} images=${firstPage.images.length} lastPage=${lastPage}`)
+  console.log(`[gallery-images] page 1 first3=${JSON.stringify(firstPage.images.slice(0,3).map(i=>({p:i.pageNum,x:i.thumbX,s:i.thumbSprite?.slice(-15)})))}`)
 
   for (let p = 1; p < lastPage; p++) {
-    const page = await fetchPage(`${baseUrl}?nw=always&p=${p}`, cookie)
+    const pageUrl = `${baseUrl}?p=${p}`
+    const page = await fetchPage(pageUrl, cookie)
+    console.log(`[gallery-images] page ${p+1} url=${pageUrl} htmlLen=${page?.html?.length} firstHref=${page?.html?.match(/exhentai\.org\/s\/[^"]+/)?.[0]}`)
     if (page === null || isAccessDenied(page.html)) break
     const { images } = parseGalleryPage(page.html)
     allImages.push(...images)
