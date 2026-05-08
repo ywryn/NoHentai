@@ -37,6 +37,8 @@
           v-show="!imageLoading && !imageError"
           :src="imageUrl"
           class="reader-img"
+          @load="onImageLoad"
+          @error="onImageError"
         />
 
         <div v-if="imageError" class="reader-img-error">
@@ -92,6 +94,7 @@ export default {
       swipeDetected: false,
       cache: {},
       loadId: 0,
+      imageLoadId: 0,
     }
   },
   computed: {
@@ -154,7 +157,8 @@ export default {
         }
         this.nlParam = data.nlParam || null
         this.imageUrl = data.imageUrl
-        this.imageLoading = false
+        this.imageLoadId = id
+        // imageLoading stays true; onImageLoad/onImageError will clear it
       } catch {
         if (this.loadId === id) {
           this.imageError = true
@@ -166,6 +170,16 @@ export default {
       for (let i = 1; i <= PRELOAD_AHEAD; i++) {
         this.fetchImage(pageNum + i)
         this.fetchImage(pageNum - i)
+      }
+    },
+
+    onImageLoad() {
+      if (this.imageLoadId === this.loadId) this.imageLoading = false
+    },
+    onImageError() {
+      if (this.imageLoadId === this.loadId) {
+        this.imageLoading = false
+        this.imageError = true
       }
     },
 
@@ -238,7 +252,7 @@ export default {
         this.cache[pageNum] = data
         this.nlParam = data.nlParam
         this.imageUrl = data.imageUrl
-        this.imageLoading = false
+        this.imageLoadId = id
       } catch {
         if (this.loadId === id) {
           this.imageError = true
