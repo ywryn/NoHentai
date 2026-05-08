@@ -2,71 +2,30 @@
   <div class="container daily-page">
     <section class="daily-shell">
       <div class="daily-header-card">
-        <div class="daily-controls">
-          <div class="daily-group-selector" v-if="groups.length">
-            <div class="daily-group-selector-header">
-              <div>
-                <div class="daily-filters-eyebrow">Groups</div>
-                <h2 class="daily-filters-title">Choose Snapshot</h2>
-              </div>
-            </div>
-            <div class="daily-group-strip">
-              <button
-                v-for="(group, index) in groups"
-                :key="group.generatedAt || index"
-                class="daily-group-pill"
-                :class="{ active: index === currentGroupIndex }"
-                @click="switchGroup(index)"
-                :aria-label="`Switch to group ${index + 1}`"
-              >
-                <span class="daily-group-pill-top">
-                  <span class="daily-group-pill-label">Group {{ index + 1 }}</span>
-                  <span class="daily-group-pill-count">{{ (group.galleries || []).length }}</span>
-                </span>
-                <span class="daily-group-pill-date">{{ formatDate(group.generatedAt) || 'Unknown' }}</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="daily-meta" v-if="currentGroup?.generatedAt">
-            <span>Updated {{ formatDate(currentGroup.generatedAt) }}</span>
-            <span class="daily-meta-sep">•</span>
-            <span>Since {{ currentGroup.cutoffDate }}</span>
-            <span class="daily-meta-sep">•</span>
-            <span>{{ totalRecords }} galleries</span>
-          </div>
+        <div class="daily-group-strip" v-if="groups.length">
+          <button
+            v-for="(group, index) in groups"
+            :key="group.generatedAt || index"
+            class="daily-group-pill"
+            :class="{ active: index === currentGroupIndex }"
+            @click="switchGroup(index)"
+          >
+            <span class="daily-group-pill-label">Group {{ index + 1 }}</span>
+            <span class="daily-group-pill-count">{{ (group.galleries || []).length }}</span>
+          </button>
         </div>
 
-        <div class="daily-filters" v-if="currentGroup?.filters?.length">
-          <div class="daily-filters-header">
-            <div>
-              <div class="daily-filters-eyebrow">Filters</div>
-              <h2 class="daily-filters-title">Match Rules</h2>
-            </div>
-            <div class="daily-filters-count">{{ currentGroup.filters.length }} rules</div>
-          </div>
-          <div class="daily-filter-groups">
-            <div class="daily-filter-group" v-if="includeFilters.length">
-              <span class="daily-filter-group-label">Include</span>
-              <div class="daily-filter-chip-list">
-                <span
-                  v-for="chip in includeFilters"
-                  :key="`include-${chip}`"
-                  class="filter-chip"
-                >{{ chip }}</span>
-              </div>
-            </div>
-            <div class="daily-filter-group" v-if="excludeFilters.length">
-              <span class="daily-filter-group-label exclude">Exclude</span>
-              <div class="daily-filter-chip-list">
-                <span
-                  v-for="chip in excludeFilters"
-                  :key="`exclude-${chip}`"
-                  class="filter-chip filter-chip-exclude"
-                >{{ chip.replace(/^-/, '') }}</span>
-              </div>
-            </div>
-          </div>
+        <div class="daily-meta" v-if="currentGroup?.generatedAt">
+          <span>{{ formatDate(currentGroup.generatedAt) }}</span>
+          <span class="daily-meta-sep">·</span>
+          <span>Since {{ currentGroup.cutoffDate }}</span>
+          <span class="daily-meta-sep">·</span>
+          <span>{{ totalRecords }} galleries</span>
+        </div>
+
+        <div class="daily-filter-chips" v-if="currentGroup?.filters?.length">
+          <span v-for="chip in includeFilters" :key="`i-${chip}`" class="filter-chip">{{ chip }}</span>
+          <span v-for="chip in excludeFilters" :key="`e-${chip}`" class="filter-chip filter-chip-exclude">{{ chip.replace(/^-/, '') }}</span>
         </div>
       </div>
 
@@ -271,179 +230,69 @@ onMounted(async () => {
   gap: 16px;
 }
 
-.daily-header-card,
-.daily-summary-card,
-.daily-group-card {
+.daily-header-card {
   background: var(--row-bg);
   border: 1px solid var(--row-border);
   border-radius: 8px;
-}
-
-.daily-header-card {
-  padding: 16px;
+  padding: 14px 16px;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-.daily-header-main {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: flex-start;
-}
-
-.daily-copy {
-  min-width: 0;
-}
-
-.daily-eyebrow {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--muted-color);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.daily-page-title {
-  margin: 8px 0 0;
-  font-size: clamp(28px, 3vw, 40px);
-  line-height: 1.08;
-  color: var(--title-color);
-}
-
-.daily-page-subtitle {
-  margin: 10px 0 0;
-  color: var(--muted-color);
-  font-size: 15px;
-  line-height: 1.5;
-  max-width: 760px;
-}
-
-.daily-summary-card {
-  min-width: 220px;
-  padding: 14px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.daily-summary-label,
-.daily-group-label {
-  font-size: 12px;
-  color: var(--muted-color);
-  font-weight: 700;
-}
-
-.daily-summary-value,
-.daily-group-title {
-  font-size: 22px;
-  line-height: 1.1;
-  color: var(--title-color);
-}
-
-.daily-summary-sub {
-  font-size: 12px;
-  color: var(--muted-color);
-}
-
-.daily-controls {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.daily-group-selector {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: min(100%, 520px);
-}
-
-.daily-group-selector-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   gap: 12px;
 }
 
 .daily-group-strip {
   display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
-}
-
-.daily-group-strip::-webkit-scrollbar {
-  height: 10px;
-}
-
-.daily-group-strip::-webkit-scrollbar-track {
-  background: var(--scrollbar-track);
-  border-radius: 999px;
-}
-
-.daily-group-strip::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
-  border-radius: 999px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .daily-group-pill {
   appearance: none;
-  min-width: 160px;
-  padding: 12px 14px;
+  height: 34px;
+  padding: 0 12px;
   border-radius: 8px;
   border: 1px solid var(--border-color);
   background: var(--surface-color);
   color: var(--text-color);
-  display: flex;
-  flex-direction: column;
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
-  text-align: left;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
 .daily-group-pill:hover {
+  background: var(--hover-bg);
   border-color: var(--primary-color);
-  background: var(--row-hover-bg);
 }
 
 .daily-group-pill.active {
-  border-color: rgba(100, 108, 255, 0.5);
-  background: linear-gradient(180deg, rgba(100, 108, 255, 0.14), rgba(100, 108, 255, 0.04));
-  box-shadow: inset 0 0 0 1px rgba(100, 108, 255, 0.12);
+  background: rgba(100, 108, 255, 0.12);
+  border-color: rgba(100, 108, 255, 0.45);
+  color: #c7ceff;
 }
 
-.daily-group-pill-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
+.my-app-light .daily-group-pill.active {
+  color: #4f46e5;
 }
 
 .daily-group-pill-label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--title-color);
 }
 
 .daily-group-pill-count {
-  min-width: 28px;
-  height: 22px;
-  padding: 0 8px;
+  min-width: 22px;
+  height: 18px;
+  padding: 0 6px;
   border-radius: 999px;
   background: var(--row-bg);
   border: 1px solid var(--row-border);
   color: var(--muted-color);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
@@ -456,150 +305,47 @@ onMounted(async () => {
   color: #c7ceff;
 }
 
-.daily-group-pill-date {
-  font-size: 12px;
-  color: var(--muted-color);
-}
-
 .daily-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
   font-size: 12px;
   color: var(--muted-color);
 }
 
 .daily-meta-sep {
-  opacity: 0.45;
+  opacity: 0.4;
 }
 
-.daily-filters {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding-top: 4px;
-  border-top: 1px solid var(--row-border);
-}
-
-.daily-filters-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.daily-filters-eyebrow {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--muted-color);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.daily-filters-title {
-  margin: 6px 0 0;
-  font-size: 18px;
-  color: var(--title-color);
-}
-
-.daily-filters-count {
-  min-height: 24px;
-  padding: 0 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border-color);
-  background: var(--surface-color);
-  color: var(--muted-color);
-  font-size: 12px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-}
-
-.daily-filter-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.daily-filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.daily-filter-group-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: #7cc3ef;
-}
-
-.daily-filter-group-label.exclude {
-  color: #e28a8a;
-}
-
-.daily-filter-chip-list {
+.daily-filter-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .filter-chip {
   display: inline-flex;
   align-items: center;
-  min-height: 28px;
-  padding: 0 12px;
+  height: 26px;
+  padding: 0 10px;
   border-radius: 6px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   background: rgba(76, 163, 221, 0.12);
   border: 1px solid rgba(76, 163, 221, 0.24);
   color: #8fd3ff;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
 }
 
 .filter-chip-exclude {
   background: rgba(220, 80, 80, 0.12);
   border-color: rgba(220, 80, 80, 0.3);
   color: #e28a8a;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
-}
-
-@media (max-width: 900px) {
-  .daily-header-main {
-    flex-direction: column;
-  }
-
-  .daily-summary-card {
-    min-width: 0;
-    width: 100%;
-  }
 }
 
 @media (max-width: 600px) {
   .daily-page {
     padding: 10px;
-  }
-
-  .daily-controls {
-    align-items: stretch;
-  }
-
-  .daily-group-selector,
-  .daily-group-strip {
-    width: 100%;
-  }
-
-  .daily-page-title {
-    font-size: 24px;
-  }
-
-  .daily-page-subtitle {
-    font-size: 14px;
-  }
-
-  .daily-filters-header {
-    flex-direction: column;
   }
 }
 </style>
