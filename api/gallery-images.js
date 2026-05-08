@@ -24,8 +24,8 @@ async function fetchPage(url, cookie) {
   const res = await fetch(url, { headers, redirect: 'follow' })
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const text = await res.text()
-  return { html: text, status: res.status, finalUrl: res.url, contentType: res.headers.get('content-type') }
+  const html = await res.text()
+  return { html }
 }
 
 // Returns true when the HTML is not a real gallery page (access denied in any form)
@@ -82,17 +82,9 @@ function parseGalleryPage(html) {
 
 async function fetchAllPages(baseUrl, cookie) {
   const first = await fetchPage(`${baseUrl}?nw=always`, cookie)
-  if (first === null) return { denied: 'HTTP 404' }
-  const { html: firstHtml, finalUrl, contentType } = first
-  if (isAccessDenied(firstHtml)) {
-    return {
-      denied: firstHtml.slice(0, 500).replace(/\s+/g, ' ') || '(empty body)',
-      length: firstHtml.length,
-      finalUrl,
-      contentType,
-    }
-  }
+  if (first === null || isAccessDenied(first.html)) return null
 
+  const firstHtml = first.html
   const firstPage = parseGalleryPage(firstHtml)
   const allImages = [...firstPage.images]
   let total = firstPage.total
@@ -130,23 +122,16 @@ export default async function handler(req, res) {
     let result = await fetchAllPages(ehUrl, null)
 
     // Fall back to exhentai with cookies
-    if (result?.denied !== undefined) {
-      const ehDenied = result.denied
+    if (!result) {
       const cookie = exhentaiCookies()
       if (!cookie) {
-        return res.status(403).json({ error: 'Access denied', ehReason: ehDenied, hint: 'no exhentai credentials' })
+        return res.status(403).json({ error: 'exhentai_blocked', message: 'ExHentai-exclusive gallery: no credentials configured' })
       }
       const exUrl = `${EXHENTAI}/g/${gid}/${token}/`
       result = await fetchAllPages(exUrl, cookie)
-      if (result?.denied !== undefined) {
-        return res.status(403).json({
-          error: 'Access denied on both',
-          ehReason: ehDenied,
-          exReason: result.denied,
-          exLength: result.length,
-          exFinalUrl: result.finalUrl,
-          exContentType: result.contentType,
-        })
+      if (!result) {
+        // ExHentai Cloudflare blocks datacenter IPs even with valid cookies
+        return res.status(403).json({ error: 'exhentai_blocked', message: 'ExHentai-exclusive gallery cannot be accessed from cloud servers due to Cloudflare IP restrictions' })
       }
     }
 

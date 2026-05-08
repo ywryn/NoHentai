@@ -592,6 +592,13 @@
   font-size: 13px;
 }
 
+.thumb-exblocked {
+  padding: 16px 0;
+  font-size: 13px;
+  color: var(--text-color);
+  opacity: 0.45;
+}
+
 .thumb-grid {
   display: flex;
   flex-wrap: wrap;

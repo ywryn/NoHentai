@@ -212,6 +212,9 @@
           <div class="thumb-spinner"></div>
           <span>Loading thumbnails...</span>
         </div>
+        <div v-else-if="thumbError === 'exhentai_blocked'" class="thumb-exblocked">
+          此画廊为 ExHentai 独占，云服务器 IP 被 Cloudflare 拦截，无法加载缩略图
+        </div>
         <div v-else-if="thumbError" class="thumb-error">{{ thumbError }}</div>
         <template v-else-if="thumbImages.length">
           <div class="thumb-grid">
@@ -429,9 +432,14 @@ export default {
       try {
         const res = await fetch(`${API_BASE}/api/gallery-images?gid=${this.itemId}&token=${this.galleryData.token}`);
         const data = await res.json();
-        if (data.error) throw new Error(data.error);
-        this.thumbImages = data.images.slice(0, data.total);
-        this.thumbTotal = data.total;
+        if (data.error === 'exhentai_blocked') {
+          this.thumbError = 'exhentai_blocked';
+        } else if (data.error) {
+          throw new Error(data.error);
+        } else {
+          this.thumbImages = data.images.slice(0, data.total);
+          this.thumbTotal = data.total;
+        }
       } catch (e) {
         this.thumbError = e.message;
       } finally {
