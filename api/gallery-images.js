@@ -32,47 +32,43 @@ function isSadPanda(html) {
 function parseGalleryPage(html) {
   const root = parse(html)
 
-  // Get total image count
-  const countEl = root.querySelector('#gdd .gdt1')
+  // Find "Length:" label, its sibling has "N pages"
   let total = 0
-  if (countEl) {
-    const text = countEl.nextElementSibling?.text || ''
-    total = parseInt(text) || 0
-  }
-
-  // Fallback: count from page nav
-  if (!total) {
-    const pager = root.querySelector('#gpc')
-    if (pager) {
-      const m = pager.text.match(/(\d+)\s+images/)
-      if (m) total = parseInt(m[1])
+  for (const label of root.querySelectorAll('#gdd .gdt1')) {
+    if (label.text.trim() === 'Length:') {
+      const m = (label.nextElementSibling?.text || '').match(/(\d+)/)
+      if (m) { total = parseInt(m[1]); break }
     }
   }
 
+  // #gdt > a > div[title="Page N: filename"]
+  // Thumbnail is sprite: background url(...) -Xpx 0 no-repeat
   const images = []
-  const gdt = root.querySelectorAll('#gdt .gdtm, #gdt .gdtl')
-  for (const cell of gdt) {
-    const a = cell.querySelector('a')
-    const img = cell.querySelector('img')
-    if (!a) continue
-    const pageUrl = a.getAttribute('href') || ''
-    const thumbUrl = img?.getAttribute('src') || ''
-    const pageNumMatch = pageUrl.match(/\/s\/[^/]+\/(\d+)-(\d+)$/)
-    const pageNum = pageNumMatch ? parseInt(pageNumMatch[2]) : images.length + 1
-    images.push({ pageNum, thumbUrl, pageUrl })
+  const gdt = root.querySelector('#gdt')
+  if (gdt) {
+    for (const a of gdt.querySelectorAll('a')) {
+      const pageUrl = a.getAttribute('href') || ''
+      const inner = a.querySelector('div')
+      const title = inner?.getAttribute('title') || ''
+      const style = inner?.getAttribute('style') || ''
+
+      const pageNumMatch = title.match(/^Page (\d+):/)
+      const pageNum = pageNumMatch ? parseInt(pageNumMatch[1]) : images.length + 1
+
+      const bgMatch = style.match(/url\(([^)]+)\)/)
+      const thumbSprite = bgMatch ? bgMatch[1] : ''
+      const xMatch = style.match(/(-?\d+)px\s+0\s+no-repeat/)
+      const thumbX = xMatch ? parseInt(xMatch[1]) : 0
+      const wMatch = style.match(/width:(\d+)px/)
+      const hMatch = style.match(/height:(\d+)px/)
+      const thumbW = wMatch ? parseInt(wMatch[1]) : 200
+      const thumbH = hMatch ? parseInt(hMatch[1]) : 283
+
+      images.push({ pageNum, pageUrl, thumbSprite, thumbX, thumbW, thumbH })
+    }
   }
 
-  // Detect next page link
-  const nextEl = root.querySelector('a[onclick*="next"], td.ptds a, #unfiltered_image_count')
-  // Use paging links
-  const pagerLinks = root.querySelectorAll('.ptt td a')
-  let lastPageUrl = null
-  for (const el of pagerLinks) {
-    const href = el.getAttribute('href')
-    if (href && href.includes('?p=')) lastPageUrl = href
-  }
-
-  return { total, images, lastPageUrl }
+  return { total, images }
 }
 
 async function fetchAllPages(baseUrl, cookie) {
@@ -83,11 +79,10 @@ async function fetchAllPages(baseUrl, cookie) {
   const allImages = [...firstPage.images]
   let total = firstPage.total
 
-  // Determine how many pages there are
+  // Find total page count from numbered pager cells (.ptt td text = "1","2",...,"N")
   const root = parse(firstHtml)
-  const pttCells = root.querySelectorAll('.ptt td')
   const pageNums = []
-  for (const td of pttCells) {
+  for (const td of root.querySelectorAll('.ptt td')) {
     const n = parseInt(td.text.trim())
     if (!isNaN(n)) pageNums.push(n)
   }
