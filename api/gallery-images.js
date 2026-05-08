@@ -61,8 +61,8 @@ function parseGalleryPage(html) {
       const title = inner?.getAttribute('title') || ''
       const style = inner?.getAttribute('style') || ''
 
-      const pageNumMatch = title.match(/^Page (\d+):/)
-      const pageNum = pageNumMatch ? parseInt(pageNumMatch[1]) : images.length + 1
+      const globalPageMatch = pageUrl.match(/\d+-(\d+)\/?$/)
+      const pageNum = globalPageMatch ? parseInt(globalPageMatch[1]) : images.length + 1
 
       const bgMatch = style.match(/url\(([^)]+)\)/)
       const thumbSprite = bgMatch ? bgMatch[1] : ''
