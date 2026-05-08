@@ -52,48 +52,49 @@ jobs:
       - name: Run Daily Search sync
         run: python app/sync_daily_search.py
 
-      - name: Ensure media release exists
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release view telegram-media-archive 2>/dev/null || \
-          gh release create telegram-media-archive \
-            --title "Telegram Media Archive" \
-            --notes "Auto-managed by sync workflow. Do not edit manually." \
-            --prerelease
-
-      - name: Download existing media archive
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release download telegram-media-archive \
-            --pattern "telegram_media.zip" \
-            --dir web-static/public/data/ 2>/dev/null || true
-          if [ -f web-static/public/data/telegram_media.zip ]; then
-            unzip -q -o web-static/public/data/telegram_media.zip \
-              -d web-static/public/data/
-            rm web-static/public/data/telegram_media.zip
-          fi
-
-      - name: Sync Telegram forwards
-        env:
-          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          TELEGRAM_ENCRYPTION_PASSWORD: ${{ secrets.TELEGRAM_ENCRYPTION_PASSWORD }}
-        run: python app/sync_telegram.py
-
-      - name: Package and upload media archive
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [ -d web-static/public/data/telegram_media ]; then
-            cd web-static/public/data
-            zip -r telegram_media.zip telegram_media/
-            cd -
-            gh release upload telegram-media-archive \
-              web-static/public/data/telegram_media.zip --clobber
-            rm -rf web-static/public/data/telegram_media/
-            rm -f web-static/public/data/telegram_media.zip
-          fi
+      # Telegram 同步暂时关闭
+      # - name: Ensure media release exists
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     gh release view telegram-media-archive 2>/dev/null || \
+      #     gh release create telegram-media-archive \
+      #       --title "Telegram Media Archive" \
+      #       --notes "Auto-managed by sync workflow. Do not edit manually." \
+      #       --prerelease
+      #
+      # - name: Download existing media archive
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     gh release download telegram-media-archive \
+      #       --pattern "telegram_media.zip" \
+      #       --dir web-static/public/data/ 2>/dev/null || true
+      #     if [ -f web-static/public/data/telegram_media.zip ]; then
+      #       unzip -q -o web-static/public/data/telegram_media.zip \
+      #         -d web-static/public/data/
+      #       rm web-static/public/data/telegram_media.zip
+      #     fi
+      #
+      # - name: Sync Telegram forwards
+      #   env:
+      #     BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      #     TELEGRAM_ENCRYPTION_PASSWORD: ${{ secrets.TELEGRAM_ENCRYPTION_PASSWORD }}
+      #   run: python app/sync_telegram.py
+      #
+      # - name: Package and upload media archive
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     if [ -d web-static/public/data/telegram_media ]; then
+      #       cd web-static/public/data
+      #       zip -r telegram_media.zip telegram_media/
+      #       cd -
+      #       gh release upload telegram-media-archive \
+      #         web-static/public/data/telegram_media.zip --clobber
+      #       rm -rf web-static/public/data/telegram_media/
+      #       rm -f web-static/public/data/telegram_media.zip
+      #     fi
 
       - name: Commit updated data
         run: |
@@ -103,8 +104,7 @@ jobs:
                   web-static/public/data/backup_data/ \
                   web-static/public/data/future_digi.json \
                   web-static/public/data/translations.json \
-                  web-static/public/data/daily_search.json \
-                  web-static/public/data/telegram_forwards.json
+                  web-static/public/data/daily_search.json
           git diff --staged --quiet || git commit -m "常规数据更新 [skip ci]"
           git push
 
@@ -117,18 +117,19 @@ jobs:
         with:
           ref: master
 
-      - name: Download media archive
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release download telegram-media-archive \
-            --pattern "telegram_media.zip" \
-            --dir web-static/public/data/ 2>/dev/null || true
-          if [ -f web-static/public/data/telegram_media.zip ]; then
-            unzip -q -o web-static/public/data/telegram_media.zip \
-              -d web-static/public/data/
-            rm web-static/public/data/telegram_media.zip
-          fi
+      # Telegram media 暂时关闭
+      # - name: Download media archive
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     gh release download telegram-media-archive \
+      #       --pattern "telegram_media.zip" \
+      #       --dir web-static/public/data/ 2>/dev/null || true
+      #     if [ -f web-static/public/data/telegram_media.zip ]; then
+      #       unzip -q -o web-static/public/data/telegram_media.zip \
+      #         -d web-static/public/data/
+      #       rm web-static/public/data/telegram_media.zip
+      #     fi
 
       - name: Setup Node
         uses: actions/setup-node@v4

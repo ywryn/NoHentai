@@ -9,8 +9,8 @@ import GalleryDetail from '@/components/GalleryDetail.vue';
 import Printed from '@/components/Printed.vue';
 // @ts-ignore
 import DailySearch from '@/components/DailySearch.vue';
-// @ts-ignore
-import TelegramFeed from '@/components/TelegramFeed.vue';
+// // @ts-ignore
+// import TelegramFeed from '@/components/TelegramFeed.vue';
 // 静态版本移除这些组件
 // // @ts-ignore
 // import Settings from '@/components/Settings.vue';
@@ -39,11 +39,11 @@ const routes = [
     name: 'DailySearch',
     component: DailySearch,
   },
-  {
-    path: '/telegram',
-    name: 'TelegramFeed',
-    component: TelegramFeed,
-  },
+  // {
+  //   path: '/telegram',
+  //   name: 'TelegramFeed',
+  //   component: TelegramFeed,
+  // },
   {
     path: '/gallery/:gid',  // ExHentai 动态路由
     name: 'GalleryDetail',

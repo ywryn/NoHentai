@@ -77,6 +77,7 @@ onBeforeUnmount(() => {
               </svg>
             </RouterLink>
           </li>
+          <!-- Telegram 暂时关闭
           <li>
             <RouterLink to="/telegram" aria-label="Telegram Feed" title="Telegram Feed">
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -84,6 +85,7 @@ onBeforeUnmount(() => {
               </svg>
             </RouterLink>
           </li>
+          -->
         </ul>
       </div>
       <!-- Desktop Navigation - 静态版本 -->
@@ -92,7 +94,7 @@ onBeforeUnmount(() => {
         <li><RouterLink to="/data">Data Analys</RouterLink></li>
         <li><RouterLink to="/printed">Printed</RouterLink></li>
         <li><RouterLink to="/daily">Daily</RouterLink></li>
-        <li><RouterLink to="/telegram">Telegram</RouterLink></li>
+        <!-- <li><RouterLink to="/telegram">Telegram</RouterLink></li> -->
       </ul>
       
       <!-- Theme Toggle (always visible) -->
