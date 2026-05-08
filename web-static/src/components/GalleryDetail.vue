@@ -253,7 +253,6 @@ import ToggleSwitch from "primevue/toggleswitch";
 const baseUrl = import.meta.env.BASE_URL;
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://no-hentai.vercel.app';
 const THUMBS_PER_PAGE = 20;
-const THUMB_DISPLAY_W = 88;
 
 export default {
   name: "GalleryDetail",
@@ -439,6 +438,14 @@ export default {
         } else {
           this.thumbImages = data.images.slice(0, data.total);
           this.thumbTotal = data.total;
+          // 计算每个 sprite 包含多少缩略图，用于百分比定位
+          const spriteCount = {};
+          for (const img of this.thumbImages) {
+            spriteCount[img.thumbSprite] = (spriteCount[img.thumbSprite] || 0) + 1;
+          }
+          for (const img of this.thumbImages) {
+            img.spriteN = spriteCount[img.thumbSprite] || 1;
+          }
         }
       } catch (e) {
         this.thumbError = e.message;
@@ -459,21 +466,20 @@ export default {
     },
 
     cellStyle(img) {
-      const scale = THUMB_DISPLAY_W / img.thumbW;
-      const displayH = Math.round(img.thumbH * scale);
-      return { width: THUMB_DISPLAY_W + 'px', height: displayH + 'px' };
+      return { aspectRatio: `${img.thumbW} / ${img.thumbH}` };
     },
 
     innerStyle(img) {
-      const scale = THUMB_DISPLAY_W / img.thumbW;
+      const N = img.spriteN || 1;
+      const index = img.thumbW > 0 ? Math.round(-img.thumbX / img.thumbW) : 0;
+      const posX = N <= 1 ? 0 : (index / (N - 1)) * 100;
       return {
-        width: img.thumbW + 'px',
-        height: img.thumbH + 'px',
         backgroundImage: `url(${img.thumbSprite})`,
-        backgroundPosition: `${img.thumbX}px 0`,
+        backgroundSize: `${N * 100}% auto`,
+        backgroundPosition: `${posX}% 0`,
         backgroundRepeat: 'no-repeat',
-        transform: `scale(${scale})`,
-        transformOrigin: 'top left',
+        width: '100%',
+        height: '100%',
       };
     },
 

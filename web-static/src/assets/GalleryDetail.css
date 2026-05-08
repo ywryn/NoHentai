@@ -601,10 +601,16 @@
 }
 
 .thumb-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 6px;
   margin-top: 16px;
+}
+@media (min-width: 480px) {
+  .thumb-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (min-width: 768px) {
+  .thumb-grid { grid-template-columns: repeat(5, 1fr); }
 }
 
 .thumb-cell {
@@ -612,7 +618,6 @@
   overflow: hidden;
   border-radius: 4px;
   cursor: pointer;
-  flex-shrink: 0;
   border: 2px solid transparent;
   transition: border-color 0.15s, transform 0.15s;
 }
@@ -625,6 +630,7 @@
 .thumb-inner {
   display: block;
   pointer-events: none;
+  background-size: cover;
 }
 
 .thumb-page-num {
