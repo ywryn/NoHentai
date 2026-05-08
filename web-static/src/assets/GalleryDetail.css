@@ -401,7 +401,8 @@
 
 /* ===== Mom mode ===== */
 .mom-mode .cover-shell img,
-.mom-mode .mob-cover img {
+.mom-mode .mob-cover img,
+.mom-mode .thumb-inner {
   filter: blur(var(--mom-mode-blur));
 }
 
