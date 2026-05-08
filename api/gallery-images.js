@@ -81,7 +81,11 @@ function parseGalleryPage(html) {
 
 async function fetchAllPages(baseUrl, cookie) {
   const firstHtml = await fetchPage(`${baseUrl}?nw=always`, cookie)
-  if (firstHtml === null || isAccessDenied(firstHtml)) return null
+  if (firstHtml === null) return { denied: 'HTTP 404' }
+  if (isAccessDenied(firstHtml)) {
+    const snippet = firstHtml.slice(0, 300).replace(/\s+/g, ' ')
+    return { denied: snippet }
+  }
 
   const firstPage = parseGalleryPage(firstHtml)
   const allImages = [...firstPage.images]
@@ -121,15 +125,16 @@ export default async function handler(req, res) {
     let result = await fetchAllPages(ehUrl, null)
 
     // Fall back to exhentai with cookies
-    if (!result) {
+    if (result?.denied !== undefined) {
+      const ehDenied = result.denied
       const cookie = exhentaiCookies()
       if (!cookie) {
-        return res.status(403).json({ error: 'Access denied and no exhentai credentials configured' })
+        return res.status(403).json({ error: 'Access denied', ehReason: ehDenied, hint: 'no exhentai credentials' })
       }
       const exUrl = `${EXHENTAI}/g/${gid}/${token}/`
       result = await fetchAllPages(exUrl, cookie)
-      if (!result) {
-        return res.status(403).json({ error: 'Access denied on both e-hentai and exhentai' })
+      if (result?.denied !== undefined) {
+        return res.status(403).json({ error: 'Access denied on both', ehReason: ehDenied, exReason: result.denied })
       }
     }
 
