@@ -37,9 +37,6 @@
           v-show="!imageLoading && !imageError"
           :src="imageUrl"
           class="reader-img"
-          :key="`${currentPage}-${retryCount}`"
-          @load="onImageLoaded"
-          @error="onImageError"
         />
 
         <div v-if="imageError" class="reader-img-error">
@@ -74,6 +71,15 @@
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://no-hentai.vercel.app'
 const PRELOAD_AHEAD = 2
 
+function preloadImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = resolve
+    img.onerror = reject
+    img.src = url
+  })
+}
+
 export default {
   name: 'GalleryReader',
   data() {
@@ -94,7 +100,7 @@ export default {
       touchStartY: 0,
       swipeDetected: false,
       cache: {},
-      retryCount: 0,
+      loadId: 0,
     }
   },
   computed: {
@@ -142,29 +148,35 @@ export default {
     async goTo(pageNum) {
       if (pageNum < 1 || pageNum > this.total) return
       this.currentPage = pageNum
-      this.imageLoading = true  // spinner on; cleared only by @load or @error
+      this.imageLoading = true
       this.imageError = false
-      // Do NOT clear imageUrl here — empty src triggers @error immediately
+      const id = ++this.loadId
 
       try {
         const data = await this.fetchImage(pageNum)
-        if (this.currentPage !== pageNum) return  // navigated away while loading
+        if (this.loadId !== id) return  // navigated away while fetching URL
+
         if (!data?.imageUrl) {
           this.imageError = true
           this.imageLoading = false
           return
         }
         this.nlParam = data.nlParam || null
+
+        // Preload image in JS before handing to template — avoids mid-load src changes
+        await preloadImage(data.imageUrl)
+        if (this.loadId !== id) return  // navigated away while image was downloading
+
         this.imageUrl = data.imageUrl
-        // imageLoading remains true until the browser fires @load or @error
+        this.imageLoading = false
       } catch {
-        if (this.currentPage === pageNum) {
+        if (this.loadId === id) {
           this.imageError = true
           this.imageLoading = false
         }
       }
 
-      // Preload adjacent pages
+      // Prefetch adjacent page URLs (not images) in background
       for (let i = 1; i <= PRELOAD_AHEAD; i++) {
         this.fetchImage(pageNum + i)
         this.fetchImage(pageNum - i)
@@ -223,16 +235,6 @@ export default {
       this.barTimer = setTimeout(() => { this.barVisible = false }, 4000)
     },
 
-    onImageLoaded() {
-      this.imageLoading = false
-      this.imageError = false
-    },
-
-    onImageError() {
-      this.imageLoading = false
-      this.imageError = true
-    },
-
     async retryImage() {
       const pageNum = this.currentPage
       delete this.cache[pageNum]
@@ -242,18 +244,19 @@ export default {
       if (this.nlParam) pageUrl += (pageUrl.includes('?') ? '&' : '?') + `nl=${this.nlParam}`
       this.imageLoading = true
       this.imageError = false
+      const id = ++this.loadId
       try {
         const res = await fetch(`${API_BASE}/api/image-url?pageUrl=${encodeURIComponent(pageUrl)}`)
         const data = await res.json()
+        if (this.loadId !== id) return
         this.cache[pageNum] = data
-        if (this.currentPage === pageNum) {
-          this.nlParam = data.nlParam
-          this.retryCount++   // force img key change so @load fires again
-          this.imageUrl = data.imageUrl
-          // imageLoading cleared by @load / @error
-        }
+        this.nlParam = data.nlParam
+        await preloadImage(data.imageUrl)
+        if (this.loadId !== id) return
+        this.imageUrl = data.imageUrl
+        this.imageLoading = false
       } catch {
-        if (this.currentPage === pageNum) {
+        if (this.loadId === id) {
           this.imageError = true
           this.imageLoading = false
         }

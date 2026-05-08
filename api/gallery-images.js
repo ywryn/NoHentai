@@ -27,8 +27,14 @@ async function fetchPage(url, cookie) {
   return res.text()
 }
 
-function isSadPanda(html) {
-  return html.includes('sadpanda') || html.includes('Your IP address has been temporarily banned')
+// Returns true when the HTML is not a real gallery page (access denied in any form)
+function isAccessDenied(html) {
+  if (html.includes('sadpanda')) return true
+  if (html.includes('Your IP address has been temporarily banned')) return true
+  if (html.includes('This gallery has been removed')) return true
+  // No image grid = not a valid gallery page (covers all other denial variants)
+  if (!html.includes('id="gdt"')) return true
+  return false
 }
 
 function parseGalleryPage(html) {
@@ -75,7 +81,7 @@ function parseGalleryPage(html) {
 
 async function fetchAllPages(baseUrl, cookie) {
   const firstHtml = await fetchPage(`${baseUrl}?nw=always`, cookie)
-  if (firstHtml === null || isSadPanda(firstHtml)) return null
+  if (firstHtml === null || isAccessDenied(firstHtml)) return null
 
   const firstPage = parseGalleryPage(firstHtml)
   const allImages = [...firstPage.images]
@@ -92,7 +98,7 @@ async function fetchAllPages(baseUrl, cookie) {
 
   for (let p = 1; p < lastPage; p++) {
     const html = await fetchPage(`${baseUrl}?nw=always&p=${p}`, cookie)
-    if (isSadPanda(html)) break
+    if (html === null || isAccessDenied(html)) break
     const { images } = parseGalleryPage(html)
     allImages.push(...images)
   }
