@@ -125,8 +125,9 @@ export default async function handler(req, res) {
       }
     }
 
+    const images = result.total > 0 ? result.images.slice(0, result.total) : result.images
     res.setHeader('Cache-Control', 'public, max-age=3600')
-    return res.status(200).json({ gid, total: result.total, images: result.images })
+    return res.status(200).json({ gid, total: result.total, images })
   } catch (err) {
     return res.status(500).json({ error: err.message })
   }

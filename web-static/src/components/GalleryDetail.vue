@@ -198,6 +198,43 @@
         </section>
       </div>
 
+      <!-- ========== Thumbnail Gallery ========== -->
+      <section class="thumb-section">
+        <div class="panel-header">
+          <div>
+            <div class="panel-eyebrow">Browse</div>
+            <h2 class="panel-title">Pages</h2>
+          </div>
+          <span v-if="thumbTotal" class="thumb-total-badge">{{ thumbTotal }} pages</span>
+        </div>
+
+        <div v-if="thumbLoading" class="thumb-loading">
+          <div class="thumb-spinner"></div>
+          <span>Loading thumbnails...</span>
+        </div>
+        <div v-else-if="thumbError" class="thumb-error">{{ thumbError }}</div>
+        <template v-else-if="thumbImages.length">
+          <div class="thumb-grid">
+            <div
+              v-for="img in pagedThumbs"
+              :key="img.pageNum"
+              class="thumb-cell"
+              :style="cellStyle(img)"
+              :title="`Page ${img.pageNum}`"
+              @click="openReader(img.pageNum)"
+            >
+              <div class="thumb-inner" :style="innerStyle(img)"></div>
+              <span class="thumb-page-num">{{ img.pageNum }}</span>
+            </div>
+          </div>
+          <div v-if="thumbTotalPages > 1" class="thumb-paginator">
+            <button :disabled="thumbPage === 0" @click="thumbPage--" class="thumb-pager-btn">‹</button>
+            <span class="thumb-pager-info">{{ thumbPage + 1 }} / {{ thumbTotalPages }}</span>
+            <button :disabled="thumbPage >= thumbTotalPages - 1" @click="thumbPage++" class="thumb-pager-btn">›</button>
+          </div>
+        </template>
+      </section>
+
     </div>
 
     <div v-else-if="loading" class="loading">Loading...</div>
@@ -211,6 +248,9 @@ import Rating from "primevue/rating";
 import ToggleSwitch from "primevue/toggleswitch";
 
 const baseUrl = import.meta.env.BASE_URL;
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://no-hentai.vercel.app';
+const THUMBS_PER_PAGE = 20;
+const THUMB_DISPLAY_W = 88;
 
 export default {
   name: "GalleryDetail",
@@ -224,6 +264,12 @@ export default {
       error: null,
       allGalleries: [],
       translationData: null,
+      // Thumbnails
+      thumbImages: [],
+      thumbTotal: 0,
+      thumbLoading: false,
+      thumbError: null,
+      thumbPage: 0,
     };
   },
   created() {
@@ -234,11 +280,16 @@ export default {
   },
   watch: {
     '$route'() {
+      this.thumbImages = [];
+      this.thumbTotal = 0;
+      this.thumbPage = 0;
+      this.thumbError = null;
       this.initializeFromRoute();
-      if (this.itemId) {
-        this.fetchGalleryData();
-      }
-    }
+      if (this.itemId) this.fetchGalleryData();
+    },
+    galleryData(val) {
+      if (val?.token) this.fetchThumbnails();
+    },
   },
   methods: {
     initializeFromRoute() {
@@ -371,6 +422,50 @@ export default {
       return match ? match[0] : str;
     },
 
+    async fetchThumbnails() {
+      if (!this.galleryData?.token) return;
+      this.thumbLoading = true;
+      this.thumbError = null;
+      try {
+        const res = await fetch(`${API_BASE}/api/gallery-images?gid=${this.itemId}&token=${this.galleryData.token}`);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        this.thumbImages = data.images.slice(0, data.total);
+        this.thumbTotal = data.total;
+      } catch (e) {
+        this.thumbError = e.message;
+      } finally {
+        this.thumbLoading = false;
+      }
+    },
+
+    openReader(pageNum) {
+      this.$router.push({
+        name: 'GalleryReader',
+        params: { gid: this.itemId },
+        query: { page: pageNum, token: this.galleryData.token },
+      });
+    },
+
+    cellStyle(img) {
+      const scale = THUMB_DISPLAY_W / img.thumbW;
+      const displayH = Math.round(img.thumbH * scale);
+      return { width: THUMB_DISPLAY_W + 'px', height: displayH + 'px' };
+    },
+
+    innerStyle(img) {
+      const scale = THUMB_DISPLAY_W / img.thumbW;
+      return {
+        width: img.thumbW + 'px',
+        height: img.thumbH + 'px',
+        backgroundImage: `url(${img.thumbSprite})`,
+        backgroundPosition: `${img.thumbX}px 0`,
+        backgroundRepeat: 'no-repeat',
+        transform: `scale(${scale})`,
+        transformOrigin: 'top left',
+      };
+    },
+
     formatFileSize(bytes) {
       if (!bytes) return "0 B";
       const sizes = ["B", "KB", "MB", "GB", "TB"];
@@ -404,6 +499,13 @@ export default {
         { label: 'Favorite Category', value: this.galleryData?.favCategory || 'Unknown' },
         { label: 'Uploader', value: this.galleryData?.uploader || 'Unknown' },
       ];
+    },
+    pagedThumbs() {
+      const start = this.thumbPage * THUMBS_PER_PAGE;
+      return this.thumbImages.slice(start, start + THUMBS_PER_PAGE);
+    },
+    thumbTotalPages() {
+      return Math.ceil(this.thumbImages.length / THUMBS_PER_PAGE);
     },
     groupedTags() {
       if (!this.galleryData?.tags) {

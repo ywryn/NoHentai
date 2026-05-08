@@ -9,6 +9,8 @@ import GalleryDetail from '@/components/GalleryDetail.vue';
 import Printed from '@/components/Printed.vue';
 // @ts-ignore
 import DailySearch from '@/components/DailySearch.vue';
+// @ts-ignore
+import GalleryReader from '@/components/GalleryReader.vue';
 // // @ts-ignore
 // import TelegramFeed from '@/components/TelegramFeed.vue';
 // 静态版本移除这些组件
@@ -49,6 +51,11 @@ const routes = [
     name: 'GalleryDetail',
     component: GalleryDetail,
     props: true,  // 将参数作为props传递给组件
+  },
+  {
+    path: '/gallery/:gid/read',
+    name: 'GalleryReader',
+    component: GalleryReader,
   },
   // 静态版本暂时移除这些路由
   // {

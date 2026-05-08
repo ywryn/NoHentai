@@ -549,3 +549,119 @@
   .layout-mobile .torrent-table th,
   .layout-mobile .torrent-table td { padding: 10px 8px; font-size: 12px; white-space: normal; }
 }
+
+/* ── Thumbnail Gallery ── */
+.thumb-section {
+  margin-top: 32px;
+  padding: 24px 28px;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.thumb-total-badge {
+  font-size: 12px;
+  color: var(--text-color);
+  opacity: 0.5;
+  align-self: center;
+}
+
+.thumb-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-color);
+  opacity: 0.5;
+  padding: 24px 0;
+}
+
+.thumb-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(148,163,184,0.2);
+  border-top-color: #60a5fa;
+  border-radius: 50%;
+  animation: thumb-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes thumb-spin { to { transform: rotate(360deg); } }
+
+.thumb-error {
+  color: #f87171;
+  padding: 16px 0;
+  font-size: 13px;
+}
+
+.thumb-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.thumb-cell {
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  border: 2px solid transparent;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.thumb-cell:hover {
+  border-color: var(--primary-color);
+  transform: scale(1.04);
+  z-index: 1;
+}
+
+.thumb-inner {
+  display: block;
+  pointer-events: none;
+}
+
+.thumb-page-num {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-size: 10px;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  line-height: 1;
+}
+
+.thumb-paginator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.thumb-pager-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-color);
+  color: var(--text-color);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.thumb-pager-btn:hover:not(:disabled) { background: var(--hover-bg); }
+.thumb-pager-btn:disabled { opacity: 0.3; cursor: default; }
+
+.thumb-pager-info {
+  font-size: 13px;
+  color: var(--text-color);
+  opacity: 0.6;
+  min-width: 60px;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .thumb-section { padding: 16px; border-radius: 8px; }
+}
