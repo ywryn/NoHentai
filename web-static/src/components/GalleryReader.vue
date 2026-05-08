@@ -71,15 +71,6 @@
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://no-hentai.vercel.app'
 const PRELOAD_AHEAD = 2
 
-function preloadImage(url) {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.onload = resolve
-    img.onerror = reject
-    img.src = url
-  })
-}
-
 export default {
   name: 'GalleryReader',
   data() {
@@ -162,11 +153,6 @@ export default {
           return
         }
         this.nlParam = data.nlParam || null
-
-        // Preload image in JS before handing to template — avoids mid-load src changes
-        await preloadImage(data.imageUrl)
-        if (this.loadId !== id) return  // navigated away while image was downloading
-
         this.imageUrl = data.imageUrl
         this.imageLoading = false
       } catch {
@@ -251,8 +237,6 @@ export default {
         if (this.loadId !== id) return
         this.cache[pageNum] = data
         this.nlParam = data.nlParam
-        await preloadImage(data.imageUrl)
-        if (this.loadId !== id) return
         this.imageUrl = data.imageUrl
         this.imageLoading = false
       } catch {
