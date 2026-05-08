@@ -37,8 +37,8 @@
           v-show="!imageLoading && !imageError"
           :src="imageUrl"
           class="reader-img"
-          :key="imageUrl"
-          @load="imageLoading = false"
+          :key="`${currentPage}-${retryCount}`"
+          @load="onImageLoaded"
           @error="onImageError"
         />
 
@@ -94,6 +94,7 @@ export default {
       touchStartY: 0,
       swipeDetected: false,
       cache: {},
+      retryCount: 0,
     }
   },
   computed: {
@@ -141,22 +142,29 @@ export default {
     async goTo(pageNum) {
       if (pageNum < 1 || pageNum > this.total) return
       this.currentPage = pageNum
-      this.imageLoading = true
+      this.imageLoading = true  // spinner on; cleared only by @load or @error
       this.imageError = false
-      this.imageUrl = ''
+      // Do NOT clear imageUrl here — empty src triggers @error immediately
 
       try {
         const data = await this.fetchImage(pageNum)
-        if (this.currentPage !== pageNum) return  // navigated away
-        this.imageUrl = data?.imageUrl || ''
-        this.nlParam = data?.nlParam || null
+        if (this.currentPage !== pageNum) return  // navigated away while loading
+        if (!data?.imageUrl) {
+          this.imageError = true
+          this.imageLoading = false
+          return
+        }
+        this.nlParam = data.nlParam || null
+        this.imageUrl = data.imageUrl
+        // imageLoading remains true until the browser fires @load or @error
       } catch {
-        if (this.currentPage === pageNum) this.imageError = true
-      } finally {
-        if (this.currentPage === pageNum) this.imageLoading = false
+        if (this.currentPage === pageNum) {
+          this.imageError = true
+          this.imageLoading = false
+        }
       }
 
-      // Preload ahead
+      // Preload adjacent pages
       for (let i = 1; i <= PRELOAD_AHEAD; i++) {
         this.fetchImage(pageNum + i)
         this.fetchImage(pageNum - i)
@@ -215,6 +223,11 @@ export default {
       this.barTimer = setTimeout(() => { this.barVisible = false }, 4000)
     },
 
+    onImageLoaded() {
+      this.imageLoading = false
+      this.imageError = false
+    },
+
     onImageError() {
       this.imageLoading = false
       this.imageError = true
@@ -234,13 +247,16 @@ export default {
         const data = await res.json()
         this.cache[pageNum] = data
         if (this.currentPage === pageNum) {
-          this.imageUrl = data.imageUrl
           this.nlParam = data.nlParam
+          this.retryCount++   // force img key change so @load fires again
+          this.imageUrl = data.imageUrl
+          // imageLoading cleared by @load / @error
         }
       } catch {
-        if (this.currentPage === pageNum) this.imageError = true
-      } finally {
-        if (this.currentPage === pageNum) this.imageLoading = false
+        if (this.currentPage === pageNum) {
+          this.imageError = true
+          this.imageLoading = false
+        }
       }
     },
   },

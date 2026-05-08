@@ -21,6 +21,8 @@ async function fetchPage(url, cookie) {
   }
   if (cookie) headers['Cookie'] = cookie
   const res = await fetch(url, { headers })
+  // 404 = gallery doesn't exist here, return null to trigger fallback
+  if (res.status === 404) return null
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.text()
 }
@@ -73,7 +75,7 @@ function parseGalleryPage(html) {
 
 async function fetchAllPages(baseUrl, cookie) {
   const firstHtml = await fetchPage(`${baseUrl}?nw=always`, cookie)
-  if (isSadPanda(firstHtml)) return null
+  if (firstHtml === null || isSadPanda(firstHtml)) return null
 
   const firstPage = parseGalleryPage(firstHtml)
   const allImages = [...firstPage.images]
