@@ -231,9 +231,9 @@
             </div>
           </div>
           <div v-if="thumbTotalPages > 1" class="thumb-paginator">
-            <button :disabled="thumbPage === 0" @click="thumbPage--" class="thumb-pager-btn">‹</button>
+            <button :disabled="thumbPage === 0" @click="prevThumbPage" class="thumb-pager-btn">‹</button>
             <span class="thumb-pager-info">{{ thumbPage + 1 }} / {{ thumbTotalPages }}</span>
-            <button :disabled="thumbPage >= thumbTotalPages - 1" @click="thumbPage++" class="thumb-pager-btn">›</button>
+            <button :disabled="thumbPage >= thumbTotalPages - 1" @click="nextThumbPage" class="thumb-pager-btn">›</button>
           </div>
         </template>
       </section>
@@ -446,6 +446,9 @@ export default {
         this.thumbLoading = false;
       }
     },
+
+    prevThumbPage() { this.thumbPage-- },
+    nextThumbPage() { this.thumbPage++ },
 
     openReader(pageNum) {
       this.$router.push({
