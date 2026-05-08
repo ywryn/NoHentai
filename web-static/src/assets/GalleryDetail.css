@@ -641,8 +641,8 @@
 
 .thumb-page-num {
   position: absolute;
-  bottom: 2px;
-  right: 4px;
+  top: 2px;
+  left: 4px;
   font-size: 10px;
   color: #fff;
   text-shadow: 0 1px 3px rgba(0,0,0,0.8);
