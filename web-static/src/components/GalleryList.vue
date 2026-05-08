@@ -10,6 +10,12 @@ defineProps({
 defineEmits(['click'])
 
 const { viewMode } = useViewMode()
+
+function titleChar(title) {
+  if (!title) return ''
+  const m = title.match(/[a-zA-Z぀-ヿ㐀-鿿豈-﫿가-힯]/)
+  return m ? m[0].toUpperCase() : title[0]
+}
 </script>
 
 <template>
@@ -26,7 +32,7 @@ const { viewMode } = useViewMode()
     >
       <div class="vm-cover-img">
         <img v-if="item.thumb" :src="item.thumb" loading="lazy" />
-        <div v-else class="vm-cover-placeholder">{{ item.title?.[0] }}</div>
+        <div v-else class="vm-cover-placeholder">{{ titleChar(item.title) }}</div>
       </div>
       <div class="vm-cover-info">
         <div v-if="item.badge" class="vm-cover-meta">
@@ -52,7 +58,7 @@ const { viewMode } = useViewMode()
     >
       <div class="gr-thumb">
         <img v-if="item.thumb" :src="item.thumb" loading="lazy" />
-        <div v-else class="gr-thumb-placeholder">{{ item.title?.[0] }}</div>
+        <div v-else class="gr-thumb-placeholder">{{ titleChar(item.title) }}</div>
       </div>
       <div class="gr-body">
         <template v-if="!item.noMeta">
