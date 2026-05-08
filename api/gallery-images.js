@@ -18,13 +18,14 @@ async function fetchPage(url, cookie) {
   const headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
     'Accept': 'text/html,application/xhtml+xml',
+    'Accept-Language': 'en-US,en;q=0.9',
   }
   if (cookie) headers['Cookie'] = cookie
-  const res = await fetch(url, { headers })
-  // 404 = gallery doesn't exist here, return null to trigger fallback
+  const res = await fetch(url, { headers, redirect: 'follow' })
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.text()
+  const text = await res.text()
+  return { html: text, status: res.status, finalUrl: res.url, contentType: res.headers.get('content-type') }
 }
 
 // Returns true when the HTML is not a real gallery page (access denied in any form)
@@ -80,18 +81,22 @@ function parseGalleryPage(html) {
 }
 
 async function fetchAllPages(baseUrl, cookie) {
-  const firstHtml = await fetchPage(`${baseUrl}?nw=always`, cookie)
-  if (firstHtml === null) return { denied: 'HTTP 404' }
+  const first = await fetchPage(`${baseUrl}?nw=always`, cookie)
+  if (first === null) return { denied: 'HTTP 404' }
+  const { html: firstHtml, finalUrl, contentType } = first
   if (isAccessDenied(firstHtml)) {
-    const snippet = firstHtml.slice(0, 300).replace(/\s+/g, ' ')
-    return { denied: snippet }
+    return {
+      denied: firstHtml.slice(0, 500).replace(/\s+/g, ' ') || '(empty body)',
+      length: firstHtml.length,
+      finalUrl,
+      contentType,
+    }
   }
 
   const firstPage = parseGalleryPage(firstHtml)
   const allImages = [...firstPage.images]
   let total = firstPage.total
 
-  // Find total page count from numbered pager cells (.ptt td text = "1","2",...,"N")
   const root = parse(firstHtml)
   const pageNums = []
   for (const td of root.querySelectorAll('.ptt td')) {
@@ -101,9 +106,9 @@ async function fetchAllPages(baseUrl, cookie) {
   const lastPage = pageNums.length ? Math.max(...pageNums) : 1
 
   for (let p = 1; p < lastPage; p++) {
-    const html = await fetchPage(`${baseUrl}?nw=always&p=${p}`, cookie)
-    if (html === null || isAccessDenied(html)) break
-    const { images } = parseGalleryPage(html)
+    const page = await fetchPage(`${baseUrl}?nw=always&p=${p}`, cookie)
+    if (page === null || isAccessDenied(page.html)) break
+    const { images } = parseGalleryPage(page.html)
     allImages.push(...images)
   }
 
@@ -134,7 +139,14 @@ export default async function handler(req, res) {
       const exUrl = `${EXHENTAI}/g/${gid}/${token}/`
       result = await fetchAllPages(exUrl, cookie)
       if (result?.denied !== undefined) {
-        return res.status(403).json({ error: 'Access denied on both', ehReason: ehDenied, exReason: result.denied })
+        return res.status(403).json({
+          error: 'Access denied on both',
+          ehReason: ehDenied,
+          exReason: result.denied,
+          exLength: result.length,
+          exFinalUrl: result.finalUrl,
+          exContentType: result.contentType,
+        })
       }
     }
 
