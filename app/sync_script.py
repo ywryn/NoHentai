@@ -1,3 +1,4 @@
+import html
 import json
 import logging
 import os
@@ -246,6 +247,11 @@ def main() -> int:
         return 1
 
     backup_json_file(output_path, backup_dir, keep_count=BACKUP_KEEP_COUNT)
+
+    for g in data:
+        for field in ("title", "title_jpn"):
+            if isinstance(g.get(field), str):
+                g[field] = html.unescape(g[field])
 
     with output_path.open("w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
