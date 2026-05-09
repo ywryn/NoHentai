@@ -2,10 +2,6 @@
   "functions": {
     "api/**/*.js": {
       "memory": 256,
-      "maxDuration": 30
-    },
-    "api/trans-*.js": {
-      "memory": 256,
       "maxDuration": 60
     }
   }
