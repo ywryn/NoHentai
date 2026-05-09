@@ -452,13 +452,18 @@ watch(viewMode, () => {
 
 onMounted(async () => {
   loading.value = true
-  await Promise.all([loadGalleriesData(), loadTranslationData()])
+  await loadGalleriesData()
   const q = route.query.q || ''
   const type = route.query.type || null
   const page = parseInt(route.query.page) || 1
   searchQuery.value = q
   activeType.value = type
   filterAndPaginateData(page, q, type)
+
+  // Load translations in background; re-enrich tags when ready
+  loadTranslationData().then(() => {
+    filterAndPaginateData(currentPage.value, searchQuery.value, activeType.value)
+  })
 })
 </script>
 
