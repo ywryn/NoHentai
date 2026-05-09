@@ -395,7 +395,15 @@ function filterAndPaginateData(page = 1, keyword = '', type = null) {
     return copy
   })
   currentPage.value = page
+  pageJumpValue.value = String(page)
   setTimeout(() => { loading.value = false }, 100)
+
+  // Sync state to URL so back-navigation restores it
+  const q = {}
+  if (query) q.q = query
+  if (type) q.type = type
+  if (page > 1) q.page = String(page)
+  router.replace({ query: q })
 }
 
 function performSearch() { filterAndPaginateData(1, searchQuery.value, activeType.value) }
@@ -438,11 +446,6 @@ function goToPage(page) {
 }
 function toggleSearchHelp(event) { searchHelpPopover.value?.toggle(event) }
 
-watch(currentPage, page => {
-  pageJumpValue.value = String(page)
-  router.replace({ query: page > 1 ? { page: String(page) } : {} })
-})
-
 watch(viewMode, () => {
   filterAndPaginateData(1, searchQuery.value, activeType.value)
 })
@@ -450,8 +453,12 @@ watch(viewMode, () => {
 onMounted(async () => {
   loading.value = true
   await Promise.all([loadGalleriesData(), loadTranslationData()])
-  const pageFromUrl = parseInt(route.query.page) || 1
-  filterAndPaginateData(pageFromUrl)
+  const q = route.query.q || ''
+  const type = route.query.type || null
+  const page = parseInt(route.query.page) || 1
+  searchQuery.value = q
+  activeType.value = type
+  filterAndPaginateData(page, q, type)
 })
 </script>
 
