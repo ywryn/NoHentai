@@ -670,10 +670,9 @@ export default {
 .gt-workbench {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  min-height: 100dvh;
   background: var(--bg-color);
   color: var(--text-color);
-  overflow: hidden;
 }
 
 /* ── Password overlay ────────────────────────────────────────────────────────── */
@@ -775,6 +774,9 @@ export default {
   background: var(--row-bg);
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
 }
 
@@ -964,9 +966,7 @@ export default {
 
 .gt-body {
   display: flex;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  align-items: flex-start;
 }
 
 /* ── Image panel ─────────────────────────────────────────────────────────────── */
@@ -975,34 +975,30 @@ export default {
   flex: 1;
   min-width: 0;
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: var(--bg-color);
-  overflow: hidden;
+  min-height: 240px;
 }
 
 .gt-image-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   color: var(--muted-color);
   font-size: 13px;
+  padding: 64px 24px;
 }
 
 .gt-image-error { color: #f87171; }
 
-.gt-image-empty {
-  text-align: center;
-}
+.gt-image-empty { text-align: center; }
 
 .gt-empty-icon { font-size: 40px; }
 
 .gt-page-img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+  width: 100%;
+  height: auto;
   display: block;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
@@ -1083,7 +1079,12 @@ export default {
   flex-direction: column;
   background: var(--row-bg);
   border-left: 1px solid var(--border-color);
-  overflow: hidden;
+  position: sticky;
+  top: 52px;
+  max-height: calc(100dvh - 52px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 .gt-sidebar-hdr {
@@ -1133,14 +1134,10 @@ export default {
 .gt-sidebar-empty-icon { font-size: 36px; }
 
 .gt-results-list {
-  flex: 1;
-  overflow-y: auto;
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 .gt-result-item {
@@ -1299,12 +1296,10 @@ export default {
 
 @media (max-width: 640px) {
   .gt-body { flex-direction: column; }
-  .gt-image-panel { flex: 1; min-height: 0; }
   .gt-sidebar {
-    display: flex;
     width: 100%;
-    height: 240px;
-    flex-shrink: 0;
+    position: static;
+    max-height: none;
     border-left: none;
     border-top: 1px solid var(--border-color);
   }
