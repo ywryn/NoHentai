@@ -252,7 +252,7 @@ import ToggleSwitch from "primevue/toggleswitch";
 
 const baseUrl = import.meta.env.BASE_URL;
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://no-hentai.vercel.app';
-const THUMBS_PER_PAGE = 24;
+const THUMBS_PER_PAGE = 20;
 
 export default {
   name: "GalleryDetail",

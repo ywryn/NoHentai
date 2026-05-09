@@ -18,32 +18,52 @@
       <div class="reader-bar" :class="{ 'reader-bar-hidden': !barVisible }">
         <button class="reader-back-btn" @click="goBack">← Back</button>
         <span class="reader-bar-title">{{ galleryTitle }}</span>
-        <span class="reader-bar-counter">{{ currentPage }} / {{ total }}</span>
+        <span class="reader-bar-counter">{{ pageCounter }}</span>
       </div>
 
       <!-- Stage -->
       <div
         class="reader-stage"
+        :class="{ 'reader-stage-double': showSecondPage }"
         @click="handleStageClick"
         @touchstart.passive="handleTouchStart"
         @touchend.passive="handleTouchEnd"
       >
-        <!-- Spinner while image loads -->
-        <div v-if="imageLoading" class="reader-img-spinner">
-          <div class="reader-spinner"></div>
+        <!-- First page -->
+        <div class="reader-page">
+          <div v-if="imageLoading" class="reader-img-spinner">
+            <div class="reader-spinner"></div>
+          </div>
+          <img
+            v-show="!imageLoading && !imageError"
+            :src="imageUrl"
+            class="reader-img"
+            @load="onImageLoad"
+            @error="onImageError"
+          />
+          <div v-if="imageError" class="reader-img-error">
+            <p>Failed to load image</p>
+            <button @click.stop="retryImage">Retry</button>
+          </div>
         </div>
 
-        <img
-          v-show="!imageLoading && !imageError"
-          :src="imageUrl"
-          class="reader-img"
-          @load="onImageLoad"
-          @error="onImageError"
-        />
-
-        <div v-if="imageError" class="reader-img-error">
-          <p>Failed to load image</p>
-          <button @click.stop="retryImage">Retry</button>
+        <!-- Second page (double-page mode only) -->
+        <div v-if="showSecondPage" class="reader-page">
+          <div v-if="imageLoading2" class="reader-img-spinner">
+            <div class="reader-spinner"></div>
+          </div>
+          <img
+            v-if="imageUrl2"
+            v-show="!imageLoading2 && !imageError2"
+            :src="imageUrl2"
+            class="reader-img"
+            @load="onImageLoad2"
+            @error="onImageError2"
+          />
+          <div v-if="imageError2" class="reader-img-error">
+            <p>Failed to load image</p>
+            <button @click.stop="retryImage2">Retry</button>
+          </div>
         </div>
 
         <!-- Desktop arrows -->
@@ -62,7 +82,7 @@
       <!-- Mobile bottom bar -->
       <div class="reader-bottom-bar" :class="{ 'reader-bar-hidden': !barVisible }">
         <button :disabled="currentPage <= 1" @click="prev" class="reader-bottom-btn">‹</button>
-        <span>{{ currentPage }} / {{ total }}</span>
+        <span>{{ pageCounter }}</span>
         <button :disabled="currentPage >= total" @click="next" class="reader-bottom-btn">›</button>
       </div>
     </template>
@@ -72,6 +92,7 @@
 <script>
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://no-hentai.vercel.app'
 const PRELOAD_AHEAD = 2
+const DOUBLE_PAGE_BREAKPOINT = 900
 
 export default {
   name: 'GalleryReader',
@@ -85,6 +106,10 @@ export default {
       imageLoading: false,
       imageError: false,
       nlParam: null,
+      imageUrl2: '',
+      imageLoading2: false,
+      imageError2: false,
+      nlParam2: null,
       initLoading: true,
       initError: null,
       barVisible: true,
@@ -95,12 +120,27 @@ export default {
       cache: {},
       loadId: 0,
       imageLoadId: 0,
+      loadId2: 0,
+      imageLoadId2: 0,
+      windowWidth: window.innerWidth,
     }
   },
   computed: {
     gid() { return this.$route.params.gid },
     token() { return this.$route.query.token || '' },
     startPage() { return parseInt(this.$route.query.page) || 1 },
+    isDoublePage() { return this.windowWidth >= DOUBLE_PAGE_BREAKPOINT },
+    showSecondPage() { return this.isDoublePage && this.currentPage < this.total },
+    pageStep() { return this.isDoublePage ? 2 : 1 },
+    pageCounter() {
+      if (this.showSecondPage) return `${this.currentPage}-${this.currentPage + 1} / ${this.total}`
+      return `${this.currentPage} / ${this.total}`
+    },
+  },
+  watch: {
+    isDoublePage() {
+      this.goTo(this.currentPage)
+    },
   },
   async created() {
     await this.loadGallery()
@@ -108,13 +148,19 @@ export default {
   },
   mounted() {
     window.addEventListener('keydown', this.onKey)
+    window.addEventListener('resize', this.onResize)
     this.resetBarTimer()
   },
   beforeUnmount() {
     window.removeEventListener('keydown', this.onKey)
+    window.removeEventListener('resize', this.onResize)
     clearTimeout(this.barTimer)
   },
   methods: {
+    onResize() {
+      this.windowWidth = window.innerWidth
+    },
+
     async loadGallery() {
       try {
         const res = await fetch(`${API_BASE}/api/gallery-images?gid=${this.gid}&token=${this.token}`)
@@ -144,32 +190,44 @@ export default {
       this.currentPage = pageNum
       this.imageLoading = true
       this.imageError = false
+      this.imageUrl2 = ''
+      this.imageError2 = false
+      const needSecond = this.isDoublePage && pageNum < this.total
+      this.imageLoading2 = needSecond
       const id = ++this.loadId
+      const id2 = ++this.loadId2
 
-      try {
-        const data = await this.fetchImage(pageNum)
-        if (this.loadId !== id) return  // navigated away while fetching URL
+      const [data, data2] = await Promise.all([
+        this.fetchImage(pageNum).catch(() => null),
+        needSecond ? this.fetchImage(pageNum + 1).catch(() => null) : Promise.resolve(null),
+      ])
 
+      if (this.loadId === id) {
         if (!data?.imageUrl) {
           this.imageError = true
           this.imageLoading = false
-          return
-        }
-        this.nlParam = data.nlParam || null
-        this.imageUrl = data.imageUrl
-        this.imageLoadId = id
-        // imageLoading stays true; onImageLoad/onImageError will clear it
-      } catch {
-        if (this.loadId === id) {
-          this.imageError = true
-          this.imageLoading = false
+        } else {
+          this.nlParam = data.nlParam || null
+          this.imageUrl = data.imageUrl
+          this.imageLoadId = id
         }
       }
 
-      // Prefetch adjacent page URLs (not images) in background
+      if (needSecond && this.loadId2 === id2) {
+        if (!data2?.imageUrl) {
+          this.imageError2 = true
+          this.imageLoading2 = false
+        } else {
+          this.nlParam2 = data2.nlParam || null
+          this.imageUrl2 = data2.imageUrl
+          this.imageLoadId2 = id2
+        }
+      }
+
+      // Prefetch adjacent pages
       for (let i = 1; i <= PRELOAD_AHEAD; i++) {
-        this.fetchImage(pageNum + i)
-        this.fetchImage(pageNum - i)
+        this.fetchImage(pageNum + this.pageStep * i)
+        this.fetchImage(pageNum - this.pageStep * i)
       }
     },
 
@@ -182,9 +240,18 @@ export default {
         this.imageError = true
       }
     },
+    onImageLoad2() {
+      if (this.imageLoadId2 === this.loadId2) this.imageLoading2 = false
+    },
+    onImageError2() {
+      if (this.imageLoadId2 === this.loadId2) {
+        this.imageLoading2 = false
+        this.imageError2 = true
+      }
+    },
 
-    prev() { this.goTo(this.currentPage - 1) },
-    next() { this.goTo(this.currentPage + 1) },
+    prev() { this.goTo(Math.max(1, this.currentPage - this.pageStep)) },
+    next() { this.goTo(Math.min(this.total, this.currentPage + this.pageStep)) },
 
     onKey(e) {
       if (e.key === 'ArrowLeft' || e.key === 'a') this.prev()
@@ -257,6 +324,32 @@ export default {
         if (this.loadId === id) {
           this.imageError = true
           this.imageLoading = false
+        }
+      }
+    },
+
+    async retryImage2() {
+      const pageNum = this.currentPage + 1
+      delete this.cache[pageNum]
+      const pg = this.pages.find(p => p.pageNum === pageNum)
+      if (!pg) return
+      let pageUrl = pg.pageUrl
+      if (this.nlParam2) pageUrl += (pageUrl.includes('?') ? '&' : '?') + `nl=${this.nlParam2}`
+      this.imageLoading2 = true
+      this.imageError2 = false
+      const id2 = ++this.loadId2
+      try {
+        const res = await fetch(`${API_BASE}/api/image-url?pageUrl=${encodeURIComponent(pageUrl)}`)
+        const data = await res.json()
+        if (this.loadId2 !== id2) return
+        this.cache[pageNum] = data
+        this.nlParam2 = data.nlParam
+        this.imageUrl2 = data.imageUrl
+        this.imageLoadId2 = id2
+      } catch {
+        if (this.loadId2 === id2) {
+          this.imageError2 = true
+          this.imageLoading2 = false
         }
       }
     },
@@ -352,11 +445,33 @@ export default {
   flex: 1;
   position: relative;
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   cursor: pointer;
 }
+
+/* Single page: one centered block */
+.reader-page {
+  flex: 0 0 auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Double page: each page fills half the stage, images touch at center */
+.reader-stage-double .reader-page {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+}
+
+.reader-stage-double .reader-page:first-child  { justify-content: flex-end; }
+.reader-stage-double .reader-page:nth-child(2) { justify-content: flex-start; }
 
 .reader-img {
   max-width: 100%;
@@ -364,6 +479,14 @@ export default {
   object-fit: contain;
   display: block;
   pointer-events: none;
+}
+
+.reader-stage-double .reader-img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: 100%;
+  object-fit: contain;
 }
 
 .reader-img-spinner {
@@ -408,6 +531,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 2;
 }
 .reader-stage:hover .reader-arrow { opacity: 1; }
 .reader-arrow:hover { background: rgba(0,0,0,0.65); }
