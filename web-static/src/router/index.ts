@@ -11,6 +11,8 @@ import Printed from '@/components/Printed.vue';
 import DailySearch from '@/components/DailySearch.vue';
 // @ts-ignore
 import GalleryReader from '@/components/GalleryReader.vue';
+// @ts-ignore
+import GalleryTranslate from '@/components/GalleryTranslate.vue';
 // // @ts-ignore
 // import TelegramFeed from '@/components/TelegramFeed.vue';
 // 静态版本移除这些组件
@@ -56,6 +58,11 @@ const routes = [
     path: '/gallery/:gid/read',
     name: 'GalleryReader',
     component: GalleryReader,
+  },
+  {
+    path: '/gallery/:gid/translate',
+    name: 'GalleryTranslate',
+    component: GalleryTranslate,
   },
   // 静态版本暂时移除这些路由
   // {

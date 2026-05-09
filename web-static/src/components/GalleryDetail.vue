@@ -205,7 +205,15 @@
             <div class="panel-eyebrow">Browse</div>
             <h2 class="panel-title">Pages</h2>
           </div>
-          <span v-if="thumbTotal" class="thumb-total-badge">{{ thumbTotal }} pages</span>
+          <div class="thumb-header-right">
+            <span v-if="thumbTotal" class="thumb-total-badge">{{ thumbTotal }} pages</span>
+            <button
+              v-if="galleryData?.token"
+              class="translate-btn"
+              @click="openTranslate"
+              title="打开翻译工作台"
+            >翻译</button>
+          </div>
         </div>
 
         <div v-if="thumbLoading" class="thumb-loading">
@@ -462,6 +470,14 @@ export default {
         name: 'GalleryReader',
         params: { gid: this.itemId },
         query: { page: pageNum, token: this.galleryData.token },
+      });
+    },
+
+    openTranslate() {
+      this.$router.push({
+        name: 'GalleryTranslate',
+        params: { gid: this.itemId },
+        query: { token: this.galleryData.token, page: 1 },
       });
     },
 

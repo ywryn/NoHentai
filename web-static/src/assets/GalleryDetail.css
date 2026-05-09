@@ -682,3 +682,29 @@
 @media (max-width: 600px) {
   .thumb-section { padding: 16px; border-radius: 8px; }
 }
+
+/* ── Translate button ── */
+.thumb-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.translate-btn {
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--primary-color);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.translate-btn:hover {
+  background: rgba(100, 108, 255, 0.08);
+  border-color: var(--primary-color);
+}
