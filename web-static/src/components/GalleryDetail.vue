@@ -211,41 +211,51 @@
             </span>
             <span v-if="thumbTotal" class="thumb-total-badge">{{ thumbTotal }} pages</span>
             <button
-              v-if="galleryData?.token"
+              v-if="thumbExpanded && galleryData?.token"
               class="translate-btn"
               @click="openTranslate"
               title="打开翻译工作台"
-            >翻译</button>
+            >Translate</button>
           </div>
         </div>
 
-        <div v-if="thumbLoading" class="thumb-loading">
-          <div class="thumb-spinner"></div>
-          <span>Loading thumbnails...</span>
-        </div>
-        <div v-else-if="thumbError === 'exhentai_blocked'" class="thumb-exblocked">
-          此画廊为 ExHentai 独占，云服务器 IP 被 Cloudflare 拦截，无法加载缩略图
-        </div>
-        <div v-else-if="thumbError" class="thumb-error">{{ thumbError }}</div>
-        <template v-else-if="thumbImages.length">
-          <div class="thumb-grid">
-            <div
-              v-for="img in pagedThumbs"
-              :key="img.pageNum"
-              class="thumb-cell"
-              :style="cellStyle(img)"
-              :title="`Page ${img.pageNum}`"
-              @click="openReader(img.pageNum)"
-            >
-              <div class="thumb-inner" :style="innerStyle(img)"></div>
-              <span class="thumb-page-num">{{ img.pageNum }}</span>
+        <!-- Collapsed: load trigger -->
+        <button v-if="!thumbExpanded" class="thumb-load-trigger" @click="loadPages">
+          <span class="thumb-load-icon">⊞</span>
+          <span>Browse Pages</span>
+          <span class="thumb-load-arrow">›</span>
+        </button>
+
+        <!-- Expanded: thumbnail content -->
+        <template v-else>
+          <div v-if="thumbLoading" class="thumb-loading">
+            <div class="thumb-spinner"></div>
+            <span>Loading thumbnails...</span>
+          </div>
+          <div v-else-if="thumbError === 'exhentai_blocked'" class="thumb-exblocked">
+            此画廊为 ExHentai 独占，云服务器 IP 被 Cloudflare 拦截，无法加载缩略图
+          </div>
+          <div v-else-if="thumbError" class="thumb-error">{{ thumbError }}</div>
+          <template v-else-if="thumbImages.length">
+            <div class="thumb-grid">
+              <div
+                v-for="img in pagedThumbs"
+                :key="img.pageNum"
+                class="thumb-cell"
+                :style="cellStyle(img)"
+                :title="`Page ${img.pageNum}`"
+                @click="openReader(img.pageNum)"
+              >
+                <div class="thumb-inner" :style="innerStyle(img)"></div>
+                <span class="thumb-page-num">{{ img.pageNum }}</span>
+              </div>
             </div>
-          </div>
-          <div v-if="thumbTotalPages > 1" class="thumb-paginator">
-            <button :disabled="thumbPage === 0" @click="prevThumbPage" class="thumb-pager-btn">‹</button>
-            <span class="thumb-pager-info">{{ thumbPage + 1 }} / {{ thumbTotalPages }}</span>
-            <button :disabled="thumbPage >= thumbTotalPages - 1" @click="nextThumbPage" class="thumb-pager-btn">›</button>
-          </div>
+            <div v-if="thumbTotalPages > 1" class="thumb-paginator">
+              <button :disabled="thumbPage === 0" @click="prevThumbPage" class="thumb-pager-btn">‹</button>
+              <span class="thumb-pager-info">{{ thumbPage + 1 }} / {{ thumbTotalPages }}</span>
+              <button :disabled="thumbPage >= thumbTotalPages - 1" @click="nextThumbPage" class="thumb-pager-btn">›</button>
+            </div>
+          </template>
         </template>
       </section>
 
@@ -284,6 +294,7 @@ export default {
       thumbLoading: false,
       thumbError: null,
       thumbPage: 0,
+      thumbExpanded: false,
     };
   },
   created() {
@@ -296,13 +307,12 @@ export default {
     '$route'() {
       this.thumbImages = [];
       this.thumbTotal = 0;
+      this.thumbSource = null;
       this.thumbPage = 0;
       this.thumbError = null;
+      this.thumbExpanded = false;
       this.initializeFromRoute();
       if (this.itemId) this.fetchGalleryData();
-    },
-    galleryData(val) {
-      if (val?.token) this.fetchThumbnails();
     },
   },
   methods: {
@@ -434,6 +444,11 @@ export default {
       const str = String(value);
       const match = str.match(/\d{4}-\d{2}-\d{2}/);
       return match ? match[0] : str;
+    },
+
+    loadPages() {
+      this.thumbExpanded = true;
+      this.fetchThumbnails();
     },
 
     async fetchThumbnails() {
