@@ -206,6 +206,9 @@
             <h2 class="panel-title">Pages</h2>
           </div>
           <div class="thumb-header-right">
+            <span v-if="thumbSource" class="thumb-source-badge" :class="'thumb-source-' + thumbSource" :title="thumbSource === 'exhentai' ? 'ExHentai' : 'E-Hentai'">
+              <span class="thumb-source-dot"></span>{{ thumbSource === 'exhentai' ? 'Ex' : 'E' }}
+            </span>
             <span v-if="thumbTotal" class="thumb-total-badge">{{ thumbTotal }} pages</span>
             <button
               v-if="galleryData?.token"
@@ -277,6 +280,7 @@ export default {
       // Thumbnails
       thumbImages: [],
       thumbTotal: 0,
+      thumbSource: null,
       thumbLoading: false,
       thumbError: null,
       thumbPage: 0,
@@ -446,6 +450,7 @@ export default {
         } else {
           this.thumbImages = data.images.slice(0, data.total);
           this.thumbTotal = data.total;
+          this.thumbSource = data.source || null;
           // 计算每个 sprite 包含多少缩略图，用于百分比定位
           const spriteCount = {};
           for (const img of this.thumbImages) {

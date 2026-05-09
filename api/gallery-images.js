@@ -120,6 +120,7 @@ export default async function handler(req, res) {
     // Try e-hentai first (no cookies)
     const ehUrl = `${EHENTAI}/g/${gid}/${token}/`
     let result = await fetchAllPages(ehUrl, null)
+    let source = 'e-hentai'
 
     // Fall back to exhentai with cookies
     if (!result) {
@@ -132,11 +133,12 @@ export default async function handler(req, res) {
       if (!result) {
         return res.status(403).json({ error: 'exhentai_blocked', message: 'ExHentai-exclusive gallery: access denied' })
       }
+      source = 'exhentai'
     }
 
     const images = result.total > 0 ? result.images.slice(0, result.total) : result.images
     res.setHeader('Cache-Control', 'public, max-age=3600')
-    return res.status(200).json({ gid, total: result.total, images })
+    return res.status(200).json({ gid, total: result.total, images, source })
   } catch (err) {
     return res.status(500).json({ error: err.message })
   }

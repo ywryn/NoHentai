@@ -683,6 +683,37 @@
   .thumb-section { padding: 16px; border-radius: 8px; }
 }
 
+/* ── Source indicator ── */
+.thumb-source-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid;
+  letter-spacing: 0.03em;
+}
+.thumb-source-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.thumb-source-e-hentai {
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.35);
+  background: rgba(74, 222, 128, 0.08);
+}
+.thumb-source-e-hentai .thumb-source-dot { background: #4ade80; }
+.thumb-source-exhentai {
+  color: #a78bfa;
+  border-color: rgba(167, 139, 250, 0.35);
+  background: rgba(167, 139, 250, 0.08);
+}
+.thumb-source-exhentai .thumb-source-dot { background: #a78bfa; }
+
 /* ── Translate button ── */
 .thumb-header-right {
   display: flex;
