@@ -335,7 +335,7 @@ function fitTextToBox(el) {
   const ch = box.clientHeight - parseFloat(s.paddingTop)  - parseFloat(s.paddingBottom)
   if (cw <= 0 || ch <= 0) return
 
-  let lo = 6, hi = 72, best = lo, attempts = 0
+  let lo = 1, hi = 72, best = lo, attempts = 0
   while (lo <= hi && attempts < 20) {
     attempts++
     const mid = Math.floor((lo + hi) / 2)
