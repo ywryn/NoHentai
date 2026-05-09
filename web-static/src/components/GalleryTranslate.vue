@@ -108,9 +108,6 @@
       <div class="gt-sidebar">
         <!-- Thumbnail strip inside sidebar -->
         <div class="gt-strip" v-if="galleryImages.length">
-          <span v-if="thumbSource" class="gt-source-badge" :class="'gt-source-' + thumbSource" :title="thumbSource === 'exhentai' ? 'ExHentai' : 'E-Hentai'">
-            <span class="gt-source-dot"></span>{{ thumbSource === 'exhentai' ? 'Ex' : 'E' }}
-          </span>
           <button class="gt-strip-nav" :disabled="currentPage <= 1" @click="prevPage">‹</button>
           <div class="gt-strip-scroll" ref="stripRef">
             <div
@@ -1325,18 +1322,6 @@ export default {
 
 /* ── Source indicator ────────────────────────────────────────────────────────── */
 
-.gt-source-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 8px;
-  border: 1px solid;
-  flex-shrink: 0;
-  letter-spacing: 0.03em;
-}
 .gt-source-dot {
   width: 5px;
   height: 5px;
