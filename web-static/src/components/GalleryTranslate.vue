@@ -1298,7 +1298,16 @@ export default {
 }
 
 @media (max-width: 640px) {
-  .gt-sidebar { display: none; }
+  .gt-body { flex-direction: column; }
+  .gt-image-panel { flex: 1; min-height: 0; }
+  .gt-sidebar {
+    display: flex;
+    width: 100%;
+    height: 240px;
+    flex-shrink: 0;
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+  }
   .gt-header-actions .gt-arrow-label { display: none; }
 }
 </style>
