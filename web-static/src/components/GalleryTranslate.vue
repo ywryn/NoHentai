@@ -89,9 +89,11 @@
               :title="result.translation || result.text"
               @click="selectedBoxIdx = selectedBoxIdx === i ? null : i"
             >
-              <span v-if="showTranslation && result.translation" class="gt-box-trans-text">
-                {{ result.translation }}
-              </span>
+              <span
+                v-if="showTranslation && result.translation"
+                class="gt-box-trans-text"
+                :ref="el => setTransTextRef(el, i)"
+              >{{ result.translation }}</span>
             </div>
           </div>
         </template>
@@ -100,18 +102,6 @@
           <p>从右侧选择页面</p>
         </div>
 
-        <!-- Image controls (bottom left overlay) -->
-        <div v-if="imageUrl && ocrResults.length" class="gt-img-controls">
-          <label class="gt-toggle-label">
-            <input v-model="showBoxes" type="checkbox" class="gt-toggle-cb" />
-            <span>框</span>
-          </label>
-          <label class="gt-toggle-label">
-            <input v-model="showTranslation" type="checkbox" class="gt-toggle-cb" />
-            <span>译文</span>
-          </label>
-          <button class="gt-btn gt-btn-sm gt-btn-danger" @click="clearResults">清空</button>
-        </div>
       </div>
 
       <!-- Sidebar -->
@@ -145,6 +135,17 @@
           <span class="gt-sidebar-title">识别结果</span>
           <span v-if="ocrResults.length" class="gt-count-badge">{{ ocrResults.length }}</span>
           <span v-if="ocrResults.some(r => r.translation)" class="gt-translated-badge">已翻译</span>
+          <div v-if="ocrResults.length" class="gt-sidebar-controls">
+            <label class="gt-toggle-label">
+              <input v-model="showBoxes" type="checkbox" class="gt-toggle-cb" />
+              <span>框</span>
+            </label>
+            <label class="gt-toggle-label">
+              <input v-model="showTranslation" type="checkbox" class="gt-toggle-cb" />
+              <span>译文</span>
+            </label>
+            <button class="gt-btn gt-btn-sm gt-btn-danger" @click="clearResults">清空</button>
+          </div>
         </div>
 
         <div v-if="!ocrResults.length" class="gt-sidebar-empty">
@@ -323,6 +324,38 @@ function mergeOcrResults(items, expandRatio = 1.05, maxDistance = 10, minGroupSi
   })
 }
 
+// ── Text fit (ported from manga-trans Workbench.tsx) ─────────────────────────
+
+function fitTextToBox(el) {
+  const box = el.parentElement
+  if (!box) return
+  box.offsetHeight // force reflow
+  const s = window.getComputedStyle(box)
+  const cw = box.clientWidth  - parseFloat(s.paddingLeft) - parseFloat(s.paddingRight)
+  const ch = box.clientHeight - parseFloat(s.paddingTop)  - parseFloat(s.paddingBottom)
+  if (cw <= 0 || ch <= 0) return
+
+  let lo = 6, hi = 72, best = lo, attempts = 0
+  while (lo <= hi && attempts < 20) {
+    attempts++
+    const mid = Math.floor((lo + hi) / 2)
+    el.style.fontSize = mid + 'px'
+    el.style.lineHeight = '1.2'
+    el.offsetHeight // force reflow
+    if (el.scrollWidth <= cw && el.scrollHeight <= ch) { best = mid; lo = mid + 1 }
+    else hi = mid - 1
+  }
+  el.style.fontSize = best + 'px'
+  for (const lh of [1.0, 1.1, 1.2, 1.3, 1.4]) {
+    el.style.lineHeight = String(lh)
+    el.offsetHeight
+    if (el.scrollWidth > cw || el.scrollHeight > ch) {
+      el.style.lineHeight = String(Math.max(1.0, lh - 0.1))
+      break
+    }
+  }
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default {
@@ -348,6 +381,7 @@ export default {
       // Current page
       currentPage: 1,
       imageUrl: null,
+      imageUrlRaw: null,
       imageLoading: false,
       imageError: null,
       nlParam: null,
@@ -362,6 +396,7 @@ export default {
       showTranslation: true,
       selectedBoxIdx: null,
       renderTick: 0,
+      transTextRefs: {},
 
       // Toasts
       toasts: [],
@@ -372,6 +407,19 @@ export default {
   computed: {
     totalPages() {
       return this.galleryImages.length
+    },
+  },
+
+  watch: {
+    renderTick() {
+      if (this.showTranslation && Object.keys(this.transTextRefs).length) {
+        this.applyTextFit()
+      }
+    },
+    showTranslation(val) {
+      if (val && Object.keys(this.transTextRefs).length) {
+        this.$nextTick(() => this.applyTextFit())
+      }
     },
   },
 
@@ -472,6 +520,7 @@ export default {
       this.ocrResults = []
       this.selectedBoxIdx = null
       this.imageUrl = null
+      this.imageUrlRaw = null
       this.imageError = null
       this.imageLoading = true
 
@@ -500,7 +549,8 @@ export default {
         )
         const data = await res.json()
         if (data.error) throw new Error(data.error)
-        this.imageUrl = data.imageUrl
+        this.imageUrlRaw = data.imageUrl
+        this.imageUrl = `${API_BASE}/api/image-proxy?imageUrl=${encodeURIComponent(data.imageUrl)}`
         this.nlParam = data.nlParam
       } catch (e) {
         this.imageError = `图片加载失败: ${e.message}`
@@ -535,7 +585,7 @@ export default {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             password: sessionStorage.getItem(SESSION_KEY),
-            imageUrl: this.imageUrl,
+            imageUrl: this.imageUrlRaw,
           }),
         })
         const data = await res.json()
@@ -582,6 +632,7 @@ export default {
           translation: data.translations[i] ?? null,
         }))
         this.showToast('翻译完成', 'success')
+        this.$nextTick(() => this.applyTextFit())
       } catch (e) {
         this.showToast('翻译失败: ' + e.message, 'error')
       } finally {
@@ -592,6 +643,7 @@ export default {
     clearResults() {
       this.ocrResults = []
       this.selectedBoxIdx = null
+      this.transTextRefs = {}
     },
 
     handleAuthError() {
@@ -599,6 +651,21 @@ export default {
       this.passwordVerified = false
       this.passwordInput = ''
       this.passwordError = '密码已失效，请重新输入'
+    },
+
+    // ── Text fit ──────────────────────────────────────────────────────────────
+
+    setTransTextRef(el, i) {
+      if (el) this.transTextRefs[i] = el
+      else delete this.transTextRefs[i]
+    },
+
+    applyTextFit() {
+      requestAnimationFrame(() => {
+        for (const el of Object.values(this.transTextRefs)) {
+          fitTextToBox(el)
+        }
+      })
     },
 
     // ── Box positioning ───────────────────────────────────────────────────────
@@ -988,6 +1055,8 @@ export default {
   cursor: pointer;
   pointer-events: all;
   overflow: hidden;
+  display: flex;
+  align-items: stretch;
   transition: border-color 0.1s, background 0.1s;
 }
 .gt-ocr-box:hover { border-color: var(--primary-color); background: rgba(100, 108, 255, 0.08); }
@@ -996,44 +1065,36 @@ export default {
 .gt-box-hidden { border-color: transparent !important; background: transparent !important; }
 
 .gt-box-trans-text {
-  position: absolute;
-  inset: 0;
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
   line-height: 1.2;
   text-align: center;
-  word-break: break-all;
+  word-break: break-word;
+  white-space: pre-wrap;
   padding: 2px;
+  box-sizing: border-box;
   background: rgba(0, 0, 0, 0.75);
   color: #fff;
   overflow: hidden;
 }
 
-/* ── Image controls overlay ──────────────────────────────────────────────────── */
-
-.gt-img-controls {
-  position: absolute;
-  bottom: 12px;
-  left: 12px;
+.gt-sidebar-controls {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 6px 10px;
+  margin-left: auto;
 }
 
 .gt-toggle-label {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   cursor: pointer;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--muted-color);
   user-select: none;
 }
 
@@ -1057,7 +1118,8 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 16px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
 }
