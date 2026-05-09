@@ -63,31 +63,6 @@
       </div>
     </header>
 
-    <!-- Thumbnail strip -->
-    <div v-if="galleryImages.length" class="gt-strip">
-      <button class="gt-strip-nav" :disabled="currentPage <= 1" @click="prevPage">‹</button>
-      <div class="gt-strip-scroll" ref="stripRef">
-        <div
-          v-for="img in galleryImages"
-          :key="img.pageNum"
-          class="gt-thumb"
-          :class="{ 'gt-thumb-active': img.pageNum === currentPage }"
-          :style="thumbCellStyle(img)"
-          :title="`Page ${img.pageNum}`"
-          @click="goToPage(img.pageNum)"
-        >
-          <div class="gt-thumb-inner" :style="thumbInnerStyle(img)"></div>
-          <span class="gt-thumb-num">{{ img.pageNum }}</span>
-        </div>
-      </div>
-      <button class="gt-strip-nav" :disabled="currentPage >= totalPages" @click="nextPage">›</button>
-    </div>
-    <div v-else-if="imagesLoading" class="gt-strip gt-strip-loading">
-      <div class="gt-spinner-sm"></div>
-      <span>加载缩略图...</span>
-    </div>
-    <div v-else-if="imagesError" class="gt-strip gt-strip-error">{{ imagesError }}</div>
-
     <!-- Main body -->
     <div class="gt-body">
       <!-- Image panel -->
@@ -128,7 +103,7 @@
         </template>
         <div v-else class="gt-image-placeholder gt-image-empty">
           <div class="gt-empty-icon">📖</div>
-          <p>从上方选择页面</p>
+          <p>从右侧选择页面</p>
         </div>
 
         <!-- Image controls (bottom left overlay) -->
@@ -147,6 +122,31 @@
 
       <!-- Sidebar -->
       <div class="gt-sidebar">
+        <!-- Thumbnail strip inside sidebar -->
+        <div class="gt-strip" v-if="galleryImages.length">
+          <button class="gt-strip-nav" :disabled="currentPage <= 1" @click="prevPage">‹</button>
+          <div class="gt-strip-scroll" ref="stripRef">
+            <div
+              v-for="img in galleryImages"
+              :key="img.pageNum"
+              class="gt-thumb"
+              :class="{ 'gt-thumb-active': img.pageNum === currentPage }"
+              :style="thumbCellStyle(img)"
+              :title="`Page ${img.pageNum}`"
+              @click="goToPage(img.pageNum)"
+            >
+              <div class="gt-thumb-inner" :style="thumbInnerStyle(img)"></div>
+              <span class="gt-thumb-num">{{ img.pageNum }}</span>
+            </div>
+          </div>
+          <button class="gt-strip-nav" :disabled="currentPage >= totalPages" @click="nextPage">›</button>
+        </div>
+        <div v-else-if="imagesLoading" class="gt-strip gt-strip-loading">
+          <div class="gt-spinner-sm"></div>
+          <span>加载缩略图...</span>
+        </div>
+        <div v-else-if="imagesError" class="gt-strip gt-strip-error">{{ imagesError }}</div>
+
         <div class="gt-sidebar-hdr">
           <span class="gt-sidebar-title">识别结果</span>
           <span v-if="ocrResults.length" class="gt-count-badge">{{ ocrResults.length }}</span>
@@ -886,11 +886,13 @@ export default {
   align-items: center;
   gap: 4px;
   height: 96px;
-  padding: 8px 8px;
+  padding: 8px;
   background: var(--sidebar-bg);
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
   overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .gt-strip-loading,
@@ -1075,7 +1077,7 @@ export default {
 /* ── Sidebar ─────────────────────────────────────────────────────────────────── */
 
 .gt-sidebar {
-  width: 320px;
+  width: 40%;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -1290,6 +1292,10 @@ export default {
 }
 
 /* ── Mobile ──────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .gt-sidebar { width: 45%; }
+}
 
 @media (max-width: 640px) {
   .gt-sidebar { display: none; }
