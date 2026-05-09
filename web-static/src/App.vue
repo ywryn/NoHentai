@@ -14,7 +14,7 @@ const route = useRoute()
 
 // 检测是否为阅读器页面
 const isReaderPage = computed(() => {
-  return route.path.startsWith('/reader/') || route.path.endsWith('/read')
+  return route.path.startsWith('/reader/') || route.path.endsWith('/read') || route.path.endsWith('/translate')
 })
 
 const shouldLockPageScroll = computed(() => false)
