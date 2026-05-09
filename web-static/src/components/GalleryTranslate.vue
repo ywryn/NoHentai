@@ -33,19 +33,13 @@
   <div v-else class="gt-workbench">
     <!-- Header -->
     <header class="gt-header">
-      <button class="gt-back-btn" @click="$router.back()">← 返回</button>
+      <button class="gt-back-btn" @click="$router.back()">←</button>
 
       <div class="gt-header-info">
-        <span class="gt-header-gid">{{ gid }}</span>
         <span v-if="totalPages" class="gt-header-pages">{{ currentPage }} / {{ totalPages }}p</span>
       </div>
 
       <div class="gt-header-actions">
-        <select v-model="sourceLang" class="gt-select">
-          <option value="japan">日语</option>
-          <option value="en">英语</option>
-        </select>
-        <span class="gt-arrow-label">→ 中文</span>
         <button
           class="gt-btn"
           :disabled="!imageUrl || ocrProcessing || translating || imagesLoading"
@@ -362,7 +356,6 @@ export default {
       ocrResults: [],
       ocrProcessing: false,
       translating: false,
-      sourceLang: 'japan',
 
       // UI state
       showBoxes: true,
@@ -575,7 +568,6 @@ export default {
           body: JSON.stringify({
             password: sessionStorage.getItem(SESSION_KEY),
             texts: this.ocrResults.map(r => r.text),
-            sourceLang: this.sourceLang,
           }),
         })
         const data = await res.json()
@@ -670,7 +662,8 @@ export default {
 .gt-workbench {
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
   background: var(--bg-color);
   color: var(--text-color);
 }
@@ -774,9 +767,6 @@ export default {
   background: var(--row-bg);
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
-  position: sticky;
-  top: 0;
-  z-index: 10;
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
 }
 
@@ -804,13 +794,6 @@ export default {
   min-width: 0;
 }
 
-.gt-header-gid {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-color);
-  font-variant-numeric: tabular-nums;
-}
-
 .gt-header-pages {
   font-size: 12px;
   color: var(--muted-color);
@@ -824,11 +807,6 @@ export default {
   flex-shrink: 0;
 }
 
-.gt-arrow-label {
-  font-size: 12px;
-  color: var(--muted-color);
-  white-space: nowrap;
-}
 
 /* ── Shared button ───────────────────────────────────────────────────────────── */
 
@@ -865,21 +843,6 @@ export default {
 }
 .gt-btn-danger:hover:not(:disabled) { background: rgba(248, 113, 113, 0.12); }
 
-/* ── Select ──────────────────────────────────────────────────────────────────── */
-
-.gt-select {
-  height: 32px;
-  padding: 0 8px;
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
-  background: var(--row-bg);
-  color: var(--text-color);
-  font-size: 13px;
-  font-family: inherit;
-  cursor: pointer;
-  outline: none;
-}
-.gt-select:focus { border-color: var(--primary-color); }
 
 /* ── Thumbnail strip ─────────────────────────────────────────────────────────── */
 
@@ -966,7 +929,9 @@ export default {
 
 .gt-body {
   display: flex;
-  align-items: flex-start;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* ── Image panel ─────────────────────────────────────────────────────────────── */
@@ -975,8 +940,11 @@ export default {
   flex: 1;
   min-width: 0;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--bg-color);
-  min-height: 240px;
+  overflow: hidden;
 }
 
 .gt-image-placeholder {
@@ -997,8 +965,9 @@ export default {
 .gt-empty-icon { font-size: 40px; }
 
 .gt-page-img {
-  width: 100%;
-  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
   display: block;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
@@ -1079,9 +1048,6 @@ export default {
   flex-direction: column;
   background: var(--row-bg);
   border-left: 1px solid var(--border-color);
-  position: sticky;
-  top: 52px;
-  max-height: calc(100dvh - 52px);
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) transparent;
@@ -1295,14 +1261,37 @@ export default {
 }
 
 @media (max-width: 640px) {
-  .gt-body { flex-direction: column; }
+  .gt-workbench {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+  .gt-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .gt-body {
+    flex-direction: column;
+    flex: none;
+    min-height: 0;
+    overflow: visible;
+  }
+  .gt-image-panel {
+    display: block;
+    overflow: visible;
+    min-height: 200px;
+  }
+  .gt-page-img {
+    width: 100%;
+    height: auto;
+    max-height: none;
+  }
   .gt-sidebar {
     width: 100%;
-    position: static;
-    max-height: none;
+    overflow-y: visible;
     border-left: none;
     border-top: 1px solid var(--border-color);
   }
-  .gt-header-actions .gt-arrow-label { display: none; }
 }
 </style>
