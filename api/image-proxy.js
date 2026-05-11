@@ -37,6 +37,7 @@ export default async function handler(req, res) {
   const contentType = upstream.headers.get('content-type') || 'image/jpeg'
   const cacheControl = upstream.headers.get('cache-control') || 'public, max-age=3600'
 
+  res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Content-Type', contentType)
   res.setHeader('Cache-Control', cacheControl)
   res.setHeader('X-Content-Type-Options', 'nosniff')
