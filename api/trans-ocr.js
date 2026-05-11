@@ -83,13 +83,7 @@ function parseVisionResponse(data) {
   return results
 }
 
-async function callGoogleVision(imageUrl, apiKey) {
-  const imgRes = await fetch(imageUrl, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-  })
-  if (!imgRes.ok) throw new Error(`Failed to fetch image: HTTP ${imgRes.status}`)
-  const b64 = Buffer.from(await imgRes.arrayBuffer()).toString('base64')
-
+async function callGoogleVision(b64, apiKey) {
   const res = await fetch(
     `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`,
     {
@@ -111,18 +105,10 @@ async function callGoogleVision(imageUrl, apiKey) {
   return parseVisionResponse(await res.json())
 }
 
-async function callPaddleOCR(imageUrl, apiToken) {
+async function callPaddleOCR(b64, apiToken) {
   const authHeader = { 'Authorization': `bearer ${apiToken}` }
 
-  // Download image first, then upload as file (fileUrl not accessible from Paddle servers)
-  const imgRes = await fetch(imageUrl, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-  })
-  if (!imgRes.ok) throw new Error(`Failed to fetch image: HTTP ${imgRes.status}`)
-  const imgBuffer = await imgRes.arrayBuffer()
-  const contentType = imgRes.headers.get('content-type') || 'image/jpeg'
-  const ext = contentType.includes('webp') ? 'webp' : contentType.includes('png') ? 'png' : 'jpg'
-
+  const imgBuffer = Buffer.from(b64, 'base64')
   const form = new FormData()
   form.append('model', PADDLE_MODEL)
   form.append('optionalPayload', JSON.stringify({
@@ -130,7 +116,7 @@ async function callPaddleOCR(imageUrl, apiToken) {
     useDocUnwarping: false,
     useTextlineOrientation: false,
   }))
-  form.append('file', new Blob([imgBuffer], { type: contentType }), `image.${ext}`)
+  form.append('file', new Blob([imgBuffer], { type: 'image/jpeg' }), 'image.jpg')
 
   // Submit async job
   const jobRes = await fetch(PADDLEOCR_JOB_URL, {
@@ -173,7 +159,7 @@ export default async function handler(req, res) {
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { password, imageUrl, ocrSource } = req.body || {}
+  const { password, imageBase64, ocrSource } = req.body || {}
 
   const expected = process.env.TRANS_PASSWORD
   if (!expected || !password || password !== expected) {
@@ -183,7 +169,7 @@ export default async function handler(req, res) {
   const paddleToken = process.env.PADDLEOCR_API_TOKEN
   const visionKey = process.env.GOOGLE_VISION_API_KEY
 
-  if (!imageUrl) return res.status(400).json({ error: 'imageUrl is required' })
+  if (!imageBase64) return res.status(400).json({ error: 'imageBase64 is required' })
 
   try {
     let results, source
@@ -192,14 +178,14 @@ export default async function handler(req, res) {
       const redis = getRedis()
       const count = await getAndIncrVisionCount(redis)
       if (count <= VISION_MONTHLY_LIMIT) {
-        results = await callGoogleVision(imageUrl, visionKey)
+        results = await callGoogleVision(imageBase64, visionKey)
         source = 'vision'
       }
     }
 
     if (!results) {
       if (!paddleToken) return res.status(500).json({ error: 'No OCR backend configured' })
-      results = await callPaddleOCR(imageUrl, paddleToken)
+      results = await callPaddleOCR(imageBase64, paddleToken)
       source = 'paddle'
     }
 

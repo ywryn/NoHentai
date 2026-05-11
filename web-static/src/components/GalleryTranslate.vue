@@ -586,6 +586,16 @@ export default {
       if (this.ocrResults.length) await this.performTranslate()
     },
 
+    getImageBase64() {
+      const img = this.$refs.imgRef
+      if (!img || !img.naturalWidth) return null
+      const canvas = document.createElement('canvas')
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+      canvas.getContext('2d').drawImage(img, 0, 0)
+      return canvas.toDataURL('image/jpeg', 0.92).split(',')[1]
+    },
+
     async performOcr() {
       if (!this.imageUrl) return
       this.ocrProcessing = true
@@ -593,12 +603,13 @@ export default {
       this.selectedBoxIdx = null
       this.showToast('正在 OCR 识别...', 'info')
       try {
+        const imageBase64 = this.getImageBase64()
         const res = await fetch(`${API_BASE}/api/trans-ocr`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             password: sessionStorage.getItem(SESSION_KEY),
-            imageUrl: this.imageUrl,
+            imageBase64,
             ocrSource: this.ocrSource,
           }),
         })
