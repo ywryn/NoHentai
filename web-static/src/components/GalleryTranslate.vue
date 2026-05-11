@@ -41,18 +41,11 @@
 
       <div class="gt-header-actions">
         <button
-          class="gt-btn"
-          :disabled="!imageUrl || ocrProcessing || translating || imagesLoading"
-          @click="performOcr"
-        >
-          {{ ocrProcessing ? '识别中...' : 'OCR' }}
-        </button>
-        <button
           class="gt-btn gt-btn-primary"
-          :disabled="!ocrResults.length || translating || ocrProcessing"
-          @click="performTranslate"
+          :disabled="!imageUrl || ocrProcessing || translating || imagesLoading"
+          @click="performOcrAndTranslate"
         >
-          {{ translating ? '翻译中...' : '翻译' }}
+          {{ ocrProcessing ? '识别中...' : translating ? '翻译中...' : '翻译' }}
         </button>
       </div>
     </header>
@@ -131,21 +124,33 @@
         </div>
         <div v-else-if="imagesError" class="gt-strip gt-strip-error">{{ imagesError }}</div>
 
+        <!-- Config panel -->
+        <div class="gt-config-panel">
+          <div class="gt-cfg-row">
+            <span class="gt-cfg-key">OCR</span>
+            <div class="gt-seg-ctrl">
+              <button class="gt-seg-btn" :class="{ active: ocrSource === 'google' }" @click="ocrSource = 'google'">
+                <span class="gt-seg-dot google"></span>Google
+              </button>
+              <button class="gt-seg-btn" :class="{ active: ocrSource === 'paddle' }" @click="ocrSource = 'paddle'">
+                <span class="gt-seg-dot paddle"></span>Paddle
+              </button>
+            </div>
+            <button class="gt-clear-btn" :disabled="!ocrResults.length" @click="clearResults">清空</button>
+          </div>
+          <div class="gt-cfg-row">
+            <span class="gt-cfg-key">显示</span>
+            <div class="gt-chip-group">
+              <button class="gt-chip" :class="{ active: showBoxes }" @click="showBoxes = !showBoxes">框</button>
+              <button class="gt-chip" :class="{ active: showTranslation }" @click="showTranslation = !showTranslation">译文</button>
+            </div>
+          </div>
+        </div>
+
         <div class="gt-sidebar-hdr">
           <span class="gt-sidebar-title">识别结果</span>
           <span v-if="ocrResults.length" class="gt-count-badge">{{ ocrResults.length }}</span>
           <span v-if="ocrResults.some(r => r.translation)" class="gt-translated-badge">已翻译</span>
-          <div v-if="ocrResults.length" class="gt-sidebar-controls">
-            <label class="gt-toggle-label">
-              <input v-model="showBoxes" type="checkbox" class="gt-toggle-cb" />
-              <span>框</span>
-            </label>
-            <label class="gt-toggle-label">
-              <input v-model="showTranslation" type="checkbox" class="gt-toggle-cb" />
-              <span>译文</span>
-            </label>
-            <button class="gt-btn gt-btn-sm gt-btn-danger" @click="clearResults">清空</button>
-          </div>
         </div>
 
         <div v-if="!ocrResults.length" class="gt-sidebar-empty">
@@ -396,6 +401,7 @@ export default {
       showBoxes: true,
       showTranslation: true,
       selectedBoxIdx: null,
+      ocrSource: 'google',
       renderTick: 0,
       transTextRefs: {},
 
@@ -575,6 +581,11 @@ export default {
 
     // ── OCR ───────────────────────────────────────────────────────────────────
 
+    async performOcrAndTranslate() {
+      await this.performOcr()
+      if (this.ocrResults.length) await this.performTranslate()
+    },
+
     async performOcr() {
       if (!this.imageUrl) return
       this.ocrProcessing = true
@@ -588,6 +599,7 @@ export default {
           body: JSON.stringify({
             password: sessionStorage.getItem(SESSION_KEY),
             imageUrl: this.imageUrlRaw,
+            ocrSource: this.ocrSource,
           }),
         })
         const data = await res.json()
@@ -597,8 +609,13 @@ export default {
         }
         if (data.error) throw new Error(data.error)
 
-        // Merge results client-side
-        this.ocrResults = mergeOcrResults(data.results)
+        // Vision blocks are coarser; use larger expand/distance for merging
+        const isVision = data.source === 'vision'
+        this.ocrResults = mergeOcrResults(
+          data.results,
+          isVision ? 1.6 : 1.05,
+          isVision ? 80 : 10,
+        )
         this.showToast(`识别完成，共 ${this.ocrResults.length} 个文本区域`, 'success')
       } catch (e) {
         this.showToast('OCR 失败: ' + e.message, 'error')
@@ -1082,6 +1099,119 @@ export default {
   color: #fff;
   overflow: hidden;
 }
+
+.gt-config-panel {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gt-cfg-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gt-cfg-key {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted-color);
+  letter-spacing: 0.04em;
+  width: 32px;
+  flex-shrink: 0;
+}
+
+/* Segmented control (OCR source) */
+.gt-seg-ctrl {
+  display: flex;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.gt-seg-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 10px;
+  font-size: 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-color);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.gt-seg-btn.active {
+  background: var(--surface-color);
+  color: var(--text-color);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.gt-seg-btn:not(.active):hover { color: var(--text-color); }
+
+.gt-seg-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.gt-seg-dot.google { background: #4285f4; }
+.gt-seg-dot.paddle { background: #2ba776; }
+
+/* Chip toggles (显示) */
+.gt-chip-group {
+  display: flex;
+  gap: 6px;
+}
+
+.gt-chip {
+  height: 24px;
+  padding: 0 12px;
+  font-size: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-color);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.gt-chip:hover { color: var(--text-color); border-color: var(--muted-color); }
+
+.gt-chip.active {
+  background: color-mix(in srgb, var(--primary-color) 15%, transparent);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+/* Clear button */
+.gt-clear-btn {
+  margin-left: auto;
+  height: 24px;
+  padding: 0 10px;
+  font-size: 12px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-color);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.gt-clear-btn:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.1);
+  border-color: rgba(248, 113, 113, 0.35);
+  color: rgb(248, 113, 113);
+}
+
+.gt-clear-btn:disabled { opacity: 0.3; cursor: default; }
 
 .gt-sidebar-controls {
   display: flex;

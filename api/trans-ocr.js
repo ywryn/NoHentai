@@ -135,7 +135,7 @@ export default async function handler(req, res) {
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { password, imageUrl } = req.body || {}
+  const { password, imageUrl, ocrSource } = req.body || {}
 
   const expected = process.env.TRANS_PASSWORD
   if (!expected || !password || password !== expected) {
@@ -158,7 +158,7 @@ export default async function handler(req, res) {
 
     let results, source
 
-    if (visionKey) {
+    if (visionKey && ocrSource !== 'paddle') {
       const redis = getRedis()
       const count = await getAndIncrVisionCount(redis)
       if (count <= VISION_MONTHLY_LIMIT) {
