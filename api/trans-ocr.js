@@ -114,19 +114,29 @@ async function callGoogleVision(imageUrl, apiKey) {
 async function callPaddleOCR(imageUrl, apiToken) {
   const authHeader = { 'Authorization': `bearer ${apiToken}` }
 
-  // Submit async job with fileUrl
+  // Download image first, then upload as file (fileUrl not accessible from Paddle servers)
+  const imgRes = await fetch(imageUrl, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+  })
+  if (!imgRes.ok) throw new Error(`Failed to fetch image: HTTP ${imgRes.status}`)
+  const imgBuffer = await imgRes.arrayBuffer()
+  const contentType = imgRes.headers.get('content-type') || 'image/jpeg'
+  const ext = contentType.includes('webp') ? 'webp' : contentType.includes('png') ? 'png' : 'jpg'
+
+  const form = new FormData()
+  form.append('model', PADDLE_MODEL)
+  form.append('optionalPayload', JSON.stringify({
+    useDocOrientationClassify: false,
+    useDocUnwarping: false,
+    useTextlineOrientation: false,
+  }))
+  form.append('file', new Blob([imgBuffer], { type: contentType }), `image.${ext}`)
+
+  // Submit async job
   const jobRes = await fetch(PADDLEOCR_JOB_URL, {
     method: 'POST',
-    headers: { ...authHeader, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      fileUrl: imageUrl,
-      model: PADDLE_MODEL,
-      optionalPayload: {
-        useDocOrientationClassify: false,
-        useDocUnwarping: false,
-        useTextlineOrientation: false,
-      },
-    }),
+    headers: authHeader,
+    body: form,
   })
   if (!jobRes.ok) {
     const text = await jobRes.text()
