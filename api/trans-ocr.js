@@ -69,13 +69,15 @@ function parseVisionResponse(data) {
       const verts = block.boundingBox?.vertices ?? []
       const xs = verts.map(v => v.x ?? 0)
       const ys = verts.map(v => v.y ?? 0)
-      const x1 = Math.min(...xs), y1 = Math.min(...ys)
-      const x2 = Math.max(...xs), y2 = Math.max(...ys)
-      const px = (x2 - x1) * 0.12, py = (y2 - y1) * 0.12
+      const MIN_DIM = 5
+      let x1 = Math.min(...xs), y1 = Math.min(...ys)
+      let x2 = Math.max(...xs), y2 = Math.max(...ys)
+      if (x2 - x1 < MIN_DIM) { const d = (MIN_DIM - (x2 - x1)) / 2; x1 -= d; x2 += d }
+      if (y2 - y1 < MIN_DIM) { const d = (MIN_DIM - (y2 - y1)) / 2; y1 -= d; y2 += d }
       results.push({
         text,
         confidence: block.confidence ?? 0,
-        bbox: [x1 - px, y1 - py, x2 + px, y2 + py],
+        bbox: [x1, y1, x2, y2],
         polygon: verts.length ? verts.map(v => [v.x ?? 0, v.y ?? 0]) : null,
       })
     }

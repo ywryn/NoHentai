@@ -620,7 +620,12 @@ export default {
         }
         if (data.error) throw new Error(data.error)
 
-        this.ocrResults = mergeOcrResults(data.results)
+        const isVision = data.source === 'vision'
+        this.ocrResults = mergeOcrResults(
+          data.results,
+          isVision ? 1.15 : 1.05,
+          isVision ? 20 : 10,
+        )
         this.showToast(`识别完成，共 ${this.ocrResults.length} 个文本区域`, 'success')
       } catch (e) {
         this.showToast('OCR 失败: ' + e.message, 'error')
