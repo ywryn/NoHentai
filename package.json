@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "node-html-parser": "^6.1.13"
+    "@upstash/redis": "^1.38.0",
+"node-html-parser": "^6.1.13"
   }
 }
