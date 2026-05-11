@@ -71,21 +71,21 @@
           <div v-if="ocrResults.length && renderTick >= 0" class="gt-boxes-layer">
             <div
               v-for="(result, i) in ocrResults"
-              :key="i"
+              :key="result._id"
               class="gt-ocr-box"
               :class="{
                 'gt-box-selected': selectedBoxIdx === i,
                 'gt-box-translated': !!result.translation,
                 'gt-box-hidden': !showBoxes,
               }"
-              :style="getBoxStyle(result.bbox)"
+              :style="getBoxStyle(result)"
               :title="result.translation || result.text"
               @click="selectedBoxIdx = selectedBoxIdx === i ? null : i"
             >
               <span
                 v-if="showTranslation && result.translation"
                 class="gt-box-trans-text"
-                :ref="el => setTransTextRef(el, i)"
+                :ref="el => setTransTextRef(el, result._id)"
               >{{ result.translation }}</span>
             </div>
           </div>
@@ -161,7 +161,7 @@
         <div v-else class="gt-results-list">
           <div
             v-for="(result, i) in ocrResults"
-            :key="i"
+            :key="result._id"
             class="gt-result-item"
             :class="{ 'gt-result-selected': selectedBoxIdx === i }"
             @click="selectedBoxIdx = selectedBoxIdx === i ? null : i"
@@ -198,6 +198,7 @@
 <script>
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://no-hentai.vercel.app'
 const SESSION_KEY = 'trans_password'
+const TRANS_CACHE_TTL = 3 * 24 * 60 * 60 * 1000
 
 // ── OCR merge algorithm (ported from manga-trans ocrService.ts) ───────────────
 
@@ -332,22 +333,23 @@ function mergeOcrResults(items, expandRatio = 1.05, maxDistance = 10, minGroupSi
 
 // ── Text fit (ported from manga-trans Workbench.tsx) ─────────────────────────
 
-function fitTextToBox(el) {
+// Returns true if text fits, false if still overflowing at minSize
+function fitTextToBox(el, minSize = 1) {
   const box = el.parentElement
-  if (!box) return
-  box.offsetHeight // force reflow
+  if (!box) return true
+  box.offsetHeight
   const s = window.getComputedStyle(box)
   const cw = box.clientWidth  - parseFloat(s.paddingLeft) - parseFloat(s.paddingRight)
   const ch = box.clientHeight - parseFloat(s.paddingTop)  - parseFloat(s.paddingBottom)
-  if (cw <= 0 || ch <= 0) return
+  if (cw <= 0 || ch <= 0) return true
 
-  let lo = 1, hi = 72, best = lo, attempts = 0
+  let lo = minSize, hi = 72, best = lo, attempts = 0
   while (lo <= hi && attempts < 20) {
     attempts++
     const mid = Math.floor((lo + hi) / 2)
     el.style.fontSize = mid + 'px'
     el.style.lineHeight = '1.2'
-    el.offsetHeight // force reflow
+    el.offsetHeight
     if (el.scrollWidth <= cw && el.scrollHeight <= ch) { best = mid; lo = mid + 1 }
     else hi = mid - 1
   }
@@ -360,7 +362,10 @@ function fitTextToBox(el) {
       break
     }
   }
+  el.offsetHeight
+  return best > minSize || (el.scrollWidth <= box.clientWidth && el.scrollHeight <= box.clientHeight)
 }
+
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -403,6 +408,8 @@ export default {
       showTranslation: true,
       selectedBoxIdx: null,
       ocrSource: 'google',
+      lastOcrSource: null,
+      expandedBboxes: {},
       renderTick: 0,
       transTextRefs: {},
 
@@ -561,6 +568,13 @@ export default {
         this.imageUrlRaw = data.imageUrl
         this.imageUrl = `${API_BASE}/api/image-proxy?imageUrl=${encodeURIComponent(data.imageUrl)}`
         this.nlParam = data.nlParam
+        const cached = this.loadPageCache(pageNum)
+        if (cached) {
+          this.ocrResults = cached.ocrResults
+          this.lastOcrSource = cached.lastOcrSource
+          this.expandedBboxes = {}
+          this.showToast(`已从缓存恢复 ${cached.ocrResults.length} 条结果`, 'info', 2000)
+        }
       } catch (e) {
         this.imageError = `图片加载失败: ${e.message}`
       } finally {
@@ -622,11 +636,14 @@ export default {
         if (data.error) throw new Error(data.error)
 
         const isVision = data.source === 'vision'
+        this.lastOcrSource = data.source
+        this.expandedBboxes = {}
         this.ocrResults = mergeOcrResults(
           data.results,
           isVision ? 1.2 : 1.05,
           isVision ? 40 : 10,
-        )
+        ).map((r, i) => ({ ...r, _id: `${Date.now()}_${i}` }))
+        this.savePageCache()
         this.showToast(`识别完成，共 ${this.ocrResults.length} 个文本区域`, 'success')
       } catch (e) {
         this.showToast('OCR 失败: ' + e.message, 'error')
@@ -661,6 +678,7 @@ export default {
           ...r,
           translation: data.translations[i] ?? null,
         }))
+        this.savePageCache()
         this.showToast('翻译完成', 'success')
         this.$nextTick(() => this.applyTextFit())
       } catch (e) {
@@ -671,16 +689,20 @@ export default {
     },
 
     deleteResult(i) {
+      const id = this.ocrResults[i]._id
       this.ocrResults.splice(i, 1)
-      delete this.transTextRefs[i]
+      delete this.transTextRefs[id]
       if (this.selectedBoxIdx === i) this.selectedBoxIdx = null
       else if (this.selectedBoxIdx > i) this.selectedBoxIdx--
+      this.savePageCache()
     },
 
     clearResults() {
+      try { localStorage.removeItem(this.cacheKey(this.currentPage)) } catch {}
       this.ocrResults = []
       this.selectedBoxIdx = null
       this.transTextRefs = {}
+      this.expandedBboxes = {}
     },
 
     handleAuthError() {
@@ -698,16 +720,30 @@ export default {
     },
 
     applyTextFit() {
-      requestAnimationFrame(() => {
-        for (const el of Object.values(this.transTextRefs)) {
-          fitTextToBox(el)
+      const isVision = this.lastOcrSource === 'vision'
+      requestAnimationFrame(async () => {
+        for (const [id, el] of Object.entries(this.transTextRefs)) {
+          if (!el) continue
+          if (!isVision) { fitTextToBox(el); continue }
+          // Vision: try to fit at min 5px, expand bbox reactively if needed
+          for (let step = 0; step <= 5; step++) {
+            const currentEl = this.transTextRefs[id]
+            if (!currentEl) break
+            if (fitTextToBox(currentEl, 5)) break
+            if (step === 5) break
+            const result = this.ocrResults.find(r => r._id === id)
+            if (!result) break
+            const [bx1, by1, bx2, by2] = this.expandedBboxes[id] || result.bbox
+            this.expandedBboxes = { ...this.expandedBboxes, [id]: [bx1 - 12, by1 - 12, bx2 + 12, by2 + 12] }
+            await this.$nextTick()
+          }
         }
       })
     },
 
     // ── Box positioning ───────────────────────────────────────────────────────
 
-    getBoxStyle(bbox) {
+    getBoxStyle(result) {
       const img = this.$refs.imgRef
       const cont = this.$refs.containerRef
       if (!img || !cont || !img.naturalWidth) return { display: 'none' }
@@ -715,7 +751,7 @@ export default {
       const cr = cont.getBoundingClientRect()
       const sx = img.clientWidth / img.naturalWidth
       const sy = img.clientHeight / img.naturalHeight
-      const [x1, y1, x2, y2] = bbox
+      const [x1, y1, x2, y2] = this.expandedBboxes[result._id] || result.bbox
       return {
         position: 'absolute',
         left: Math.round(ir.left - cr.left + x1 * sx) + 'px',
@@ -743,6 +779,36 @@ export default {
         width: '100%',
         height: '100%',
       }
+    },
+
+    // ── Translation cache ─────────────────────────────────────────────────────
+
+    cacheKey(pageNum) {
+      return `trans_cache_${this.gid}_p${pageNum}`
+    },
+
+    savePageCache() {
+      if (!this.ocrResults.length) return
+      try {
+        localStorage.setItem(this.cacheKey(this.currentPage), JSON.stringify({
+          ocrResults: this.ocrResults,
+          lastOcrSource: this.lastOcrSource,
+          ts: Date.now(),
+        }))
+      } catch {}
+    },
+
+    loadPageCache(pageNum) {
+      try {
+        const raw = localStorage.getItem(this.cacheKey(pageNum))
+        if (!raw) return null
+        const entry = JSON.parse(raw)
+        if (Date.now() - entry.ts > TRANS_CACHE_TTL) {
+          localStorage.removeItem(this.cacheKey(pageNum))
+          return null
+        }
+        return entry
+      } catch { return null }
     },
 
     // ── Toasts ────────────────────────────────────────────────────────────────
