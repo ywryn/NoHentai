@@ -586,14 +586,14 @@ export default {
       if (this.ocrResults.length) await this.performTranslate()
     },
 
-    getImageBase64() {
-      const img = this.$refs.imgRef
-      if (!img || !img.naturalWidth) return null
-      const canvas = document.createElement('canvas')
-      canvas.width = img.naturalWidth
-      canvas.height = img.naturalHeight
-      canvas.getContext('2d').drawImage(img, 0, 0)
-      return canvas.toDataURL('image/jpeg', 0.92).split(',')[1]
+    async getImageBase64() {
+      const res = await fetch(this.imageUrl)
+      if (!res.ok) throw new Error(`Failed to fetch image: HTTP ${res.status}`)
+      const buf = await res.arrayBuffer()
+      const bytes = new Uint8Array(buf)
+      let binary = ''
+      for (const b of bytes) binary += String.fromCharCode(b)
+      return btoa(binary)
     },
 
     async performOcr() {
@@ -603,7 +603,7 @@ export default {
       this.selectedBoxIdx = null
       this.showToast('正在 OCR 识别...', 'info')
       try {
-        const imageBase64 = this.getImageBase64()
+        const imageBase64 = await this.getImageBase64()
         const res = await fetch(`${API_BASE}/api/trans-ocr`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
