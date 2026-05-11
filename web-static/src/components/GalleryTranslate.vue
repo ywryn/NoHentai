@@ -598,7 +598,7 @@ export default {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             password: sessionStorage.getItem(SESSION_KEY),
-            imageUrl: this.imageUrlRaw,
+            imageUrl: this.imageUrl,
             ocrSource: this.ocrSource,
           }),
         })
@@ -609,13 +609,7 @@ export default {
         }
         if (data.error) throw new Error(data.error)
 
-        // Vision blocks are coarser; use larger expand/distance for merging
-        const isVision = data.source === 'vision'
-        this.ocrResults = mergeOcrResults(
-          data.results,
-          isVision ? 1.6 : 1.05,
-          isVision ? 80 : 10,
-        )
+        this.ocrResults = mergeOcrResults(data.results)
         this.showToast(`识别完成，共 ${this.ocrResults.length} 个文本区域`, 'success')
       } catch (e) {
         this.showToast('OCR 失败: ' + e.message, 'error')
