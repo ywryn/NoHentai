@@ -171,6 +171,7 @@
               <span class="gt-result-conf">{{ (result.confidence * 100).toFixed(0) }}%</span>
               <span v-if="result.is_merged" class="gt-merged-badge">合并×{{ result.original_count }}</span>
               <span v-if="result.translation" class="gt-done-mark">✓</span>
+              <button class="gt-result-del" @click.stop="deleteResult(i)" title="删除">×</button>
             </div>
             <p class="gt-result-orig">{{ result.text }}</p>
             <p v-if="result.translation" class="gt-result-trans">{{ result.translation }}</p>
@@ -623,8 +624,8 @@ export default {
         const isVision = data.source === 'vision'
         this.ocrResults = mergeOcrResults(
           data.results,
-          isVision ? 1.15 : 1.05,
-          isVision ? 20 : 10,
+          isVision ? 1.2 : 1.05,
+          isVision ? 40 : 10,
         )
         this.showToast(`识别完成，共 ${this.ocrResults.length} 个文本区域`, 'success')
       } catch (e) {
@@ -667,6 +668,13 @@ export default {
       } finally {
         this.translating = false
       }
+    },
+
+    deleteResult(i) {
+      this.ocrResults.splice(i, 1)
+      delete this.transTextRefs[i]
+      if (this.selectedBoxIdx === i) this.selectedBoxIdx = null
+      else if (this.selectedBoxIdx > i) this.selectedBoxIdx--
     },
 
     clearResults() {
@@ -1360,7 +1368,27 @@ export default {
 .gt-done-mark {
   font-size: 10px;
   color: #4ade80;
+}
+
+.gt-result-del {
   margin-left: auto;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted-color);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.gt-result-del:hover {
+  background: rgba(248, 113, 113, 0.15);
+  color: rgb(248, 113, 113);
 }
 
 .gt-result-orig {

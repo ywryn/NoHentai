@@ -69,7 +69,7 @@ function parseVisionResponse(data) {
       const verts = block.boundingBox?.vertices ?? []
       const xs = verts.map(v => v.x ?? 0)
       const ys = verts.map(v => v.y ?? 0)
-      const MIN_DIM = 5
+      const MIN_DIM = 12
       let x1 = Math.min(...xs), y1 = Math.min(...ys)
       let x2 = Math.max(...xs), y2 = Math.max(...ys)
       if (x2 - x1 < MIN_DIM) { const d = (MIN_DIM - (x2 - x1)) / 2; x1 -= d; x2 += d }
