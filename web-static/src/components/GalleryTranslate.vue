@@ -933,23 +933,31 @@ export default {
       }
     },
 
+    isClickableToken(token) {
+      // Skip whitespace and pure symbols
+      if (!token.surface_form.trim()) return false
+      if (token.pos === '記号') return false
+      return true
+    },
+
     isContentWord(token) {
       if (!POS_COLOR[token.pos]) return false
-      // 非自立 = grammatically dependent (e.g. られ、てくる、ていく、ない as aux)
-      // 接尾 = suffix (e.g. さ、め、的)
       const detail = token.pos_detail_1
       if (detail === '非自立' || detail === '接尾') return false
       return true
     },
 
     getTokenStyle(token) {
-      if (!this.isContentWord(token)) return { color: 'var(--muted-color)' }
+      if (!this.isClickableToken(token)) return { color: 'var(--muted-color)' }
+      if (!this.isContentWord(token)) {
+        return { color: 'var(--muted-color)', cursor: 'pointer' }
+      }
       const color = POS_COLOR[token.pos]
       return { color, cursor: 'pointer', borderBottom: `1px dotted ${color}88` }
     },
 
     async onTokenClick(token) {
-      if (!this.isContentWord(token)) return
+      if (!this.isClickableToken(token)) return
       const word = token.basic_form && token.basic_form !== '*'
         ? token.basic_form : token.surface_form
       this.wordCard = { token, word, entries: null, loading: true, error: null }
@@ -1794,7 +1802,8 @@ export default {
 }
 
 .gt-token[style*="cursor: pointer"]:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
 }
 
 /* ── Word card ───────────────────────────────────────────────────────────────── */
