@@ -550,7 +550,8 @@ export default {
   watch: {
     renderTick() {
       if (this.showTranslation && Object.keys(this.transTextRefs).length) {
-        this.applyTextFit()
+        this.expandedBboxes = {}
+        this.$nextTick(() => this.applyTextFit())
       }
     },
     showTranslation(val) {
@@ -854,16 +855,16 @@ export default {
         for (const [id, el] of Object.entries(this.transTextRefs)) {
           if (!el) continue
           if (!isVision) { fitTextToBox(el); continue }
-          // Vision: try to fit at min 5px, expand bbox reactively if needed
-          for (let step = 0; step <= 5; step++) {
+          // Vision: try to fit at min 10px, expand bbox reactively if needed
+          for (let step = 0; step <= 10; step++) {
             const currentEl = this.transTextRefs[id]
             if (!currentEl) break
-            if (fitTextToBox(currentEl, 5)) break
-            if (step === 5) break
+            if (fitTextToBox(currentEl, 10)) break
+            if (step === 10) break
             const result = this.ocrResults.find(r => r._id === id)
             if (!result) break
             const [bx1, by1, bx2, by2] = this.expandedBboxes[id] || result.bbox
-            this.expandedBboxes = { ...this.expandedBboxes, [id]: [bx1 - 12, by1 - 12, bx2 + 12, by2 + 12] }
+            this.expandedBboxes = { ...this.expandedBboxes, [id]: [bx1 - 15, by1 - 15, bx2 + 15, by2 + 15] }
             await this.$nextTick()
           }
         }
