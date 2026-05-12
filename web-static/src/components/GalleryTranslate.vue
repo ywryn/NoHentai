@@ -145,6 +145,18 @@
               <button class="gt-chip" :class="{ active: showTranslation }" @click="showTranslation = !showTranslation">译文</button>
             </div>
           </div>
+          <div class="gt-cfg-row">
+            <span class="gt-cfg-key">学习</span>
+            <button
+              class="gt-chip"
+              :class="{ active: studyMode }"
+              :disabled="kuromojiLoading"
+              @click="toggleStudyMode"
+            >{{ kuromojiLoading ? '加载中...' : '日语解析' }}</button>
+            <span v-if="studyMode" class="gt-pos-legend">
+              <span v-for="(color, pos) in { '名': '#60a5fa', '動': '#4ade80', '形': '#fb923c', '副': '#c084fc' }" :key="pos" class="gt-pos-dot" :style="{ background: color }" :title="pos"></span>
+            </span>
+          </div>
         </div>
 
         <div class="gt-sidebar-hdr">
@@ -173,12 +185,72 @@
               <span v-if="result.translation" class="gt-done-mark">✓</span>
               <button class="gt-result-del" @click.stop="deleteResult(i)" title="删除">×</button>
             </div>
-            <p class="gt-result-orig">{{ result.text }}</p>
+            <div v-if="studyMode && studyTokens[result._id]" class="gt-result-orig gt-token-line">
+              <span
+                v-for="(token, ti) in studyTokens[result._id]"
+                :key="ti"
+                class="gt-token"
+                :style="getTokenStyle(token)"
+                :title="token.reading && token.reading !== '*' ? token.reading : undefined"
+                @click.stop="onTokenClick(token)"
+              >{{ token.surface_form }}</span>
+            </div>
+            <p v-else class="gt-result-orig">{{ result.text }}</p>
             <p v-if="result.translation" class="gt-result-trans">{{ result.translation }}</p>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Word Card -->
+    <Transition name="gt-wc">
+      <div v-if="wordCard" class="gt-wc-overlay" @click.self="wordCard = null">
+        <div class="gt-wc-panel">
+          <div class="gt-wc-header">
+            <div class="gt-wc-title-row">
+              <span class="gt-wc-surface">{{ wordCard.token.surface_form }}</span>
+              <span
+                v-if="wordCard.token.reading && wordCard.token.reading !== '*' && wordCard.token.reading !== wordCard.token.surface_form"
+                class="gt-wc-kana"
+              >{{ wordCard.token.reading }}</span>
+              <span v-if="wordCard.word !== wordCard.token.surface_form" class="gt-wc-base-form">→ {{ wordCard.word }}</span>
+            </div>
+            <div class="gt-wc-meta-row">
+              <span class="gt-wc-pos-badge" :style="{ background: getPosColor(wordCard.token.pos) + '22', color: getPosColor(wordCard.token.pos), borderColor: getPosColor(wordCard.token.pos) + '55' }">
+                {{ wordCard.token.pos }}{{ wordCard.token.pos_detail_1 && wordCard.token.pos_detail_1 !== '*' ? '・' + wordCard.token.pos_detail_1 : '' }}
+              </span>
+              <span v-if="wordCard.token.conjugated_form && wordCard.token.conjugated_form !== '*'" class="gt-wc-conj">{{ wordCard.token.conjugated_form }}</span>
+            </div>
+            <button class="gt-wc-close" @click="wordCard = null">×</button>
+          </div>
+
+          <div class="gt-wc-body">
+            <div v-if="wordCard.loading" class="gt-wc-state">
+              <div class="gt-spinner-sm"></div><span>查询中...</span>
+            </div>
+            <div v-else-if="wordCard.error" class="gt-wc-state gt-wc-err">{{ wordCard.error }}</div>
+            <div v-else-if="!wordCard.entries?.length" class="gt-wc-state">未找到词条</div>
+            <div v-else class="gt-wc-entries">
+              <div v-for="(entry, ei) in wordCard.entries" :key="ei" class="gt-wc-entry">
+                <div class="gt-wc-entry-head">
+                  <span class="gt-wc-entry-word">{{ entry.word }}</span>
+                  <span v-if="entry.reading" class="gt-wc-entry-reading">{{ entry.reading }}</span>
+                  <span v-if="entry.is_common" class="gt-wc-badge gt-wc-common">常用</span>
+                  <span v-for="j in entry.jlpt" :key="j" class="gt-wc-badge gt-wc-jlpt">{{ j }}</span>
+                </div>
+                <ol class="gt-wc-senses">
+                  <li v-for="(sense, si) in entry.senses" :key="si" class="gt-wc-sense">
+                    <span v-if="sense.parts_of_speech.length" class="gt-wc-sense-pos">{{ sense.parts_of_speech.join(', ') }}</span>
+                    {{ sense.english_definitions.join('; ') }}
+                    <span v-if="sense.info.length" class="gt-wc-sense-info">（{{ sense.info.join(', ') }}）</span>
+                  </li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <!-- Toast notifications -->
     <div class="gt-toasts">
@@ -199,6 +271,47 @@
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://no-hentai.vercel.app'
 const SESSION_KEY = 'trans_password'
 const TRANS_CACHE_TTL = 3 * 24 * 60 * 60 * 1000
+
+// ── Kuromoji (CDN lazy-load, singleton) ───────────────────────────────────────
+
+let _kuromojiTokenizer = null
+let _kuromojiPromise = null
+
+function loadKuromoji() {
+  if (_kuromojiTokenizer) return Promise.resolve(_kuromojiTokenizer)
+  if (_kuromojiPromise) return _kuromojiPromise
+  _kuromojiPromise = new Promise((resolve, reject) => {
+    const ensureScript = () => new Promise((res, rej) => {
+      if (window.kuromoji) { res(); return }
+      const s = document.createElement('script')
+      s.src = 'https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/build/kuromoji.js'
+      s.onload = res
+      s.onerror = () => rej(new Error('kuromoji 脚本加载失败'))
+      document.head.appendChild(s)
+    })
+    ensureScript().then(() => {
+      window.kuromoji
+        .builder({ dicPath: 'https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/dict' })
+        .build((err, tokenizer) => {
+          if (err) { _kuromojiPromise = null; reject(err); return }
+          _kuromojiTokenizer = tokenizer
+          resolve(tokenizer)
+        })
+    }).catch(err => { _kuromojiPromise = null; reject(err) })
+  })
+  return _kuromojiPromise
+}
+
+// POS → highlight color (null = no highlight, not clickable)
+const POS_COLOR = {
+  '名詞':     '#60a5fa',
+  '動詞':     '#4ade80',
+  '形容詞':   '#fb923c',
+  '形容動詞': '#fbbf24',
+  '副詞':     '#c084fc',
+  '接続詞':   '#f472b6',
+  '感動詞':   '#f87171',
+}
 
 // ── OCR merge algorithm (ported from manga-trans ocrService.ts) ───────────────
 
@@ -416,6 +529,12 @@ export default {
       // Toasts
       toasts: [],
       toastCounter: 0,
+
+      // Study mode
+      studyMode: false,
+      kuromojiLoading: false,
+      studyTokens: {},
+      wordCard: null,
     }
   },
 
@@ -434,6 +553,12 @@ export default {
     showTranslation(val) {
       if (val && Object.keys(this.transTextRefs).length) {
         this.$nextTick(() => this.applyTextFit())
+      }
+    },
+    ocrResults(newVal) {
+      if (this.studyMode) {
+        if (newVal.length) this.analyzeAllResults()
+        else this.studyTokens = {}
       }
     },
   },
@@ -779,6 +904,58 @@ export default {
         width: '100%',
         height: '100%',
       }
+    },
+
+    // ── Study mode ────────────────────────────────────────────────────────────
+
+    async toggleStudyMode() {
+      this.studyMode = !this.studyMode
+      if (!this.studyMode) { this.wordCard = null; return }
+      if (this.ocrResults.length) await this.analyzeAllResults()
+    },
+
+    async analyzeAllResults() {
+      if (this.kuromojiLoading) return
+      this.kuromojiLoading = true
+      if (!_kuromojiTokenizer) this.showToast('正在加载分词词典（约 8MB，首次较慢）...', 'info', 12000)
+      try {
+        const tokenizer = await loadKuromoji()
+        const tokens = {}
+        for (const result of this.ocrResults) {
+          tokens[result._id] = tokenizer.tokenize(result.text)
+        }
+        this.studyTokens = tokens
+      } catch (e) {
+        this.showToast('kuromoji 加载失败: ' + e.message, 'error')
+        this.studyMode = false
+      } finally {
+        this.kuromojiLoading = false
+      }
+    },
+
+    getTokenStyle(token) {
+      const color = POS_COLOR[token.pos]
+      if (!color) return { color: 'var(--muted-color)' }
+      return { color, cursor: 'pointer', borderBottom: `1px dotted ${color}88` }
+    },
+
+    async onTokenClick(token) {
+      if (!POS_COLOR[token.pos]) return
+      const word = token.basic_form && token.basic_form !== '*'
+        ? token.basic_form : token.surface_form
+      this.wordCard = { token, word, entries: null, loading: true, error: null }
+      try {
+        const res = await fetch(`${API_BASE}/api/jmdict-lookup?word=${encodeURIComponent(word)}`)
+        const data = await res.json()
+        if (data.error) throw new Error(data.error)
+        this.wordCard = { ...this.wordCard, entries: data.results, loading: false }
+      } catch (e) {
+        this.wordCard = { ...this.wordCard, entries: [], loading: false, error: e.message }
+      }
+    },
+
+    getPosColor(pos) {
+      return POS_COLOR[pos] || '#6b7280'
     },
 
     // ── Translation cache ─────────────────────────────────────────────────────
@@ -1574,6 +1751,250 @@ export default {
   background: rgba(167, 139, 250, 0.08);
 }
 .gt-source-exhentai .gt-source-dot { background: #a78bfa; }
+
+/* ── Study mode ──────────────────────────────────────────────────────────────── */
+
+.gt-pos-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+}
+
+.gt-pos-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  opacity: 0.75;
+}
+
+.gt-token-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px 2px;
+  line-height: 1.8;
+  padding: 0;
+}
+
+.gt-token {
+  font-size: 12px;
+  padding: 0 1px;
+  border-radius: 2px;
+  transition: background 0.1s;
+  user-select: none;
+}
+
+.gt-token[style*="cursor: pointer"]:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Word card ───────────────────────────────────────────────────────────────── */
+
+.gt-wc-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.gt-wc-panel {
+  background: var(--row-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 460px;
+  max-height: 72vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.gt-wc-header {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.gt-wc-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-right: 28px;
+}
+
+.gt-wc-surface {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-color);
+  line-height: 1.2;
+}
+
+.gt-wc-kana {
+  font-size: 15px;
+  color: var(--muted-color);
+}
+
+.gt-wc-base-form {
+  font-size: 12px;
+  color: var(--muted-color);
+}
+
+.gt-wc-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.gt-wc-pos-badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid;
+}
+
+.gt-wc-conj {
+  font-size: 11px;
+  color: var(--muted-color);
+  background: var(--surface-color);
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+}
+
+.gt-wc-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-color);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.gt-wc-close:hover { background: var(--hover-bg); color: var(--text-color); }
+
+.gt-wc-body {
+  overflow-y: auto;
+  flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.gt-wc-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px;
+  color: var(--muted-color);
+  font-size: 13px;
+}
+
+.gt-wc-err { color: #f87171; }
+
+.gt-wc-entries {
+  padding: 8px 0;
+}
+
+.gt-wc-entry {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+.gt-wc-entry:last-child { border-bottom: none; }
+
+.gt-wc-entry-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.gt-wc-entry-word {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.gt-wc-entry-reading {
+  font-size: 13px;
+  color: var(--muted-color);
+}
+
+.gt-wc-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.gt-wc-common {
+  background: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.gt-wc-jlpt {
+  background: rgba(167, 139, 250, 0.12);
+  color: #a78bfa;
+  border: 1px solid rgba(167, 139, 250, 0.3);
+}
+
+.gt-wc-senses {
+  margin: 0;
+  padding: 0 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gt-wc-sense {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-color);
+}
+
+.gt-wc-sense-pos {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary-color) 25%, transparent);
+  border-radius: 3px;
+  padding: 0 5px;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.gt-wc-sense-info {
+  font-size: 11px;
+  color: var(--muted-color);
+  margin-left: 4px;
+}
+
+/* Word card transition */
+.gt-wc-enter-active { transition: opacity 0.15s, transform 0.15s; }
+.gt-wc-leave-active { transition: opacity 0.12s, transform 0.12s; }
+.gt-wc-enter-from, .gt-wc-leave-to { opacity: 0; transform: scale(0.96); }
 
 @media (max-width: 900px) {
   .gt-sidebar { width: 45%; }
