@@ -270,6 +270,8 @@
 import Tag from "primevue/tag";
 import Rating from "primevue/rating";
 import ToggleSwitch from "primevue/toggleswitch";
+import { enrichTags, exTypeClassMap } from '@/utils/galleryUtils';
+import { loadGalleries, loadTranslations } from '@/composables/useGalleryData';
 
 const baseUrl = import.meta.env.BASE_URL;
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://no-hentai.vercel.app';
@@ -285,8 +287,6 @@ export default {
       isChinese: true,
       loading: true,
       error: null,
-      allGalleries: [],
-      translationData: null,
       // Thumbnails
       thumbImages: [],
       thumbTotal: 0,
@@ -329,12 +329,10 @@ export default {
         const source = this.$route.query.source;
 
         if (source === 'daily') {
-          const [dailyResponse, translationsResponse] = await Promise.all([
-            fetch(`${baseUrl}data/daily_search.json`),
-            fetch(`${baseUrl}data/translations.json`),
+          const [dailyGroups, translations] = await Promise.all([
+            fetch(`${baseUrl}data/daily_search.json`).then(r => r.json()),
+            loadTranslations(),
           ]);
-          this.translationData = await translationsResponse.json();
-          const dailyGroups = await dailyResponse.json();
           let gallery = null;
           if (Array.isArray(dailyGroups)) {
             for (const group of dailyGroups) {
@@ -345,48 +343,44 @@ export default {
             }
           }
           if (gallery) {
-            const processedGallery = { ...gallery };
-            if (Array.isArray(gallery.tags)) {
-              processedGallery.tags = this.enrichTags(gallery.tags);
-            }
-            this.galleryData = processedGallery;
+            this.galleryData = {
+              ...gallery,
+              tags: Array.isArray(gallery.tags) ? enrichTags(gallery.tags, translations) : gallery.tags,
+            };
           } else {
             this.error = `Gallery with ID ${this.itemId} not found`;
           }
           return;
         }
 
-        const [galleriesResponse, translationsResponse, dailyResponse] = await Promise.all([
-          fetch(`${baseUrl}data/galleries.json`),
-          fetch(`${baseUrl}data/translations.json`),
-          fetch(`${baseUrl}data/daily_search.json`),
+        const [galleries, translations] = await Promise.all([
+          loadGalleries(),
+          loadTranslations(),
         ]);
 
-        this.allGalleries = await galleriesResponse.json();
-        this.translationData = await translationsResponse.json();
-
-        let gallery = this.allGalleries.find(item =>
+        let gallery = galleries.find(item =>
           item.gid && item.gid.toString() === this.itemId.toString()
         );
 
-        if (!gallery && dailyResponse.ok) {
-          const dailyGroups = await dailyResponse.json();
-          if (Array.isArray(dailyGroups)) {
-            for (const group of dailyGroups) {
-              const found = (group.galleries || []).find(item =>
-                item.gid && item.gid.toString() === this.itemId.toString()
-              );
-              if (found) { gallery = found; break; }
+        if (!gallery) {
+          try {
+            const dailyGroups = await fetch(`${baseUrl}data/daily_search.json`).then(r => r.json());
+            if (Array.isArray(dailyGroups)) {
+              for (const group of dailyGroups) {
+                const found = (group.galleries || []).find(item =>
+                  item.gid && item.gid.toString() === this.itemId.toString()
+                );
+                if (found) { gallery = found; break; }
+              }
             }
-          }
+          } catch {}
         }
 
         if (gallery) {
-          const processedGallery = { ...gallery };
-          if (Array.isArray(gallery.tags)) {
-            processedGallery.tags = this.enrichTags(gallery.tags);
-          }
-          this.galleryData = processedGallery;
+          this.galleryData = {
+            ...gallery,
+            tags: Array.isArray(gallery.tags) ? enrichTags(gallery.tags, translations) : gallery.tags,
+          };
         } else {
           this.error = `Gallery with ID ${this.itemId} not found`;
         }
@@ -396,33 +390,6 @@ export default {
       } finally {
         this.loading = false;
       }
-    },
-
-    enrichTags(tags) {
-      if (!this.translationData || !Array.isArray(tags)) return [];
-
-      const enrichedTags = [];
-      for (const tag of tags) {
-        if (typeof tag !== 'string' || !tag.includes(':')) continue;
-
-        const [namespace, value] = tag.split(':', 2);
-        try {
-          const tagDetail = this.translationData.data
-            .find(item => item.namespace === namespace)?.data?.[value];
-
-          enrichedTags.push({
-            tag: tag,
-            namespace: namespace,
-            value: value,
-            tag_cn: tagDetail?.name || '',
-            intro: tagDetail?.intro || '',
-            links: tagDetail?.links || ''
-          });
-        } catch {
-          continue;
-        }
-      }
-      return enrichedTags;
     },
 
     getDisplayTitle() {
@@ -531,19 +498,7 @@ export default {
       return `https://exhentai.org/g/${this.itemId}/${this.galleryData?.token || ''}`;
     },
     categoryClass() {
-      const map = {
-        'Doujinshi': 'red',
-        'Manga': 'orange',
-        'Artist CG': 'yellow',
-        'Game CG': 'green',
-        'Western': 'gold',
-        'Non-H': 'lightblue',
-        'Image Set': 'blue',
-        'Cosplay': 'purple',
-        'Asian Porn': 'pink',
-        'Misc': 'gray',
-      };
-      return map[this.getDisplayCategory()] || 'default';
+      return exTypeClassMap[this.getDisplayCategory()] || 'default';
     },
     statsCards() {
       return [

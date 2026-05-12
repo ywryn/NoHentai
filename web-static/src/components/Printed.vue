@@ -4,14 +4,12 @@ import { useRouter, useRoute } from 'vue-router'
 import * as OpenCC from 'opencc-js'
 import { useViewMode } from '@/composables/useViewMode'
 import GalleryList from '@/components/GalleryList.vue'
+import { exTypeClassMap } from '@/utils/galleryUtils'
+import { loadGalleries, loadTranslations } from '@/composables/useGalleryData'
 
 const { viewMode } = useViewMode()
 
-const typeClassMap = {
-  'Doujinshi': 'red', 'Manga': 'orange', 'Artist CG': 'yellow',
-  'Game CG': 'green', 'Western': 'gold', 'Non-H': 'lightblue',
-  'Image Set': 'blue', 'Cosplay': 'purple', 'Asian Porn': 'pink', 'Misc': 'gray',
-}
+const typeClassMap = exTypeClassMap
 
 function getGallery(sid) {
   if (sid == null || sid === '') return null
@@ -52,20 +50,17 @@ const error = ref('')
 
 onMounted(async () => {
   try {
-    const [digeRes, galRes, transRes] = await Promise.all([
+    const [digeRes, galleries, translations] = await Promise.all([
       fetch('/data/future_digi.json'),
-      fetch('/data/galleries.json'),
-      fetch('/data/translations.json'),
+      loadGalleries(),
+      loadTranslations(),
     ])
     if (!digeRes.ok) throw new Error('future_digi.json not found')
     const digeData = await digeRes.json()
-    const galleries = await galRes.json()
 
-    items.value = digeData.data
-    galleryMap.value = Object.fromEntries(
-      galleries.map((g) => [String(g.gid), g])
-    )
-    if (transRes.ok) translationData.value = await transRes.json()
+    items.value = Array.isArray(digeData) ? digeData : (digeData.data ?? [])
+    galleryMap.value = Object.fromEntries(galleries.map(g => [String(g.gid), g]))
+    translationData.value = translations
     const pageFromUrl = parseInt(route.query.page) || 1
     if (pageFromUrl > 1) {
       currentPage.value = pageFromUrl

@@ -134,13 +134,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Popover from 'primevue/popover'
-import { useViewMode } from '@/composables/useViewMode'
 import GalleryList from '@/components/GalleryList.vue'
-
-const { viewMode } = useViewMode()
+import { exTypeList, exTypeDotColors, exTypeClassMap, formatTimestamp, enrichTags } from '@/utils/galleryUtils'
+import { loadGalleries, loadTranslations } from '@/composables/useGalleryData'
 
 const searchQuery = ref('')
 const results = ref([])
@@ -154,60 +153,14 @@ const loading = ref(false)
 const pageJumpValue = ref('1')
 
 const searchHelpPopover = ref()
-const baseUrl = import.meta.env.BASE_URL
 const router = useRouter()
 const route = useRoute()
 
-const exTypeList = [
-  { name: 'Doujinshi',  color: 'red' },
-  { name: 'Manga',      color: 'orange' },
-  { name: 'Artist CG',  color: 'yellow' },
-  { name: 'Game CG',    color: 'green' },
-  { name: 'Western',    color: 'gold' },
-  { name: 'Non-H',      color: 'lightblue' },
-  { name: 'Image Set',  color: 'blue' },
-  { name: 'Cosplay',    color: 'purple' },
-  { name: 'Asian Porn', color: 'pink' },
-  { name: 'Misc',       color: 'gray' }
-]
-
-const exTypeDotColors = {
-  'Doujinshi': '#a22',
-  'Manga': '#d67e22',
-  'Artist CG': '#d6a922',
-  'Game CG': '#4caf50',
-  'Western': '#d4af37',
-  'Non-H': '#4ca3dd',
-  'Image Set': '#2a78d6',
-  'Cosplay': '#7e57c2',
-  'Asian Porn': '#d81b60',
-  'Misc': '#757575',
-}
-
-const exTypeClassMap = Object.fromEntries(exTypeList.map(t => [t.name, t.color]))
-const currentTypeClassMap = computed(() => exTypeClassMap)
-
 const totalPages = computed(() => Math.max(1, Math.ceil(totalRecords.value / perPage.value)))
-const pagerPages = computed(() => {
-  const total = totalPages.value
-  const cur = currentPage.value
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
-  const set = new Set([1, total])
-  for (let i = Math.max(1, cur - 1); i <= Math.min(total, cur + 1); i++) set.add(i)
-  const sorted = [...set].sort((a, b) => a - b)
-  const result = []
-  let prev = 0
-  for (const p of sorted) {
-    if (p - prev > 1) result.push('…')
-    result.push(p)
-    prev = p
-  }
-  return result
-})
 
 const mappedResults = computed(() => results.value.map(item => ({
   type: item.category,
-  typeClass: currentTypeClassMap.value[item.category] || 'default',
+  typeClass: exTypeClassMap[item.category] || 'default',
   title: item.title,
   title_jpn: item.title_jpn,
   published: item.posted ? formatTimestamp(item.posted) : '',
@@ -220,62 +173,11 @@ const mappedResults = computed(() => results.value.map(item => ({
   favCategory: item.favCategory || '',
 })))
 
-function formatTimestamp(timestamp) {
-  if (!timestamp) return ''
-  const ts = typeof timestamp === 'string' ? parseInt(timestamp) : timestamp
-  if (isNaN(ts)) return ''
-  const date = ts.toString().length === 10 ? new Date(ts * 1000) : new Date(ts)
-  if (isNaN(date.getTime())) return ''
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric', month: '2-digit', day: '2-digit'
-  }).replace(/\//g, '-')
-}
-
 function formatFavDate(value) {
   if (!value) return ''
   const str = String(value)
   const match = str.match(/\d{4}-\d{2}-\d{2}/)
   return match ? match[0] : str
-}
-
-async function loadGalleriesData() {
-  try {
-    const response = await fetch(`${baseUrl}data/galleries.json`)
-    allGalleries.value = await response.json()
-  } catch {
-    allGalleries.value = []
-  }
-}
-
-async function loadTranslationData() {
-  try {
-    const response = await fetch(`${baseUrl}data/translations.json`)
-    translationData.value = await response.json()
-  } catch {
-    translationData.value = null
-  }
-}
-
-function enrichTags(tags) {
-  if (!translationData.value || !Array.isArray(tags)) return []
-  const enrichedTags = []
-  for (const tag of tags) {
-    if (typeof tag !== 'string' || !tag.includes(':')) continue
-    const [namespace, value] = tag.split(':', 2)
-    try {
-      const tagDetail = translationData.value.data
-        .find(item => item.namespace === namespace)?.data?.[value]
-      enrichedTags.push({
-        tag, namespace, value,
-        tag_cn: tagDetail?.name || '',
-        intro: tagDetail?.intro || '',
-        links: tagDetail?.links || ''
-      })
-    } catch {
-      continue
-    }
-  }
-  return enrichedTags
 }
 
 const namespaceAliases = {
@@ -391,12 +293,12 @@ function filterAndPaginateData(page = 1, keyword = '', type = null) {
   const start = (page - 1) * perPage.value
   results.value = filtered.slice(start, start + perPage.value).map(item => {
     const copy = { ...item }
-    if (Array.isArray(item.tags)) copy.tags = enrichTags(item.tags)
+    if (Array.isArray(item.tags)) copy.tags = enrichTags(item.tags, translationData.value)
     return copy
   })
   currentPage.value = page
   pageJumpValue.value = String(page)
-  setTimeout(() => { loading.value = false }, 100)
+  loading.value = false
 
   // Sync state to URL so back-navigation restores it
   const q = {}
@@ -446,13 +348,9 @@ function goToPage(page) {
 }
 function toggleSearchHelp(event) { searchHelpPopover.value?.toggle(event) }
 
-watch(viewMode, () => {
-  filterAndPaginateData(1, searchQuery.value, activeType.value)
-})
-
 onMounted(async () => {
   loading.value = true
-  await loadGalleriesData()
+  allGalleries.value = await loadGalleries()
   const q = route.query.q || ''
   const type = route.query.type || null
   const page = parseInt(route.query.page) || 1
@@ -461,7 +359,8 @@ onMounted(async () => {
   filterAndPaginateData(page, q, type)
 
   // Load translations in background; re-enrich tags when ready
-  loadTranslationData().then(() => {
+  loadTranslations().then(data => {
+    translationData.value = data
     filterAndPaginateData(currentPage.value, searchQuery.value, activeType.value)
   })
 })

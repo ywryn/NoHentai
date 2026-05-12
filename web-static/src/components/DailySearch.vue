@@ -65,6 +65,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useViewMode } from '@/composables/useViewMode'
 import GalleryList from '@/components/GalleryList.vue'
+import { exTypeClassMap, formatTimestamp, enrichTags } from '@/utils/galleryUtils'
+import { loadTranslations } from '@/composables/useGalleryData'
 
 const { viewMode } = useViewMode()
 
@@ -86,41 +88,15 @@ const currentGalleries = computed(() => currentGroup.value?.galleries ?? [])
 const includeFilters = computed(() => (currentGroup.value?.filters ?? []).filter(chip => !chip.startsWith('-')))
 const excludeFilters = computed(() => (currentGroup.value?.filters ?? []).filter(chip => chip.startsWith('-')))
 
-const typeClassMap = {
-  'Doujinshi': 'red', 'Manga': 'orange', 'Artist CG': 'yellow',
-  'Game CG': 'green', 'Western': 'gold', 'Non-H': 'lightblue',
-  'Image Set': 'blue', 'Cosplay': 'purple', 'Asian Porn': 'pink', 'Misc': 'gray',
-}
 
 const totalPages = computed(() => Math.max(1, Math.ceil(totalRecords.value / perPage.value)))
 const pageJumpValue = ref('1')
-
-function formatTimestamp(timestamp) {
-  if (!timestamp) return ''
-  const ts = typeof timestamp === 'string' ? parseInt(timestamp) : timestamp
-  if (isNaN(ts)) return ''
-  const date = ts.toString().length === 10 ? new Date(ts * 1000) : new Date(ts)
-  if (isNaN(date.getTime())) return ''
-  return date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-')
-}
 
 function formatDate(isoStr) {
   if (!isoStr) return ''
   const d = new Date(isoStr)
   if (isNaN(d.getTime())) return isoStr
   return d.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-')
-}
-
-function enrichTags(tags) {
-  if (!translationData.value || !Array.isArray(tags)) return []
-  return tags
-    .filter(tag => typeof tag === 'string' && tag.includes(':'))
-    .map(tag => {
-      const [namespace, value] = tag.split(':', 2)
-      const detail = translationData.value.data
-        ?.find(item => item.namespace === namespace)?.data?.[value]
-      return { tag, namespace, value, tag_cn: detail?.name || '' }
-    })
 }
 
 function paginate(page = 1) {
@@ -130,14 +106,14 @@ function paginate(page = 1) {
   results.value = galleries.slice(start, start + perPage.value).map(item => ({
     gid: item.gid,
     type: item.category,
-    typeClass: typeClassMap[item.category] || 'default',
+    typeClass: exTypeClassMap[item.category] || 'default',
     title: item.title,
     title_jpn: item.title_jpn,
     thumb: item.thumb,
     published: formatTimestamp(item.posted),
     filecount: item.filecount,
     rating: parseFloat(item.rating) || null,
-    tags: enrichTags(item.tags || []),
+    tags: enrichTags(item.tags || [], translationData.value),
   }))
   currentPage.value = page
 }
@@ -169,17 +145,15 @@ watch(viewMode, () => { paginate(1) })
 
 async function loadData() {
   try {
-    const [dailyRes, transRes] = await Promise.all([
+    const [dailyRes, translations] = await Promise.all([
       fetch(`${baseUrl}data/daily_search.json`),
-      fetch(`${baseUrl}data/translations.json`),
+      loadTranslations(),
     ])
     if (dailyRes.ok) {
       const data = await dailyRes.json()
       groups.value = Array.isArray(data) ? data : []
     }
-    if (transRes.ok) {
-      translationData.value = await transRes.json()
-    }
+    translationData.value = translations
   } catch (e) {
     console.error('Error loading daily_search data:', e)
   }
