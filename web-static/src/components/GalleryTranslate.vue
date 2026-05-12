@@ -154,7 +154,7 @@
               @click="toggleStudyMode"
             >{{ kuromojiLoading ? '加载中...' : '日语解析' }}</button>
             <span v-if="studyMode" class="gt-pos-legend">
-              <span v-for="(color, pos) in { '名': '#60a5fa', '動': '#4ade80', '形': '#fb923c', '副': '#c084fc' }" :key="pos" class="gt-pos-dot" :style="{ background: color }" :title="pos"></span>
+              <span v-for="(color, pos) in { '名': '#60a5fa', '動': '#4ade80', '形': '#fb923c', '副': '#c084fc', '助': '#22d3ee', '助動': '#34d399' }" :key="pos" class="gt-pos-dot" :style="{ background: color }" :title="pos"></span>
             </span>
           </div>
         </div>
@@ -302,15 +302,18 @@ function loadKuromoji() {
   return _kuromojiPromise
 }
 
-// POS → highlight color (null = no highlight, not clickable)
+// POS → highlight color
 const POS_COLOR = {
-  '名詞':     '#60a5fa',
-  '動詞':     '#4ade80',
-  '形容詞':   '#fb923c',
-  '形容動詞': '#fbbf24',
-  '副詞':     '#c084fc',
-  '接続詞':   '#f472b6',
-  '感動詞':   '#f87171',
+  '名詞':     '#60a5fa',  // blue
+  '動詞':     '#4ade80',  // green
+  '形容詞':   '#fb923c',  // orange
+  '形容動詞': '#fbbf24',  // yellow
+  '副詞':     '#c084fc',  // purple
+  '接続詞':   '#f472b6',  // pink
+  '感動詞':   '#f87171',  // red
+  '助詞':     '#22d3ee',  // cyan
+  '助動詞':   '#34d399',  // emerald
+  '連体詞':   '#a3e635',  // lime
 }
 
 // ── OCR merge algorithm (ported from manga-trans ocrService.ts) ───────────────
@@ -949,11 +952,15 @@ export default {
 
     getTokenStyle(token) {
       if (!this.isClickableToken(token)) return { color: 'var(--muted-color)' }
-      if (!this.isContentWord(token)) {
-        return { color: 'var(--muted-color)', cursor: 'pointer' }
-      }
       const color = POS_COLOR[token.pos]
-      return { color, cursor: 'pointer', borderBottom: `1px dotted ${color}88` }
+      const detail = token.pos_detail_1
+      const isDependent = detail === '非自立' || detail === '接尾'
+      // Dependent words: gray + subtle underline
+      if (isDependent || !color) {
+        return { color: 'var(--muted-color)', cursor: 'pointer', borderBottom: '1px dotted rgba(156,163,175,0.45)' }
+      }
+      // Content / grammatical words: colored + dotted underline
+      return { color, cursor: 'pointer', borderBottom: `1px dotted ${color}99` }
     },
 
     async onTokenClick(token) {
