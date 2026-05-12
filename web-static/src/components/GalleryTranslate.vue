@@ -291,7 +291,7 @@ function loadKuromoji() {
     })
     ensureScript().then(() => {
       window.kuromoji
-        .builder({ dicPath: 'https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/dict' })
+        .builder({ dicPath: '/kuromoji-dict' })
         .build((err, tokenizer) => {
           if (err) { _kuromojiPromise = null; reject(err); return }
           _kuromojiTokenizer = tokenizer
@@ -608,6 +608,7 @@ export default {
             if (this.$refs.containerRef) this._ro?.observe(this.$refs.containerRef)
           })
           this.loadGalleryImages()
+          loadKuromoji().catch(() => {}) // preload dict while user browses/waits for OCR
         } else {
           this.passwordError = '密码错误'
           sessionStorage.removeItem(SESSION_KEY)
