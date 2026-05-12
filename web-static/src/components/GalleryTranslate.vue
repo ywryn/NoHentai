@@ -933,14 +933,23 @@ export default {
       }
     },
 
+    isContentWord(token) {
+      if (!POS_COLOR[token.pos]) return false
+      // 非自立 = grammatically dependent (e.g. られ、てくる、ていく、ない as aux)
+      // 接尾 = suffix (e.g. さ、め、的)
+      const detail = token.pos_detail_1
+      if (detail === '非自立' || detail === '接尾') return false
+      return true
+    },
+
     getTokenStyle(token) {
+      if (!this.isContentWord(token)) return { color: 'var(--muted-color)' }
       const color = POS_COLOR[token.pos]
-      if (!color) return { color: 'var(--muted-color)' }
       return { color, cursor: 'pointer', borderBottom: `1px dotted ${color}88` }
     },
 
     async onTokenClick(token) {
-      if (!POS_COLOR[token.pos]) return
+      if (!this.isContentWord(token)) return
       const word = token.basic_form && token.basic_form !== '*'
         ? token.basic_form : token.surface_form
       this.wordCard = { token, word, entries: null, loading: true, error: null }
