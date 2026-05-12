@@ -191,9 +191,11 @@
                 :key="ti"
                 class="gt-token"
                 :style="getTokenStyle(token)"
-                :title="token.reading && token.reading !== '*' ? token.reading : undefined"
                 @click.stop="onTokenClick(token)"
-              >{{ token.surface_form }}</span>
+              >
+                <ruby v-if="hasKanji(token.surface_form) && token.reading && token.reading !== '*'">{{ token.surface_form }}<rt>{{ toHiragana(token.reading) }}</rt></ruby>
+                <template v-else>{{ token.surface_form }}</template>
+              </span>
             </div>
             <p v-else class="gt-result-orig">{{ result.text }}</p>
             <p v-if="result.translation" class="gt-result-trans">{{ result.translation }}</p>
@@ -314,6 +316,14 @@ const POS_COLOR = {
   '助詞':     '#22d3ee',  // cyan
   '助動詞':   '#34d399',  // emerald
   '連体詞':   '#a3e635',  // lime
+}
+
+function hasKanji(str) {
+  return /[一-鿿㐀-䶿]/.test(str)
+}
+
+function toHiragana(katakana) {
+  return katakana.replace(/[ァ-ヶ]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60))
 }
 
 // ── OCR merge algorithm (ported from manga-trans ocrService.ts) ───────────────
@@ -983,6 +993,9 @@ export default {
     getPosColor(pos) {
       return POS_COLOR[pos] || '#6b7280'
     },
+
+    hasKanji,
+    toHiragana,
 
     // ── Translation cache ─────────────────────────────────────────────────────
 
@@ -1831,8 +1844,17 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 1px 2px;
-  line-height: 1.8;
+  line-height: 2.6;
   padding: 0;
+}
+
+.gt-token ruby { ruby-align: center; }
+
+.gt-token rt {
+  font-size: 0.6em;
+  opacity: 0.6;
+  letter-spacing: 0;
+  font-style: normal;
 }
 
 .gt-token {
