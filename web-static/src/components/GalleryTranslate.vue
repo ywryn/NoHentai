@@ -154,7 +154,7 @@
               @click="toggleStudyMode"
             >{{ kuromojiLoading ? '加载中...' : '日语解析' }}</button>
             <span v-if="studyMode" class="gt-pos-legend">
-              <span v-for="(color, pos) in { '名': '#60a5fa', '動': '#4ade80', '形': '#fb923c', '副': '#c084fc', '助': '#22d3ee', '助動': '#34d399' }" :key="pos" class="gt-pos-dot" :style="{ background: color }" :title="pos"></span>
+              <span v-for="(color, pos) in { '名詞': '#60a5fa', '動詞': '#4ade80', '形容詞': '#fb923c', '副詞': '#c084fc', '助詞': '#22d3ee', '助動詞': '#34d399' }" :key="pos" class="gt-pos-dot" :style="{ '--dot-color': color }" :data-pos="pos"></span>
             </span>
           </div>
         </div>
@@ -1787,11 +1787,44 @@ export default {
 }
 
 .gt-pos-dot {
+  position: relative;
   width: 7px;
   height: 7px;
   border-radius: 50%;
+  background: var(--dot-color);
   opacity: 0.75;
+  cursor: default;
+  flex-shrink: 0;
 }
+
+.gt-pos-dot::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+}
+
+.gt-pos-dot::after {
+  content: attr(data-pos);
+  position: absolute;
+  bottom: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--row-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  font-size: 10px;
+  white-space: nowrap;
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s;
+  z-index: 50;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.gt-pos-dot:hover { opacity: 1; }
+.gt-pos-dot:hover::after { opacity: 1; }
 
 .gt-token-line {
   display: flex;

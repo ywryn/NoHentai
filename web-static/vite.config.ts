@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath } from 'url'
 import { dirname, resolve } from 'path'
+import { createReadStream, existsSync } from 'fs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -20,6 +21,20 @@ export default defineConfig({
     },
   },
   plugins: [
+    {
+      name: 'serve-kuromoji-dict',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          if (!req.url?.startsWith('/kuromoji-dict/')) return next()
+          const file = resolve(__dirname, 'public', req.url.slice(1))
+          if (!existsSync(file)) return next()
+          res.statusCode = 200
+          res.setHeader('Content-Type', 'application/octet-stream')
+          res.setHeader('Cache-Control', 'public, max-age=31536000')
+          createReadStream(file).pipe(res)
+        })
+      },
+    },
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
