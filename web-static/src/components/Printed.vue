@@ -100,13 +100,15 @@ onMounted(async () => {
   }
 })
 
-function getThumb(sid) {
+function getThumb(item) {
+  if (item?.cover) return `/printed-cover/${encodeURIComponent(item.cover)}`
+  const sid = item?.sid
   if (!sid && sid !== 0) return null
   return galleryMap.value[String(sid)]?.thumb ?? null
 }
 
 const matchedCount = computed(
-  () => items.value.filter((item) => getThumb(item.sid)).length
+  () => items.value.filter((item) => getThumb(item)).length
 )
 
 const searchQuery = ref('')
@@ -124,7 +126,7 @@ const normalizedItems = computed(() => pagedItems.value.map(item => {
   return {
     key: item.ID,
     gid: gallery ? String(item.sid) : null,
-    thumb: getThumb(item.sid),
+    thumb: getThumb(item),
     title: item['书名'] || item['日文名'],
     badge: gallery?.category ?? null,
     badgeClass: gallery ? (typeClassMap[gallery.category] || 'default') : null,
