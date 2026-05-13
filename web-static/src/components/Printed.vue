@@ -48,17 +48,44 @@ const translationData = ref(null)
 const loading = ref(true)
 const error = ref('')
 
+function parseCSV(text) {
+  const rows = []
+  let row = [], value = '', inQuotes = false, i = 0
+  while (i < text.length) {
+    const ch = text[i]
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { value += '"'; i += 2; continue }
+        inQuotes = false; i++; continue
+      }
+      value += ch; i++; continue
+    }
+    if (ch === '"') { inQuotes = true; i++; continue }
+    if (ch === ',') { row.push(value); value = ''; i++; continue }
+    if (ch === '\n' || ch === '\r') {
+      if (value !== '' || row.length) { row.push(value); rows.push(row); row = []; value = '' }
+      if (ch === '\r' && text[i + 1] === '\n') i++
+      i++; continue
+    }
+    value += ch; i++
+  }
+  if (value !== '' || row.length) { row.push(value); rows.push(row) }
+  if (rows.length < 2) return []
+  const headers = rows[0]
+  return rows.slice(1).map(r => Object.fromEntries(headers.map((h, j) => [h, r[j] ?? ''])))
+}
+
 onMounted(async () => {
   try {
     const [digeRes, galleries, translations] = await Promise.all([
-      fetch('/data/future_digi.json'),
+      fetch('/data/future_digi.csv'),
       loadGalleries(),
       loadTranslations(),
     ])
-    if (!digeRes.ok) throw new Error('future_digi.json not found')
-    const digeData = await digeRes.json()
+    if (!digeRes.ok) throw new Error('future_digi.csv not found')
+    const csvText = await digeRes.text()
 
-    items.value = Array.isArray(digeData) ? digeData : (digeData.data ?? [])
+    items.value = parseCSV(csvText)
     galleryMap.value = Object.fromEntries(galleries.map(g => [String(g.gid), g]))
     translationData.value = translations
     const pageFromUrl = parseInt(route.query.page) || 1

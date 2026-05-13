@@ -41,11 +41,6 @@ jobs:
       - name: Run sync script
         run: python app/sync_script.py
 
-      - name: Run Google Sheets sync script
-        env:
-          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
-        run: python app/sync_sheets.py
-
       - name: Sync EhTagTranslation Database
         run: python app/sync_translations.py
 
@@ -102,7 +97,6 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add web-static/public/data/galleries.json \
                   web-static/public/data/backup_data/ \
-                  web-static/public/data/future_digi.json \
                   web-static/public/data/translations.json \
                   web-static/public/data/daily_search.json
           git diff --staged --quiet || git commit -m "常规数据更新 [skip ci]"
