@@ -84,3 +84,5 @@ web/
 dev-requirements.md
 
 .superpowers/
+
+web-static/public/printed-cover/compress_image.py
