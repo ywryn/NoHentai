@@ -62,8 +62,11 @@
                     <strong>{{ group }}</strong>
                     <div class="tag-list">
                       <Tag v-for="(tag, index) in tags" :key="index"
-                        :value="isChinese ? (tag.tag_cn || tag.value) : tag.value"
-                        class="tag" severity="secondary" />
+                        :value="tagCopyValue === tag.tag ? '已复制' : (isChinese ? (tag.tag_cn || tag.value) : tag.value)"
+                        class="tag tag-copyable"
+                        :class="{ 'tag-copied': tagCopyValue === tag.tag }"
+                        severity="secondary"
+                        @click="copyTag(tag)" />
                     </div>
                   </div>
                 </div>
@@ -164,8 +167,11 @@
               <strong>{{ group }}</strong>
               <div class="tag-list">
                 <Tag v-for="(tag, index) in tags" :key="index"
-                  :value="isChinese ? (tag.tag_cn || tag.value) : tag.value"
-                  class="tag" severity="secondary" />
+                  :value="tagCopyValue === tag.tag ? '已复制' : (isChinese ? (tag.tag_cn || tag.value) : tag.value)"
+                  class="tag tag-copyable"
+                  :class="{ 'tag-copied': tagCopyValue === tag.tag }"
+                  severity="secondary"
+                  @click="copyTag(tag)" />
               </div>
             </div>
           </div>
@@ -295,6 +301,8 @@ export default {
       thumbError: null,
       thumbPage: 0,
       thumbExpanded: false,
+      tagCopyValue: null,
+      tagCopyTimer: null,
     };
   },
   created() {
@@ -311,9 +319,15 @@ export default {
       this.thumbPage = 0;
       this.thumbError = null;
       this.thumbExpanded = false;
+      this.tagCopyValue = null;
+      clearTimeout(this.tagCopyTimer);
+      this.tagCopyTimer = null;
       this.initializeFromRoute();
       if (this.itemId) this.fetchGalleryData();
     },
+  },
+  beforeUnmount() {
+    clearTimeout(this.tagCopyTimer);
   },
   methods: {
     initializeFromRoute() {
@@ -411,6 +425,21 @@ export default {
       const str = String(value);
       const match = str.match(/\d{4}-\d{2}-\d{2}/);
       return match ? match[0] : str;
+    },
+
+    async copyTag(tag) {
+      if (!tag?.tag) return;
+      try {
+        await navigator.clipboard.writeText(`${tag.namespace}:"${tag.value}$"`);
+        this.tagCopyValue = tag.tag;
+        clearTimeout(this.tagCopyTimer);
+        this.tagCopyTimer = setTimeout(() => {
+          this.tagCopyValue = null;
+          this.tagCopyTimer = null;
+        }, 1200);
+      } catch (error) {
+        console.error('Failed to copy tag:', error);
+      }
     },
 
     loadPages() {

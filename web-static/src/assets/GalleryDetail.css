@@ -339,6 +339,24 @@
   font-size: 12px !important;
 }
 
+.tag-copyable {
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.tag-copyable:hover {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--tag-bg) 75%, var(--primary-color) 25%) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.tag-copied {
+  background: color-mix(in srgb, var(--tag-bg) 65%, #22c55e 35%) !important;
+  border-color: #22c55e !important;
+  color: #eafff3 !important;
+}
+
 /* ===== Torrents ===== */
 .torrents-panel { padding: 16px; }
 
