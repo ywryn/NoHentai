@@ -78,7 +78,7 @@
                 'gt-box-translated': !!result.translation,
                 'gt-box-hidden': !showBoxes,
               }"
-              :style="getBoxStyle(result)"
+              :style="getBoxStyle(result, i)"
               :title="result.translation || result.text"
               @click="selectedBoxIdx = selectedBoxIdx === i ? null : i"
             >
@@ -673,6 +673,11 @@ export default {
 
     async goToPage(pageNum) {
       this.currentPage = pageNum
+      this.$router.replace({
+        name: 'GalleryTranslate',
+        params: { gid: this.gid },
+        query: { token: this.token, page: String(pageNum) },
+      })
       this.ocrResults = []
       this.selectedBoxIdx = null
       this.imageUrl = null
@@ -883,7 +888,7 @@ export default {
 
     // ── Box positioning ───────────────────────────────────────────────────────
 
-    getBoxStyle(result) {
+    getBoxStyle(result, index) {
       const img = this.$refs.imgRef
       const cont = this.$refs.containerRef
       if (!img || !cont || !img.naturalWidth) return { display: 'none' }
@@ -898,6 +903,7 @@ export default {
         top: Math.round(ir.top - cr.top + y1 * sy) + 'px',
         width: Math.round((x2 - x1) * sx) + 'px',
         height: Math.round((y2 - y1) * sy) + 'px',
+        zIndex: this.selectedBoxIdx === index ? 20 : 10,
       }
     },
 
