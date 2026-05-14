@@ -565,9 +565,12 @@ export default {
       }
     },
     showTranslation(val) {
-      if (val && Object.keys(this.transTextRefs).length) {
-        this.$nextTick(() => this.applyTextFit())
+      this.expandedBboxes = {}
+      if (!val) {
+        this.transTextRefs = {}
+        return
       }
+      this.$nextTick(() => this.applyTextFit())
     },
     ocrResults(newVal) {
       if (this.studyMode) {
