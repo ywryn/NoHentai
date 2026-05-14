@@ -125,7 +125,12 @@
         <div v-else-if="imagesError" class="gt-strip gt-strip-error">{{ imagesError }}</div>
 
         <!-- Config panel -->
-        <div class="gt-config-panel">
+        <div class="gt-config-panel" :class="{ 'gt-config-panel-collapsed': !configPanelExpanded }">
+          <button class="gt-config-toggle" @click="configPanelExpanded = !configPanelExpanded">
+            <span>功能设置</span>
+            <span class="gt-config-toggle-icon" :class="{ 'is-open': configPanelExpanded }">⌃</span>
+          </button>
+          <template v-if="configPanelExpanded">
           <div class="gt-cfg-row">
             <span class="gt-cfg-key">OCR</span>
             <div class="gt-seg-ctrl">
@@ -146,17 +151,38 @@
             </div>
           </div>
           <div class="gt-cfg-row">
+            <span class="gt-cfg-key">自动</span>
+            <label class="gt-switch-row">
+              <button
+                type="button"
+                class="gt-switch"
+                :class="{ active: autoTranslate }"
+                :aria-pressed="autoTranslate"
+                @click="autoTranslate = !autoTranslate"
+              >
+                <span class="gt-switch-thumb"></span>
+              </button>
+            </label>
+          </div>
+          <div class="gt-cfg-row">
             <span class="gt-cfg-key">学习</span>
-            <button
-              class="gt-chip"
-              :class="{ active: studyMode }"
-              :disabled="kuromojiLoading"
-              @click="toggleStudyMode"
-            >{{ kuromojiLoading ? '加载中...' : '日语解析' }}</button>
+            <label class="gt-switch-row">
+              <button
+                type="button"
+                class="gt-switch"
+                :class="{ active: studyMode }"
+                :aria-pressed="studyMode"
+                :disabled="kuromojiLoading"
+                @click="toggleStudyMode"
+              >
+                <span class="gt-switch-thumb"></span>
+              </button>
+            </label>
             <span v-if="studyMode" class="gt-pos-legend">
               <span v-for="(color, pos) in { '名詞': '#60a5fa', '動詞': '#4ade80', '形容詞': '#fb923c', '副詞': '#c084fc', '助詞': '#22d3ee', '助動詞': '#34d399' }" :key="pos" class="gt-pos-dot" :style="{ '--dot-color': color }" :data-pos="pos"></span>
             </span>
           </div>
+          </template>
         </div>
 
         <div class="gt-sidebar-hdr">
@@ -532,6 +558,8 @@ export default {
       // UI state
       showBoxes: true,
       showTranslation: true,
+      autoTranslate: false,
+      configPanelExpanded: true,
       selectedBoxIdx: null,
       ocrSource: 'google',
       lastOcrSource: null,
@@ -722,6 +750,9 @@ export default {
           this.lastOcrSource = cached.lastOcrSource
           this.expandedBboxes = {}
           this.showToast(`已从缓存恢复 ${cached.ocrResults.length} 条结果`, 'info', 2000)
+        } else if (this.autoTranslate) {
+          await this.$nextTick()
+          await this.performOcrAndTranslate()
         }
       } catch (e) {
         this.imageError = `图片加载失败: ${e.message}`
@@ -1377,20 +1408,27 @@ export default {
 
 .gt-ocr-box {
   position: absolute;
-  border: 1.5px solid rgba(100, 108, 255, 0.6);
-  background: rgba(100, 108, 255, 0.04);
+  border: 1.5px solid rgba(148, 163, 184, 0.42);
+  background: rgba(148, 163, 184, 0.05);
   border-radius: 2px;
   cursor: pointer;
   pointer-events: all;
   overflow: hidden;
   display: flex;
   align-items: stretch;
-  transition: border-color 0.1s, background 0.1s;
+  transition: border-color 0.1s, background 0.1s, box-shadow 0.1s;
 }
-.gt-ocr-box:hover { border-color: var(--primary-color); background: rgba(100, 108, 255, 0.08); }
-.gt-box-selected { border-color: var(--primary-color) !important; background: rgba(100, 108, 255, 0.12) !important; box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.25); }
-.gt-box-translated { border-color: rgba(74, 222, 128, 0.5); }
-.gt-box-hidden { border-color: transparent !important; background: transparent !important; }
+.gt-ocr-box:hover {
+  border-color: color-mix(in srgb, var(--primary-color) 68%, white 32%);
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+}
+.gt-box-selected {
+  border-color: var(--primary-color) !important;
+  background: color-mix(in srgb, var(--primary-color) 16%, transparent) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary-color) 36%, transparent);
+}
+.gt-box-translated { border-color: rgba(74, 222, 128, 0.42); }
+.gt-box-hidden { border-color: transparent !important; background: transparent !important; box-shadow: none !important; }
 
 .gt-box-trans-text {
   flex: 1;
@@ -1410,11 +1448,48 @@ export default {
 }
 
 .gt-config-panel {
-  padding: 10px 14px;
+  padding: 10px 16px;
   border-bottom: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.gt-config-panel-collapsed {
+  gap: 0;
+}
+
+.gt-config-toggle {
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gt-config-toggle-icon {
+  color: var(--muted-color);
+  transition: transform 0.18s ease;
+}
+
+.gt-config-toggle-icon.is-open {
+  transform: rotate(180deg);
+}
+
+.gt-config-panel button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gt-config-panel button:focus,
+.gt-config-panel button:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .gt-cfg-row {
@@ -1460,7 +1535,7 @@ export default {
 .gt-seg-btn.active {
   background: var(--surface-color);
   color: var(--text-color);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  box-shadow: none;
 }
 
 .gt-seg-btn:not(.active):hover { color: var(--text-color); }
@@ -1496,7 +1571,7 @@ export default {
 
 .gt-chip.active {
   background: color-mix(in srgb, var(--primary-color) 15%, transparent);
-  border-color: var(--primary-color);
+  border-color: transparent;
   color: var(--primary-color);
 }
 
@@ -1521,6 +1596,53 @@ export default {
 }
 
 .gt-clear-btn:disabled { opacity: 0.3; cursor: default; }
+
+.gt-switch-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gt-switch {
+  width: 38px;
+  height: 22px;
+  padding: 2px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--surface-color);
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+}
+
+.gt-switch.active {
+  background: color-mix(in srgb, var(--primary-color) 78%, white 22%);
+  border-color: var(--primary-color);
+}
+
+.gt-switch:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.gt-switch-thumb {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+  transform: translateX(0);
+  transition: transform 0.18s ease;
+}
+
+.gt-switch.active .gt-switch-thumb {
+  transform: translateX(16px);
+}
+
+.gt-switch-label {
+  font-size: 12px;
+  color: var(--text-color);
+}
 
 .gt-sidebar-controls {
   display: flex;
