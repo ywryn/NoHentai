@@ -86,11 +86,24 @@ function parseVisionResponse(data) {
   return results
 }
 
+function detectImageMimeType(b64) {
+  if (b64.startsWith('/9j/')) return 'image/jpeg'
+  if (b64.startsWith('iVBORw')) return 'image/png'
+  if (b64.startsWith('R0lG')) return 'image/gif'
+  if (b64.startsWith('UklG')) return 'image/webp'
+  return 'image/jpeg'
+}
+
 function parseOcrSpaceResponse(data) {
+  if (data.IsErroredOnProcessing) {
+    throw new Error(`OCR.Space: ${data.ErrorMessage || data.ErrorDetails || '处理失败'}`)
+  }
   const results = []
-  if (data.IsErroredOnProcessing) return results
   for (const pageResult of data.ParsedResults ?? []) {
-    if (pageResult.FileParseExitCode != 1) continue
+    if (pageResult.FileParseExitCode != 1) {
+      if (pageResult.ErrorMessage) throw new Error(`OCR.Space: ${pageResult.ErrorMessage}`)
+      continue
+    }
     const overlay = pageResult.TextOverlay
     if (!overlay?.Lines?.length) continue
     for (const line of overlay.Lines) {
@@ -112,8 +125,9 @@ function parseOcrSpaceResponse(data) {
 }
 
 async function callOcrSpace(b64, apiKey) {
+  const mimeType = detectImageMimeType(b64)
   const form = new FormData()
-  form.append('base64Image', `data:image/jpeg;base64,${b64}`)
+  form.append('base64Image', `data:${mimeType};base64,${b64}`)
   form.append('language', 'jpn')
   form.append('isOverlayRequired', 'true')
   form.append('OCREngine', '1')
