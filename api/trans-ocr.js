@@ -142,7 +142,20 @@ async function callOcrSpace(b64, apiKey) {
     const text = await res.text()
     throw new Error(`OCR.Space error ${res.status}: ${text.slice(0, 200)}`)
   }
-  return parseOcrSpaceResponse(await res.json())
+  const json = await res.json()
+  console.log('[OCR.Space] response:', JSON.stringify({
+    OCRExitCode: json.OCRExitCode,
+    IsErroredOnProcessing: json.IsErroredOnProcessing,
+    ErrorMessage: json.ErrorMessage,
+    pages: (json.ParsedResults ?? []).map(p => ({
+      FileParseExitCode: p.FileParseExitCode,
+      ErrorMessage: p.ErrorMessage,
+      hasOverlay: !!p.TextOverlay?.Lines?.length,
+      lineCount: p.TextOverlay?.Lines?.length ?? 0,
+      textSnippet: p.ParsedText?.slice(0, 100),
+    })),
+  }))
+  return parseOcrSpaceResponse(json)
 }
 
 async function callGoogleVision(b64, apiKey) {
