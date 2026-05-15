@@ -817,7 +817,7 @@ export default {
         }
         if (data.error) throw new Error(data.error)
 
-        const isVision = data.source === 'vision'
+        const isVision = data.source === 'vision' || data.source === 'ocrspace'
         this.lastOcrSource = data.source
         this.expandedBboxes = {}
         this.ocrResults = mergeOcrResults(
@@ -902,7 +902,7 @@ export default {
     },
 
     applyTextFit() {
-      const isVision = this.lastOcrSource === 'vision'
+      const isVision = this.lastOcrSource === 'vision' || this.lastOcrSource === 'ocrspace'
       requestAnimationFrame(async () => {
         for (const [id, el] of Object.entries(this.transTextRefs)) {
           if (!el) continue
