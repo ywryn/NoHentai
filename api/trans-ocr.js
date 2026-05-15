@@ -130,7 +130,7 @@ async function callOcrSpace(b64, apiKey) {
   form.append('base64Image', `data:${mimeType};base64,${b64}`)
   form.append('language', 'jpn')
   form.append('isOverlayRequired', 'true')
-  form.append('OCREngine', '1')
+  form.append('OCREngine', '2')
   form.append('detectOrientation', 'true')
 
   const res = await fetch(OCR_SPACE_API_URL, {
