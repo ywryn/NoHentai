@@ -4,6 +4,7 @@ import { Redis } from '@upstash/redis'
 const PADDLEOCR_JOB_URL = 'https://paddleocr.aistudio-app.com/api/v2/ocr/jobs'
 const PADDLE_MODEL = 'PP-OCRv5'
 const VISION_MONTHLY_LIMIT = 1000
+const OCR_SPACE_API_URL = 'https://api.ocr.space/parse/image'
 
 function getRedis() {
   const url = process.env.KV_REST_API_URL
@@ -83,6 +84,51 @@ function parseVisionResponse(data) {
     }
   }
   return results
+}
+
+function parseOcrSpaceResponse(data) {
+  const results = []
+  if (data.IsErroredOnProcessing) return results
+  for (const pageResult of data.ParsedResults ?? []) {
+    if (pageResult.FileParseExitCode != 1) continue
+    const overlay = pageResult.TextOverlay
+    if (!overlay?.Lines?.length) continue
+    for (const line of overlay.Lines) {
+      if (!line.Words?.length) continue
+      const words = line.Words
+      const left = Math.min(...words.map(w => w.Left))
+      const top = Math.min(...words.map(w => w.Top))
+      const right = Math.max(...words.map(w => w.Left + w.Width))
+      const bottom = Math.max(...words.map(w => w.Top + w.Height))
+      results.push({
+        text: words.map(w => w.WordText).join(''),
+        confidence: 0.85,
+        bbox: [left, top, right, bottom],
+        polygon: null,
+      })
+    }
+  }
+  return results
+}
+
+async function callOcrSpace(b64, apiKey) {
+  const form = new FormData()
+  form.append('base64Image', `data:image/jpeg;base64,${b64}`)
+  form.append('language', 'jpn')
+  form.append('isOverlayRequired', 'true')
+  form.append('OCREngine', '1')
+  form.append('detectOrientation', 'true')
+
+  const res = await fetch(OCR_SPACE_API_URL, {
+    method: 'POST',
+    headers: { apikey: apiKey },
+    body: form,
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`OCR.Space error ${res.status}: ${text.slice(0, 200)}`)
+  }
+  return parseOcrSpaceResponse(await res.json())
 }
 
 async function callGoogleVision(b64, apiKey) {
@@ -176,19 +222,26 @@ export default async function handler(req, res) {
   try {
     let results, source
 
-    if (visionKey && ocrSource !== 'paddle') {
-      const redis = getRedis()
-      const count = await getAndIncrVisionCount(redis)
-      if (count <= VISION_MONTHLY_LIMIT) {
-        results = await callGoogleVision(imageBase64, visionKey)
-        source = 'vision'
+    if (ocrSource === 'ocrspace') {
+      const ocrSpaceKey = process.env.OCR_SPACE_KEY
+      if (!ocrSpaceKey) return res.status(500).json({ error: 'OCR.Space key not configured' })
+      results = await callOcrSpace(imageBase64, ocrSpaceKey)
+      source = 'ocrspace'
+    } else {
+      if (visionKey && ocrSource !== 'paddle') {
+        const redis = getRedis()
+        const count = await getAndIncrVisionCount(redis)
+        if (count <= VISION_MONTHLY_LIMIT) {
+          results = await callGoogleVision(imageBase64, visionKey)
+          source = 'vision'
+        }
       }
-    }
 
-    if (!results) {
-      if (!paddleToken) return res.status(500).json({ error: 'No OCR backend configured' })
-      results = await callPaddleOCR(imageBase64, paddleToken)
-      source = 'paddle'
+      if (!results) {
+        if (!paddleToken) return res.status(500).json({ error: 'No OCR backend configured' })
+        results = await callPaddleOCR(imageBase64, paddleToken)
+        source = 'paddle'
+      }
     }
 
     return res.status(200).json({ results, source })

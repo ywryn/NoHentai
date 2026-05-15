@@ -140,6 +140,9 @@
               <button class="gt-seg-btn" :class="{ active: ocrSource === 'paddle' }" @click="ocrSource = 'paddle'">
                 <span class="gt-seg-dot paddle"></span>Paddle
               </button>
+              <button class="gt-seg-btn" :class="{ active: ocrSource === 'ocrspace' }" @click="ocrSource = 'ocrspace'">
+                <span class="gt-seg-dot ocrspace"></span>OCR.Space
+              </button>
             </div>
             <button class="gt-clear-btn" :disabled="!ocrResults.length" @click="clearResults">清空</button>
           </div>
@@ -1548,6 +1551,7 @@ export default {
 }
 .gt-seg-dot.google { background: #4285f4; }
 .gt-seg-dot.paddle { background: #2ba776; }
+.gt-seg-dot.ocrspace { background: #f97316; }
 
 /* Chip toggles (显示) */
 .gt-chip-group {
