@@ -1006,15 +1006,13 @@ export default {
     },
 
     getTokenStyle(token) {
-      if (!this.isClickableToken(token)) return { color: 'var(--muted-color)' }
+      if (!this.isClickableToken(token)) return { color: 'color-mix(in srgb, var(--text-color) 65%, transparent)' }
       const color = POS_COLOR[token.pos]
       const detail = token.pos_detail_1
       const isDependent = detail === '非自立' || detail === '接尾'
-      // Dependent words: gray + subtle underline
       if (isDependent || !color) {
-        return { color: 'var(--muted-color)', cursor: 'pointer', borderBottom: '1px dotted rgba(156,163,175,0.45)' }
+        return { color: 'color-mix(in srgb, var(--text-color) 65%, transparent)', cursor: 'pointer', borderBottom: '1px dotted rgba(156,163,175,0.6)' }
       }
-      // Content / grammatical words: colored + dotted underline
       return { color, cursor: 'pointer', borderBottom: `1px dotted ${color}99` }
     },
 
@@ -1811,7 +1809,7 @@ export default {
   margin: 0;
   font-size: 12px;
   line-height: 1.5;
-  color: var(--muted-color);
+  color: color-mix(in srgb, var(--text-color) 65%, transparent);
   word-break: break-all;
 }
 
