@@ -109,6 +109,7 @@
               class="gt-thumb"
               :class="{ 'gt-thumb-active': img.pageNum === currentPage }"
               :style="thumbCellStyle(img)"
+              :data-page="img.pageNum"
               :title="`Page ${img.pageNum}`"
               @click="goToPage(img.pageNum)"
             >
@@ -574,6 +575,9 @@ export default {
       toasts: [],
       toastCounter: 0,
 
+      // Thumbnail lazy load
+      loadedThumbPages: {},
+
       // Study mode
       studyMode: false,
       kuromojiLoading: false,
@@ -631,6 +635,7 @@ export default {
 
   beforeUnmount() {
     this._ro?.disconnect()
+    this._thumbObserver?.disconnect()
   },
 
   methods: {
@@ -694,6 +699,8 @@ export default {
           }
           // Load the initial page
           const targetPage = Math.min(Math.max(this.currentPage, 1), data.total)
+          this.loadedThumbPages = {}
+          this.$nextTick(() => this.setupThumbObserver())
           this.goToPage(targetPage)
         }
       } catch (e) {
@@ -944,6 +951,32 @@ export default {
       }
     },
 
+    // ── Thumbnail lazy load ───────────────────────────────────────────────────
+
+    setupThumbObserver() {
+      this._thumbObserver?.disconnect()
+      const strip = this.$refs.stripRef
+      if (!strip) return
+      this._thumbObserver = new IntersectionObserver((entries) => {
+        const batch = {}
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            batch[entry.target.dataset.page] = true
+            this._thumbObserver.unobserve(entry.target)
+          }
+        }
+        if (Object.keys(batch).length) {
+          this.loadedThumbPages = { ...this.loadedThumbPages, ...batch }
+        }
+      }, { root: strip, rootMargin: '0px 150px' })
+
+      strip.querySelectorAll('.gt-thumb').forEach(el => {
+        if (!this.loadedThumbPages[el.dataset.page]) {
+          this._thumbObserver.observe(el)
+        }
+      })
+    },
+
     // ── Thumbnail rendering ───────────────────────────────────────────────────
 
     thumbCellStyle(img) {
@@ -951,6 +984,7 @@ export default {
     },
 
     thumbInnerStyle(img) {
+      if (!this.loadedThumbPages[img.pageNum]) return { width: '100%', height: '100%' }
       const N = img.spriteN || 1
       const index = img.thumbW > 0 ? Math.round(-img.thumbX / img.thumbW) : 0
       const posX = N <= 1 ? 0 : (index / (N - 1)) * 100
