@@ -1430,7 +1430,6 @@ export default {
   background: color-mix(in srgb, var(--primary-color) 16%, transparent) !important;
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary-color) 36%, transparent);
 }
-.gt-box-translated { }
 .gt-box-hidden { border-color: transparent !important; background: transparent !important; box-shadow: none !important; }
 
 .gt-box-trans-text {
