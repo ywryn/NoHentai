@@ -1296,22 +1296,26 @@ export default {
 }
 
 .gt-strip-nav {
-  height: 36px;
-  width: 28px;
+  height: 44px;
+  width: 22px;
   border-radius: 6px;
   border: 1px solid var(--border-color);
-  background: var(--row-bg);
-  color: var(--text-color);
-  font-size: 18px;
+  background: transparent;
+  color: var(--muted-color);
+  font-size: 14px;
   cursor: pointer;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
-.gt-strip-nav:hover:not(:disabled) { background: var(--hover-bg); }
-.gt-strip-nav:disabled { opacity: 0.35; cursor: default; }
+.gt-strip-nav:hover:not(:disabled) {
+  color: var(--text-color);
+  border-color: var(--muted-color);
+  background: var(--hover-bg);
+}
+.gt-strip-nav:disabled { opacity: 0.25; cursor: default; }
 
 .gt-strip-scroll {
   display: flex;
