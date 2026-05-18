@@ -33,44 +33,114 @@
 }
 
 /* ── 搜索框 ── */
-.digi-search {
-  margin-bottom: 14px;
+.digi-search-row {
   display: flex;
-  justify-content: center;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.digi-search-wrap {
+  flex: 1;
+  height: 40px;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 8px;
+  min-width: 0;
+  position: relative;
+}
+
+.digi-search-wrap:focus-within {
+  border-color: var(--primary-color);
+}
+
+.digi-search-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--muted-color);
+  flex-shrink: 0;
 }
 
 .digi-search-input {
-  width: 100%;
-  max-width: 560px;
-  box-sizing: border-box;
-  background-color: var(--surface-color);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  color: var(--text-color);
-  padding: 10px 12px;
-  font-size: 14px;
+  flex: 1;
+  background: none;
+  border: none;
   outline: none;
-  transition: all 0.3s ease;
+  color: var(--text-color);
+  font-size: 14px;
+  min-width: 0;
 }
 
 .digi-search-input::placeholder {
-  color: var(--text-muted, #94a3b8);
+  color: var(--muted-color);
 }
 
-.digi-search-input:focus {
-  border-color: #4caf50;
+.digi-tag-suggest {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-color);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+  z-index: 30;
 }
 
-.my-app-light .digi-search-input {
-  background-color: #ffffff;
-  border-color: #d6d3d1;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04);
+.digi-tag-suggest-item {
+  border: none;
+  background: transparent;
+  color: var(--text-color);
+  text-align: left;
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
 }
 
-.my-app-light .digi-search-input:focus {
-  background-color: #ffffff;
-  border-color: #4caf50;
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+.digi-tag-suggest-item:hover {
+  background: var(--hover-bg);
+}
+
+.digi-tag-suggest-main {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-color);
+  overflow-wrap: anywhere;
+}
+
+.digi-tag-suggest-sub {
+  font-size: 11px;
+  color: var(--muted-color);
+  overflow-wrap: anywhere;
+}
+
+.digi-clear-btn {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--surface-color);
+  color: var(--text-color);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.digi-clear-btn:hover {
+  background: var(--hover-bg);
+  border-color: var(--primary-color);
 }
 
 /* ── 空/错误状态 ── */
@@ -219,5 +289,18 @@
 
   .digi-container {
     padding: 8px 10px 20px;
+  }
+
+  .digi-search-row {
+    flex-wrap: wrap;
+  }
+
+  .digi-search-wrap {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .digi-clear-btn {
+    flex: 1 1 0;
   }
 }

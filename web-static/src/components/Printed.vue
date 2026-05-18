@@ -115,6 +115,63 @@ const searchQuery = ref('')
 const toast = ref('')
 let toastTimer = null
 
+const activeSearchToken = computed(() => {
+  const query = searchQuery.value
+  let inQuote = false, lastBreak = -1
+  for (let i = 0; i < query.length; i++) {
+    const ch = query[i]
+    if (ch === '"') inQuote = !inQuote
+    if (!inQuote && (ch === ' ' || ch === ',')) lastBreak = i
+  }
+  return query.slice(lastBreak + 1).trim()
+})
+
+const tagSuggestions = computed(() => {
+  const token = activeSearchToken.value.trim().toLowerCase()
+  const translations = translationData.value?.data
+  if (!token || !translations || token.length < 2) return []
+  if (token.includes('$') || token.startsWith('-') || token.startsWith('~')) return []
+  const normalized = token.includes(':') ? token.split(':', 2)[1].replace(/^"|"$/g, '') : token.replace(/^"|"$/g, '')
+  if (!normalized) return []
+  const suggestions = []
+  for (const namespaceEntry of translations) {
+    const namespace = namespaceEntry.namespace
+    const values = namespaceEntry.data || {}
+    for (const [value, detail] of Object.entries(values)) {
+      const valueLower = value.toLowerCase()
+      const cnLower = (detail?.name || '').toLowerCase()
+      const nsLower = namespace.toLowerCase()
+      const score =
+        valueLower === normalized ? 0 :
+        valueLower.startsWith(normalized) ? 1 :
+        cnLower.startsWith(normalized) ? 2 :
+        nsLower.startsWith(normalized) ? 3 :
+        valueLower.includes(normalized) ? 4 :
+        cnLower.includes(normalized) ? 5 : -1
+      if (score === -1) continue
+      suggestions.push({ tag: `${namespace}:${value}`, namespace, value, tag_cn: detail?.name || '', score })
+    }
+  }
+  return suggestions
+    .sort((a, b) => a.score - b.score || a.namespace.localeCompare(b.namespace) || a.value.localeCompare(b.value))
+    .slice(0, 8)
+})
+
+function applyTagSuggestion(item) {
+  const query = searchQuery.value
+  let inQuote = false, lastBreak = -1
+  for (let i = 0; i < query.length; i++) {
+    const ch = query[i]
+    if (ch === '"') inQuote = !inQuote
+    if (!inQuote && (ch === ' ' || ch === ',')) lastBreak = i
+  }
+  const prefix = query.slice(0, lastBreak + 1).trimEnd()
+  const replacement = `${item.namespace}:"${item.value}$"`
+  searchQuery.value = prefix ? `${prefix} ${replacement} ` : `${replacement} `
+}
+
+function clearSearch() { searchQuery.value = '' }
+
 function showToast(msg) {
   toast.value = msg
   clearTimeout(toastTimer)
@@ -327,13 +384,30 @@ function submitPageJump() {
       </div>
     </div>
 
-    <div class="digi-search" v-if="!loading && !error">
-      <input
-        v-model="searchQuery"
-        class="digi-search-input"
-        placeholder="搜索 ID / 书名 / 日文名 / sid / tag（如 artist:xxx）"
-        type="search"
-      />
+    <div class="digi-search-row" v-if="!loading && !error">
+      <div class="digi-search-wrap">
+        <svg class="digi-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="11" cy="11" r="7.5"/><line x1="20" y1="20" x2="15.5" y2="15.5"/>
+        </svg>
+        <input
+          v-model="searchQuery"
+          class="digi-search-input"
+          placeholder="搜索 ID / 书名 / 日文名 / sid / tag（如 artist:xxx）"
+        />
+        <div v-if="tagSuggestions.length" class="digi-tag-suggest">
+          <button
+            v-for="item in tagSuggestions"
+            :key="item.tag"
+            type="button"
+            class="digi-tag-suggest-item"
+            @click="applyTagSuggestion(item)"
+          >
+            <span class="digi-tag-suggest-main">{{ item.namespace }}:"{{ item.value }}$"</span>
+            <span class="digi-tag-suggest-sub">{{ item.tag_cn || item.value }}</span>
+          </button>
+        </div>
+      </div>
+      <button class="digi-clear-btn" @click="clearSearch">Clear</button>
     </div>
 
     <div v-if="loading" class="digi-empty">Loading…</div>
