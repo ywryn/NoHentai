@@ -149,65 +149,130 @@ function handleGalleryClick(item) {
   }
 }
 
-// namespace 别名表（与 Home.vue 保持一致）
+// ── Advanced search (同 Home.vue，扩展 Printed 专有字段) ──────────────────────
+
 const namespaceAliases = {
   f: 'female', m: 'male', a: 'artist', p: 'parody',
   c: 'character', l: 'language', g: 'group', o: 'other',
   cos: 'cosplayer', x: 'mixed', r: 'reclass',
 }
 
-/**
- * 对单条 gallery tags 数组做单个 query 词匹配。
- * 支持：namespace:value（含别名）、tag$（精确）、纯文本（模糊）
- */
-function matchTagsByQuery(tags, query) {
-  if (!Array.isArray(tags) || !tags.length) return false
-
-  if (query.includes(':')) {
-    const colonIdx = query.indexOf(':')
-    const nsRaw = query.slice(0, colonIdx)
-    const ns = namespaceAliases[nsRaw] || nsRaw
-    let val = query.slice(colonIdx + 1)
-    if (!val) return false
-    const exact = val.endsWith('$')
-    if (exact) val = val.slice(0, -1)
-
-    return tags.some((tag) => {
-      if (!tag.includes(':')) return false
-      const [tagNs, tagVal] = tag.toLowerCase().split(':', 2)
-      if (tagNs !== ns) return false
-      return exact ? tagVal === val : tagVal.includes(val)
-    })
+function tokenizeQuery(query) {
+  const tokens = []
+  let buffer = '', inQuote = false, wasQuoted = false
+  for (const ch of query) {
+    if (ch === '"') { inQuote = !inQuote; wasQuoted = true; continue }
+    if (!inQuote && (ch === ' ' || ch === ',')) {
+      if (buffer) { tokens.push({ text: buffer, quoted: wasQuoted }); buffer = ''; wasQuoted = false }
+      continue
+    }
+    buffer += ch
   }
+  if (buffer) tokens.push({ text: buffer, quoted: wasQuoted })
+  return tokens
+}
 
-  // 纯文本：匹配任意 tag 的值部分（忽略 namespace 前缀）
-  const exact = query.endsWith('$')
-  const val = exact ? query.slice(0, -1) : query
-  return tags.some((tag) => {
-    const lower = tag.toLowerCase()
-    const tagVal = lower.includes(':') ? lower.split(':', 2)[1] : lower
-    return exact ? tagVal === val : tagVal.includes(val)
-  })
+function parseQuery(query) {
+  const include = [], exclude = [], orTerms = []
+  for (const token of tokenizeQuery(query)) {
+    let raw = token.text.trim()
+    if (!raw) continue
+    let mode = 'include'
+    if (raw.startsWith('-')) { mode = 'exclude'; raw = raw.slice(1) }
+    else if (raw.startsWith('~')) { mode = 'or'; raw = raw.slice(1) }
+    raw = raw.replace(/_/g, ' ').trim()
+    if (!raw) continue
+    let exactTag = false
+    if (raw.endsWith('$')) { exactTag = true; raw = raw.slice(0, -1) }
+    let wildcard = false
+    if (raw.endsWith('*') || raw.endsWith('%')) { wildcard = true; raw = raw.slice(0, -1) }
+    let field = 'any', namespace = null, value = raw
+    if (raw.includes(':')) {
+      const [prefixRaw, rest] = raw.split(':', 2)
+      const prefix = prefixRaw.toLowerCase()
+      const printedFields = ['id', 'name', 'jpname', 'sid']
+      const galleryFields = ['title', 'uploader', 'category', 'gid', 'tag']
+      if (printedFields.includes(prefix) || galleryFields.includes(prefix)) {
+        field = prefix; value = rest || ''
+      } else {
+        field = 'tag'; namespace = namespaceAliases[prefix] || prefix; value = rest || ''
+      }
+    }
+    value = value.trim().toLowerCase()
+    if (!value) continue
+    const term = { field, value, wildcard, exactTag, namespace, quoted: token.quoted }
+    if (mode === 'exclude') exclude.push(term)
+    else if (mode === 'or') orTerms.push(term)
+    else include.push(term)
+  }
+  return { include, exclude, orTerms }
+}
+
+function matchText(text, term) {
+  if (!text) return false
+  const target = String(text).toLowerCase()
+  const check = (val) => {
+    if (!val) return false
+    if (term.wildcard) return target.startsWith(val)
+    return target.includes(val)
+  }
+  if (check(term.value)) return true
+  const trad = toTraditional(term.value)
+  return trad !== term.value && check(trad)
+}
+
+function matchTagList(tags, term) {
+  if (!Array.isArray(tags)) return false
+  for (const tag of tags) {
+    if (typeof tag !== 'string') continue
+    const tagLower = tag.toLowerCase()
+    if (term.namespace) {
+      if (!tagLower.startsWith(`${term.namespace}:`)) continue
+      const tagValue = tagLower.slice(term.namespace.length + 1)
+      if (term.exactTag) { if (tagValue === term.value) return true }
+      else if (term.wildcard) { if (tagValue.startsWith(term.value)) return true }
+      else if (tagValue.includes(term.value)) return true
+    } else {
+      const tagValue = tagLower.includes(':') ? tagLower.split(':', 2)[1] : tagLower
+      if (term.exactTag) { if (tagValue === term.value) return true }
+      else if (term.wildcard) { if (tagValue.startsWith(term.value)) return true }
+      else if (tagLower.includes(term.value)) return true
+    }
+  }
+  return false
+}
+
+function matchTerm(item, term) {
+  const gallery = galleryMap.value[String(item.sid)]
+  if (term.field === 'id')      return String(item.ID || '').toLowerCase().includes(term.value)
+  if (term.field === 'name')    return matchText(item['书名'], term)
+  if (term.field === 'jpname')  return matchText(item['日文名'], term)
+  if (term.field === 'sid')     return String(item.sid || '') === term.value
+  if (term.field === 'gid')     return String(gallery?.gid || '') === term.value
+  if (term.field === 'title')   return matchText(gallery?.title, term) || matchText(gallery?.title_jpn, term)
+  if (term.field === 'uploader') return matchText(gallery?.uploader, term)
+  if (term.field === 'category') return matchText(gallery?.category, term)
+  if (term.field === 'tag')     return matchTagList(gallery?.tags, term)
+  // any: 搜所有字段
+  return matchText(item.ID, term) ||
+    matchText(item['书名'], term) ||
+    matchText(item['日文名'], term) ||
+    matchText(gallery?.title, term) ||
+    matchText(gallery?.title_jpn, term) ||
+    matchText(gallery?.uploader, term) ||
+    matchText(gallery?.category, term) ||
+    matchTagList(gallery?.tags, term)
 }
 
 const filteredItems = computed(() => {
-  const raw = searchQuery.value.trim().toLowerCase()
+  const raw = searchQuery.value.trim()
   if (!raw) return items.value
-  // 保留原始输入，同时生成繁体版本，两者都用于匹配
-  const queries = [...new Set([raw, toTraditional(raw).toLowerCase()])]
-
-  return items.value.filter((item) => {
-    // 1. 原有字段匹配（ID / 书名 / 日文名 / sid）
-    const fieldMatch = [item.ID, item['书名'], item['日文名'], item.sid].some((v) => {
-      if (v == null) return false
-      const field = String(v).toLowerCase()
-      return queries.some((q) => field.includes(q))
-    })
-    if (fieldMatch) return true
-
-    // 2. 关联 gallery 的 tags 匹配
-    const tags = galleryMap.value[String(item.sid)]?.tags
-    return queries.some((q) => matchTagsByQuery(tags, q))
+  const parsed = parseQuery(raw)
+  return items.value.filter(item => {
+    if (!parsed.include.every(term => matchTerm(item, term))) return false
+    if (parsed.exclude.some(term => matchTerm(item, term))) return false
+    if (parsed.orTerms.length > 0 && !parsed.orTerms.some(term => matchTerm(item, term))) return false
+    return true
   })
 })
 
