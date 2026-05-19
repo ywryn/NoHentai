@@ -1,0 +1,70 @@
+/* web-static/src/assets/reader.css */
+:root {
+  --reader-bg: #0a0f1a;
+  --reader-surface: rgba(255,255,255,0.06);
+  --reader-border: rgba(255,255,255,0.1);
+  --reader-text: #f1f5f9;
+  --reader-muted: #94a3b8;
+  --reader-accent: #60a5fa;
+  --reader-error: #f87171;
+  --reader-overlay: rgba(0,0,0,0.8);
+  --reader-bar-h: 48px;
+  --reader-strip-h: 72px;
+  --reader-anim: 0.28s ease;
+}
+
+.reader-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(148,163,184,0.2);
+  border-top-color: var(--reader-accent);
+  border-radius: 50%;
+  animation: reader-spin 0.8s linear infinite;
+}
+@keyframes reader-spin { to { transform: rotate(360deg); } }
+
+.reader-btn {
+  background: none;
+  border: none;
+  color: var(--reader-text);
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 14px;
+  line-height: 1;
+  transition: background var(--reader-anim);
+  white-space: nowrap;
+}
+.reader-btn:hover { background: rgba(255,255,255,0.1); }
+.reader-btn:active { background: rgba(255,255,255,0.15); }
+.reader-btn:disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+
+/* Book/Scroll view transition animations */
+
+/* Slide: enter from left (RTL forward / LTR backward) */
+.slide-left-enter-from  { transform: translateX(-100%); }
+.slide-left-leave-to    { transform: translateX(100%); }
+.slide-left-enter-active,
+.slide-left-leave-active { transition: transform var(--reader-anim); }
+
+/* Slide: enter from right (LTR forward / RTL backward) */
+.slide-right-enter-from  { transform: translateX(100%); }
+.slide-right-leave-to    { transform: translateX(-100%); }
+.slide-right-enter-active,
+.slide-right-leave-active { transition: transform var(--reader-anim); }
+
+/* Flip: pages come from left */
+.flip-left-enter-from  { transform: perspective(1200px) rotateY(90deg);  opacity: 0; }
+.flip-left-leave-to    { transform: perspective(1200px) rotateY(-90deg); opacity: 0; }
+.flip-left-enter-active,
+.flip-left-leave-active  { transition: transform var(--reader-anim), opacity var(--reader-anim); }
+
+/* Flip: pages come from right */
+.flip-right-enter-from  { transform: perspective(1200px) rotateY(-90deg); opacity: 0; }
+.flip-right-leave-to    { transform: perspective(1200px) rotateY(90deg);  opacity: 0; }
+.flip-right-enter-active,
+.flip-right-leave-active { transition: transform var(--reader-anim), opacity var(--reader-anim); }
+
+/* Instant (no animation) */
+.instant-enter-active,
+.instant-leave-active { transition: none; }
