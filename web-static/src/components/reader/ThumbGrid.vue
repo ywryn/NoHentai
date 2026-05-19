@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
+import { inject, computed } from 'vue'
 import { READER_KEY } from '@/composables/useReader'
 import type { PageInfo } from '@/composables/useReader'
 
@@ -37,16 +37,27 @@ function onSelect(pageNum: number) {
   emit('close')
 }
 
+const spriteCountMap = computed(() => {
+  const map = new Map<string, number>()
+  for (const pg of pages.value) {
+    map.set(pg.thumbSprite, (map.get(pg.thumbSprite) || 0) + 1)
+  }
+  return map
+})
+
 function spriteStyle(pg: PageInfo) {
   const url = pg.thumbSprite.replace(/['"]/g, '')
+  const N = spriteCountMap.value.get(pg.thumbSprite) || 1
+  const index = pg.thumbW > 0 ? Math.round(-pg.thumbX / pg.thumbW) : 0
+  const posX = N <= 1 ? 0 : (index / (N - 1)) * 100
   const targetH = 120
-  const scale = targetH / (pg.thumbH || 120)
+  const w = Math.round((pg.thumbW || 85) * targetH / (pg.thumbH || targetH))
   return {
     backgroundImage: `url(${url})`,
-    backgroundPosition: `${pg.thumbX * scale}px 0`,
+    backgroundSize: `${N * 100}% auto`,
+    backgroundPosition: `${posX}% 0`,
     backgroundRepeat: 'no-repeat',
-    backgroundSize: `auto ${targetH}px`,
-    width:  `${(pg.thumbW || 85) * scale}px`,
+    width: `${w}px`,
     height: `${targetH}px`,
   }
 }

@@ -57,21 +57,45 @@ function parseGalleryPage(html) {
   if (gdt) {
     for (const a of gdt.querySelectorAll('a')) {
       const pageUrl = a.getAttribute('href') || ''
-      const inner = a.querySelector('div')
-      const title = inner?.getAttribute('title') || ''
-      const style = inner?.getAttribute('style') || ''
 
+      // Skip non-image page URLs (navigation links, etc.)
       const globalPageMatch = pageUrl.match(/\d+-(\d+)\/?$/)
-      const pageNum = globalPageMatch ? parseInt(globalPageMatch[1]) : images.length + 1
+      if (!globalPageMatch) continue
+      const pageNum = parseInt(globalPageMatch[1])
 
-      const bgMatch = style.match(/url\(([^)]+)\)/)
-      const thumbSprite = bgMatch ? bgMatch[1] : ''
-      const xMatch = style.match(/(-?\d+)px\s+0\s+no-repeat/)
-      const thumbX = xMatch ? parseInt(xMatch[1]) : 0
-      const wMatch = style.match(/width:(\d+)px/)
-      const hMatch = style.match(/height:(\d+)px/)
-      const thumbW = wMatch ? parseInt(wMatch[1]) : 200
-      const thumbH = hMatch ? parseInt(hMatch[1]) : 283
+      let thumbSprite = '', thumbX = 0, thumbW = 100, thumbH = 142
+
+      // Prefer the div that actually contains the sprite background (handles nested wrappers)
+      const spriteDiv = a.querySelector('div[style*="url("]') || a.querySelector('div')
+      if (spriteDiv) {
+        const style = spriteDiv.getAttribute('style') || ''
+        const bgMatch = style.match(/url\(([^)]+)\)/)
+        if (bgMatch) {
+          thumbSprite = bgMatch[1].replace(/['"]/g, '')
+          // Handle variants: "-Xpx 0 no-repeat", "-Xpx 0px no-repeat", "no-repeat -Xpx 0(px)"
+          const xMatch = style.match(/(-?\d+)px\s+0(?:px)?\s+no-repeat/)
+              || style.match(/no-repeat\s+(-?\d+)px/)
+          thumbX = xMatch ? parseInt(xMatch[1]) : 0
+          const wMatch = style.match(/width:(\d+)px/)
+          const hMatch = style.match(/height:(\d+)px/)
+          thumbW = wMatch ? parseInt(wMatch[1]) : 100
+          thumbH = hMatch ? parseInt(hMatch[1]) : 142
+        }
+      }
+
+      // Fallback: gdtl mode uses <img> instead of a sprite div
+      if (!thumbSprite) {
+        const img = a.querySelector('img')
+        if (img) {
+          thumbSprite = img.getAttribute('src') || ''
+          thumbX = 0
+          const imgStyle = img.getAttribute('style') || ''
+          const wMatch = imgStyle.match(/width:(\d+)px/)
+          const hMatch = imgStyle.match(/height:(\d+)px/)
+          thumbW = wMatch ? parseInt(wMatch[1]) : 100
+          thumbH = hMatch ? parseInt(hMatch[1]) : 142
+        }
+      }
 
       images.push({ pageNum, pageUrl, thumbSprite, thumbX, thumbW, thumbH })
     }
@@ -137,7 +161,7 @@ export default async function handler(req, res) {
     }
 
     const images = result.total > 0 ? result.images.slice(0, result.total) : result.images
-    res.setHeader('Cache-Control', 'public, max-age=3600')
+    res.setHeader('Cache-Control', 'private, max-age=3600')
     return res.status(200).json({ gid, total: result.total, images, source })
   } catch (err) {
     return res.status(500).json({ error: err.message })

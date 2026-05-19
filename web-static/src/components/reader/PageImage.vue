@@ -36,10 +36,12 @@ const imgSrc = ref('')
 const elRef  = ref<HTMLElement | null>(null)
 let nlParam: string | null = null
 let observer: IntersectionObserver | null = null
+let autoRetried = false
 
 async function load() {
   state.value = 'loading'
   imgSrc.value = ''
+  autoRetried = false
   try {
     const data = await getImageUrl(props.pageNum)
     nlParam  = data.nlParam
@@ -62,8 +64,15 @@ async function retry() {
   }
 }
 
-function onLoad()     { state.value = 'loaded' }
-function onImgError() { state.value = 'error' }
+function onLoad() { state.value = 'loaded' }
+function onImgError() {
+  if (!autoRetried) {
+    autoRetried = true
+    retry()
+  } else {
+    state.value = 'error'
+  }
+}
 
 function startLoad() {
   if (state.value !== 'idle') return
@@ -98,6 +107,7 @@ watch(() => props.pageNum, () => {
   state.value = 'idle'
   imgSrc.value = ''
   nlParam = null
+  autoRetried = false
   observer?.disconnect()
   observer = null
   if (!props.lazy) startLoad()

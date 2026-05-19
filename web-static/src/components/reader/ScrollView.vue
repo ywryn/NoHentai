@@ -24,7 +24,6 @@ import { ref, watch, inject, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { READER_KEY } from '@/composables/useReader'
 import PageImage from './PageImage.vue'
 
-defineEmits<{ toggleBar: [] }>()
 
 const reader = inject(READER_KEY)!
 const { pages, currentPage, settings, total, goTo } = reader

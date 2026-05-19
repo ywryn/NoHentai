@@ -14,24 +14,23 @@
           'spread-rtl': settings.bookDirection === 'rtl',
         }"
       >
-        <PageImage
-          class="page-slot"
-          :page-num="currentPage"
-          :style="pageStyle"
-        />
-        <PageImage
+        <div class="page-slot" :style="pageStyle">
+          <PageImage :page-num="currentPage" />
+        </div>
+        <div
           v-if="effectivePagesPerScreen === 2 && currentPage < total"
           class="page-slot"
-          :page-num="currentPage + 1"
           :style="pageStyle"
-        />
+        >
+          <PageImage :page-num="currentPage + 1" />
+        </div>
       </div>
     </Transition>
 
     <!-- Click zones -->
-    <div class="click-zone click-zone-left"   @click="onClickLeft"   />
-    <div class="click-zone click-zone-center" @click="$emit('toggleBar')" />
-    <div class="click-zone click-zone-right"  @click="onClickRight"  />
+    <div class="click-zone click-zone-left"   @click="onClickLeft"  />
+    <div class="click-zone click-zone-center" />
+    <div class="click-zone click-zone-right"  @click="onClickRight" />
   </div>
 </template>
 
@@ -40,7 +39,6 @@ import { ref, computed, watch, inject } from 'vue'
 import { READER_KEY } from '@/composables/useReader'
 import PageImage from './PageImage.vue'
 
-defineEmits<{ toggleBar: [] }>()
 
 const reader = inject(READER_KEY)!
 const { currentPage, total, settings, effectivePagesPerScreen, prev, next } = reader
@@ -118,8 +116,23 @@ function onTouchEnd(e: TouchEvent) {
   flex: 0 0 auto;
   max-height: 100%;
 }
-.spread-double .page-slot:first-child  { justify-content: flex-end; }
-.spread-double .page-slot:last-child   { justify-content: flex-start; }
+/* LTR: first=left half → image at right seam; last=right half → image at left seam */
+.spread-double:not(.spread-rtl) .page-slot:first-child { justify-content: flex-end; }
+.spread-double:not(.spread-rtl) .page-slot:last-child  { justify-content: flex-start; }
+/* RTL: row-reverse so first=right half → image at left seam; last=left half → image at right seam */
+.spread-double.spread-rtl .page-slot:first-child { justify-content: flex-start; }
+.spread-double.spread-rtl .page-slot:last-child  { justify-content: flex-end; }
+/* In double-page mode, PageImage sizes itself to the image so spinner centers on the image area */
+.spread-double .page-slot :deep(.page-image) {
+  width: auto;
+  height: 100%;
+  min-width: 120px;
+}
+.spread-double .page-slot :deep(.pi-img) {
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+}
 
 /* Click zones */
 .click-zone {
