@@ -38,18 +38,28 @@ function setupScrollObserver() {
   if (!scrollEl.value) return
   const pageEls = Array.from(scrollEl.value.querySelectorAll<HTMLElement>('.scroll-page'))
 
+  const visibleRatios = new Map<number, number>()
+
   scrollObserver = new IntersectionObserver(
     entries => {
       if (programmaticScroll) return
-      let best: { pageNum: number; ratio: number } | null = null
+      // Update the persistent map with latest ratios
       for (const entry of entries) {
-        if (!entry.isIntersecting) continue
         const pageNum = parseInt((entry.target as HTMLElement).dataset.page ?? '0')
-        if (!best || entry.intersectionRatio > best.ratio) {
-          best = { pageNum, ratio: entry.intersectionRatio }
+        if (pageNum <= 0) continue
+        if (entry.isIntersecting) {
+          visibleRatios.set(pageNum, entry.intersectionRatio)
+        } else {
+          visibleRatios.delete(pageNum)
         }
       }
-      if (best) currentPage.value = best.pageNum
+      // Pick the page with highest ratio across ALL currently visible pages
+      let bestPage = 0
+      let bestRatio = 0
+      for (const [pageNum, ratio] of visibleRatios) {
+        if (ratio > bestRatio) { bestRatio = ratio; bestPage = pageNum }
+      }
+      if (bestPage > 0) currentPage.value = bestPage
     },
     { threshold: [0, 0.25, 0.5, 0.75, 1] }
   )
