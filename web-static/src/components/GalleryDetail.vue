@@ -462,13 +462,19 @@ export default {
           this.thumbImages = data.images.slice(0, data.total);
           this.thumbTotal = data.total;
           this.thumbSource = data.source || null;
-          // 计算每个 sprite 包含多少缩略图，用于百分比定位
-          const spriteCount = {};
+          // 计算每个 sprite 的数量和最大偏移，用于百分比定位
+          const spriteMeta = {};
           for (const img of this.thumbImages) {
-            spriteCount[img.thumbSprite] = (spriteCount[img.thumbSprite] || 0) + 1;
+            const prev = spriteMeta[img.thumbSprite] || { count: 0, maxOffset: 0 };
+            spriteMeta[img.thumbSprite] = {
+              count: prev.count + 1,
+              maxOffset: Math.max(prev.maxOffset, -img.thumbX),
+            };
           }
           for (const img of this.thumbImages) {
-            img.spriteN = spriteCount[img.thumbSprite] || 1;
+            const meta = spriteMeta[img.thumbSprite] || { count: 1, maxOffset: 0 };
+            img.spriteN = meta.count;
+            img.spriteMaxOffset = meta.maxOffset;
           }
         }
       } catch (e) {
@@ -503,8 +509,8 @@ export default {
 
     innerStyle(img) {
       const N = img.spriteN || 1;
-      const index = img.thumbW > 0 ? Math.round(-img.thumbX / img.thumbW) : 0;
-      const posX = N <= 1 ? 0 : (index / (N - 1)) * 100;
+      const maxOffset = img.spriteMaxOffset || 0;
+      const posX = maxOffset > 0 ? (-img.thumbX / maxOffset) * 100 : 0;
       return {
         backgroundImage: `url(${img.thumbSprite})`,
         backgroundSize: `${N * 100}% auto`,

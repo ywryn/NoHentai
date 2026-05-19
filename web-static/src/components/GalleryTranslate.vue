@@ -689,13 +689,19 @@ export default {
         } else {
           this.galleryImages = data.images.slice(0, data.total)
           this.thumbSource = data.source || null
-          // Compute sprite count for thumbnail rendering
-          const spriteCount = {}
+          // Compute sprite count and max offset for thumbnail rendering
+          const spriteMeta = {}
           for (const img of this.galleryImages) {
-            spriteCount[img.thumbSprite] = (spriteCount[img.thumbSprite] || 0) + 1
+            const prev = spriteMeta[img.thumbSprite] || { count: 0, maxOffset: 0 }
+            spriteMeta[img.thumbSprite] = {
+              count: prev.count + 1,
+              maxOffset: Math.max(prev.maxOffset, -img.thumbX),
+            }
           }
           for (const img of this.galleryImages) {
-            img.spriteN = spriteCount[img.thumbSprite] || 1
+            const meta = spriteMeta[img.thumbSprite] || { count: 1, maxOffset: 0 }
+            img.spriteN = meta.count
+            img.spriteMaxOffset = meta.maxOffset
           }
           // Load the initial page
           const targetPage = Math.min(Math.max(this.currentPage, 1), data.total)
@@ -986,8 +992,8 @@ export default {
     thumbInnerStyle(img) {
       if (!this.loadedThumbPages[img.pageNum]) return { width: '100%', height: '100%' }
       const N = img.spriteN || 1
-      const index = img.thumbW > 0 ? Math.round(-img.thumbX / img.thumbW) : 0
-      const posX = N <= 1 ? 0 : (index / (N - 1)) * 100
+      const maxOffset = img.spriteMaxOffset || 0
+      const posX = maxOffset > 0 ? (-img.thumbX / maxOffset) * 100 : 0
       return {
         backgroundImage: `url(${img.thumbSprite})`,
         backgroundSize: `${N * 100}% auto`,

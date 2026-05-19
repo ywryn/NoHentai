@@ -37,24 +37,27 @@ function onSelect(pageNum: number) {
   emit('close')
 }
 
-const spriteCountMap = computed(() => {
-  const map = new Map<string, number>()
+const spriteMetaMap = computed(() => {
+  const map = new Map<string, { count: number, maxOffset: number }>()
   for (const pg of pages.value) {
-    map.set(pg.thumbSprite, (map.get(pg.thumbSprite) || 0) + 1)
+    const prev = map.get(pg.thumbSprite) || { count: 0, maxOffset: 0 }
+    map.set(pg.thumbSprite, {
+      count: prev.count + 1,
+      maxOffset: Math.max(prev.maxOffset, -pg.thumbX),
+    })
   }
   return map
 })
 
 function spriteStyle(pg: PageInfo) {
   const url = pg.thumbSprite.replace(/['"]/g, '')
-  const N = spriteCountMap.value.get(pg.thumbSprite) || 1
-  const index = pg.thumbW > 0 ? Math.round(-pg.thumbX / pg.thumbW) : 0
-  const posX = N <= 1 ? 0 : (index / (N - 1)) * 100
+  const meta = spriteMetaMap.value.get(pg.thumbSprite) || { count: 1, maxOffset: 0 }
+  const posX = meta.maxOffset > 0 ? (-pg.thumbX / meta.maxOffset) * 100 : 0
   const targetH = 120
   const w = Math.round((pg.thumbW || 85) * targetH / (pg.thumbH || targetH))
   return {
     backgroundImage: `url(${url})`,
-    backgroundSize: `${N * 100}% auto`,
+    backgroundSize: `${meta.count * 100}% auto`,
     backgroundPosition: `${posX}% 0`,
     backgroundRepeat: 'no-repeat',
     width: `${w}px`,
