@@ -10,7 +10,7 @@ import Printed from '@/components/Printed.vue';
 // @ts-ignore
 import DailySearch from '@/components/DailySearch.vue';
 // @ts-ignore
-import GalleryReader from '@/components/GalleryReader.vue';
+import GalleryReader from '@/components/reader/GalleryReader.vue';
 // @ts-ignore
 import GalleryTranslate from '@/components/GalleryTranslate.vue';
 // // @ts-ignore
