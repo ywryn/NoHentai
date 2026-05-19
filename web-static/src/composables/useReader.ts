@@ -138,9 +138,17 @@ export function useReader() {
 
   function preload(center: number) {
     const step = effectivePagesPerScreen.value
+    const targets = new Set<number>()
+
     for (const off of [1, -1, 2, -2, 3, -3]) {
-      const n = center + off * step
-      if (n >= 1 && n <= total.value) getImageUrl(n).catch(() => {})
+      const start = center + off * step
+      if (start < 1 || start > total.value) continue
+      targets.add(start)
+      if (step === 2 && start + 1 <= total.value) targets.add(start + 1)
+    }
+
+    for (const pageNum of targets) {
+      getImageUrl(pageNum).catch(() => {})
     }
   }
 
@@ -157,7 +165,7 @@ export function useReader() {
     pages, total, galleryTitle, initLoading, initError,
     currentPage, settings, effectivePagesPerScreen, windowWidth,
     imageCache, getImageUrl, retryImage,
-    updateSetting, init, goTo, prev, next, onResize,
+    updateSetting, init, goTo, prev, next, preload, onResize,
   }
 }
 

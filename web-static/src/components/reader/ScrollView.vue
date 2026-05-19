@@ -26,7 +26,7 @@ import PageImage from './PageImage.vue'
 
 
 const reader = inject(READER_KEY)!
-const { pages, currentPage, settings, total, goTo } = reader
+const { pages, currentPage, settings, total, goTo, preload } = reader
 
 const scrollEl = ref<HTMLElement | null>(null)
 let scrollObserver: IntersectionObserver | null = null
@@ -58,7 +58,10 @@ function setupScrollObserver() {
       for (const [pageNum, ratio] of visibleRatios) {
         if (ratio > bestRatio) { bestRatio = ratio; bestPage = pageNum }
       }
-      if (bestPage > 0) currentPage.value = bestPage
+      if (bestPage > 0 && currentPage.value !== bestPage) {
+        currentPage.value = bestPage
+        preload(bestPage)
+      }
     },
     { threshold: [0, 0.25, 0.5, 0.75, 1] }
   )

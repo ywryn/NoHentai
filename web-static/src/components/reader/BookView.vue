@@ -5,9 +5,13 @@
     @touchstart.passive="onTouchStart"
     @touchend.passive="onTouchEnd"
   >
-    <Transition :name="transitionName">
+    <Transition
+      v-for="spread in cachedSpreads"
+      :key="spread.startPage"
+      :name="transitionName"
+    >
       <div
-        :key="currentPage"
+        v-show="spread.startPage === currentPage"
         class="spread"
         :class="{
           'spread-double': effectivePagesPerScreen === 2,
@@ -15,22 +19,21 @@
         }"
       >
         <div class="page-slot" :style="pageStyle">
-          <PageImage :page-num="currentPage" />
+          <PageImage :page-num="spread.startPage" :active="spread.startPage === currentPage" />
         </div>
         <div
-          v-if="effectivePagesPerScreen === 2 && currentPage < total"
+          v-if="spread.endPage !== null"
           class="page-slot"
           :style="pageStyle"
         >
-          <PageImage :page-num="currentPage + 1" />
+          <PageImage :page-num="spread.endPage" :active="spread.startPage === currentPage" />
         </div>
       </div>
     </Transition>
 
-    <!-- Click zones -->
-    <div class="click-zone click-zone-left"   @click="onClickLeft"  />
+    <div class="click-zone click-zone-left" @click="onClickLeft" />
     <div class="click-zone click-zone-center" />
-    <div class="click-zone click-zone-right"  @click="onClickRight" />
+    <div class="click-zone click-zone-right" @click="onClickRight" />
   </div>
 </template>
 
@@ -39,11 +42,14 @@ import { ref, computed, watch, inject } from 'vue'
 import { READER_KEY } from '@/composables/useReader'
 import PageImage from './PageImage.vue'
 
+interface Spread {
+  startPage: number
+  endPage: number | null
+}
 
 const reader = inject(READER_KEY)!
 const { currentPage, total, settings, effectivePagesPerScreen, prev, next } = reader
 
-// Track flip direction to pick the right CSS transition
 const flipDir = ref<'forward' | 'backward'>('forward')
 let lastPage = currentPage.value
 
@@ -54,8 +60,6 @@ watch(currentPage, newVal => {
 
 const transitionName = computed(() => {
   if (settings.pageTurnAnimation === 'none') return 'instant'
-  // RTL + forward → visual LEFT;  RTL + backward → visual RIGHT
-  // LTR + forward → visual RIGHT; LTR + backward → visual LEFT
   const rtl = settings.bookDirection === 'rtl'
   const fwd = flipDir.value === 'forward'
   const dir = (rtl ? fwd : !fwd) ? 'left' : 'right'
@@ -66,12 +70,26 @@ const pageStyle = computed(() => ({
   maxWidth: `calc(${settings.widthScale}% / ${effectivePagesPerScreen.value})`,
 }))
 
-// RTL: click LEFT = next (page numbers increase leftward)
-// LTR: click LEFT = prev
-function onClickLeft()  { settings.bookDirection === 'rtl' ? next() : prev() }
+const cachedSpreads = computed<Spread[]>(() => {
+  const step = effectivePagesPerScreen.value
+  const spreads: Spread[] = []
+  const maxDistance = 3
+
+  for (let off = -maxDistance; off <= maxDistance; off++) {
+    const startPage = currentPage.value + off * step
+    if (startPage < 1 || startPage > total.value) continue
+    spreads.push({
+      startPage,
+      endPage: step === 2 && startPage < total.value ? startPage + 1 : null,
+    })
+  }
+
+  return spreads
+})
+
+function onClickLeft() { settings.bookDirection === 'rtl' ? next() : prev() }
 function onClickRight() { settings.bookDirection === 'rtl' ? prev() : next() }
 
-// Touch swipe
 let touchX = 0
 function onTouchStart(e: TouchEvent) { touchX = e.touches[0].clientX }
 function onTouchEnd(e: TouchEvent) {
@@ -101,6 +119,7 @@ function onTouchEnd(e: TouchEvent) {
   justify-content: center;
   position: absolute;
   inset: 0;
+  background: var(--reader-bg);
 }
 .spread-rtl { flex-direction: row-reverse; }
 
@@ -116,13 +135,10 @@ function onTouchEnd(e: TouchEvent) {
   flex: 0 0 auto;
   max-height: 100%;
 }
-/* LTR: first=left half → image at right seam; last=right half → image at left seam */
 .spread-double:not(.spread-rtl) .page-slot:first-child { justify-content: flex-end; }
 .spread-double:not(.spread-rtl) .page-slot:last-child  { justify-content: flex-start; }
-/* RTL: row-reverse so first=right half → image at left seam; last=left half → image at right seam */
 .spread-double.spread-rtl .page-slot:first-child { justify-content: flex-start; }
 .spread-double.spread-rtl .page-slot:last-child  { justify-content: flex-end; }
-/* In double-page mode, PageImage sizes itself to the image so spinner centers on the image area */
 .spread-double .page-slot :deep(.page-image) {
   width: auto;
   height: 100%;
@@ -134,7 +150,6 @@ function onTouchEnd(e: TouchEvent) {
   max-width: 100%;
 }
 
-/* Click zones */
 .click-zone {
   position: absolute;
   top: 0;
@@ -142,7 +157,7 @@ function onTouchEnd(e: TouchEvent) {
   z-index: 5;
   cursor: pointer;
 }
-.click-zone-left   { left: 0;   width: 30%; }
+.click-zone-left   { left: 0; width: 30%; }
 .click-zone-center { left: 30%; width: 40%; }
-.click-zone-right  { right: 0;  width: 30%; }
+.click-zone-right  { right: 0; width: 30%; }
 </style>

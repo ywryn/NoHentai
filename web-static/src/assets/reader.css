@@ -65,6 +65,23 @@
 .flip-right-enter-active,
 .flip-right-leave-active { transition: transform var(--reader-anim), opacity var(--reader-anim); }
 
+/* Keep the entering spread above the leaving spread during transitions. */
+.slide-left-enter-active,
+.slide-right-enter-active,
+.flip-left-enter-active,
+.flip-right-enter-active,
+.instant-enter-active {
+  z-index: 2;
+}
+.slide-left-leave-active,
+.slide-right-leave-active,
+.flip-left-leave-active,
+.flip-right-leave-active,
+.instant-leave-active {
+  z-index: 1;
+  pointer-events: none;
+}
+
 /* Instant (no animation) */
 .instant-enter-active,
 .instant-leave-active { transition: none; }

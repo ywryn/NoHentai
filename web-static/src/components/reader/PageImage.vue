@@ -25,6 +25,7 @@ import { READER_KEY } from '@/composables/useReader'
 const props = defineProps<{
   pageNum: number
   lazy?: boolean
+  active?: boolean
 }>()
 
 const reader = inject(READER_KEY)!
@@ -74,8 +75,8 @@ function onImgError() {
   }
 }
 
-function startLoad() {
-  if (state.value !== 'idle') return
+function startLoad(force = false) {
+  if (!force && state.value !== 'idle') return
   load()
 }
 
@@ -95,8 +96,22 @@ function attachObserver() {
 }
 
 onMounted(() => {
+  if (props.active === false) return
   if (!props.lazy) { startLoad(); return }
   attachObserver()
+})
+
+watch(() => props.active, active => {
+  if (active === false) {
+    observer?.disconnect()
+    observer = null
+    return
+  }
+  observer?.disconnect()
+  observer = null
+  if (!props.lazy) startLoad(state.value !== 'loaded')
+  else if (state.value === 'idle') attachObserver()
+  else if (state.value === 'error') startLoad(true)
 })
 
 onBeforeUnmount(() => {
@@ -110,6 +125,7 @@ watch(() => props.pageNum, () => {
   autoRetried = false
   observer?.disconnect()
   observer = null
+  if (props.active === false) return
   if (!props.lazy) startLoad()
   else attachObserver()
 })
@@ -133,6 +149,7 @@ watch(() => props.pageNum, () => {
   gap: 12px;
   position: absolute;
   inset: 0;
+  z-index: 6;
 }
 .pi-error { color: var(--reader-error); font-size: 13px; text-align: center; }
 .pi-img {
