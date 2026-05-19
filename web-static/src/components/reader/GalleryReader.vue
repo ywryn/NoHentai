@@ -15,30 +15,28 @@
     <!-- Reader -->
     <template v-else>
       <ReaderTopBar
-        :bar-visible="barVisible"
+        :show-sidebar="showSidebar"
         :show-thumb-grid="showThumbGrid"
-        :show-settings="showSettings"
         @back="router.back()"
+        @toggle-sidebar="showSidebar = !showSidebar"
         @toggle-thumb-grid="showThumbGrid = !showThumbGrid"
-        @toggle-settings="showSettings = !showSettings"
-        @mouseover="showBar"
       />
 
-      <BookView   v-if="settings.readingMode === 'book'"   @toggle-bar="toggleBar" />
-      <ScrollView v-else @toggle-bar="toggleBar" />
-
-      <ThumbStrip :bar-visible="barVisible" />
+      <div class="gr-content">
+        <ThumbStrip v-if="showSidebar" />
+        <BookView   v-if="settings.readingMode === 'book'" />
+        <ScrollView v-else />
+      </div>
 
       <Teleport to="body">
-        <ThumbGrid    v-if="showThumbGrid" @close="showThumbGrid = false" />
-        <SettingsPanel v-if="showSettings" @close="showSettings = false" />
+        <ThumbGrid v-if="showThumbGrid" @close="showThumbGrid = false" />
       </Teleport>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, provide, onMounted, onBeforeUnmount } from 'vue'
+import { ref, provide, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useReader, READER_KEY } from '@/composables/useReader'
 import ReaderTopBar  from './ReaderTopBar.vue'
@@ -46,7 +44,6 @@ import BookView      from './BookView.vue'
 import ScrollView    from './ScrollView.vue'
 import ThumbStrip    from './ThumbStrip.vue'
 import ThumbGrid     from './ThumbGrid.vue'
-import SettingsPanel from './SettingsPanel.vue'
 import '@/assets/reader.css'
 
 const route  = useRoute()
@@ -55,33 +52,17 @@ const router = useRouter()
 const reader = useReader()
 provide(READER_KEY, reader)
 
-const { initLoading, initError, settings, prev, next, updateSetting, onResize, init } = reader
+const { initLoading, initError, settings, currentPage, prev, next, updateSetting, onResize, init } = reader
 
 const gid       = route.params.gid as string
 const token     = (route.query.token as string) || ''
 const startPage = parseInt(route.query.page as string) || 1
 
-const barVisible    = ref(true)
+const showSidebar   = ref(false)
 const showThumbGrid = ref(false)
-const showSettings  = ref(false)
-let barTimer: ReturnType<typeof setTimeout> | null = null
-
-function showBar() {
-  barVisible.value = true
-  resetBarTimer()
-}
-function toggleBar() {
-  barVisible.value = !barVisible.value
-  if (barVisible.value) resetBarTimer()
-}
-function resetBarTimer() {
-  if (barTimer) clearTimeout(barTimer)
-  barTimer = setTimeout(() => { barVisible.value = false }, 4000)
-}
 
 function onKey(e: KeyboardEvent) {
   if ((e.target as HTMLElement).tagName === 'INPUT') return
-  showBar()
   const rtl = settings.bookDirection === 'rtl'
   switch (e.key) {
     case 'ArrowLeft':
@@ -90,26 +71,33 @@ function onKey(e: KeyboardEvent) {
     case 'd': rtl ? prev() : next(); break
     case 'Escape':
       if (showThumbGrid.value) { showThumbGrid.value = false; return }
-      if (showSettings.value)  { showSettings.value  = false; return }
       router.back(); break
     case 'f': case 'F': showThumbGrid.value = !showThumbGrid.value; break
-    case 's': case 'S': showSettings.value  = !showSettings.value;  break
     case 'm': case 'M':
       updateSetting('readingMode', settings.readingMode === 'book' ? 'scroll' : 'book'); break
   }
 }
 
+watch(currentPage, page => {
+  const pageParam = String(page)
+  if ((route.query.page as string | undefined) === pageParam) return
+  router.replace({
+    query: {
+      ...route.query,
+      page: pageParam,
+    },
+  })
+})
+
 onMounted(async () => {
   window.addEventListener('keydown', onKey)
   window.addEventListener('resize', onResize)
-  resetBarTimer()
   await init(gid, token, startPage)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKey)
   window.removeEventListener('resize', onResize)
-  if (barTimer) clearTimeout(barTimer)
 })
 </script>
 
@@ -135,4 +123,11 @@ onBeforeUnmount(() => {
   color: var(--reader-muted);
 }
 .gr-error { color: var(--reader-error); }
+.gr-content {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  min-height: 0;
+}
 </style>
