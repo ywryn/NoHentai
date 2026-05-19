@@ -12,7 +12,7 @@
       :lazy="true"
       class="scroll-page"
       :style="{
-        marginBottom: `${settings.scrollPageMargin}px`,
+        marginBottom: '0px',
         maxWidth: `${settings.widthScale}%`,
       }"
     />
@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, inject, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, inject, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { READER_KEY } from '@/composables/useReader'
 import PageImage from './PageImage.vue'
 
@@ -30,7 +30,6 @@ const { pages, currentPage, settings, total, goTo, preload } = reader
 
 const scrollEl = ref<HTMLElement | null>(null)
 let scrollObserver: IntersectionObserver | null = null
-let programmaticScroll = false
 
 function setupScrollObserver() {
   scrollObserver?.disconnect()
@@ -41,7 +40,6 @@ function setupScrollObserver() {
 
   scrollObserver = new IntersectionObserver(
     entries => {
-      if (programmaticScroll) return
       // Update the persistent map with latest ratios
       for (const entry of entries) {
         const pageNum = parseInt((entry.target as HTMLElement).dataset.page ?? '0')
@@ -72,29 +70,27 @@ function setupScrollObserver() {
   })
 }
 
-watch(currentPage, async (n, old) => {
-  if (n === old) return
-  await nextTick()
-  const pageEls = scrollEl.value?.querySelectorAll<HTMLElement>('.scroll-page')
-  if (!pageEls) return
-  const idx = pages.value.findIndex(p => p.pageNum === n)
-  const el = idx >= 0 ? pageEls[idx] : null
-  if (!el) return
-  programmaticScroll = true
-  el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  setTimeout(() => { programmaticScroll = false }, 600)
-}, { flush: 'post' })
-
 onMounted(async () => {
   await nextTick()
   setupScrollObserver()
 })
 onBeforeUnmount(() => { scrollObserver?.disconnect() })
 
-function onScrollClick(e: MouseEvent) {
+async function onScrollClick(e: MouseEvent) {
   const ratio = e.clientX / window.innerWidth
-  if (ratio < 0.3) goTo(Math.max(1, currentPage.value - 1))
-  else if (ratio > 0.7) goTo(Math.min(total.value, currentPage.value + 1))
+  const target = ratio < 0.3
+    ? Math.max(1, currentPage.value - 1)
+    : ratio > 0.7
+      ? Math.min(total.value, currentPage.value + 1)
+      : 0
+  if (!target) return
+  goTo(target)
+  await nextTick()
+  const pageEls = scrollEl.value?.querySelectorAll<HTMLElement>('.scroll-page')
+  if (!pageEls) return
+  const idx = pages.value.findIndex(p => p.pageNum === target)
+  const el = idx >= 0 ? pageEls[idx] : null
+  el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 </script>
 
@@ -110,12 +106,23 @@ function onScrollClick(e: MouseEvent) {
   scrollbar-width: thin;
   scrollbar-color: rgba(148,163,184,0.3) transparent;
 }
+.scroll-page.page-image {
+  width: 100%;
+  height: auto;
+  min-height: 200px;
+}
+.scroll-page :deep(.pi-img) {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  max-height: none;
+}
 .scroll-page {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  min-height: 200px;
+  min-height: 0;
 }
 </style>
