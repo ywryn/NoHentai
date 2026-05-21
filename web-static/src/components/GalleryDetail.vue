@@ -34,7 +34,7 @@
                   <dd>{{ formatFavDate(galleryData.favTime) }}</dd>
                 </div>
               </dl>
-              <a class="external-link cover-ext-link" :href="externalLink" target="_blank" rel="noreferrer">Open ExHentai</a>
+              <a class="external-link cover-ext-link" :href="externalLink" @click.prevent="openExHentai">Open ExHentai</a>
             </div>
           </div>
 
@@ -127,7 +127,7 @@
             <Rating :modelValue="galleryData.rating" readonly />
             <span class="mob-score">{{ galleryData.rating ?? "N/A" }}</span>
           </div>
-          <a class="external-link" :href="externalLink" target="_blank" rel="noreferrer">Open ExHentai</a>
+          <a class="external-link" :href="externalLink" @click.prevent="openExHentai">Open ExHentai</a>
         </div>
 
         <!-- 基础信息 -->
@@ -486,6 +486,14 @@ export default {
 
     prevThumbPage() { this.thumbPage-- },
     nextThumbPage() { this.thumbPage++ },
+
+    openExHentai() {
+      if (/Android/i.test(navigator.userAgent)) {
+        window.location.href = this.externalLink;
+      } else {
+        window.open(this.externalLink, '_blank', 'noreferrer');
+      }
+    },
 
     openReader(pageNum) {
       this.$router.push({
