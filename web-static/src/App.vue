@@ -50,7 +50,7 @@ onBeforeUnmount(() => {
         </RouterLink>
         <ul class="icon-nav">
           <li>
-            <RouterLink to="/" aria-label="Ex Home" title="Ex Home">
+            <RouterLink to="/" aria-label="Home" title="Home">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M3 10.5l9-7 9 7V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z" />
               </svg>
@@ -90,7 +90,7 @@ onBeforeUnmount(() => {
       </div>
       <!-- Desktop Navigation - 静态版本 -->
       <ul class="nav-menu desktop-menu">
-        <li><RouterLink to="/">Ex Home</RouterLink></li>
+        <li><RouterLink to="/">Home</RouterLink></li>
         <li><RouterLink to="/data">Data Analys</RouterLink></li>
         <li><RouterLink to="/printed">Printed</RouterLink></li>
         <li><RouterLink to="/daily">Daily</RouterLink></li>
