@@ -13,6 +13,8 @@ import DailySearch from '@/components/DailySearch.vue';
 import GalleryReader from '@/components/reader/GalleryReader.vue';
 // @ts-ignore
 import GalleryTranslate from '@/components/GalleryTranslate.vue';
+// @ts-ignore
+import TranslateLookup from '@/components/TranslateLookup.vue';
 // // @ts-ignore
 // import TelegramFeed from '@/components/TelegramFeed.vue';
 // 静态版本移除这些组件
@@ -63,6 +65,11 @@ const routes = [
     path: '/gallery/:gid/translate',
     name: 'GalleryTranslate',
     component: GalleryTranslate,
+  },
+  {
+    path: '/translate',
+    name: 'TranslateLookup',
+    component: TranslateLookup,
   },
   // 静态版本暂时移除这些路由
   // {
