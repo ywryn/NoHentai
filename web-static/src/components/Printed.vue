@@ -178,10 +178,10 @@ function showToast(msg) {
   toastTimer = setTimeout(() => { toast.value = '' }, 2500)
 }
 
-const normalizedItems = computed(() => pagedItems.value.map(item => {
+const normalizedItems = computed(() => pagedItems.value.map((item, index) => {
   const gallery = getGallery(item.sid)
   return {
-    key: item.ID,
+    key: `${item.ID}-${index}`,
     gid: gallery ? String(item.sid) : null,
     thumb: getThumb(item),
     title: item['书名'] || item['日文名'],
