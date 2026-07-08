@@ -11,7 +11,7 @@
     "filecount": "337",
     "filesize": 383917409,
     "expunged": false,
-    "rating": "4.57",
+    "rating": "4.55",
     "torrentcount": "2",
     "torrents": [
       {
@@ -82,7 +82,7 @@
     "filecount": "103",
     "filesize": 207936134,
     "expunged": false,
-    "rating": "4.64",
+    "rating": "4.62",
     "torrentcount": "1",
     "torrents": [
       {
@@ -142,7 +142,7 @@
     "filecount": "172",
     "filesize": 170646049,
     "expunged": false,
-    "rating": "4.48",
+    "rating": "4.43",
     "torrentcount": "1",
     "torrents": [
       {
@@ -196,7 +196,7 @@
     "filecount": "188",
     "filesize": 271083624,
     "expunged": false,
-    "rating": "4.64",
+    "rating": "4.62",
     "torrentcount": "1",
     "torrents": [
       {
@@ -359,7 +359,7 @@
     "filecount": "183",
     "filesize": 446268361,
     "expunged": false,
-    "rating": "4.67",
+    "rating": "4.68",
     "torrentcount": "1",
     "torrents": [
       {
@@ -630,7 +630,7 @@
     "filecount": "108",
     "filesize": 571087918,
     "expunged": false,
-    "rating": "4.27",
+    "rating": "4.28",
     "torrentcount": "0",
     "torrents": [],
     "tags": [
@@ -1416,7 +1416,7 @@
     "filecount": "41",
     "filesize": 36246838,
     "expunged": false,
-    "rating": "4.38",
+    "rating": "4.39",
     "torrentcount": "1",
     "torrents": [
       {
@@ -1846,7 +1846,7 @@
     "filecount": "55",
     "filesize": 96178457,
     "expunged": false,
-    "rating": "4.68",
+    "rating": "4.67",
     "torrentcount": "1",
     "torrents": [
       {
@@ -1886,7 +1886,7 @@
     "filecount": "43",
     "filesize": 62076340,
     "expunged": false,
-    "rating": "4.60",
+    "rating": "4.59",
     "torrentcount": "1",
     "torrents": [
       {
@@ -1934,7 +1934,7 @@
     "filecount": "151",
     "filesize": 267760167,
     "expunged": false,
-    "rating": "4.78",
+    "rating": "4.77",
     "torrentcount": "1",
     "torrents": [
       {
@@ -2464,7 +2464,7 @@
     "filecount": "31",
     "filesize": 144457982,
     "expunged": false,
-    "rating": "4.58",
+    "rating": "4.59",
     "torrentcount": "1",
     "torrents": [
       {
@@ -7459,7 +7459,7 @@
     "filecount": "240",
     "filesize": 167615382,
     "expunged": false,
-    "rating": "4.60",
+    "rating": "4.61",
     "torrentcount": "1",
     "torrents": [
       {
@@ -8124,22 +8124,8 @@
     "filesize": 707214530,
     "expunged": false,
     "rating": "4.66",
-    "torrentcount": "4",
+    "torrentcount": "2",
     "torrents": [
-      {
-        "hash": "17031ae27e7dbe18597a7957ae8385892cb32717",
-        "added": "1779381789",
-        "name": "[ムルの本箱] アンドロイドは母子でツガウ夢を見るか ？ [中国翻訳] [Amerins漢化].zip",
-        "tsize": "25359",
-        "fsize": "653892197"
-      },
-      {
-        "hash": "5f322ab18a411b89f4aa3fbc85dc78fe20c90876",
-        "added": "1779408351",
-        "name": "[ムルの本箱] アンドロイドは母子でツガウ夢を見るか ？ [中国翻訳] [Amerins漢化].zip",
-        "tsize": "25339",
-        "fsize": "653744406"
-      },
       {
         "hash": "1c2b487130cd040cd972705407e443786ff6a304",
         "added": "1783348339",
@@ -14493,7 +14479,7 @@
     "filecount": "622",
     "filesize": 466396832,
     "expunged": false,
-    "rating": "4.44",
+    "rating": "4.43",
     "torrentcount": "1",
     "torrents": [
       {
@@ -14773,19 +14759,19 @@
     "favTime": "2026-04-08 05:28"
   },
   {
-    "gid": 3925926,
-    "token": "e74f2c6691",
-    "title": "[ゆっ栗栖] 冒險者公會的櫃檯小姐是個婊子 第1-6話  [中国翻訳] [無修正] [連載中]",
-    "title_jpn": "[ゆっ栗栖] 冒険者ギルドの受付嬢はビッチでした 第1-6話",
+    "gid": 4038690,
+    "token": "fe3eda265d",
+    "title": "[ゆっ栗栖] 冒險者公會的櫃檯小姐是個婊子 第1-7話  [中国翻訳] [無修正] [連載中]",
+    "title_jpn": "[ゆっ栗栖] 冒険者ギルドの受付嬢はビッチでした 第1-7話",
     "category": "Manga",
     "thumb": "https://ehgt.org/w/02/336/10557-eq8izwu9.webp",
     "uploader": "DDXXO",
-    "posted": "1778238597",
-    "filecount": "160",
-    "filesize": 96487303,
+    "posted": "1783511873",
+    "filecount": "202",
+    "filesize": 120328938,
     "expunged": false,
     "rating": "4.64",
-    "torrentcount": "2",
+    "torrentcount": "3",
     "torrents": [
       {
         "hash": "409e64e2f8d505e94476e8a9067826002c8b125c",
@@ -14800,6 +14786,13 @@
         "name": "[ゆっ栗栖] 冒険者ギルドの受付嬢はビッチでした 第1-6話.rar",
         "tsize": "14846",
         "fsize": "90992509"
+      },
+      {
+        "hash": "0ba6272f40e27d6cd14d84578443ae3af52ae019",
+        "added": "1783518149",
+        "name": "[ゆっ栗栖] 冒險者公會的櫃檯小姐是個婊子 第1-7話  [中国翻訳] [無修正] [連載中].zip",
+        "tsize": "4770",
+        "fsize": "113943514"
       }
     ],
     "tags": [
@@ -14812,12 +14805,13 @@
       "female:gyaru",
       "female:huge breasts",
       "female:masturbation",
+      "female:moral degeneration",
       "other:compilation",
       "other:story arc",
       "other:uncensored"
     ],
-    "parent_gid": "3878754",
-    "parent_key": "12d4210421",
+    "parent_gid": "3925926",
+    "parent_key": "e74f2c6691",
     "first_gid": "3878754",
     "first_key": "12d4210421",
     "favCategory": "待下载",
@@ -17104,7 +17098,7 @@
     "filesize": 625874409,
     "expunged": false,
     "rating": "4.60",
-    "torrentcount": "2",
+    "torrentcount": "1",
     "torrents": [
       {
         "hash": "c5aa63696238edc80331ba5156bd0480527ccdec",
@@ -17112,13 +17106,6 @@
         "name": "(C107) [ねこらぶらん堂 (ねこじまさき)] 兄ラブ高湿度長乳妹に迫られて孕ませちゃう話 (オリジナル) [DL版].zip",
         "tsize": "33170",
         "fsize": "428787976"
-      },
-      {
-        "hash": "6967da18f1c50a08b8d502b0007faa8bdbc21a65",
-        "added": "1773683592",
-        "name": "[Nekolovelandou (Nekojima)] Ani Love Kou Shitsudo Chounyuu Imouto ni Semararete Haramasechau Hanashi [Digital]-1280x.zip",
-        "tsize": "10334",
-        "fsize": "32415295"
       }
     ],
     "tags": [
@@ -19762,7 +19749,7 @@
     "filecount": "204",
     "filesize": 85608092,
     "expunged": false,
-    "rating": "4.33",
+    "rating": "4.34",
     "torrentcount": "1",
     "torrents": [
       {
@@ -21487,7 +21474,7 @@
     "filecount": "238",
     "filesize": 275495679,
     "expunged": false,
-    "rating": "4.65",
+    "rating": "4.64",
     "torrentcount": "2",
     "torrents": [
       {
@@ -22559,7 +22546,7 @@
     "filecount": "48",
     "filesize": 232302191,
     "expunged": false,
-    "rating": "4.55",
+    "rating": "4.54",
     "torrentcount": "1",
     "torrents": [
       {
@@ -67358,16 +67345,8 @@
     "filesize": 177341340,
     "expunged": false,
     "rating": "3.90",
-    "torrentcount": "1",
-    "torrents": [
-      {
-        "hash": "851eeb65a69cc342e2ff8b74be90126bb7ce8ba2",
-        "added": "1714158790",
-        "name": "[韩漫] 阴湿路 陰濕路 1-40 [完结].zip",
-        "tsize": "13393",
-        "fsize": "170975852"
-      }
-    ],
+    "torrentcount": "0",
+    "torrents": [],
     "tags": [
       "language:chinese",
       "language:translated",
@@ -68263,6 +68242,7 @@
       "artist:shiono kou",
       "male:nipple stimulation",
       "male:shotacon",
+      "male:virginity",
       "female:big ass",
       "female:big breasts",
       "female:blowjob",
@@ -68274,6 +68254,7 @@
       "female:nakadashi",
       "female:ponytail",
       "female:rimjob",
+      "female:sex toys",
       "female:squirting",
       "other:tankoubon"
     ],
@@ -75503,6 +75484,7 @@
       "female:milf",
       "female:mother",
       "female:nakadashi",
+      "female:netorare",
       "female:piercing",
       "female:piss drinking",
       "female:pixie cut",
@@ -98883,7 +98865,6 @@
       "female:facesitting",
       "female:femdom",
       "female:footjob",
-      "female:gloves",
       "female:handjob",
       "female:inverted nipples",
       "female:nakadashi",
@@ -117900,16 +117881,8 @@
     "filesize": 206230738,
     "expunged": false,
     "rating": "4.76",
-    "torrentcount": "1",
-    "torrents": [
-      {
-        "hash": "3c43951b1359d5914185a76ae537246071e1bf97",
-        "added": "1669528917",
-        "name": "(C79) [BLACK DOG (黒犬獣)] PEARL JAM 2 (セーラームーン) [中国翻訳] [個人漢化].zip",
-        "tsize": "16006",
-        "fsize": "204599696"
-      }
-    ],
+    "torrentcount": "0",
+    "torrents": [],
     "tags": [
       "language:chinese",
       "language:translated",
