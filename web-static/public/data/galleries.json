@@ -659,7 +659,7 @@
     "filecount": "172",
     "filesize": 170646049,
     "expunged": false,
-    "rating": "4.41",
+    "rating": "4.40",
     "torrentcount": "1",
     "torrents": [
       {
@@ -753,7 +753,7 @@
     "filecount": "259",
     "filesize": 435392135,
     "expunged": false,
-    "rating": "4.81",
+    "rating": "4.82",
     "torrentcount": "4",
     "torrents": [
       {
@@ -822,7 +822,7 @@
     "filecount": "243",
     "filesize": 214931491,
     "expunged": false,
-    "rating": "4.13",
+    "rating": "4.15",
     "torrentcount": "1",
     "torrents": [
       {
@@ -1602,7 +1602,7 @@
     "filecount": "80",
     "filesize": 90445426,
     "expunged": false,
-    "rating": "4.63",
+    "rating": "4.64",
     "torrentcount": "1",
     "torrents": [
       {
@@ -2226,7 +2226,7 @@
     "filecount": "282",
     "filesize": 401594404,
     "expunged": false,
-    "rating": "4.85",
+    "rating": "4.84",
     "torrentcount": "1",
     "torrents": [
       {
@@ -2403,7 +2403,7 @@
     "filecount": "43",
     "filesize": 62076340,
     "expunged": false,
-    "rating": "4.59",
+    "rating": "4.60",
     "torrentcount": "1",
     "torrents": [
       {
@@ -3116,7 +3116,7 @@
     "filecount": "225",
     "filesize": 494325175,
     "expunged": false,
-    "rating": "4.60",
+    "rating": "4.59",
     "torrentcount": "1",
     "torrents": [
       {
@@ -3441,7 +3441,7 @@
     "filecount": "230",
     "filesize": 149936296,
     "expunged": false,
-    "rating": "4.68",
+    "rating": "4.69",
     "torrentcount": "1",
     "torrents": [
       {
@@ -11339,7 +11339,7 @@
     "filecount": "185",
     "filesize": 505624894,
     "expunged": false,
-    "rating": "4.74",
+    "rating": "4.75",
     "torrentcount": "2",
     "torrents": [
       {
@@ -14078,7 +14078,7 @@
     "filecount": "198",
     "filesize": 147775770,
     "expunged": false,
-    "rating": "4.57",
+    "rating": "4.58",
     "torrentcount": "2",
     "torrents": [
       {
@@ -28424,7 +28424,7 @@
     "filecount": "240",
     "filesize": 443325051,
     "expunged": false,
-    "rating": "4.66",
+    "rating": "4.65",
     "torrentcount": "3",
     "torrents": [
       {
@@ -39140,7 +39140,9 @@
       "female:lolicon",
       "female:mind control",
       "female:stockings",
+      "female:teacher",
       "female:very long hair",
+      "female:wings",
       "other:soushuuhen"
     ],
     "parent_gid": "3631221",
@@ -53764,6 +53766,7 @@
       "female:bukkake",
       "female:deepthroat",
       "female:defloration",
+      "female:dickgirl on female",
       "female:double penetration",
       "female:drugs",
       "female:enema",
@@ -53774,6 +53777,7 @@
       "female:masturbation",
       "female:mind break",
       "female:nakadashi",
+      "female:netorare",
       "female:petplay",
       "female:prolapse",
       "female:prostitution",
@@ -53781,6 +53785,7 @@
       "female:rimjob",
       "female:scat",
       "female:schoolgirl uniform",
+      "female:sex toys",
       "female:slave",
       "female:speculum",
       "female:triple penetration",
@@ -56776,7 +56781,7 @@
     "filecount": "55",
     "filesize": 52611955,
     "expunged": false,
-    "rating": "4.70",
+    "rating": "4.71",
     "torrentcount": "1",
     "torrents": [
       {
@@ -57274,7 +57279,7 @@
     "filecount": "54",
     "filesize": 52340675,
     "expunged": false,
-    "rating": "4.77",
+    "rating": "4.78",
     "torrentcount": "1",
     "torrents": [
       {
@@ -57963,7 +57968,7 @@
     "filecount": "37",
     "filesize": 380078154,
     "expunged": false,
-    "rating": "4.54",
+    "rating": "4.53",
     "torrentcount": "3",
     "torrents": [
       {
@@ -63545,7 +63550,7 @@
     "filecount": "60",
     "filesize": 32628268,
     "expunged": false,
-    "rating": "4.24",
+    "rating": "4.25",
     "torrentcount": "1",
     "torrents": [
       {
@@ -80005,6 +80010,7 @@
       "female:masturbation",
       "female:moral degeneration",
       "female:nakadashi",
+      "female:prostitution",
       "female:sex toys",
       "female:shared senses",
       "female:twintails",
@@ -82633,7 +82639,8 @@
       "female:big breasts",
       "female:gyaru",
       "female:hotpants",
-      "female:sole female"
+      "female:sole female",
+      "other:multi-work series"
     ],
     "parent_gid": "3013441",
     "parent_key": "481b9cae9d",
@@ -88212,20 +88219,13 @@
     "filesize": 78710607,
     "expunged": false,
     "rating": "4.70",
-    "torrentcount": "2",
+    "torrentcount": "1",
     "torrents": [
       {
         "hash": "db76538ec7ce3d1947f6ad552ab041ea18476d9b",
         "added": "1709848237",
         "name": "[ダンジエンジン (司馬ゆうじ)] オスガキ銭湯 [中国語] [無修正] [DL版].zip",
         "tsize": "23444",
-        "fsize": "75375383"
-      },
-      {
-        "hash": "19d323e0c404266904a9cd9b97ac6b2bbb5b46a1",
-        "added": "1709858204",
-        "name": "[ダンジエンジン (司馬ゆうじ)] オスガキ銭湯 [中国語] [無修正] [DL版].zip",
-        "tsize": "11902",
         "fsize": "75375383"
       }
     ],
@@ -110279,7 +110279,7 @@
     "filecount": "1073",
     "filesize": 339676205,
     "expunged": false,
-    "rating": "4.78",
+    "rating": "4.79",
     "torrentcount": "1",
     "torrents": [
       {
@@ -131114,6 +131114,7 @@
       "female:sex toys",
       "female:stockings",
       "female:tail plug",
+      "female:teacher",
       "female:unusual pupils",
       "female:very long hair",
       "female:wings",
@@ -150262,6 +150263,7 @@
       "parody:original",
       "group:kedama gyuunyuu",
       "artist:tamano kedama",
+      "male:bondage",
       "female:collar",
       "female:crotch tattoo",
       "female:demon girl",
@@ -150272,6 +150274,7 @@
       "female:gothic lolita",
       "female:heterochromia",
       "female:horns",
+      "female:inverted nipples",
       "female:lolicon",
       "female:ponytail",
       "female:smalldom",
@@ -150279,7 +150282,9 @@
       "female:stockings",
       "female:tail",
       "female:twintails",
+      "female:unusual pupils",
       "female:very long hair",
+      "female:x-ray",
       "mixed:ffm threesome",
       "mixed:group",
       "other:soushuuhen",
@@ -159539,21 +159544,30 @@
       "artist:commamion",
       "artist:numa",
       "male:anal",
+      "male:anal intercourse",
       "male:angel",
       "male:bisexual",
       "male:bunny boy",
       "male:catboy",
+      "male:cbt",
       "male:clothed female nude male",
       "male:crossdressing",
       "male:dark skin",
       "male:elf",
+      "male:exhibitionism",
+      "male:exposed clothing",
+      "male:forced exposure",
       "male:gender change",
+      "male:humiliation",
       "male:kemonomimi",
       "male:kodomo doushi",
       "male:leotard",
       "male:masturbation",
+      "male:nakadashi",
+      "male:nipple stimulation",
       "male:phimosis",
       "male:prostate massage",
+      "male:rape",
       "male:shotacon",
       "male:small penis",
       "male:spanking",
@@ -159566,6 +159580,7 @@
       "female:cunnilingus",
       "female:dark skin",
       "female:demon girl",
+      "female:femdom",
       "female:fingering",
       "female:footjob",
       "female:gender change",
@@ -159586,6 +159601,7 @@
       "mixed:incest",
       "mixed:kodomo doushi",
       "mixed:mmf threesome",
+      "other:kodomo only",
       "other:uncensored"
     ],
     "favCategory": "默认位置",
