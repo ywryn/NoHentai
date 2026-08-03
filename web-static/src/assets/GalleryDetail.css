@@ -18,7 +18,10 @@
   gap: 16px;
 }
 
-/* 单列优先，够宽时侧栏化。此前是桌面/移动两套完整 DOM 靠 display 切换。 */
+/* 单列优先，够宽时侧栏化。
+   左栏内容恒定（封面 + 徽章 + 按钮），右栏内容随标题行数浮动；
+   用 stretch + 右栏底部块 margin-top:auto 让两栏底边始终对齐，
+   富余空间落在标题与元信息之间，读起来是刻意的留白而不是参差。 */
 .gd-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -34,9 +37,55 @@
 
 @media (min-width: 768px) {
   .gd-hero {
-    grid-template-columns: 280px minmax(0, 1fr);
-    align-items: start;
+    /* 240 而非 280：左栏内容恒定，栏宽直接决定封面高度进而决定整行高度。
+       收窄后左栏自然高度更贴近右栏，富余空间从 ~200px 降到 ~100px。 */
+    grid-template-columns: 240px minmax(0, 1fr);
+    align-items: stretch;
   }
+
+  .gd-main > .gd-meta-row { margin-top: auto; }
+}
+
+/* ===== 元信息行（评分 / 发布 / 收藏） ===== */
+.gd-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.gd-meta-item {
+  flex: 1 1 150px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+}
+
+.gd-meta-key {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-color);
+}
+
+.gd-meta-val {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--title-color);
+  overflow-wrap: anywhere;
+}
+
+.gd-meta-rating .rating-score {
+  font-size: 14px;
+  color: var(--title-color);
 }
 
 /* ===== Shared panel base ===== */
@@ -53,18 +102,33 @@
   padding: 14px;
   display: flex;
   flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
 }
 
-/* 窄屏封面与信息并排，避免竖向占掉整屏 */
+.gd-cover-panel .category-badge {
+  align-self: flex-start;
+  justify-self: start;
+}
+
+/* 封面图占据富余空间，使左栏底边与右栏对齐时图片不会被压扁 */
+.gd-cover-panel .cover-shell {
+  flex: 0 1 auto;
+  min-height: 0;
+}
+
+/* 窄屏封面与徽章/按钮并排，避免竖向占掉整屏 */
 @media (max-width: 767px) {
   .gd-cover-panel {
     display: grid;
     grid-template-columns: minmax(0, 118px) minmax(0, 1fr);
-    gap: 14px;
+    grid-template-rows: auto 1fr;
+    gap: 10px 14px;
     align-items: start;
   }
 
   .gd-cover-panel .cover-shell {
+    grid-row: 1 / -1;
     aspect-ratio: 7 / 10;
   }
 
@@ -73,7 +137,13 @@
     object-fit: cover;
   }
 
-  .cover-meta { margin-top: 0; }
+  /* grid 布局下要用 justify-self，align-self 管的是块轴 */
+  .gd-cover-panel .category-badge {
+    align-self: start;
+    justify-self: start;
+  }
+
+  .gd-cover-panel .cover-ext-link { align-self: end; }
 }
 
 .cover-shell {
