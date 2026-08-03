@@ -305,11 +305,12 @@
   font-weight: 600;
   text-align: center;
   padding: 0 4px;
-  outline: none;
 }
 
-.pag-jump-input:focus {
+.pag-jump-input:focus-visible {
   border-color: var(--primary-color);
+  outline: 2px solid var(--primary-color);
+  outline-offset: 1px;
 }
 
 .pag-jump-total {

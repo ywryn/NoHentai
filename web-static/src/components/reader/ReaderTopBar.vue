@@ -140,7 +140,10 @@ const pageCounter = computed(() => {
   font-size: 12px;
   padding: 2px 4px;
   cursor: pointer;
-  outline: none;
+}
+.tb-select:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 1px;
 }
 .tb-select option { background: #1f2937; color: #fff; }
 

@@ -4,8 +4,9 @@
       @click="toggleMomMode"
       class="mom-mode-btn"
       :class="{ 'active': isMomMode }"
-      :aria-label="getMomModeLabel()"
-      :title="`${getMomModeLabel()}: ${isMomMode ? '已开启' : '已关闭'}`"
+      :aria-pressed="isMomMode"
+      :aria-label="`${getMomModeLabel()}（${isMomMode ? '已开启' : '已关闭'}）`"
+      :title="isMomMode ? '妈妈模式已开启 · 悬停或长按可临时查看' : '开启妈妈模式（图片模糊遮蔽）'"
     >
       <!-- 关闭状态：眼睛图标 -->
       <svg 
@@ -70,9 +71,10 @@ const { isMomMode, toggleMomMode, getMomModeLabel } = useMomMode()
   background: var(--surface-color);
   color: var(--text-color);
   cursor: pointer;
-  transition: all 0.2s ease;
-  outline: none;
-  box-shadow: none;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
 }
 
 .mom-mode-btn:hover {
@@ -83,10 +85,6 @@ const { isMomMode, toggleMomMode, getMomModeLabel } = useMomMode()
 
 .mom-mode-btn:hover svg {
   color: #ff6b9d;
-}
-
-.mom-mode-btn:focus {
-  outline: none;
 }
 
 /* 激活状态时的特殊样式 */
