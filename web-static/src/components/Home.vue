@@ -96,7 +96,13 @@
           </div>
         </div>
 
-        <GalleryList :items="normalizedItems" :loading="loading" @click="handleGalleryClick" />
+        <GalleryList
+          :items="normalizedItems"
+          :loading="loading"
+          :skeleton-count="perPage"
+          empty-text="没有匹配的画廊"
+          empty-hint="试试放宽条件，或点搜索框右侧的「语法」查看高级用法"
+        />
 
         <div class="home-pagination-footer" v-if="totalPages > 1">
           <div class="pagination-control">
@@ -391,6 +397,7 @@ function toggleType(type) {
 const normalizedItems = computed(() => mappedResults.value.map(item => ({
   key: item.gid,
   gid: item.gid,
+  to: item.gid ? `/gallery/${item.gid}/` : null,
   thumb: item.thumb,
   title: item.title_jpn || item.title,
   badge: item.type,
@@ -405,9 +412,6 @@ const normalizedItems = computed(() => mappedResults.value.map(item => ({
   noMetaText: null,
 })))
 
-function handleGalleryClick(item) {
-  if (item.gid) router.push(`/gallery/${item.gid}/`)
-}
 function submitPageJump() {
   const normalized = pageJumpValue.value.replace(/[^\d]/g, '')
   if (!normalized) {
