@@ -47,8 +47,7 @@
   min-width: 0;
 }
 
-.home-eyebrow,
-.home-filter-eyebrow {
+.home-eyebrow {
   font-size: 11px;
   font-weight: 700;
   color: var(--muted-color);
@@ -325,32 +324,25 @@
   border-style: solid;
 }
 
-.home-filter-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.home-type-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.home-type-pill {
-  appearance: none;
-  min-height: 34px;
-  padding: 0 12px;
-  border-radius: 8px;
+/* ── 分类筛选触发器 ──────────────────────────────────────
+   原先是 10 个宽度不一的 pill 走 flex-wrap，行数随视口在 2/3/5 行之间
+   跳变、尾部永远参差；且给了 2028 条的 Doujinshi 和 0 条的 Asian Porn
+   同等视觉权重（前两类占全部藏品的 90%）。改为收进下拉多选面板。 */
+.home-filter-btn {
+  height: 40px;
+  padding: 0 10px 0 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   background: var(--surface-color);
-  color: var(--text-color);
+  color: var(--muted-color);
   font-size: 13px;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
+  flex-shrink: 0;
+  max-width: 190px;
+  white-space: nowrap;
   cursor: pointer;
   transition:
     background-color var(--dur-fast) var(--ease-out),
@@ -358,36 +350,125 @@
     color var(--dur-fast) var(--ease-out);
 }
 
-.home-type-pill:hover {
+.home-filter-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.home-filter-btn:hover {
   background: var(--hover-bg);
   border-color: var(--primary-color);
+  color: var(--text-color);
 }
 
-.home-type-pill.active {
+.home-filter-btn.is-on {
   background: var(--primary-soft-bg);
   border-color: var(--primary-soft-border);
   color: var(--primary-on-soft);
 }
 
-.home-type-count {
-  min-width: 18px;
-  padding: 0 5px;
-  height: 17px;
-  border-radius: 999px;
-  background: var(--tag-bg);
-  border: 1px solid var(--tag-border);
-  color: var(--muted-color);
+.home-filter-caret {
   font-size: 10px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  opacity: 0.7;
 }
 
-.home-type-pill.active .home-type-count {
-  background: var(--primary-soft-bg);
-  border-color: var(--primary-soft-border);
-  color: var(--primary-on-soft);
+/* ── 分类多选面板 ────────────────────────────────────── */
+
+.category-popover {
+  max-width: 280px;
+}
+
+.category-panel {
+  min-width: 232px;
+}
+
+.category-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 6px 8px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 4px;
+}
+
+.category-panel-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted-color);
+  letter-spacing: 0.04em;
+}
+
+.category-reset {
+  padding: 2px 8px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--primary-color);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.category-reset:hover {
+  background: var(--hover-bg);
+  color: var(--primary-color-hover);
+}
+
+.category-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.category-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: var(--tap-target);
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.category-row:hover { background: var(--hover-bg); }
+
+/* 当前查询下没有结果的分类：可见但不可选，避免点进空结果 */
+.category-row.is-empty {
+  opacity: 0.42;
+  cursor: default;
+}
+
+.category-row.is-empty:hover { background: transparent; }
+
+.category-check {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--primary-color);
+  cursor: inherit;
+  flex-shrink: 0;
+}
+
+.category-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-color);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 
 .home-type-dot {
@@ -653,13 +734,20 @@
     gap: 6px;
   }
 
-  .home-type-grid {
-    gap: 8px;
+  /* 窄屏搜索行换行：输入框独占一行，两个按钮平分下一行 */
+  .home-search-row {
+    flex-wrap: wrap;
   }
 
-  .home-type-pill {
-    font-size: 12px;
-    padding: 0 10px;
+  .home-search-wrap {
+    flex: 1 1 100%;
+  }
+
+  .home-filter-btn,
+  .home-syntax-btn {
+    flex: 1 1 0;
+    max-width: none;
+    justify-content: center;
   }
 }
 
