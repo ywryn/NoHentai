@@ -1,49 +1,4 @@
-body {
-  background-color: var(--bg-color);
-  margin: 0;
-  padding: 0;
-  color: var(--text-color);
-  font-family: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-#app {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-:root {
-  --bg-color: #0f172a;
-  --text-color: #f1f5f9;
-  --surface-color: #1e293b;
-  --border-color: #334155;
-  --hover-bg: #475569;
-}
-
-.my-app-light {
-  --bg-color: #faf8f5;
-  --text-color: #2d3748;
-  --surface-color: #f1ede7;
-  --border-color: #d6d3d1;
-  --hover-bg: #e7e2dc;
-}
-
-.my-app-dark {
-  --bg-color: #0f172a;
-  --text-color: #f1f5f9;
-  --surface-color: #1e293b;
-  --border-color: #334155;
-  --hover-bg: #475569;
-}
-
-.seo-description {
-  position: absolute;
-  left: -10000px;
-  top: auto;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-}
+/* 主题变量统一由 src/style.css 定义，本文件只消费不定义。 */
 
 .container {
   width: 100%;
@@ -153,6 +108,13 @@ body {
   color: var(--muted-color);
 }
 
+/* type=search 只为拿到移动端键盘的「搜索」键，清除按钮用自绘的那颗，
+   否则 Chrome 会额外渲染一个原生 × 造成两颗清除按钮 */
+.home-search-input::-webkit-search-cancel-button {
+  appearance: none;
+  display: none;
+}
+
 .home-search-help {
   font-size: 12px;
   color: var(--muted-color);
@@ -166,6 +128,8 @@ body {
 }
 
 .home-tag-suggest {
+  list-style: none;
+  margin: 0;
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
@@ -194,8 +158,13 @@ body {
   cursor: pointer;
 }
 
-.home-tag-suggest-item:hover {
+.home-tag-suggest-item:hover,
+.home-tag-suggest-item.is-active {
   background: var(--hover-bg);
+}
+
+.home-tag-suggest-item.is-active {
+  box-shadow: inset 2px 0 0 var(--primary-color);
 }
 
 .home-tag-suggest-main {
@@ -211,37 +180,149 @@ body {
   overflow-wrap: anywhere;
 }
 
-.home-search-btn,
-.home-clear-btn {
+/* 语法帮助入口：此前是搜索框里一个 12px 的「?」字符，
+   无按钮外观、颜色又是 muted，功能几乎不可能被发现。 */
+.home-syntax-btn {
   height: 40px;
-  padding: 0 14px;
-  border-radius: 8px;
+  padding: 0 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
+  background: var(--surface-color);
+  color: var(--muted-color);
   font-size: 13px;
   font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
 }
 
-.home-search-btn {
-  background: #4caf50;
-  border-color: #4caf50;
-  color: #fff;
+.home-syntax-btn svg {
+  width: 15px;
+  height: 15px;
 }
 
-.home-search-btn:hover {
-  background: #3a9940;
-  border-color: #3a9940;
-}
-
-.home-clear-btn {
-  background: var(--surface-color);
+.home-syntax-btn:hover {
+  background: var(--hover-bg);
+  border-color: var(--primary-color);
   color: var(--text-color);
 }
 
-.home-clear-btn:hover {
+.home-search-clear {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--tag-bg);
+  color: var(--muted-color);
+  font-size: 15px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.home-search-clear:hover {
   background: var(--hover-bg);
+  color: var(--text-color);
+}
+
+/* ── 当前生效条件 ────────────────────────────────────────── */
+
+.home-active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.home-active-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-color);
+  margin-right: 2px;
+}
+
+.home-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--primary-soft-border);
+  background: var(--primary-soft-bg);
+  color: var(--primary-on-soft);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+.home-filter-chip:hover {
+  background: var(--primary-soft-bg);
+  color: var(--primary-on-soft);
   border-color: var(--primary-color);
+}
+
+.home-filter-chip.is-exclude {
+  border-color: rgba(220, 80, 80, 0.42);
+  background: rgba(220, 80, 80, 0.12);
+  color: #e79494;
+  text-decoration: line-through;
+  text-decoration-color: rgba(231, 148, 148, 0.6);
+}
+
+.my-app-light .home-filter-chip.is-exclude { color: #b03a3a; }
+
+.home-filter-chip.is-or {
+  border-color: rgba(148, 163, 184, 0.45);
+  background: var(--tag-bg);
+  color: var(--tag-color);
+}
+
+.chip-sign {
+  font-weight: 800;
+  opacity: 0.85;
+  text-decoration: none;
+}
+
+.chip-x {
+  margin-left: 2px;
+  opacity: 0.6;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.home-filter-chip:hover .chip-x { opacity: 1; }
+
+.home-clear-all {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-color);
+  background: transparent;
+  color: var(--muted-color);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.home-clear-all:hover {
+  background: var(--hover-bg);
+  color: var(--text-color);
+  border-style: solid;
 }
 
 .home-filter-meta {
@@ -271,7 +352,10 @@ body {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
 }
 
 .home-type-pill:hover {
@@ -280,17 +364,30 @@ body {
 }
 
 .home-type-pill.active {
-  background: rgba(100, 108, 255, 0.12);
-  border-color: rgba(100, 108, 255, 0.45);
-  color: #c7ceff;
+  background: var(--primary-soft-bg);
+  border-color: var(--primary-soft-border);
+  color: var(--primary-on-soft);
 }
 
-.my-app-light .home-type-pill.active {
-  color: #4f46e5;
+.home-type-count {
+  min-width: 18px;
+  padding: 0 5px;
+  height: 17px;
+  border-radius: 999px;
+  background: var(--tag-bg);
+  border: 1px solid var(--tag-border);
+  color: var(--muted-color);
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.home-type-pill.all-pill.active {
-  color: var(--title-color);
+.home-type-pill.active .home-type-count {
+  background: var(--primary-soft-bg);
+  border-color: var(--primary-soft-border);
+  color: var(--primary-on-soft);
 }
 
 .home-type-dot {
@@ -350,11 +447,12 @@ body {
   font-weight: 600;
   text-align: center;
   padding: 0 4px;
-  outline: none;
 }
 
-.pag-jump-input:focus {
+.pag-jump-input:focus-visible {
   border-color: var(--primary-color);
+  outline: 2px solid var(--primary-color);
+  outline-offset: 1px;
 }
 
 .pag-jump-total {
@@ -379,11 +477,14 @@ body {
   cursor: pointer;
   padding: 0 8px;
   line-height: 1;
-  transition: background 0.12s, color 0.12s;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
 }
 
 .pag-btn:hover:not(:disabled) {
   background: var(--hover-bg);
+  border-color: var(--border-color);
   color: var(--text-color);
 }
 
@@ -417,23 +518,69 @@ body {
 .p-popover::before { border-color: transparent transparent var(--border-color) transparent !important; }
 
 .search-help-popover {
-  max-width: 260px;
+  max-width: 380px;
 }
 
 .search-help-content {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   font-size: 12px;
 }
 
 .search-help-title {
   font-weight: 700;
-  margin-bottom: 2px;
+  font-size: 13px;
 }
 
-.search-help-list div {
-  opacity: 0.9;
+.search-help-note {
+  margin: 0 0 6px;
+  font-size: 11px;
+  color: var(--muted-color);
+}
+
+.search-help-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.search-help-row {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  gap: 4px 10px;
+  align-items: baseline;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-color);
+  text-align: left;
+  cursor: pointer;
+}
+
+.search-help-row:hover {
+  background: var(--hover-bg);
+  color: var(--text-color);
+}
+
+.search-help-syntax {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--primary-on-soft);
+  white-space: nowrap;
+}
+
+.search-help-desc {
+  font-size: 12px;
+  color: var(--text-color);
+}
+
+.search-help-example {
+  grid-column: 2;
+  font-size: 11px;
+  color: var(--muted-color);
 }
 
 .p-paginator {
@@ -501,28 +648,22 @@ body {
   }
 }
 
-@media (max-width: 700px) {
-  .home-search-row {
-    flex-wrap: wrap;
-  }
-
-  .home-search-wrap {
-    width: 100%;
-    flex: 1 1 100%;
-  }
-
-  .home-search-btn,
-  .home-clear-btn {
-    flex: 1 1 0;
-  }
-
+@media (max-width: 767px) {
   .pagination-control {
     gap: 6px;
   }
 
+  .home-type-grid {
+    gap: 8px;
+  }
+
+  .home-type-pill {
+    font-size: 12px;
+    padding: 0 10px;
+  }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 560px) {
   .home-page {
     padding: 10px;
   }

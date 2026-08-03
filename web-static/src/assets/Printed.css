@@ -75,11 +75,40 @@
   min-width: 0;
 }
 
+.digi-search-input::-webkit-search-cancel-button {
+  appearance: none;
+  display: none;
+}
+
+.digi-search-clear {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--tag-bg);
+  color: var(--muted-color);
+  font-size: 15px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.digi-search-clear:hover {
+  background: var(--hover-bg);
+  color: var(--text-color);
+}
+
 .digi-search-input::placeholder {
   color: var(--muted-color);
 }
 
 .digi-tag-suggest {
+  list-style: none;
+  margin: 0;
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
@@ -108,6 +137,11 @@
   cursor: pointer;
 }
 
+.digi-tag-suggest-item.is-active {
+  box-shadow: inset 2px 0 0 var(--primary-color);
+}
+
+.digi-tag-suggest-item.is-active,
 .digi-tag-suggest-item:hover {
   background: var(--hover-bg);
 }
@@ -281,7 +315,7 @@
 }
 
 /* ── 响应式 ── */
-@media (max-width: 600px) {
+@media (max-width: 767px) {
   .digi-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 8px;

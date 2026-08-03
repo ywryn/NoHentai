@@ -11,27 +11,36 @@
   margin: 0 auto;
 }
 
-/* ===== Layout switch ===== */
-.layout-desktop { display: flex; flex-direction: column; gap: 16px; }
-.layout-mobile  { display: none; }
-
-/* ===== Desktop: Hero grid ===== */
-.gallery-detail-hero {
-  display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
-  grid-template-rows: auto 1fr;
-  grid-template-areas:
-    "cover copy"
-    "cover main";
+/* ===== Layout ===== */
+.gallery-detail-page {
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
-.gallery-detail-hero > .hero-copy   { grid-area: copy; align-self: start; }
-.gallery-detail-hero > .cover-panel { grid-area: cover; align-self: stretch; }
-.gallery-detail-hero > .hero-main   { grid-area: main; align-self: stretch; }
+/* 单列优先，够宽时侧栏化。此前是桌面/移动两套完整 DOM 靠 display 切换。 */
+.gd-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.gd-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .gd-hero {
+    grid-template-columns: 280px minmax(0, 1fr);
+    align-items: start;
+  }
+}
 
 /* ===== Shared panel base ===== */
-.cover-panel,
+.gd-cover-panel,
 .detail-panel {
   background: var(--row-bg);
   border: 1px solid var(--row-border);
@@ -40,10 +49,31 @@
 }
 
 /* ===== Cover panel ===== */
-.cover-panel {
+.gd-cover-panel {
   padding: 14px;
   display: flex;
   flex-direction: column;
+}
+
+/* 窄屏封面与信息并排，避免竖向占掉整屏 */
+@media (max-width: 767px) {
+  .gd-cover-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 118px) minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+  }
+
+  .gd-cover-panel .cover-shell {
+    aspect-ratio: 7 / 10;
+  }
+
+  .gd-cover-panel .cover-shell img {
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .cover-meta { margin-top: 0; }
 }
 
 .cover-shell {
@@ -99,11 +129,11 @@
 }
 
 .cover-info-row a {
-  color: #8fb3ff;
+  color: var(--primary-color);
   text-decoration: none;
 }
 
-.cover-info-row a:hover { color: #b7ccff; }
+.cover-info-row a:hover { color: var(--primary-color-hover); }
 
 /* ===== Category badge ===== */
 .category-badge {
@@ -119,16 +149,16 @@
   white-space: nowrap;
 }
 
-.category-badge.red       { background: #a22; }
-.category-badge.orange    { background: #d67e22; }
-.category-badge.yellow    { background: #d6a922; }
-.category-badge.green     { background: #4caf50; }
-.category-badge.gold      { background: #d4af37; }
-.category-badge.lightblue { background: #4ca3dd; }
-.category-badge.blue      { background: #2a78d6; }
-.category-badge.purple    { background: #7e57c2; }
-.category-badge.pink      { background: #d81b60; }
-.category-badge.gray      { background: #757575; }
+.category-badge.red       { background: #a02222; }
+.category-badge.orange    { background: #9c5410; }
+.category-badge.yellow    { background: #f0c000; color: #3a2c00; }
+.category-badge.green     { background: #2f7d36; }
+.category-badge.gold      { background: #e0bd44; color: #382c00; }
+.category-badge.lightblue { background: #8fd0f5; color: #0a2a3d; }
+.category-badge.blue      { background: #1e63b8; }
+.category-badge.purple    { background: #6a44b0; }
+.category-badge.pink      { background: #c2185b; }
+.category-badge.gray      { background: #5f5f5f; }
 .category-badge.default   { background: #475569; }
 
 /* ===== Hero copy ===== */
@@ -147,7 +177,7 @@
 
 .title {
   margin: 8px 0 0;
-  font-size: clamp(28px, 3vw, 40px);
+  font-size: clamp(21px, 3vw, 38px);
   line-height: 1.08;
   color: var(--title-color);
   overflow-wrap: anywhere;
@@ -156,7 +186,7 @@
 .subtitle {
   margin: 10px 0 0;
   color: var(--muted-color);
-  font-size: 15px;
+  font-size: clamp(13px, 1.4vw, 15px);
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
@@ -176,7 +206,9 @@
   text-decoration: none;
   font-size: 13px;
   font-weight: 700;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
 }
 
 .external-link:hover {
@@ -329,32 +361,59 @@
   gap: 6px;
 }
 
-.tag {
-  margin: 0 !important;
-  background: var(--tag-bg) !important;
-  border: 1px solid var(--tag-border) !important;
-  color: var(--tag-color) !important;
-  border-radius: 6px !important;
-  padding: 5px 8px !important;
-  font-size: 12px !important;
+.tags-hint {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--muted-color);
 }
 
-.tag-copyable {
+/* 标签 chip：主区跳搜索、副区复制语法。
+   此前整块只做「复制」，且反馈是把文字换成「已复制」导致整行重排跳动。 */
+.tag-chip {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--tag-border);
+  background: var(--tag-bg);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+.tag-chip:hover { border-color: var(--primary-color); }
+
+.tag-chip-main {
+  padding: 5px 8px;
+  font-size: 12px;
+  color: var(--tag-color);
+  text-decoration: none;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.tag-chip-main:hover {
+  background: var(--primary-soft-bg);
+  color: var(--primary-on-soft);
+}
+
+.tag-chip-copy {
+  width: 26px;
+  padding: 0;
+  border: none;
+  border-left: 1px solid var(--tag-border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted-color);
+  font-size: 12px;
+  line-height: 1;
   cursor: pointer;
-  user-select: none;
-  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+  flex-shrink: 0;
+  /* 宽度固定，切到 ✓ 时不会引起重排 */
 }
 
-.tag-copyable:hover {
-  transform: translateY(-1px);
-  background: color-mix(in srgb, var(--tag-bg) 75%, var(--primary-color) 25%) !important;
-  border-color: var(--primary-color) !important;
-}
-
-.tag-copied {
-  background: color-mix(in srgb, var(--tag-bg) 65%, #22c55e 35%) !important;
-  border-color: #22c55e !important;
-  color: #eafff3 !important;
+.tag-chip-copy:hover {
+  background: var(--hover-bg);
+  color: var(--text-color);
+  border-color: var(--tag-border);
 }
 
 /* ===== Torrents ===== */
@@ -419,7 +478,6 @@
 
 /* ===== Mom mode ===== */
 .mom-mode .cover-shell img,
-.mom-mode .mob-cover img,
 .mom-mode .thumb-inner {
   filter: blur(var(--mom-mode-blur));
 }
@@ -429,144 +487,26 @@
   .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-/* ===== Mobile Layout (<720px) ===== */
-@media (max-width: 720px) {
-  .layout-desktop { display: none; }
-  .layout-mobile  { display: flex; flex-direction: column; gap: 12px; }
-
+/* ===== 窄屏微调（布局本身已是单列，这里只调间距与表格） ===== */
+@media (max-width: 767px) {
   .gallery-detail-wrapper { padding: 12px; }
 
-  /* 标题区 */
-  .mob-header {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+  .gd-hero { gap: 12px; }
+
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  /* Torrents 收窄：隐藏次要列，避免横向滚动 */
+  .torrent-table { min-width: 0; width: 100%; }
+
+  .torrent-table th,
+  .torrent-table td {
+    padding: 10px 8px;
+    font-size: 12px;
+    white-space: normal;
   }
 
-  .mob-title {
-    margin: 0;
-    font-size: 20px;
-    line-height: 1.3;
-    color: var(--title-color);
-    overflow-wrap: anywhere;
-  }
-
-  .mob-subtitle {
-    margin: 0;
-    font-size: 13px;
-    color: var(--muted-color);
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-  }
-
-  /* 封面 */
-  .mob-cover {
-    border-radius: 8px;
-    overflow: hidden;
-    background: var(--sidebar-bg);
-    border: 1px solid var(--row-border);
-    aspect-ratio: 7 / 10;
-  }
-
-  .mob-cover img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  /* 评分 + 按钮行 */
-  .mob-quick {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 10px 14px;
-    background: var(--row-bg);
-    border: 1px solid var(--row-border);
-    border-radius: 8px;
-  }
-
-  .mob-rating {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .mob-score {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--title-color);
-  }
-
-  /* 基础信息 */
-  .mob-info-list {
-    margin: 0;
-    padding: 0 14px;
-    background: var(--row-bg);
-    border: 1px solid var(--row-border);
-    border-radius: 8px;
-  }
-
-  .mob-info-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--row-border);
-  }
-
-  .mob-info-row:last-child { border-bottom: none; }
-
-  .mob-info-row dt {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--muted-color);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .mob-info-row dd {
-    margin: 0;
-    font-size: 13px;
-    color: var(--title-color);
-    text-align: right;
-  }
-
-  /* 统计卡片 */
-  .mob-stats {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
-
-  .mob-stat-card {
-    background: var(--row-bg);
-    border: 1px solid var(--row-border);
-    border-radius: 8px;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  /* 标签面板 */
-  .mob-tags-panel {
-    padding: 14px;
-  }
-
-  .mob-tag-group {
-    grid-template-columns: 1fr;
-    gap: 6px;
-  }
-
-  /* Torrents 小屏精简列 */
-  .layout-mobile .torrent-table { min-width: 0; width: 100%; }
-  .layout-mobile .torrent-table th,
-  .layout-mobile .torrent-table td { padding: 10px 8px; font-size: 12px; white-space: normal; }
+  .torrent-table .tt-tsize,
+  .torrent-table .tt-added { display: none; }
 }
 
 /* ── Thumbnail Gallery ── */

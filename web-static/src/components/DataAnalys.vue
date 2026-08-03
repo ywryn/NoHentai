@@ -2,12 +2,12 @@
     <div class="data-container">
         <div class="data-page-header">
             <div class="page-copy">
-                <div class="page-eyebrow">Analytics</div>
-                <h1 class="page-title">Gallery Statistics</h1>
-                <p class="page-subtitle">Collection trends, category distribution, tag breakdowns, and favorite activity across the archive.</p>
+                <div class="page-eyebrow">数据分析</div>
+                <h1 class="page-title">收藏统计</h1>
+                <p class="page-subtitle">收藏趋势、分类构成、标签排行与收藏活跃度。点击标签可跳回首页按该标签检索。</p>
             </div>
             <div class="summary-card">
-                <span class="summary-label">Total Galleries</span>
+                <span class="summary-label">收录总数</span>
                 <strong class="summary-value">{{ stats.total_count }}</strong>
             </div>
         </div>
@@ -15,8 +15,8 @@
         <section class="data-panel heatmap-section">
             <div class="panel-header">
                 <div>
-                    <div class="panel-eyebrow">Activity</div>
-                    <h2 class="section-title">Favorite Activity</h2>
+                    <div class="panel-eyebrow">活跃度</div>
+                    <h2 class="section-title">收藏热力图</h2>
                 </div>
             </div>
             <div class="heatmap-chart-container">
@@ -28,15 +28,15 @@
             <section class="data-panel stats-left">
                 <div class="panel-header panel-header-spread">
                     <div>
-                        <div class="panel-eyebrow">Trend</div>
-                        <h2 class="section-title-large">Quarterly Growth</h2>
+                        <div class="panel-eyebrow">趋势</div>
+                        <h2 class="section-title-large">季度增长</h2>
                     </div>
                     <div class="toggle-wrapper">
-                        <span class="toggle-label">Show All</span>
+                        <span class="toggle-label">显示全部年份</span>
                         <ToggleSwitch v-model="showFullData" @change="toggleFullData" />
                     </div>
                 </div>
-                <p class="stats-text">Total Galleries: {{ stats.total_count }}</p>
+                <p class="stats-text">累计 {{ stats.total_count }} 部</p>
                 <div class="line-chart-container">
                     <Chart type="line" :data="quarterlyLineData" :options="quarterlyLineOptions" class="chart-full" />
                 </div>
@@ -44,8 +44,8 @@
             <section class="data-panel stats-right">
                 <div class="panel-header">
                     <div>
-                        <div class="panel-eyebrow">Distribution</div>
-                        <h2 class="section-title">Categories</h2>
+                        <div class="panel-eyebrow">构成</div>
+                        <h2 class="section-title">分类分布</h2>
                     </div>
                 </div>
                 <div class="chart-container">
@@ -58,8 +58,8 @@
             <section class="data-panel tags-section-half">
                 <div class="panel-header">
                     <div>
-                        <div class="panel-eyebrow">Tags</div>
-                        <h2 class="section-title">Female Tags</h2>
+                        <div class="panel-eyebrow">标签</div>
+                        <h2 class="section-title">Female 标签排行</h2>
                     </div>
                 </div>
                 <div class="chart-container">
@@ -69,8 +69,8 @@
             <section class="data-panel tags-section-half">
                 <div class="panel-header">
                     <div>
-                        <div class="panel-eyebrow">Tags</div>
-                        <h2 class="section-title">Male Tags</h2>
+                        <div class="panel-eyebrow">标签</div>
+                        <h2 class="section-title">Male 标签排行</h2>
                     </div>
                 </div>
                 <div class="chart-container">
@@ -80,147 +80,18 @@
         </div>
 
         <div class="bottom-row">
-            <section class="data-panel bottom-section">
-                <div class="panel-header">
-                    <div>
-                        <div class="panel-eyebrow">Namespace</div>
-                        <h2 class="section-title">Other</h2>
-                    </div>
-                </div>
-                <table class="data-table">
-                    <colgroup>
-                        <col class="tag-col">
-                        <col class="count-col">
-                    </colgroup>
-                    <thead>
-                        <tr>
-                            <th class="left-align">Tag</th>
-                            <th class="right-align">Count</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="tag in tags.other" :key="tag.tag" v-tooltip.bottom="[
-                            `${tag.tag}`,
-                            `翻译: ${tag.tag_cn || 'N/A'}`,
-                            tag.intro ? `介绍: ${tag.intro.length > 100 ? tag.intro.slice(0, 100) + '...' : tag.intro}` : null
-                        ].filter(Boolean).join('\n')">
-                            <td class="left-align">
-                                {{ tag.tag_cn || tag.tag.replace(/^language:/, '') }}
-                            </td>
-                            <td class="right-align">
-                                {{ tag.count }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </section>
-            
-            <section class="data-panel bottom-section">
-                <div class="panel-header">
-                    <div>
-                        <div class="panel-eyebrow">Namespace</div>
-                        <h2 class="section-title">Artist</h2>
-                    </div>
-                </div>
-                <table class="data-table">
-                    <colgroup>
-                        <col class="tag-col">
-                        <col class="count-col">
-                    </colgroup>
-                    <thead>
-                        <tr>
-                            <th class="left-align">Tag</th>
-                            <th class="right-align">Count</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="tag in tags.artist" :key="tag.tag" v-tooltip.bottom="[
-                            `${tag.tag}`,
-                            `翻译: ${tag.tag_cn || 'N/A'}`,
-                            tag.intro ? `介绍: ${tag.intro.length > 100 ? tag.intro.slice(0, 100) + '...' : tag.intro}` : null
-                        ].filter(Boolean).join('\n')">
-                            <td class="left-align">
-                                {{ tag.tag_cn || tag.tag.replace(/^artist:/, '') }}
-                            </td>
-                            <td class="right-align">{{ tag.count }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </section>
-            
-            <section class="data-panel bottom-section">
-                <div class="panel-header">
-                    <div>
-                        <div class="panel-eyebrow">Namespace</div>
-                        <h2 class="section-title">Parody</h2>
-                    </div>
-                </div>
-                <table class="data-table">
-                    <colgroup>
-                        <col class="tag-col">
-                        <col class="count-col">
-                    </colgroup>
-                    <thead>
-                        <tr>
-                            <th class="left-align">Tag</th>
-                            <th class="right-align">Count</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="tag in tags.parody" :key="tag.tag" v-tooltip.bottom="[
-                            `${tag.tag}`,
-                            `翻译: ${tag.tag_cn || 'N/A'}`,
-                            tag.intro ? `介绍: ${tag.intro.length > 100 ? tag.intro.slice(0, 100) + '...' : tag.intro}` : null
-                        ].filter(Boolean).join('\n')">
-                            <td class="left-align">
-                                {{ tag.tag_cn || tag.tag.replace(/^parody:/, '') }}
-                            </td>
-                            <td class="right-align">{{ tag.count }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </section>
-            
-            <section class="data-panel bottom-section">
-                <div class="panel-header">
-                    <div>
-                        <div class="panel-eyebrow">Namespace</div>
-                        <h2 class="section-title">Character</h2>
-                    </div>
-                </div>
-                <table class="data-table">
-                    <colgroup>
-                        <col class="tag-col">
-                        <col class="count-col">
-                    </colgroup>
-                    <thead>
-                        <tr>
-                            <th class="left-align">Tag</th>
-                            <th class="right-align">Count</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="tag in tags.character" :key="tag.tag" v-tooltip.bottom="[
-                            `${tag.tag}`,
-                            `翻译: ${tag.tag_cn || 'N/A'}`,
-                            tag.intro ? `介绍: ${tag.intro.length > 100 ? tag.intro.slice(0, 100) + '...' : tag.intro}` : null
-                        ].filter(Boolean).join('\n')">
-                            <td class="left-align">
-                                {{ tag.tag_cn || tag.tag.replace(/^character:/, '') }}
-                            </td>
-                            <td class="right-align">{{ tag.count }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </section>
+            <TagCountTable namespace="other" title="Other" :rows="tags.other" />
+            <TagCountTable namespace="artist" title="Artist" :rows="tags.artist" />
+            <TagCountTable namespace="parody" title="Parody" :rows="tags.parody" />
+            <TagCountTable namespace="character" title="Character" :rows="tags.character" />
         </div>
-
     </div>
 </template>
 
 <script>
 import { ref, onMounted, watch } from "vue";
 import Chart from "primevue/chart";
+import TagCountTable from "@/components/TagCountTable.vue";
 import ToggleSwitch from "primevue/toggleswitch";
 import { useTheme } from '@/composables/useTheme';
 import '@/assets/DataAnalys.css';
@@ -232,7 +103,7 @@ ChartJS.register(MatrixController, MatrixElement);
 
 const baseUrl = import.meta.env.BASE_URL;
 export default {
-    components: { Chart, ToggleSwitch },
+    components: { Chart, ToggleSwitch, TagCountTable },
     setup() {
         const { isDark } = useTheme()
         return { isDark }

@@ -5,7 +5,7 @@
       @click="toggleTheme"
       class="theme-btn"
       :class="{ 'dark': isDark }"
-      :aria-label="isDark ? 'dark' : 'light'"
+      :aria-label="isDark ? '当前深色主题，点击切换为浅色' : '当前浅色主题，点击切换为深色'"
       title="切换明暗主题"
     >
       <svg 
@@ -75,8 +75,10 @@ const { isDark, toggleTheme } = useTheme()
   background: var(--surface-color);
   color: var(--text-color);
   cursor: pointer;
-  transition: all 0.2s ease;
-  outline: none;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
 }
 
 .theme-btn:hover {
@@ -88,15 +90,10 @@ const { isDark, toggleTheme } = useTheme()
   color: var(--primary-color);
 }
 
-.theme-btn:focus {
-  outline: none;
-}
-
 .moon-icon,
 .sun-icon {
   width: 20px;
   height: 20px;
-  transition: all 0.2s ease;
 }
 
 /* 已取消响应式设计 */

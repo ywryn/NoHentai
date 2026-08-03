@@ -1,3 +1,8 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Design tokens — 单一来源
+   页面级 CSS 不得重复定义主题变量，只允许消费。
+   ═══════════════════════════════════════════════════════════════════════ */
+
 :root {
   font-family: "Noto Sans CJK SC", "Noto Sans SC", "Source Han Sans SC", "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1.5;
@@ -7,39 +12,67 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  
-  /* 共用变量 */
-  --primary-color: #646cff;
-  --primary-color-hover: #535bf2;
 
-  /* 布局变量默认值（深色），由主题类覆盖 */
+  /* ── 动效 ────────────────────────────────────────────────
+     统一时长与缓动，避免同一次交互中各属性速度不一致。 */
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+  --ease-out: cubic-bezier(0.22, 0.8, 0.28, 1);
+  --ease-in-out: cubic-bezier(0.5, 0, 0.2, 1);
+
+  /* ── 响应式断点（供 JS 侧 matchMedia 复用，CSS 中直接写数值） ──
+     sm 480 / md 768 / lg 1024 / xl 1280 */
+  --bp-sm: 480px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1280px;
+
+  /* ── 触控目标下限（Apple HIG 44 / Material 48） ── */
+  --tap-target: 44px;
+
+  /* ── 圆角与层级 ── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --z-nav: 100;
+  --z-popover: 300;
+}
+
+/* 深色主题（默认）
+   对比度基于 --row-bg #131f2e 计算，正文类变量均 ≥ 4.5:1 */
+:root,
+.my-app-dark {
+  color-scheme: dark;
+  --text-color: #f1f5f9;
+  --bg-color: #0f172a;
+  --surface-color: #1e293b;
+  --border-color: #334155;
+  --hover-bg: #2b3a4f;
+  --shadow-color: rgba(0, 0, 0, 0.3);
   --row-bg: #131f2e;
   --row-border: #1e293b;
   --row-hover-bg: #172234;
   --sidebar-bg: #0d1929;
   --toolbar-border: #1e293b;
-  --muted-color: #475569;
-  --title-color: #cbd5e1;
+  /* slate-400：对 --row-bg 6.51:1（原 #475569 仅 2.19:1，不可读） */
+  --muted-color: #94a3b8;
+  /* 更暗的一档，仅用于分隔符/装饰，不承载信息 */
+  --faint-color: #64748b;
+  --title-color: #e2e8f0;
   --tag-bg: rgba(51, 65, 85, 0.6);
   --tag-border: #334155;
-  --tag-color: #94a3b8;
+  --tag-color: #cbd5e1;
+  /* indigo-400：对 --bg-color 5.97:1（原 #646cff 仅 4.36:1） */
+  --primary-color: #818cf8;
+  --primary-color-hover: #a5b4fc;
+  --primary-soft-bg: rgba(129, 140, 248, 0.14);
+  --primary-soft-border: rgba(129, 140, 248, 0.42);
+  --primary-on-soft: #c7d2fe;
+  --placeholder-bg: #1a2640;
   --scrollbar-track: rgba(15, 23, 42, 0.35);
   --scrollbar-thumb: rgba(71, 85, 105, 0.8);
   --scrollbar-thumb-hover: rgba(100, 116, 139, 0.95);
-}
-
-/* HTML 根元素也需要设置背景色和过渡效果 */
-html {
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-html.home-scroll-locked,
-body.home-scroll-locked {
-  overflow: hidden;
-  overscroll-behavior: none;
-  height: 100%;
 }
 
 /* 浅色主题 - 护眼暖米色调 */
@@ -49,120 +82,107 @@ body.home-scroll-locked {
   --bg-color: #faf8f5;
   --surface-color: #f1ede7;
   --border-color: #d6d3d1;
+  --hover-bg: #e7e2dc;
   --shadow-color: rgba(0, 0, 0, 0.06);
   --row-bg: #ffffff;
   --row-border: #e2ddd8;
   --row-hover-bg: #f5f0ea;
   --sidebar-bg: #eee9e2;
   --toolbar-border: #d6d3d1;
+  /* 对白底 4.76:1 */
   --muted-color: #64748b;
+  --faint-color: #94a3b8;
   --title-color: #2d3748;
   --tag-bg: rgba(210, 205, 195, 0.6);
   --tag-border: #c5bfb7;
-  --tag-color: #64748b;
+  --tag-color: #52606d;
+  /* indigo-600：对 --bg-color 5.97:1 */
+  --primary-color: #4f46e5;
+  --primary-color-hover: #4338ca;
+  --primary-soft-bg: rgba(79, 70, 229, 0.1);
+  --primary-soft-border: rgba(79, 70, 229, 0.38);
+  --primary-on-soft: #4338ca;
+  --placeholder-bg: #e8e3dc;
   --scrollbar-track: rgba(214, 211, 209, 0.45);
   --scrollbar-thumb: rgba(148, 163, 184, 0.95);
   --scrollbar-thumb-hover: rgba(100, 116, 139, 1);
 }
 
-/* 深色主题 */
-.my-app-dark {
-  color-scheme: dark;
-  --text-color: #f1f5f9;
-  --bg-color: #0f172a;
-  --surface-color: #1e293b;
-  --border-color: #334155;
-  --shadow-color: rgba(0, 0, 0, 0.3);
-  --row-bg: #131f2e;
-  --row-border: #1e293b;
-  --row-hover-bg: #172234;
-  --sidebar-bg: #0d1929;
-  --toolbar-border: #1e293b;
-  --muted-color: #475569;
-  --title-color: #cbd5e1;
-  --tag-bg: rgba(51, 65, 85, 0.6);
-  --tag-border: #334155;
-  --tag-color: #94a3b8;
-  --scrollbar-track: rgba(15, 23, 42, 0.35);
-  --scrollbar-thumb: rgba(71, 85, 105, 0.8);
-  --scrollbar-thumb-hover: rgba(100, 116, 139, 0.95);
+/* HTML 根元素也需要设置背景色和过渡效果 */
+html {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color var(--dur-slow) var(--ease-out), color var(--dur-slow) var(--ease-out);
 }
 
-/* 妈妈模式 - 图片毛玻璃特效（排除缩略图和大图查看器元素，避免与遮罩层冲突） */
+html.home-scroll-locked,
+body.home-scroll-locked {
+  overflow: hidden;
+  overscroll-behavior: none;
+  height: 100%;
+}
+
+/* ═══════════════════════════════════════
+   妈妈模式 — 图片毛玻璃遮蔽
+   揭示方式：指针设备 hover 预览；触屏设备长按（:active）预览。
+   ═══════════════════════════════════════ */
+
 .mom-mode img:not(.thumbnail-image):not(.full-image),
-.mom-mode .cover img,
-.mom-mode .image-popover img,
-.mom-mode .popover img {
+.mom-mode .poster,
+.mom-mode .album-cover {
   filter: blur(var(--mom-mode-blur)) !important;
-  transition: filter 0.3s ease;
+  transition: filter var(--dur-slow) var(--ease-out);
 }
 
-/* 鼠标悬停时暂时清除模糊效果 */
-.mom-mode img:not(.thumbnail-image):not(.full-image):hover,
-.mom-mode .cover img:hover,
-.mom-mode .image-popover img:hover,
-.mom-mode .popover img:hover {
+/* 触屏：长按预览（快速点击仍然正常跳转） */
+.mom-mode img:not(.thumbnail-image):not(.full-image):active,
+.mom-mode .poster:active,
+.mom-mode .album-cover:active,
+.mom-mode a:active img:not(.thumbnail-image):not(.full-image),
+.mom-mode button:active img:not(.thumbnail-image):not(.full-image) {
   filter: blur(0px) !important;
 }
 
-/* 特殊处理：对于使用背景图片的缩略图，添加一个遮罩层 */
-.mom-mode .thumbnail-item,
-.mom-mode .thumbnail-gallery .thumbnail-item {
+/* 指针设备：悬停预览 */
+@media (hover: hover) and (pointer: fine) {
+  .mom-mode img:not(.thumbnail-image):not(.full-image):hover,
+  .mom-mode .poster:hover,
+  .mom-mode .album-cover:hover,
+  .mom-mode a:hover img:not(.thumbnail-image):not(.full-image),
+  .mom-mode button:hover img:not(.thumbnail-image):not(.full-image) {
+    filter: blur(0px) !important;
+  }
+}
+
+/* 背景图缩略图（sprite）走独立遮罩层 */
+.mom-mode .thumbnail-item {
   position: relative;
 }
 
-.mom-mode .thumbnail-item::before,
-.mom-mode .thumbnail-gallery .thumbnail-item::before {
+.mom-mode .thumbnail-item::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  /* background: rgba(255, 255, 255, 0.8); */
+  inset: 0;
   backdrop-filter: blur(var(--mom-mode-blur));
   border-radius: 2px;
-  transition: opacity 0.3s ease;
+  transition: opacity var(--dur-slow) var(--ease-out);
   pointer-events: none;
   z-index: 1;
 }
 
-.mom-mode .thumbnail-item:hover::before,
-.mom-mode .thumbnail-gallery .thumbnail-item:hover::before {
-  opacity: 0;
-}
+.mom-mode .thumbnail-item:active::before { opacity: 0; }
 
-/* 深色主题下的妈妈模式遮罩 */
-.my-app-dark.mom-mode .thumbnail-item::before,
-.my-app-dark.mom-mode .thumbnail-gallery .thumbnail-item::before {
-  /* background: rgba(0, 0, 0, 0.8); */
-}
-
-/* 为所有可能包含敏感图片的元素添加模糊效果（排除缩略图和大图查看器，避免重复） */
-.mom-mode .gallery-item img,
-.mom-mode .gallery-preview img,
-.mom-mode .poster,
-.mom-mode .album-cover,
-.mom-mode .gallery-detail-container .cover img {
-  filter: blur(var(--mom-mode-blur)) !important;
-  transition: filter 0.3s ease;
-}
-
-.mom-mode .gallery-item img:hover,
-.mom-mode .gallery-preview img:hover,
-.mom-mode .poster:hover,
-.mom-mode .album-cover:hover,
-.mom-mode .gallery-detail-container .cover img:hover {
-  filter: blur(0px) !important;
+@media (hover: hover) and (pointer: fine) {
+  .mom-mode .thumbnail-item:hover::before { opacity: 0; }
 }
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: var(--primary-color);
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  color: var(--primary-color-hover);
 }
 
 body {
@@ -172,17 +192,12 @@ body {
   min-height: 100vh;
   background-color: var(--bg-color);
   color: var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color var(--dur-slow) var(--ease-out), color var(--dur-slow) var(--ease-out);
   /* 移除 flex 布局，让内容正常流动 */
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
 button {
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   padding: 0.6em 1.2em;
   font-size: 1em;
@@ -191,16 +206,26 @@ button {
   background-color: var(--surface-color);
   color: var(--text-color);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
 }
 button:hover {
   border-color: var(--primary-color);
   background-color: var(--primary-color);
-  color: white;
+  color: #fff;
 }
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+
+/* ── 统一焦点指示 ────────────────────────────────────────
+   组件不得使用 outline:none 裸移除，需覆盖时请覆盖此变量。 */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+:where(a, button, input, select, textarea, [tabindex]):focus:not(:focus-visible) {
+  outline: none;
 }
 
 .card {
@@ -212,7 +237,7 @@ button:focus-visible {
   min-height: 100vh;
   background-color: var(--bg-color);
   color: var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color var(--dur-slow) var(--ease-out), color var(--dur-slow) var(--ease-out);
 }
 
 /* Container */
@@ -246,30 +271,54 @@ img {
   .vm-cover-grid { grid-template-columns: repeat(3, 1fr); }
 }
 @media (min-width: 768px) {
+  .vm-cover-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (min-width: 1024px) {
   .vm-cover-grid { grid-template-columns: repeat(5, 1fr); }
 }
-@media (min-width: 1100px) {
+@media (min-width: 1280px) {
   .vm-cover-grid { grid-template-columns: repeat(6, 1fr); }
 }
 
+/* 条目同时可能渲染为 <a> 或 <button>，此处统一抹平两者的默认样式，
+   并覆盖全局 button:hover 的主色填充。 */
 .vm-cover-card {
-  border-radius: 8px;
+  display: block;
+  width: 100%;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  text-decoration: none;
+  appearance: none;
+  border-radius: var(--radius-md);
   overflow: hidden;
   background: var(--row-bg);
   border: 1px solid var(--row-border);
   cursor: pointer;
-  transition: transform 0.15s, border-color 0.15s;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
 }
 
 .vm-cover-card:hover {
   transform: translateY(-2px);
-  border-color: var(--border-color);
+  background: var(--row-bg);
+  color: inherit;
+  border-color: var(--primary-soft-border);
+  box-shadow: 0 6px 18px var(--shadow-color);
+}
+
+.vm-cover-card:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
 .vm-cover-img {
   aspect-ratio: 2/3;
   overflow: hidden;
-  background: #1a2640;
+  background: var(--placeholder-bg);
 }
 
 .vm-cover-img img {
@@ -364,7 +413,7 @@ img {
   border-radius: 8px;
   padding: 8px 10px;
   cursor: pointer;
-  transition: border-color 0.12s, background 0.12s;
+  transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
 }
 
 .vm-card-row:hover {
@@ -378,7 +427,7 @@ img {
   border-radius: 4px;
   flex-shrink: 0;
   overflow: hidden;
-  background: #1a2640;
+  background: var(--placeholder-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -503,17 +552,32 @@ img {
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  text-decoration: none;
+  appearance: none;
   background: var(--row-bg);
   border: 1px solid var(--row-border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 8px 10px;
   cursor: pointer;
-  transition: border-color 0.12s, background 0.12s;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
 }
 
 .gallery-row:hover {
-  border-color: var(--border-color);
+  border-color: var(--primary-soft-border);
   background: var(--row-hover-bg);
+  color: inherit;
+}
+
+.gallery-row:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
 .gr-thumb {
@@ -522,7 +586,7 @@ img {
   border-radius: 4px;
   flex-shrink: 0;
   overflow: hidden;
-  background: #1a2640;
+  background: var(--placeholder-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -554,30 +618,35 @@ img {
   min-width: 0;
 }
 
+/* 分类徽章
+   前景色按底色明度分两档：浅底用深墨色，深底用白色，
+   保证每一款都 ≥ 4.5:1（原先一律白字，yellow/gold 仅 2.2:1）。 */
 .gr-badge {
-  height: 15px;
+  height: 16px;
   border-radius: 3px;
   padding: 0 6px;
   font-size: 11px;
   font-weight: 700;
-  color: #fff;
+  color: var(--badge-fg, #fff);
+  background: var(--badge-bg, #333);
   display: flex;
   align-items: center;
   flex-shrink: 0;
   white-space: nowrap;
+  letter-spacing: 0.01em;
 }
 
-.gr-badge.red { background: #a22 !important; }
-.gr-badge.orange { background: #d67e22 !important; }
-.gr-badge.yellow { background: #d6a922 !important; }
-.gr-badge.green { background: #4caf50 !important; }
-.gr-badge.gold { background: #d4af37 !important; }
-.gr-badge.lightblue { background: #4ca3dd !important; }
-.gr-badge.blue { background: #2a78d6 !important; }
-.gr-badge.purple { background: #7e57c2 !important; }
-.gr-badge.pink { background: #d81b60 !important; }
-.gr-badge.gray { background: #757575 !important; }
-.gr-badge.default { background: #333 !important; }
+.gr-badge.red       { --badge-bg: #a02222; }
+.gr-badge.orange    { --badge-bg: #9c5410; }
+.gr-badge.yellow    { --badge-bg: #f0c000; --badge-fg: #3a2c00; }
+.gr-badge.green     { --badge-bg: #2f7d36; }
+.gr-badge.gold      { --badge-bg: #e0bd44; --badge-fg: #382c00; }
+.gr-badge.lightblue { --badge-bg: #8fd0f5; --badge-fg: #0a2a3d; }
+.gr-badge.blue      { --badge-bg: #1e63b8; }
+.gr-badge.purple    { --badge-bg: #6a44b0; }
+.gr-badge.pink      { --badge-bg: #c2185b; }
+.gr-badge.gray      { --badge-bg: #5f5f5f; }
+.gr-badge.default   { --badge-bg: #3a3a3a; }
 
 .gr-title {
   font-size: 14px;
@@ -657,18 +726,66 @@ img {
   margin-left: auto;
 }
 
-@media (max-width: 600px) {
-  .gr-thumb {
-    width: 49px;
-    height: 70px;
-  }
-
+@media (max-width: 767px) {
   .gr-title {
-    font-size: 11px;
+    font-size: 12.5px;
   }
 
   .gr-badge {
-    font-size: 8px;
-    height: 13px;
+    font-size: 10px;
+    height: 15px;
+    padding: 0 5px;
   }
+}
+
+/* ═══════════════════════════════════════
+   骨架屏 — 替代纯文字 Loading，避免加载期的空白与布局跳动
+   ═══════════════════════════════════════ */
+
+.sk-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-color);
+  border-radius: var(--radius-sm);
+}
+
+.sk-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--text-color) 8%, transparent),
+    transparent
+  );
+  animation: sk-sweep 1.4s var(--ease-in-out) infinite;
+}
+
+@keyframes sk-sweep {
+  100% { transform: translateX(100%); }
+}
+
+.sk-line {
+  height: 10px;
+  border-radius: 999px;
+}
+
+/* ═══════════════════════════════════════
+   动效降级 — 尊重系统「减少动态效果」偏好 (WCAG 2.3.3)
+   ═══════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* 骨架屏改为静态占位，不再扫光 */
+  .sk-shimmer::after { display: none; }
 }
