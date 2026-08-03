@@ -5,30 +5,11 @@
            页面里有两个 <h1>、两组标签面板，读屏会把全部内容读两遍 -->
       <section class="gd-hero">
         <div class="gd-cover-panel">
-          <div class="cover-shell">
-            <img :src="galleryData.thumb || galleryData.image || '/placeholder.png'" :alt="`${getDisplayTitle()} 封面`" />
-          </div>
-          <div class="cover-meta">
+          <div class="cover-shell" :style="{ '--cover-src': `url(${coverSrc})` }">
             <span class="category-badge" :class="categoryClass">{{ getDisplayCategory() }}</span>
-            <div class="rating-card">
-              <span class="rating-label">评分</span>
-              <div class="rating-value">
-                <Rating :modelValue="galleryData.rating" readonly />
-                <span class="rating-score">{{ galleryData.rating ?? "N/A" }}</span>
-              </div>
-            </div>
-            <dl class="cover-info-list">
-              <div class="cover-info-row">
-                <dt>发布时间</dt>
-                <dd>{{ formatDate(galleryData.posted) || "未知" }}</dd>
-              </div>
-              <div class="cover-info-row">
-                <dt>收藏时间</dt>
-                <dd>{{ formatFavDate(galleryData.favTime) }}</dd>
-              </div>
-            </dl>
-            <a class="external-link cover-ext-link" :href="externalLink" @click.prevent="openExHentai">在 ExHentai 打开</a>
+            <img :src="coverSrc" :alt="`${getDisplayTitle()} 封面`" />
           </div>
+          <a class="external-link cover-ext-link" :href="externalLink" @click.prevent="openExHentai">在 ExHentai 打开</a>
         </div>
 
         <div class="gd-main">
@@ -38,47 +19,68 @@
             <p v-if="galleryData.title_jpn" class="subtitle">{{ galleryData.title_jpn }}</p>
           </div>
 
+          <!-- 以下两块由 margin-top:auto 推到底部，与封面栏底边对齐 -->
+          <div class="gd-meta-row">
+            <div class="gd-meta-item gd-meta-rating">
+              <span class="gd-meta-key">评分</span>
+              <span class="gd-meta-val">
+                <Rating :modelValue="galleryData.rating" readonly />
+                <strong class="rating-score">{{ galleryData.rating ?? "N/A" }}</strong>
+              </span>
+            </div>
+            <div class="gd-meta-item">
+              <span class="gd-meta-key">发布时间</span>
+              <span class="gd-meta-val">{{ formatDate(galleryData.posted) || "未知" }}</span>
+            </div>
+            <div class="gd-meta-item">
+              <span class="gd-meta-key">收藏时间</span>
+              <span class="gd-meta-val">{{ formatFavDate(galleryData.favTime) }}</span>
+            </div>
+          </div>
+
           <div class="stats-grid">
             <article v-for="stat in statsCards" :key="stat.label" class="stat-card">
               <span class="stat-label">{{ stat.label }}</span>
               <strong class="stat-value">{{ stat.value }}</strong>
             </article>
           </div>
+        </div>
+      </section>
 
-          <section class="detail-panel tags-panel">
-            <div class="panel-header">
-              <div>
-                <div class="panel-eyebrow">分类标签</div>
-                <h2 class="panel-title">Tags</h2>
-              </div>
-              <div class="language-toggle-wrap">
-                <span class="toggle-copy">{{ isChinese ? "中文" : "English" }}</span>
-                <ToggleSwitch v-model="isChinese" class="language-toggle" />
-              </div>
+      <!-- 标签全宽：111 个标签挤在 640px 右栏里要排到 842px 高，
+           全宽后高度显著下降，也顺带消除了长短栏问题 -->
+      <section class="detail-panel tags-panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-eyebrow">分类标签</div>
+            <h2 class="panel-title">Tags</h2>
+          </div>
+          <div class="language-toggle-wrap">
+            <span class="toggle-copy">{{ isChinese ? "中文" : "English" }}</span>
+            <ToggleSwitch v-model="isChinese" class="language-toggle" />
+          </div>
+        </div>
+        <p class="tags-hint">点击标签按它检索，右侧 ⧉ 复制搜索语法</p>
+        <div class="tags">
+          <div v-for="(tags, group) in groupedTags" :key="group" class="tag-group">
+            <strong>{{ group }}</strong>
+            <div class="tag-list">
+              <span v-for="(tag, index) in tags" :key="index" class="tag-chip">
+                <RouterLink
+                  class="tag-chip-main"
+                  :to="tagSearchRoute(tag)"
+                  :title="`按 ${tag.value} 检索`"
+                >{{ isChinese ? (tag.tag_cn || tag.value) : tag.value }}</RouterLink>
+                <button
+                  class="tag-chip-copy"
+                  type="button"
+                  :aria-label="`复制 ${tag.value} 的搜索语法`"
+                  :title="tagCopyValue === tag.tag ? '已复制' : '复制搜索语法'"
+                  @click="copyTag(tag)"
+                >{{ tagCopyValue === tag.tag ? '✓' : '⧉' }}</button>
+              </span>
             </div>
-            <p class="tags-hint">点击标签按它检索，右侧 ⧉ 复制搜索语法</p>
-            <div class="tags">
-              <div v-for="(tags, group) in groupedTags" :key="group" class="tag-group">
-                <strong>{{ group }}</strong>
-                <div class="tag-list">
-                  <span v-for="(tag, index) in tags" :key="index" class="tag-chip">
-                    <RouterLink
-                      class="tag-chip-main"
-                      :to="tagSearchRoute(tag)"
-                      :title="`按 ${tag.value} 检索`"
-                    >{{ isChinese ? (tag.tag_cn || tag.value) : tag.value }}</RouterLink>
-                    <button
-                      class="tag-chip-copy"
-                      type="button"
-                      :aria-label="`复制 ${tag.value} 的搜索语法`"
-                      :title="tagCopyValue === tag.tag ? '已复制' : '复制搜索语法'"
-                      @click="copyTag(tag)"
-                    >{{ tagCopyValue === tag.tag ? '✓' : '⧉' }}</button>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </section>
+          </div>
         </div>
       </section>
 
@@ -450,6 +452,9 @@ export default {
     },
   },
   computed: {
+    coverSrc() {
+      return this.galleryData?.thumb || this.galleryData?.image || '/placeholder.png';
+    },
     externalLink() {
       return `https://exhentai.org/g/${this.itemId}/${this.galleryData?.token || ''}`;
     },
