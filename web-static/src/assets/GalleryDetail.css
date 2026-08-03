@@ -106,9 +106,15 @@
   align-items: stretch;
 }
 
+/* 分类徽章改为封面左上角标，省掉左栏一行（约 38px）竖向占用 */
 .gd-cover-panel .category-badge {
-  align-self: flex-start;
-  justify-self: start;
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  height: 24px;
+  font-size: 11px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
 }
 
 /* 封面图占据富余空间，使左栏底边与右栏对齐时图片不会被压扁 */
@@ -117,46 +123,60 @@
   min-height: 0;
 }
 
-/* 窄屏封面与徽章/按钮并排，避免竖向占掉整屏 */
 @media (max-width: 767px) {
-  .gd-cover-panel {
-    display: grid;
-    grid-template-columns: minmax(0, 118px) minmax(0, 1fr);
-    grid-template-rows: auto 1fr;
-    gap: 10px 14px;
-    align-items: start;
-  }
-
+  /* 封面铺满宽度作为主视觉，外链按钮排在其下。
+     用 max-height 兜住，避免在竖屏上吃掉整屏；被夹住时框会比 7/10 更宽，
+     前景 contain 居中、模糊铺底补两侧，依然不裁切。 */
   .gd-cover-panel .cover-shell {
-    grid-row: 1 / -1;
-    aspect-ratio: 7 / 10;
+    width: 100%;
+    max-height: min(46vh, 420px);
   }
 
-  .gd-cover-panel .cover-shell img {
-    height: 100%;
-    object-fit: cover;
-  }
-
-  /* grid 布局下要用 justify-self，align-self 管的是块轴 */
+  /* 角标同比例收小，否则会盖掉太多画面 */
   .gd-cover-panel .category-badge {
-    align-self: start;
-    justify-self: start;
+    top: 6px;
+    left: 6px;
+    height: 20px;
+    padding: 0 7px;
+    font-size: 10px;
   }
-
-  .gd-cover-panel .cover-ext-link { align-self: end; }
 }
 
+/* 固定比例框：EX 缩略图的长宽比是双峰分布（抽样 60 张：中位 0.71 的竖版，
+   另有超过 10% 是宽高比 1.4–2.3 的横版）。用图片原始比例时左栏高度会在
+   ~170px（横版）到 ~400px（长竖版）之间跳动，是双栏失配的残余来源。
+   固定比例后左栏高度完全确定。
+
+   填充上没有用 cover：详情页封面是主视觉，把横版封面竖切成中间一条不可接受。
+   改为前景 contain 不裁切 + 同一张图放大模糊后铺底填充留白 ——
+   竖版封面几乎铺满看不到铺底，横版封面上下补背景，两端都成立。
+   （列表封面 2/3、列表缩略图 49×70 早已是固定比例，此处是全站唯一的例外。） */
 .cover-shell {
+  position: relative;
+  aspect-ratio: 7 / 10;
   background: var(--sidebar-bg);
   border: 1px solid var(--row-border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
+.cover-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--cover-src);
+  background-size: cover;
+  background-position: center;
+  filter: blur(22px) saturate(1.25) brightness(0.5);
+  transform: scale(1.15);
+}
+
 .cover-shell img {
+  position: relative;
   width: 100%;
+  height: 100%;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .cover-meta {
