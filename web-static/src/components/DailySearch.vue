@@ -8,38 +8,36 @@
             :key="group.generatedAt || index"
             class="daily-group-pill"
             :class="{ active: index === currentGroupIndex }"
+            type="button"
+            :aria-pressed="index === currentGroupIndex"
             @click="switchGroup(index)"
           >
-            <span class="daily-group-pill-label">Group {{ index + 1 }}</span>
+            <span class="daily-group-pill-label">{{ group.name || `筛选组 ${index + 1}` }}</span>
             <span class="daily-group-pill-count">{{ (group.galleries || []).length }}</span>
           </button>
         </div>
 
         <div class="daily-meta" v-if="currentGroup?.generatedAt">
-          <span>{{ formatDate(currentGroup.generatedAt) }}</span>
+          <span>更新于 {{ formatDate(currentGroup.generatedAt) }}</span>
           <span class="daily-meta-sep">·</span>
-          <span>Since {{ currentGroup.cutoffDate }}</span>
+          <span>收录自 {{ currentGroup.cutoffDate }}</span>
           <span class="daily-meta-sep">·</span>
-          <span>{{ totalRecords }} galleries</span>
+          <span>{{ totalRecords }} 部</span>
         </div>
 
+        <!-- 这些是生成这批数据时用的条件，只作说明、不可交互，
+             因此刻意做成低对比的标签而非按钮外观 -->
         <div class="daily-filter-chips" v-if="currentGroup?.filters?.length">
+          <span class="daily-filter-label">抓取条件</span>
           <span v-for="chip in includeFilters" :key="`i-${chip}`" class="filter-chip">{{ chip }}</span>
-          <span v-for="chip in excludeFilters" :key="`e-${chip}`" class="filter-chip filter-chip-exclude">{{ chip.replace(/^-/, '') }}</span>
+          <span v-for="chip in excludeFilters" :key="`e-${chip}`" class="filter-chip filter-chip-exclude">
+            <span class="filter-chip-sign" aria-hidden="true">−</span>{{ chip.replace(/^-/, '') }}
+          </span>
         </div>
       </div>
 
-      <div class="toolbar">
-        <div class="paginator-mini" v-if="totalPages > 1">
-          <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(1)">«</button>
-          <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">‹</button>
-          <label class="pag-jump-inline">
-            <input v-model="pageJumpValue" class="pag-jump-input" inputmode="numeric" autocomplete="off" spellcheck="false" @keydown.enter.prevent="submitPageJump" />
-            <span class="pag-jump-total">/ {{ totalPages }}</span>
-          </label>
-          <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">›</button>
-          <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(totalPages)">»</button>
-        </div>
+      <div class="toolbar" v-if="totalPages > 1">
+        <Paginator :page="currentPage" :total="totalPages" @go="goToPage" />
       </div>
 
       <GalleryList
@@ -50,16 +48,7 @@
       />
 
       <div v-if="totalPages > 1" class="toolbar">
-        <div class="paginator-mini">
-          <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(1)">«</button>
-          <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">‹</button>
-          <label class="pag-jump-inline">
-            <input v-model="pageJumpValue" class="pag-jump-input" inputmode="numeric" autocomplete="off" spellcheck="false" @keydown.enter.prevent="submitPageJump" />
-            <span class="pag-jump-total">/ {{ totalPages }}</span>
-          </label>
-          <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">›</button>
-          <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(totalPages)">»</button>
-        </div>
+        <Paginator :page="currentPage" :total="totalPages" @go="goToPage" />
       </div>
     </section>
   </div>
@@ -70,6 +59,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useViewMode } from '@/composables/useViewMode'
 import GalleryList from '@/components/GalleryList.vue'
+import Paginator from '@/components/Paginator.vue'
 import { exTypeClassMap, formatTimestamp, enrichTags } from '@/utils/galleryUtils'
 import { loadTranslations } from '@/composables/useGalleryData'
 
@@ -95,7 +85,6 @@ const excludeFilters = computed(() => (currentGroup.value?.filters ?? []).filter
 
 
 const totalPages = computed(() => Math.max(1, Math.ceil(totalRecords.value / perPage.value)))
-const pageJumpValue = ref('1')
 
 function formatDate(isoStr) {
   if (!isoStr) return ''
@@ -126,24 +115,20 @@ function paginate(page = 1) {
 function goToPage(page) {
   const p = Math.max(1, Math.min(totalPages.value, Number(page)))
   if (p !== currentPage.value) paginate(p)
-  pageJumpValue.value = String(p)
-}
-
-function submitPageJump() {
-  const n = parseInt(pageJumpValue.value)
-  if (!isNaN(n)) goToPage(n)
 }
 
 function switchGroup(index) {
   if (index < 0 || index >= groups.value.length) return
   currentGroupIndex.value = index
   paginate(1)
-  pageJumpValue.value = '1'
 }
 
-watch(currentPage, page => {
-  pageJumpValue.value = String(page)
-  router.replace({ query: page > 1 ? { page: String(page) } : {} })
+/* 组与页码都写进 URL：刷新后不再跳回第一组，也便于分享 */
+watch([currentPage, currentGroupIndex], () => {
+  const query = {}
+  if (currentGroupIndex.value > 0) query.group = String(currentGroupIndex.value + 1)
+  if (currentPage.value > 1) query.page = String(currentPage.value)
+  router.replace({ query })
 })
 
 watch(viewMode, () => { paginate(1) })
@@ -186,15 +171,18 @@ const normalizedItems = computed(() => results.value.map(item => ({
 onMounted(async () => {
   loading.value = true
   await loadData()
-  const pageFromUrl = parseInt(route.query.page) || 1
-  paginate(pageFromUrl)
+  const groupFromUrl = parseInt(route.query.group) || 1
+  if (groupFromUrl > 1 && groupFromUrl <= groups.value.length) {
+    currentGroupIndex.value = groupFromUrl - 1
+  }
+  paginate(parseInt(route.query.page) || 1)
   loading.value = false
 })
 </script>
 
 <style src="../assets/Home.css"></style>
 
-<style>
+<style scoped>
 .daily-page {
   padding: 16px;
 }
@@ -238,7 +226,10 @@ onMounted(async () => {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
 }
 
 .daily-group-pill:hover {
@@ -247,13 +238,9 @@ onMounted(async () => {
 }
 
 .daily-group-pill.active {
-  background: rgba(100, 108, 255, 0.12);
-  border-color: rgba(100, 108, 255, 0.45);
-  color: #c7ceff;
-}
-
-.my-app-light .daily-group-pill.active {
-  color: #4f46e5;
+  background: var(--primary-soft-bg);
+  border-color: var(--primary-soft-border);
+  color: var(--primary-on-soft);
 }
 
 .daily-group-pill-label {
@@ -277,9 +264,9 @@ onMounted(async () => {
 }
 
 .daily-group-pill.active .daily-group-pill-count {
-  background: rgba(100, 108, 255, 0.14);
-  border-color: rgba(100, 108, 255, 0.35);
-  color: #c7ceff;
+  background: var(--primary-soft-bg);
+  border-color: var(--primary-soft-border);
+  color: var(--primary-on-soft);
 }
 
 .daily-meta {
@@ -301,26 +288,43 @@ onMounted(async () => {
   gap: 6px;
 }
 
+.daily-filter-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--muted-color);
+  margin-right: 2px;
+}
+
+/* 纯说明性标签：无边框、低对比，避免被误认为可点击的筛选控件 */
 .filter-chip {
   display: inline-flex;
   align-items: center;
-  height: 26px;
-  padding: 0 10px;
-  border-radius: 6px;
+  gap: 3px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
   font-size: 12px;
-  font-weight: 600;
-  background: rgba(76, 163, 221, 0.12);
-  border: 1px solid rgba(76, 163, 221, 0.24);
-  color: #8fd3ff;
+  font-weight: 500;
+  background: var(--tag-bg);
+  border: 1px solid var(--tag-border);
+  color: var(--tag-color);
+  cursor: default;
 }
 
 .filter-chip-exclude {
-  background: rgba(220, 80, 80, 0.12);
-  border-color: rgba(220, 80, 80, 0.3);
-  color: #e28a8a;
+  color: var(--muted-color);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  opacity: 0.85;
 }
 
-@media (max-width: 600px) {
+.filter-chip-sign {
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 560px) {
   .daily-page {
     padding: 10px;
   }
