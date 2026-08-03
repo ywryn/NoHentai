@@ -55,16 +55,25 @@ export function useReader() {
   const initError = ref<string | null>(null)
   const currentPage = ref(1)
   const windowWidth = ref(window.innerWidth)
+  const windowHeight = ref(window.innerHeight)
   const settings = reactive<ReaderSettings>(loadSettings())
   const imageCache = new Map<number, ImageData>()
   const inflightCache = new Map<number, Promise<ImageData>>()
 
-  const effectivePagesPerScreen = computed<1 | 2>(() =>
-    settings.pagesPerScreen === 2 && windowWidth.value >= 900 ? 2 : 1
-  )
+  /**
+   * 双页对开的启用条件。
+   * 原先要求 windowWidth >= 900，主流手机横屏（844–932px）大量机型
+   * 够不着；改为「横向且够宽」判定，兼顾手机横屏与窄窗口桌面。
+   */
+  const effectivePagesPerScreen = computed<1 | 2>(() => {
+    if (settings.pagesPerScreen !== 2) return 1
+    const landscape = windowWidth.value > windowHeight.value
+    return windowWidth.value >= (landscape ? 720 : 1024) ? 2 : 1
+  })
 
   function onResize() {
     windowWidth.value = window.innerWidth
+    windowHeight.value = window.innerHeight
   }
 
   function updateSetting<K extends keyof ReaderSettings>(key: K, value: ReaderSettings[K]) {
@@ -163,7 +172,7 @@ export function useReader() {
 
   return {
     pages, total, galleryTitle, initLoading, initError,
-    currentPage, settings, effectivePagesPerScreen, windowWidth,
+    currentPage, settings, effectivePagesPerScreen, windowWidth, windowHeight,
     imageCache, getImageUrl, retryImage,
     updateSetting, init, goTo, prev, next, preload, onResize,
   }

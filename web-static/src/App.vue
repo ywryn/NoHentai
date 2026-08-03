@@ -9,10 +9,8 @@ import ViewModeToggle from '@/components/ViewModeToggle.vue'
 const { initMomMode } = useMomMode()
 const route = useRoute()
 
-/** 阅读器与翻译工作台是沉浸式全屏页，不显示全局导航 */
-const isImmersivePage = computed(() =>
-  route.path.endsWith('/read') || /\/gallery\/\d+\/translate$/.test(route.path)
-)
+/** 阅读器与翻译工作台是沉浸式全屏页，不显示全局导航（由路由 meta 声明） */
+const isImmersivePage = computed(() => Boolean(route.meta.immersive))
 
 /** 视图模式切换只对列表页有意义，其它页面隐藏，避免出现无效控件 */
 const showViewModeToggle = computed(() =>
