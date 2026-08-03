@@ -30,7 +30,7 @@
   </div>
 
   <!-- Main Workbench -->
-  <div v-else class="gt-workbench">
+  <div v-else class="gt-workbench" :style="{ '--gt-image-h': splitRatio }">
     <!-- Header -->
     <header class="gt-header">
       <button class="gt-back-btn" @click="$router.back()">←</button>
@@ -99,6 +99,19 @@
 
       <!-- Sidebar -->
       <div class="gt-sidebar">
+        <!-- 移动端：调整图片与结果列表的分屏比例 -->
+        <div class="gt-split-toggle" role="group" aria-label="分屏比例">
+          <button
+            v-for="opt in splitOptions"
+            :key="opt.value"
+            class="gt-split-btn"
+            :class="{ active: splitRatio === opt.value }"
+            type="button"
+            :aria-pressed="splitRatio === opt.value"
+            @click="splitRatio = opt.value"
+          >{{ opt.label }}</button>
+        </div>
+
         <!-- Thumbnail strip inside sidebar -->
         <div class="gt-strip" v-if="galleryImages.length">
           <button class="gt-strip-nav" :disabled="currentPage <= 1" @click="prevPage">‹</button>
@@ -564,6 +577,13 @@ export default {
       showTranslation: true,
       autoTranslate: false,
       configPanelExpanded: true,
+      /* 移动端图片区占比，三档可切 */
+      splitRatio: '52%',
+      splitOptions: [
+        { label: '图大', value: '70%' },
+        { label: '均分', value: '52%' },
+        { label: '文大', value: '34%' },
+      ],
       selectedBoxIdx: null,
       ocrSource: 'google',
       lastOcrSource: null,
@@ -2257,38 +2277,83 @@ export default {
   .gt-sidebar { width: 45%; }
 }
 
-@media (max-width: 640px) {
+/* 移动端：图片固定在上半屏，结果列表在下半屏独立滚动。
+   此前是整页长滚动 —— OCR 框在上、译文在下，对照原文必须来回滚动，
+   两者不可能同屏，直接破坏了这个页面的核心用途。 */
+@media (max-width: 767px) {
   .gt-workbench {
-    height: auto;
-    min-height: 100dvh;
-    overflow: visible;
+    height: 100dvh;
+    overflow: hidden;
   }
-  .gt-header {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
+
   .gt-body {
     flex-direction: column;
-    flex: none;
     min-height: 0;
-    overflow: visible;
+    overflow: hidden;
   }
+
   .gt-image-panel {
-    display: block;
-    overflow: visible;
-    min-height: 200px;
+    flex: 0 0 var(--gt-image-h, 52%);
+    min-height: 0;
+    overflow: hidden;
   }
+
   .gt-page-img {
-    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
     height: auto;
-    max-height: none;
+    object-fit: contain;
   }
+
   .gt-sidebar {
     width: 100%;
-    overflow-y: visible;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
     border-left: none;
     border-top: 1px solid var(--border-color);
+    /* 拖拽把手的视觉暗示 */
+    box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.25);
   }
+
+  /* 分栏比例三档切换，避免固定比例在不同内容量下都不合适 */
+  .gt-split-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 0 4px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--row-bg);
+    position: sticky;
+    top: 0;
+    z-index: 4;
+  }
+
+  .gt-split-btn {
+    min-width: 54px;
+    min-height: 32px;
+    padding: 0 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background: var(--surface-color);
+    color: var(--muted-color);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .gt-split-btn.active {
+    background: var(--primary-soft-bg);
+    border-color: var(--primary-soft-border);
+    color: var(--primary-on-soft);
+  }
+
+  .gt-header { min-height: var(--tap-target); }
+  .gt-back-btn { min-width: var(--tap-target); min-height: var(--tap-target); }
 }
+
+/* 宽屏不需要分栏比例切换 */
+.gt-split-toggle { display: none; }
 </style>
