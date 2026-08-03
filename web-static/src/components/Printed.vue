@@ -183,6 +183,7 @@ const normalizedItems = computed(() => pagedItems.value.map((item, index) => {
   return {
     key: `${item.ID}-${index}`,
     gid: gallery ? String(item.sid) : null,
+    to: gallery ? `/gallery/${item.sid}/` : null,
     thumb: getThumb(item),
     title: item['书名'] || item['日文名'],
     badge: gallery?.category ?? null,

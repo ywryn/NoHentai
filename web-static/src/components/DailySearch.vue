@@ -42,7 +42,12 @@
         </div>
       </div>
 
-      <GalleryList :items="normalizedItems" :loading="loading" @click="handleGalleryClick" />
+      <GalleryList
+        :items="normalizedItems"
+        :loading="loading"
+        :skeleton-count="perPage"
+        empty-text="该筛选组暂无结果"
+      />
 
       <div v-if="totalPages > 1" class="toolbar">
         <div class="paginator-mini">
@@ -162,6 +167,7 @@ async function loadData() {
 const normalizedItems = computed(() => results.value.map(item => ({
   key: item.gid,
   gid: item.gid,
+  to: item.gid ? `/gallery/${item.gid}/?source=daily` : null,
   thumb: item.thumb,
   title: item.title_jpn || item.title,
   badge: item.type,
@@ -176,9 +182,6 @@ const normalizedItems = computed(() => results.value.map(item => ({
   noMetaText: null,
 })))
 
-function handleGalleryClick(item) {
-  if (item.gid) router.push(`/gallery/${item.gid}/?source=daily`)
-}
 
 onMounted(async () => {
   loading.value = true
