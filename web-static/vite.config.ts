@@ -46,7 +46,8 @@ export default defineConfig({
         theme_color: '#0f172a',
         background_color: '#0f172a',
         display: 'standalone',
-        orientation: 'portrait',
+        /* 不锁方向：阅读器的双页对开模式必须横屏才有意义 */
+        orientation: 'any',
         scope: '/',
         start_url: '/',
         icons: [
@@ -68,14 +69,15 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,svg,png,woff2}'],
         runtimeCaching: [
           {
+            // 数据一天只更新一次：先出缓存保证秒开，再后台刷新。
+            // 原 NetworkFirst + 10s 超时会让弱网用户干等满 10 秒。
             urlPattern: /\/data\/.*\.json$/,
-            handler: 'NetworkFirst',
+            handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'data-cache',
-              networkTimeoutSeconds: 10,
               expiration: {
                 maxEntries: 20,
-                maxAgeSeconds: 60 * 60 * 24, // 1 天
+                maxAgeSeconds: 60 * 60 * 24 * 7,
               },
             },
           },
@@ -83,4 +85,17 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        // 把体积大且非首屏必需的依赖拆出去，避免拖慢首屏
+        manualChunks: {
+          vendor: ['vue', 'vue-router'],
+          charts: ['chart.js', 'chartjs-chart-matrix'],
+          opencc: ['opencc-js'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 700,
+  },
 })
