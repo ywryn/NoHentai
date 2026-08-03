@@ -68,6 +68,27 @@
             </div>
 
             <button
+              class="home-filter-btn"
+              :class="{ 'is-on': activeTypes.length }"
+              type="button"
+              aria-haspopup="dialog"
+              :aria-expanded="categoryOpen"
+              :title="activeTypes.length ? `已选 ${activeTypes.length} 个分类` : '按分类筛选'"
+              @click="toggleCategoryPanel"
+            >
+              <span
+                v-if="activeTypes.length"
+                class="home-type-dot"
+                :style="{ background: exTypeDotColors[activeTypes[0]] }"
+              ></span>
+              <svg v-else viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+                <path d="M3 5h18l-7 8v6l-4 2v-8L3 5z" />
+              </svg>
+              {{ categoryLabel }}
+              <span class="home-filter-caret" aria-hidden="true">▾</span>
+            </button>
+
+            <button
               class="home-syntax-btn"
               type="button"
               aria-haspopup="dialog"
@@ -112,26 +133,6 @@
             </button>
             <button class="home-clear-all" type="button" @click="clearAll">全部清除</button>
           </div>
-
-          <div class="home-filter-meta">
-            <div class="home-filter-eyebrow">分类 · 可多选</div>
-          </div>
-
-          <div class="home-type-grid">
-            <button
-              v-for="type in exTypeList"
-              :key="type.name"
-              class="home-type-pill"
-              :class="{ active: activeTypes.includes(type.name) }"
-              type="button"
-              :aria-pressed="activeTypes.includes(type.name)"
-              @click="toggleType(type.name)"
-            >
-              <span class="home-type-dot" :style="{ background: exTypeDotColors[type.name] }"></span>
-              {{ type.name }}
-              <span class="home-type-count">{{ typeCounts[type.name] || 0 }}</span>
-            </button>
-          </div>
         </div>
       </div>
 
@@ -152,6 +153,36 @@
           <Paginator :page="currentPage" :total="totalPages" @go="goToPage" />
         </div>
       </section>
+
+      <Popover ref="categoryPopover" class="category-popover">
+        <div class="category-panel">
+          <div class="category-panel-head">
+            <span class="category-panel-title">按分类筛选</span>
+            <button
+              v-if="activeTypes.length"
+              class="category-reset"
+              type="button"
+              @click="activeTypes = []"
+            >清除</button>
+          </div>
+          <ul class="category-list">
+            <li v-for="opt in categoryOptions" :key="opt.name">
+              <label class="category-row" :class="{ 'is-empty': opt.count === 0 && !opt.checked }">
+                <input
+                  type="checkbox"
+                  class="category-check"
+                  :checked="opt.checked"
+                  :disabled="opt.count === 0 && !opt.checked"
+                  @change="toggleType(opt.name)"
+                />
+                <span class="home-type-dot" :style="{ background: opt.color }"></span>
+                <span class="category-name">{{ opt.name }}</span>
+                <span class="category-count">{{ opt.count }}</span>
+              </label>
+            </li>
+          </ul>
+        </div>
+      </Popover>
 
       <Popover ref="searchHelpPopover" class="search-help-popover">
         <div class="search-help-content">
@@ -213,6 +244,8 @@ const loading = ref(true)
 
 const searchInputRef = ref()
 const searchHelpPopover = ref()
+const categoryPopover = ref()
+const categoryOpen = ref(false)
 const highlightIndex = ref(-1)
 const suggestDismissed = ref(false)
 
@@ -237,6 +270,42 @@ const typeCounts = computed(() => {
     counts[item.category] = (counts[item.category] || 0) + 1
   }
   return counts
+})
+
+/* 全量计数只用于排序，保证列表顺序不随输入抖动 */
+const totalTypeCounts = computed(() => {
+  const counts = {}
+  for (const item of allGalleries.value) {
+    counts[item.category] = (counts[item.category] || 0) + 1
+  }
+  return counts
+})
+
+/**
+ * 分类选项。
+ * 以 exTypeList 为基准，另外补上数据里出现过但不在标准分类表中的类目
+ * （如收藏夹里的 private），否则这些画廊无法通过分类筛到。
+ * 按全量数量降序，显示的是当前查询下的数量，便于预判点击结果。
+ */
+const categoryOptions = computed(() => {
+  const known = new Set(exTypeList.map(t => t.name))
+  const extras = Object.keys(totalTypeCounts.value).filter(name => name && !known.has(name))
+  return [...exTypeList.map(t => t.name), ...extras]
+    .map(name => ({
+      name,
+      color: exTypeDotColors[name] || 'var(--faint-color)',
+      count: typeCounts.value[name] || 0,
+      total: totalTypeCounts.value[name] || 0,
+      checked: activeTypes.value.includes(name),
+    }))
+    .sort((a, b) => b.total - a.total)
+})
+
+const categoryLabel = computed(() => {
+  const n = activeTypes.value.length
+  if (n === 0) return '分类'
+  if (n === 1) return activeTypes.value[0]
+  return `${activeTypes.value[0]} +${n - 1}`
 })
 
 const filtered = computed(() => {
@@ -388,6 +457,11 @@ function goToPage(page) {
 
 function toggleSearchHelp(event) {
   searchHelpPopover.value?.toggle(event)
+}
+
+function toggleCategoryPanel(event) {
+  categoryOpen.value = !categoryOpen.value
+  categoryPopover.value?.toggle(event)
 }
 
 function applyExample(example) {
