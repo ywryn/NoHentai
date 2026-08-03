@@ -1530,10 +1530,9 @@ export default {
   -webkit-tap-highlight-color: transparent;
 }
 
-.gt-config-panel button:focus,
 .gt-config-panel button:focus-visible {
-  outline: none;
-  box-shadow: none;
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
 .gt-cfg-row {

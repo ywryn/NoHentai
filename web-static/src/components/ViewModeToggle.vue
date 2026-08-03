@@ -1,6 +1,7 @@
 <template>
   <button
     class="view-mode-btn"
+    :aria-label="viewMode === 'card' ? '切换为封面视图' : '切换为列表视图'"
     :title="viewMode === 'card' ? '切换为封面视图' : '切换为列表视图'"
     @click="toggleViewMode"
   >
@@ -33,7 +34,7 @@ const { viewMode, toggleViewMode } = useViewMode()
   align-items: center;
   justify-content: center;
   padding: 0;
-  transition: color 0.2s, border-color 0.2s;
+  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
 }
 .view-mode-btn:hover {
   color: var(--primary-color);

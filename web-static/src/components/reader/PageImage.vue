@@ -6,14 +6,15 @@
     <img
       v-show="state === 'loaded'"
       :src="imgSrc"
+      :alt="`第 ${pageNum} 页`"
       class="pi-img"
       draggable="false"
       @load="onLoad"
       @error="onImgError"
     />
     <div v-if="state === 'error'" class="pi-center pi-error">
-      <p>Failed to load page {{ pageNum }}</p>
-      <button class="reader-btn" @click="retry">Retry</button>
+      <p>第 {{ pageNum }} 页加载失败</p>
+      <button class="reader-btn" @click="retry">重试</button>
     </div>
   </div>
 </template>
