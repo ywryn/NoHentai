@@ -4,96 +4,140 @@
       <div class="home-header-card">
         <div class="home-header-main">
           <div class="home-copy">
-            <div class="home-eyebrow">NoHentai · {{ totalRecords }} {{ activeType || 'Galleries' }}</div>
+            <div class="home-eyebrow">
+              NoHentai · 共 {{ totalRecords }} 部
+              <span v-if="isFiltered" class="home-eyebrow-sub">（已筛选自 {{ allGalleries.length }} 部）</span>
+            </div>
           </div>
         </div>
 
         <div class="home-filter-panel">
           <div class="home-search-row">
             <div class="home-search-wrap">
-              <svg class="home-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="11" cy="11" r="7.5"/><line x1="20" y1="20" x2="15.5" y2="15.5"/>
+              <svg class="home-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <circle cx="11" cy="11" r="7.5" /><line x1="20" y1="20" x2="15.5" y2="15.5" />
               </svg>
               <input
+                ref="searchInputRef"
                 v-model="searchQuery"
                 class="home-search-input"
-                placeholder="Search…"
-                @keyup.enter="performSearch"
+                type="search"
+                placeholder="搜索标题、作者、标签…"
+                aria-label="搜索画廊"
+                role="combobox"
+                aria-autocomplete="list"
+                :aria-expanded="suggestOpen"
+                aria-controls="home-tag-suggest"
+                :aria-activedescendant="suggestOpen && highlightIndex >= 0 ? `tag-opt-${highlightIndex}` : undefined"
+                autocomplete="off"
+                spellcheck="false"
+                @keydown="onSearchKeydown"
+                @blur="closeSuggestSoon"
+                @focus="suggestDismissed = false"
               />
-              <span
-                class="home-search-help"
-                role="button"
-                tabindex="0"
-                @click="toggleSearchHelp"
-                @keyup.enter="toggleSearchHelp"
-              >?</span>
-              <div v-if="tagSuggestions.length" class="home-tag-suggest">
-                <button
-                  v-for="item in tagSuggestions"
+              <button
+                v-if="searchQuery"
+                class="home-search-clear"
+                type="button"
+                aria-label="清空搜索词"
+                @click="clearQuery"
+              >×</button>
+
+              <ul
+                v-if="suggestOpen"
+                id="home-tag-suggest"
+                class="home-tag-suggest"
+                role="listbox"
+                aria-label="标签建议"
+              >
+                <li
+                  v-for="(item, i) in tagSuggestions"
+                  :id="`tag-opt-${i}`"
                   :key="item.tag"
-                  type="button"
                   class="home-tag-suggest-item"
-                  @click="applyTagSuggestion(item)"
+                  :class="{ 'is-active': i === highlightIndex }"
+                  role="option"
+                  :aria-selected="i === highlightIndex"
+                  @mousedown.prevent="applyTagSuggestion(item)"
+                  @mouseenter="highlightIndex = i"
                 >
                   <span class="home-tag-suggest-main">{{ item.namespace }}:"{{ item.value }}$"</span>
                   <span class="home-tag-suggest-sub">{{ item.tag_cn || item.value }}</span>
-                </button>
-              </div>
+                </li>
+              </ul>
             </div>
-            <button class="home-search-btn" @click="performSearch">Search</button>
-            <button class="home-clear-btn" @click="clearSearch">Clear</button>
+
+            <button
+              class="home-syntax-btn"
+              type="button"
+              aria-haspopup="dialog"
+              title="查看高级搜索语法"
+              @click="toggleSearchHelp"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 10.9 12 11.5 12 13h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26A1.96 1.96 0 0 0 10 7a2 2 0 0 0-2 2H6a4 4 0 1 1 8 0c0 .88-.36 1.68-.93 2.25z" />
+              </svg>
+              语法
+            </button>
+          </div>
+
+          <!-- 当前生效的筛选条件：逐项可移除 -->
+          <div v-if="isFiltered" class="home-active-filters">
+            <span class="home-active-label">当前条件</span>
+            <button
+              v-for="term in activeTerms"
+              :key="`t-${term.raw}`"
+              class="home-filter-chip"
+              :class="{ 'is-exclude': term.mode === 'exclude', 'is-or': term.mode === 'or' }"
+              type="button"
+              :title="`移除条件：${term.raw}`"
+              @click="removeTerm(term)"
+            >
+              <span v-if="term.mode === 'exclude'" class="chip-sign">−</span>
+              <span v-else-if="term.mode === 'or'" class="chip-sign">或</span>
+              {{ term.raw.replace(/^[-~]/, '') }}
+              <span class="chip-x" aria-hidden="true">×</span>
+            </button>
+            <button
+              v-for="type in activeTypes"
+              :key="`c-${type}`"
+              class="home-filter-chip is-category"
+              type="button"
+              :title="`移除分类：${type}`"
+              @click="toggleType(type)"
+            >
+              <span class="home-type-dot" :style="{ background: exTypeDotColors[type] }"></span>
+              {{ type }}
+              <span class="chip-x" aria-hidden="true">×</span>
+            </button>
+            <button class="home-clear-all" type="button" @click="clearAll">全部清除</button>
           </div>
 
           <div class="home-filter-meta">
-            <div class="home-filter-copy">
-              <div class="home-filter-eyebrow">Categories</div>
-            </div>
+            <div class="home-filter-eyebrow">分类 · 可多选</div>
           </div>
 
           <div class="home-type-grid">
             <button
-              class="home-type-pill all-pill"
-              :class="{ active: !activeType }"
-              @click="toggleType(null)"
-            >
-              <span class="home-type-dot" style="background:#334155"></span>
-              All
-            </button>
-            <button
               v-for="type in exTypeList"
               :key="type.name"
               class="home-type-pill"
-              :class="{ active: activeType === type.name }"
+              :class="{ active: activeTypes.includes(type.name) }"
+              type="button"
+              :aria-pressed="activeTypes.includes(type.name)"
               @click="toggleType(type.name)"
             >
               <span class="home-type-dot" :style="{ background: exTypeDotColors[type.name] }"></span>
               {{ type.name }}
+              <span class="home-type-count">{{ typeCounts[type.name] || 0 }}</span>
             </button>
           </div>
         </div>
       </div>
 
       <section class="home-content-panel">
-        <div class="toolbar">
-          <div class="pagination-control" v-if="totalPages > 1">
-            <div class="paginator-mini">
-              <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(1)">«</button>
-              <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">‹</button>
-              <label class="pag-jump-inline">
-                <input
-                  v-model="pageJumpValue"
-                  class="pag-jump-input"
-                  inputmode="numeric"
-                  autocomplete="off"
-                  spellcheck="false"
-                  @keydown.enter.prevent="submitPageJump"
-                />
-                <span class="pag-jump-total">/ {{ totalPages }}</span>
-              </label>
-              <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">›</button>
-              <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(totalPages)">»</button>
-            </div>
-          </div>
+        <div class="toolbar" v-if="totalPages > 1">
+          <Paginator :page="currentPage" :total="totalPages" @go="goToPage" />
         </div>
 
         <GalleryList
@@ -105,40 +149,26 @@
         />
 
         <div class="home-pagination-footer" v-if="totalPages > 1">
-          <div class="pagination-control">
-            <div class="paginator-mini">
-              <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(1)">«</button>
-              <button class="pag-btn pag-nav" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">‹</button>
-              <label class="pag-jump-inline">
-                <input
-                  v-model="pageJumpValue"
-                  class="pag-jump-input"
-                  inputmode="numeric"
-                  autocomplete="off"
-                  spellcheck="false"
-                  @keydown.enter.prevent="submitPageJump"
-                />
-                <span class="pag-jump-total">/ {{ totalPages }}</span>
-              </label>
-              <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">›</button>
-              <button class="pag-btn pag-nav" :disabled="currentPage >= totalPages" @click="goToPage(totalPages)">»</button>
-            </div>
-          </div>
+          <Paginator :page="currentPage" :total="totalPages" @go="goToPage" />
         </div>
       </section>
 
       <Popover ref="searchHelpPopover" class="search-help-popover">
         <div class="search-help-content">
-          <div class="search-help-title">Search Syntax</div>
+          <div class="search-help-title">高级搜索语法</div>
+          <p class="search-help-note">点击示例可直接填入搜索框</p>
           <div class="search-help-list">
-            <div>AND: space separated terms</div>
-            <div>Exclude: -term</div>
-            <div>OR: ~term (any ~term matches)</div>
-            <div>Phrase: "exact words"</div>
-            <div>Wildcard: term*</div>
-            <div>Exact tag: tag$</div>
-            <div>Fields: title:, uploader:, category:, gid:</div>
-            <div>Tags: tag:, f:/m:/a:/p:/c:/l:/g:/o:</div>
+            <button
+              v-for="row in SEARCH_SYNTAX_HELP"
+              :key="row.syntax"
+              class="search-help-row"
+              type="button"
+              @click="applyExample(row.example)"
+            >
+              <code class="search-help-syntax">{{ row.syntax }}</code>
+              <span class="search-help-desc">{{ row.desc }}</span>
+              <code class="search-help-example">{{ row.example }}</code>
+            </button>
           </div>
         </div>
       </Popover>
@@ -147,300 +177,247 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Popover from 'primevue/popover'
 import GalleryList from '@/components/GalleryList.vue'
+import Paginator from '@/components/Paginator.vue'
 import { exTypeList, exTypeDotColors, exTypeClassMap, formatTimestamp, enrichTags } from '@/utils/galleryUtils'
 import { loadGalleries, loadTranslations } from '@/composables/useGalleryData'
+import {
+  SEARCH_SYNTAX_HELP,
+  parseQuery,
+  parsedTerms,
+  passesQuery,
+  matchGalleryTerm,
+  activeToken,
+  applySuggestion,
+  suggestTags,
+} from '@/utils/gallerySearch'
 
-const searchQuery = ref('')
-const results = ref([])
-const allGalleries = ref([])
-const translationData = ref(null)
-const currentPage = ref(1)
-const perPage = ref(30)
-const totalRecords = ref(0)
-const activeType = ref(null)
-const loading = ref(false)
-const pageJumpValue = ref('1')
+const PER_PAGE = 30
+const DEBOUNCE_MS = 220
 
-const searchHelpPopover = ref()
 const router = useRouter()
 const route = useRoute()
 
+const searchQuery = ref('')
+/** 防抖后的查询词，真正参与过滤 */
+const appliedQuery = ref('')
+const allGalleries = ref([])
+const translationData = ref(null)
+const activeTypes = ref([])
+const currentPage = ref(1)
+const perPage = ref(PER_PAGE)
+const loading = ref(true)
+
+const searchInputRef = ref()
+const searchHelpPopover = ref()
+const highlightIndex = ref(-1)
+const suggestDismissed = ref(false)
+
+let debounceTimer = null
+let blurTimer = null
+
+/* ── 过滤（即时，与 Printed 页行为一致） ───────────────────────── */
+
+const parsedQuery = computed(() => parseQuery(appliedQuery.value.trim()))
+const activeTerms = computed(() => parsedTerms(parsedQuery.value))
+
+/** 先只应用文本条件，分类计数基于这一层，方便用户预判点下去有多少结果 */
+const queryFiltered = computed(() => {
+  if (!appliedQuery.value.trim()) return allGalleries.value
+  const parsed = parsedQuery.value
+  return allGalleries.value.filter(item => passesQuery(item, parsed, matchGalleryTerm))
+})
+
+const typeCounts = computed(() => {
+  const counts = {}
+  for (const item of queryFiltered.value) {
+    counts[item.category] = (counts[item.category] || 0) + 1
+  }
+  return counts
+})
+
+const filtered = computed(() => {
+  if (!activeTypes.value.length) return queryFiltered.value
+  const set = new Set(activeTypes.value)
+  return queryFiltered.value.filter(item => set.has(item.category))
+})
+
+const totalRecords = computed(() => filtered.value.length)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalRecords.value / perPage.value)))
+const isFiltered = computed(() => activeTerms.value.length > 0 || activeTypes.value.length > 0)
 
-const activeSearchToken = computed(() => {
-  const query = searchQuery.value
-  let inQuote = false
-  let lastBreak = -1
-  for (let i = 0; i < query.length; i++) {
-    const ch = query[i]
-    if (ch === '"') inQuote = !inQuote
-    if (!inQuote && (ch === ' ' || ch === ',')) lastBreak = i
-  }
-  return query.slice(lastBreak + 1).trim()
+const pageItems = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value
+  return filtered.value.slice(start, start + perPage.value)
 })
 
-const tagSuggestions = computed(() => {
-  const token = activeSearchToken.value.trim().toLowerCase()
-  const translations = translationData.value?.data
-  if (!token || !translations || token.length < 2) return []
-  if (token.includes('$') || token.startsWith('-') || token.startsWith('~')) return []
-
-  const normalized = token.includes(':') ? token.split(':', 2)[1].replace(/^"|"$/g, '') : token.replace(/^"|"$/g, '')
-  if (!normalized) return []
-
-  const suggestions = []
-  for (const namespaceEntry of translations) {
-    const namespace = namespaceEntry.namespace
-    const values = namespaceEntry.data || {}
-    for (const [value, detail] of Object.entries(values)) {
-      const valueLower = value.toLowerCase()
-      const cnLower = (detail?.name || '').toLowerCase()
-      const nsLower = namespace.toLowerCase()
-      const score =
-        valueLower === normalized ? 0 :
-        valueLower.startsWith(normalized) ? 1 :
-        cnLower.startsWith(normalized) ? 2 :
-        nsLower.startsWith(normalized) ? 3 :
-        valueLower.includes(normalized) ? 4 :
-        cnLower.includes(normalized) ? 5 :
-        -1
-      if (score === -1) continue
-      suggestions.push({
-        tag: `${namespace}:${value}`,
-        namespace,
-        value,
-        tag_cn: detail?.name || '',
-        score,
-      })
+const normalizedItems = computed(() =>
+  pageItems.value.map(item => {
+    const tags = Array.isArray(item.tags) ? enrichTags(item.tags, translationData.value) : []
+    return {
+      key: item.gid,
+      gid: item.gid,
+      to: item.gid ? `/gallery/${item.gid}/` : null,
+      thumb: item.thumb,
+      title: item.title_jpn || item.title,
+      badge: item.category,
+      badgeClass: exTypeClassMap[item.category] || 'default',
+      tags: tags.slice(0, 8).map(t => t.tag_cn || t.value),
+      pages: item.filecount ? `${item.filecount}p` : null,
+      date: item.posted ? formatTimestamp(item.posted) : null,
+      rating: item.rating,
+      fav: item.favCategory || null,
+      refId: null,
+      noMeta: false,
+      noMetaText: null,
     }
-  }
-
-  return suggestions
-    .sort((a, b) => a.score - b.score || a.namespace.localeCompare(b.namespace) || a.value.localeCompare(b.value))
-    .slice(0, 8)
-})
-
-const mappedResults = computed(() => results.value.map(item => ({
-  type: item.category,
-  typeClass: exTypeClassMap[item.category] || 'default',
-  title: item.title,
-  title_jpn: item.title_jpn,
-  published: item.posted ? formatTimestamp(item.posted) : '',
-  gid: item.gid,
-  filecount: item.filecount ? `${item.filecount}p` : '',
-  tags: Array.isArray(item.tags) ? item.tags : [],
-  rating: item.rating,
-  thumb: item.thumb,
-  favTime: formatFavDate(item.favTime),
-  favCategory: item.favCategory || '',
-})))
-
-function formatFavDate(value) {
-  if (!value) return ''
-  const str = String(value)
-  const match = str.match(/\d{4}-\d{2}-\d{2}/)
-  return match ? match[0] : str
-}
-
-const namespaceAliases = {
-  f: 'female', m: 'male', a: 'artist', p: 'parody',
-  c: 'character', l: 'language', g: 'group', o: 'other',
-  cos: 'cosplayer', x: 'mixed', r: 'reclass'
-}
-
-function tokenizeQuery(query) {
-  const tokens = []
-  let buffer = '', inQuote = false, wasQuoted = false
-  for (const ch of query) {
-    if (ch === '"') { inQuote = !inQuote; wasQuoted = true; continue }
-    if (!inQuote && (ch === ' ' || ch === ',')) {
-      if (buffer) { tokens.push({ text: buffer, quoted: wasQuoted }); buffer = ''; wasQuoted = false }
-      continue
-    }
-    buffer += ch
-  }
-  if (buffer) tokens.push({ text: buffer, quoted: wasQuoted })
-  return tokens
-}
-
-function parseQuery(query) {
-  const include = [], exclude = [], orTerms = []
-  for (const token of tokenizeQuery(query)) {
-    let raw = token.text.trim()
-    if (!raw) continue
-    let mode = 'include'
-    if (raw.startsWith('-')) { mode = 'exclude'; raw = raw.slice(1) }
-    else if (raw.startsWith('~')) { mode = 'or'; raw = raw.slice(1) }
-    raw = raw.replace(/_/g, ' ').trim()
-    if (!raw) continue
-    let exactTag = false
-    if (raw.endsWith('$')) { exactTag = true; raw = raw.slice(0, -1) }
-    let wildcard = false
-    if (raw.endsWith('*') || raw.endsWith('%')) { wildcard = true; raw = raw.slice(0, -1) }
-    let field = 'any', namespace = null, value = raw
-    if (raw.includes(':')) {
-      const [prefixRaw, rest] = raw.split(':', 2)
-      const prefix = prefixRaw.toLowerCase()
-      if (['title', 'uploader', 'category', 'gid', 'tag'].includes(prefix)) {
-        field = prefix; value = rest || ''
-      } else {
-        field = 'tag'; namespace = namespaceAliases[prefix] || prefix; value = rest || ''
-      }
-    }
-    value = value.trim().toLowerCase()
-    if (!value) continue
-    const term = { field, value, wildcard, exactTag, namespace, quoted: token.quoted }
-    if (mode === 'exclude') exclude.push(term)
-    else if (mode === 'or') orTerms.push(term)
-    else include.push(term)
-  }
-  return { include, exclude, orTerms }
-}
-
-function matchText(text, term) {
-  if (!text) return false
-  const target = String(text).toLowerCase()
-  if (term.wildcard) return target.startsWith(term.value)
-  if (term.quoted) return target.includes(term.value)
-  return target.includes(term.value)
-}
-
-function matchTagList(tags, term) {
-  if (!Array.isArray(tags)) return false
-  for (const tag of tags) {
-    if (typeof tag !== 'string') continue
-    const tagLower = tag.toLowerCase()
-    if (term.namespace) {
-      if (!tagLower.startsWith(`${term.namespace}:`)) continue
-      const tagValue = tagLower.slice(term.namespace.length + 1)
-      if (term.exactTag) { if (tagValue === term.value) return true }
-      else if (term.wildcard) { if (tagValue.startsWith(term.value)) return true }
-      else if (tagValue.includes(term.value)) return true
-    } else {
-      const tagValue = tagLower.includes(':') ? tagLower.split(':', 2)[1] : tagLower
-      if (term.exactTag) { if (tagValue === term.value) return true }
-      else if (term.wildcard) { if (tagValue.startsWith(term.value)) return true }
-      else if (tagLower.includes(term.value)) return true
-    }
-  }
-  return false
-}
-
-function matchTerm(item, term) {
-  if (term.field === 'gid') return String(item.gid || '') === term.value
-  if (term.field === 'title') return matchText(item.title, term) || matchText(item.title_jpn, term)
-  if (term.field === 'uploader') return matchText(item.uploader, term)
-  if (term.field === 'category') return matchText(item.category, term)
-  if (term.field === 'tag') return matchTagList(item.tags, term)
-  return matchText(item.title, term) || matchText(item.title_jpn, term) ||
-    matchText(item.uploader, term) || matchText(item.category, term) ||
-    matchTagList(item.tags, term)
-}
-
-function filterAndPaginateData(page = 1, keyword = '', type = null) {
-  loading.value = true
-  let filtered = [...allGalleries.value]
-  const query = keyword.trim()
-  if (query) {
-    const parsed = parseQuery(query)
-    filtered = filtered.filter(item => {
-      if (!parsed.include.every(term => matchTerm(item, term))) return false
-      if (parsed.exclude.some(term => matchTerm(item, term))) return false
-      if (parsed.orTerms.length > 0 && !parsed.orTerms.some(term => matchTerm(item, term))) return false
-      return true
-    })
-  }
-  if (type) filtered = filtered.filter(item => item.category === type)
-  totalRecords.value = filtered.length
-  const start = (page - 1) * perPage.value
-  results.value = filtered.slice(start, start + perPage.value).map(item => {
-    const copy = { ...item }
-    if (Array.isArray(item.tags)) copy.tags = enrichTags(item.tags, translationData.value)
-    return copy
   })
-  currentPage.value = page
-  pageJumpValue.value = String(page)
-  loading.value = false
+)
 
-  // Sync state to URL so back-navigation restores it
-  const q = {}
-  if (query) q.q = query
-  if (type) q.type = type
-  if (page > 1) q.page = String(page)
-  router.replace({ query: q })
+/* ── 标签联想 ─────────────────────────────────────────────────── */
+
+const tagSuggestions = computed(() =>
+  suggestTags(activeToken(searchQuery.value).text, translationData.value?.data)
+)
+
+const suggestOpen = computed(() => !suggestDismissed.value && tagSuggestions.value.length > 0)
+
+watch(tagSuggestions, () => { highlightIndex.value = -1 })
+
+function onSearchKeydown(e) {
+  if (e.key === 'Escape') {
+    suggestDismissed.value = true
+    highlightIndex.value = -1
+    return
+  }
+  if (!suggestOpen.value) {
+    if (e.key === 'Enter') flushQuery()
+    return
+  }
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    highlightIndex.value = (highlightIndex.value + 1) % tagSuggestions.value.length
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    highlightIndex.value =
+      (highlightIndex.value - 1 + tagSuggestions.value.length) % tagSuggestions.value.length
+  } else if (e.key === 'Enter') {
+    e.preventDefault()
+    if (highlightIndex.value >= 0) applyTagSuggestion(tagSuggestions.value[highlightIndex.value])
+    else flushQuery()
+  } else if (e.key === 'Tab' && highlightIndex.value >= 0) {
+    e.preventDefault()
+    applyTagSuggestion(tagSuggestions.value[highlightIndex.value])
+  }
+}
+
+function closeSuggestSoon() {
+  clearTimeout(blurTimer)
+  blurTimer = setTimeout(() => { suggestDismissed.value = true }, 120)
 }
 
 function applyTagSuggestion(item) {
-  const query = searchQuery.value
-  let inQuote = false
-  let lastBreak = -1
-  for (let i = 0; i < query.length; i++) {
-    const ch = query[i]
-    if (ch === '"') inQuote = !inQuote
-    if (!inQuote && (ch === ' ' || ch === ',')) lastBreak = i
-  }
-  const prefix = query.slice(0, lastBreak + 1).trimEnd()
-  const replacement = `${item.namespace}:"${item.value}$"`
-  searchQuery.value = prefix ? `${prefix} ${replacement} ` : `${replacement} `
+  searchQuery.value = applySuggestion(searchQuery.value, item)
+  highlightIndex.value = -1
+  suggestDismissed.value = true
+  searchInputRef.value?.focus()
 }
 
-function performSearch() { filterAndPaginateData(1, searchQuery.value, activeType.value) }
-function clearSearch() { searchQuery.value = ''; activeType.value = null; filterAndPaginateData(1) }
+/* ── 查询同步：输入防抖 → appliedQuery → URL ───────────────────── */
+
+watch(searchQuery, () => {
+  suggestDismissed.value = false
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => { appliedQuery.value = searchQuery.value }, DEBOUNCE_MS)
+})
+
+function flushQuery() {
+  clearTimeout(debounceTimer)
+  appliedQuery.value = searchQuery.value
+  suggestDismissed.value = true
+}
+
+/* 条件变化后回到第 1 页，并把状态同步到 URL 以便后退恢复与分享 */
+watch([appliedQuery, activeTypes], () => { currentPage.value = 1 })
+
+watch([appliedQuery, activeTypes, currentPage], () => {
+  const query = {}
+  const q = appliedQuery.value.trim()
+  if (q) query.q = q
+  if (activeTypes.value.length) query.type = activeTypes.value.join(',')
+  if (currentPage.value > 1) query.page = String(currentPage.value)
+  router.replace({ query })
+}, { deep: true })
+
 function toggleType(type) {
-  activeType.value = activeType.value === type ? null : type
-  filterAndPaginateData(1, searchQuery.value, activeType.value)
+  const i = activeTypes.value.indexOf(type)
+  if (i >= 0) activeTypes.value.splice(i, 1)
+  else activeTypes.value.push(type)
 }
-const normalizedItems = computed(() => mappedResults.value.map(item => ({
-  key: item.gid,
-  gid: item.gid,
-  to: item.gid ? `/gallery/${item.gid}/` : null,
-  thumb: item.thumb,
-  title: item.title_jpn || item.title,
-  badge: item.type,
-  badgeClass: item.typeClass,
-  tags: item.tags.slice(0, 8).map(t => t.tag_cn || t.value),
-  pages: item.filecount || null,
-  date: item.published || null,
-  rating: item.rating,
-  fav: item.favCategory || null,
-  refId: null,
-  noMeta: false,
-  noMetaText: null,
-})))
 
-function submitPageJump() {
-  const normalized = pageJumpValue.value.replace(/[^\d]/g, '')
-  if (!normalized) {
-    pageJumpValue.value = String(currentPage.value)
-    return
-  }
-  goToPage(normalized)
+function removeTerm(term) {
+  /* 按原始 token 从查询串里删掉这一段 */
+  const next = searchQuery.value
+    .split(/([ ,])/)
+    .filter(part => part.trim() !== term.raw.trim())
+    .join('')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+  searchQuery.value = next
+  flushQuery()
 }
+
+function clearQuery() {
+  searchQuery.value = ''
+  flushQuery()
+  searchInputRef.value?.focus()
+}
+
+function clearAll() {
+  searchQuery.value = ''
+  activeTypes.value = []
+  flushQuery()
+}
+
 function goToPage(page) {
-  const p = Math.max(1, Math.min(totalPages.value, Number(page)))
-  if (p !== currentPage.value) filterAndPaginateData(p, searchQuery.value, activeType.value)
+  currentPage.value = Math.max(1, Math.min(totalPages.value, Number(page) || 1))
 }
-function toggleSearchHelp(event) { searchHelpPopover.value?.toggle(event) }
+
+function toggleSearchHelp(event) {
+  searchHelpPopover.value?.toggle(event)
+}
+
+function applyExample(example) {
+  const current = searchQuery.value.trim()
+  searchQuery.value = current ? `${current} ${example} ` : `${example} `
+  flushQuery()
+  searchHelpPopover.value?.hide()
+  searchInputRef.value?.focus()
+}
+
+/* ── 初始化 ───────────────────────────────────────────────────── */
 
 onMounted(async () => {
-  loading.value = true
-  allGalleries.value = await loadGalleries()
-  const q = route.query.q || ''
-  const type = route.query.type || null
-  const page = parseInt(route.query.page) || 1
+  const q = String(route.query.q || '')
+  const type = String(route.query.type || '')
   searchQuery.value = q
-  activeType.value = type
-  filterAndPaginateData(page, q, type)
+  appliedQuery.value = q
+  activeTypes.value = type ? type.split(',').filter(Boolean) : []
 
-  // Load translations in background; re-enrich tags when ready
-  loadTranslations().then(data => {
-    translationData.value = data
-    filterAndPaginateData(currentPage.value, searchQuery.value, activeType.value)
-  })
+  allGalleries.value = await loadGalleries()
+  currentPage.value = parseInt(route.query.page) || 1
+  loading.value = false
+
+  /* 翻译数据后到：只影响标签文案，不再重跑整个过滤与分页 */
+  translationData.value = await loadTranslations()
+})
+
+onBeforeUnmount(() => {
+  clearTimeout(debounceTimer)
+  clearTimeout(blurTimer)
 })
 </script>
 
