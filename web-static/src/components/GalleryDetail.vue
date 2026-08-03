@@ -5,10 +5,10 @@
            页面里有两个 <h1>、两组标签面板，读屏会把全部内容读两遍 -->
       <section class="gd-hero">
         <div class="gd-cover-panel">
-          <div class="cover-shell">
-            <img :src="galleryData.thumb || galleryData.image || '/placeholder.png'" :alt="`${getDisplayTitle()} 封面`" />
+          <div class="cover-shell" :style="{ '--cover-src': `url(${coverSrc})` }">
+            <span class="category-badge" :class="categoryClass">{{ getDisplayCategory() }}</span>
+            <img :src="coverSrc" :alt="`${getDisplayTitle()} 封面`" />
           </div>
-          <span class="category-badge" :class="categoryClass">{{ getDisplayCategory() }}</span>
           <a class="external-link cover-ext-link" :href="externalLink" @click.prevent="openExHentai">在 ExHentai 打开</a>
         </div>
 
@@ -452,6 +452,9 @@ export default {
     },
   },
   computed: {
+    coverSrc() {
+      return this.galleryData?.thumb || this.galleryData?.image || '/placeholder.png';
+    },
     externalLink() {
       return `https://exhentai.org/g/${this.itemId}/${this.galleryData?.token || ''}`;
     },
