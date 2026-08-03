@@ -1,10 +1,5 @@
 <template>
   <div class="container home-page">
-    <div class="seo-description">
-      <h1>NoHentai – ExHentai & E-Hentai Favorites Backup and Gallery Browser</h1>
-      <p>NoHentai is a backup and browsing platform designed for ExHentai and E-Hentai favorite galleries. It allows users to organize and browse doujinshi, manga, artist CG, game CG, and related gallery content with structured metadata. Features include advanced tag filtering, category browsing, keyword search, Japanese title support, tag translation, and detailed gallery information, enabling efficient archive management and discovery of ExHentai and E-Hentai collections.</p>
-    </div>
-
     <div class="home-shell">
       <div class="home-header-card">
         <div class="home-header-main">
