@@ -1,93 +1,84 @@
-import { createRouter, createWebHashHistory } from 'vue-router';
-// @ts-ignore
-import Home from '@/components/Home.vue';
-// @ts-ignore
-import DataAnalys from '@/components/DataAnalys.vue';
-// @ts-ignore
-import GalleryDetail from '@/components/GalleryDetail.vue';
-// @ts-ignore
-import Printed from '@/components/Printed.vue';
-// @ts-ignore
-import DailySearch from '@/components/DailySearch.vue';
-// @ts-ignore
-import GalleryReader from '@/components/reader/GalleryReader.vue';
-// @ts-ignore
-import GalleryTranslate from '@/components/GalleryTranslate.vue';
-// @ts-ignore
-import TranslateLookup from '@/components/TranslateLookup.vue';
-// // @ts-ignore
-// import TelegramFeed from '@/components/TelegramFeed.vue';
-// 静态版本移除这些组件
-// // @ts-ignore
-// import Settings from '@/components/Settings.vue';
-// // @ts-ignore
-// import Reader from '@/components/Reader.vue';
- 
+import { createRouter, createWebHashHistory } from 'vue-router'
+import type { RouteRecordRaw } from 'vue-router'
 
-const routes = [
+/**
+ * 全部页面走动态 import 做路由级代码分割。
+ * 此前是静态 import，首屏会一并加载 Chart.js（统计页）、opencc-js（书单）、
+ * 翻译工作台及其词典依赖 —— 而大多数访问只停留在首页。
+ */
+const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'Home',
-    component: Home,
+    component: () => import('@/components/Home.vue'),
+    meta: { title: '收藏画廊' },
   },
   {
     path: '/data',
     name: 'DataAnalys',
-    component: DataAnalys,
+    component: () => import('@/components/DataAnalys.vue'),
+    meta: { title: '数据统计' },
   },
   {
     path: '/printed',
     name: 'Printed',
-    component: Printed,
+    component: () => import('@/components/Printed.vue'),
+    meta: { title: '实体书单' },
   },
   {
     path: '/daily',
     name: 'DailySearch',
-    component: DailySearch,
+    component: () => import('@/components/DailySearch.vue'),
+    meta: { title: '每日搜索' },
   },
-  // {
-  //   path: '/telegram',
-  //   name: 'TelegramFeed',
-  //   component: TelegramFeed,
-  // },
   {
-    path: '/gallery/:gid',  // ExHentai 动态路由
+    path: '/gallery/:gid',
     name: 'GalleryDetail',
-    component: GalleryDetail,
-    props: true,  // 将参数作为props传递给组件
+    component: () => import('@/components/GalleryDetail.vue'),
+    props: true,
+    meta: { title: '画廊详情' },
   },
   {
     path: '/gallery/:gid/read',
     name: 'GalleryReader',
-    component: GalleryReader,
+    component: () => import('@/components/reader/GalleryReader.vue'),
+    meta: { title: '阅读器', immersive: true },
   },
   {
     path: '/gallery/:gid/translate',
     name: 'GalleryTranslate',
-    component: GalleryTranslate,
+    component: () => import('@/components/GalleryTranslate.vue'),
+    meta: { title: '翻译工作台', immersive: true },
   },
   {
     path: '/translate',
     name: 'TranslateLookup',
-    component: TranslateLookup,
+    component: () => import('@/components/TranslateLookup.vue'),
+    meta: { title: '日文查词' },
   },
-  // 静态版本暂时移除这些路由
-  // {
-  //   path: '/settings',
-  //   name: 'Settings',
-  //   component: Settings,
-  // },
-  // {
-  //   path: '/reader/:gid/:token',  // ExHentai 阅读器路由
-  //   name: 'Reader',
-  //   component: Reader,
-  //   props: true,  // 将参数作为props传递给组件
-  // },
-];
+]
 
 const router = createRouter({
   history: createWebHashHistory(),
   routes,
-});
+  /**
+   * 前进/后退恢复原滚动位置，其余情况回到顶部。
+   * 此前未配置：翻页后停留在原滚动位置，用户点击底部「下一页」
+   * 看到的是新一页的尾部。
+   */
+  scrollBehavior(to, _from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.meta.immersive) return false
+    return { top: 0 }
+  },
+})
 
-export default router;
+const BASE_TITLE = 'NoHentai | の変態'
+
+/* 路由切换时更新标题，便于区分多标签页与浏览历史 */
+router.afterEach(to => {
+  const title = to.meta.title as string | undefined
+  document.title = title ? `${title} · ${BASE_TITLE}` : BASE_TITLE
+})
+
+export default router
