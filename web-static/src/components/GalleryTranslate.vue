@@ -1538,6 +1538,11 @@ export default {
   flex: 1;
   min-width: 0;
   position: relative;
+  /* OCR 框带内联 z-index: 10/20。没有这行的话 .gt-image-panel 只是 position: relative、
+     z-index: auto，不构成层叠上下文，那些框会跑到根层叠上下文里去比高低，
+     于是盖住 z-index: 6 的底部抽屉 —— 图片被正常遮挡，气泡却浮在抽屉之上。
+     这里显式建一个层叠上下文，把框关在图片区内部。 */
+  z-index: 0;
   display: flex;
   align-items: center;
   justify-content: center;
