@@ -93,6 +93,99 @@ function submitJump() {
 </template>
 
 <style scoped>
+/* 这些样式此前住在 Home.css（无 scoped、只被 Home/Daily 引入），
+   而 Printed 用的是 scoped 的 Printed.css。直接落地 /printed 时
+   Home.css 根本没加载，分页器就是一堆无样式的裸 button；
+   先逛过首页再回来才「恢复正常」—— 因为 Home.css 作为全局样式表留在了文档里。
+   组件自己的样式必须跟组件走。 */
+.pagination-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.paginator-mini {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  min-height: 36px;
+  padding: 4px 6px;
+}
+
+.pag-btn {
+  appearance: none;
+  min-width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted-color);
+  cursor: pointer;
+  padding: 0 8px;
+  line-height: 1;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.pag-btn:hover:not(:disabled) {
+  background: var(--hover-bg);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+.pag-btn.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #fff;
+  font-weight: 700;
+}
+
+.pag-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.pag-jump-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 4px;
+}
+
+.pag-jump-input {
+  width: 44px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  padding: 0 4px;
+}
+
+.pag-jump-input:focus-visible {
+  border-color: var(--primary-color);
+  outline: 2px solid var(--primary-color);
+  outline-offset: 1px;
+}
+
+.pag-jump-total {
+  font-size: 13px;
+  color: var(--muted-color);
+  white-space: nowrap;
+}
+
 .pag-page {
   font-size: 12px;
   font-weight: 600;
@@ -115,6 +208,12 @@ function submitJump() {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+@media (max-width: 767px) {
+  .pagination-control {
+    gap: 6px;
+  }
 }
 
 /* 窄屏收起页码序列与跳页框，只保留方向键 —— 底部标签栏已占用空间 */
