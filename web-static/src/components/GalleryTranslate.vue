@@ -30,7 +30,7 @@
   </div>
 
   <!-- Main Workbench -->
-  <div v-else class="gt-workbench" :style="{ '--gt-image-h': splitRatio }">
+  <div v-else class="gt-workbench" :style="{ '--gt-sheet-h': sheetHeight }">
     <!-- Header -->
     <header class="gt-header">
       <button class="gt-back-btn" @click="$router.back()">←</button>
@@ -80,7 +80,7 @@
               }"
               :style="getBoxStyle(result, i)"
               :title="result.translation || result.text"
-              @click="selectedBoxIdx = selectedBoxIdx === i ? null : i"
+              @click="onBoxClick(i)"
             >
               <span
                 v-if="showTranslation && result.translation"
@@ -97,19 +97,46 @@
 
       </div>
 
-      <!-- Sidebar -->
-      <div class="gt-sidebar">
-        <!-- 移动端：调整图片与结果列表的分屏比例 -->
-        <div class="gt-split-toggle" role="group" aria-label="分屏比例">
-          <button
-            v-for="opt in splitOptions"
-            :key="opt.value"
-            class="gt-split-btn"
-            :class="{ active: splitRatio === opt.value }"
-            type="button"
-            :aria-pressed="splitRatio === opt.value"
-            @click="splitRatio = opt.value"
-          >{{ opt.label }}</button>
+      <!-- Sidebar（移动端为底部抽屉） -->
+      <div
+        ref="sidebarRef"
+        class="gt-sidebar"
+        :class="[`is-${sheetState}`, { 'is-dragging': sheetDragging }]"
+      >
+        <!-- 移动端抽屉把手：收起时只占一条，图片区因此能拿到整屏 -->
+        <div
+          class="gt-sheet-handle"
+          role="button"
+          tabindex="0"
+          :aria-expanded="sheetState !== 'peek'"
+          aria-label="识别结果面板"
+          @pointerdown="onSheetPointerDown"
+          @keydown.enter.prevent="cycleSheet"
+          @keydown.space.prevent="cycleSheet"
+        >
+          <span class="gt-sheet-grip"></span>
+          <div class="gt-sheet-row">
+            <button
+              class="gt-sheet-nav"
+              type="button"
+              :disabled="currentPage <= 1"
+              aria-label="上一页"
+              @pointerdown.stop
+              @click.stop="prevPage"
+            >‹</button>
+            <span class="gt-sheet-label">
+              识别结果
+              <span v-if="ocrResults.length" class="gt-sheet-count">{{ ocrResults.length }}</span>
+            </span>
+            <button
+              class="gt-sheet-nav"
+              type="button"
+              :disabled="currentPage >= totalPages"
+              aria-label="下一页"
+              @pointerdown.stop
+              @click.stop="nextPage"
+            >›</button>
+          </div>
         </div>
 
         <!-- Thumbnail strip inside sidebar -->
@@ -218,6 +245,7 @@
             v-for="(result, i) in ocrResults"
             :key="result._id"
             class="gt-result-item"
+            :data-idx="i"
             :class="{ 'gt-result-selected': selectedBoxIdx === i }"
             @click="selectedBoxIdx = selectedBoxIdx === i ? null : i"
           >
@@ -316,6 +344,11 @@
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://no-hentai.vercel.app'
 const SESSION_KEY = 'trans_password'
 const TRANS_CACHE_TTL = 3 * 24 * 60 * 60 * 1000
+
+/* 移动端底部抽屉的三个档位。peek 与 CSS 里的 --gt-sheet-peek 保持一致 */
+const SHEET_PEEK_PX = 64
+const SHEET_SNAPS = { peek: `${SHEET_PEEK_PX}px`, half: '50dvh', full: '88dvh' }
+const SHEET_ORDER = ['peek', 'half', 'full']
 
 // ── Kuromoji (CDN lazy-load, singleton) ───────────────────────────────────────
 
@@ -577,13 +610,10 @@ export default {
       showTranslation: true,
       autoTranslate: false,
       configPanelExpanded: true,
-      /* 移动端图片区占比，三档可切 */
-      splitRatio: '52%',
-      splitOptions: [
-        { label: '图大', value: '70%' },
-        { label: '均分', value: '52%' },
-        { label: '文大', value: '34%' },
-      ],
+      /* 移动端底部抽屉：peek 只留把手（图片占满整屏）→ half → full */
+      sheetState: 'peek',
+      sheetDragging: false,
+      sheetDragH: null,
       selectedBoxIdx: null,
       ocrSource: 'google',
       lastOcrSource: null,
@@ -609,6 +639,11 @@ export default {
   computed: {
     totalPages() {
       return this.galleryImages.length
+    },
+    /** 抽屉高度：拖拽中用像素跟手，松手后落到档位 */
+    sheetHeight() {
+      if (this.sheetDragH != null) return `${this.sheetDragH}px`
+      return SHEET_SNAPS[this.sheetState] || SHEET_SNAPS.peek
     },
   },
 
@@ -659,6 +694,78 @@ export default {
   },
 
   methods: {
+    // ── 移动端底部抽屉 ─────────────────────────────────────────────────────────
+
+    /** 各档位换算成像素，用于拖拽吸附 */
+    sheetSnapPixels() {
+      const vh = window.innerHeight
+      return { peek: SHEET_PEEK_PX, half: vh * 0.5, full: vh * 0.88 }
+    },
+
+    setSheet(state) {
+      this.sheetState = state
+      this.sheetDragH = null
+      // 高度变化会改变图片可用区域，OCR 框需要重算
+      this.$nextTick(() => { this.renderTick++ })
+    },
+
+    cycleSheet() {
+      const next = SHEET_ORDER[(SHEET_ORDER.indexOf(this.sheetState) + 1) % SHEET_ORDER.length]
+      this.setSheet(next)
+    },
+
+    onSheetPointerDown(e) {
+      // 桌面端没有抽屉
+      if (window.innerWidth > 767) return
+      const el = this.$refs.sidebarRef
+      if (!el) return
+      const startY = e.clientY
+      const startH = el.getBoundingClientRect().height
+      let moved = 0
+
+      const onMove = ev => {
+        moved = Math.max(moved, Math.abs(ev.clientY - startY))
+        if (moved < 4) return
+        this.sheetDragging = true
+        const max = window.innerHeight * 0.88
+        this.sheetDragH = Math.min(max, Math.max(SHEET_PEEK_PX, startH - (ev.clientY - startY)))
+      }
+
+      const onUp = () => {
+        window.removeEventListener('pointermove', onMove)
+        window.removeEventListener('pointerup', onUp)
+        window.removeEventListener('pointercancel', onUp)
+        if (moved < 4) {
+          // 视为点击：在三档之间轮转
+          this.sheetDragging = false
+          this.cycleSheet()
+          return
+        }
+        const h = this.sheetDragH ?? startH
+        const snaps = this.sheetSnapPixels()
+        const nearest = SHEET_ORDER.reduce((best, k) =>
+          Math.abs(snaps[k] - h) < Math.abs(snaps[best] - h) ? k : best, 'peek')
+        this.sheetDragging = false
+        this.setSheet(nearest)
+      }
+
+      window.addEventListener('pointermove', onMove)
+      window.addEventListener('pointerup', onUp)
+      window.addEventListener('pointercancel', onUp)
+    },
+
+    /** 点击图片上的 OCR 框：移动端顺带把抽屉抬起来并滚到对应条目 */
+    onBoxClick(i) {
+      const next = this.selectedBoxIdx === i ? null : i
+      this.selectedBoxIdx = next
+      if (next == null || window.innerWidth > 767) return
+      if (this.sheetState === 'peek') this.setSheet('half')
+      this.$nextTick(() => {
+        const el = this.$refs.sidebarRef?.querySelector(`.gt-result-item[data-idx="${next}"]`)
+        el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+      })
+    },
+
     // ── Auth ──────────────────────────────────────────────────────────────────
 
     async verifyPassword() {
@@ -2277,25 +2384,34 @@ export default {
   .gt-sidebar { width: 45%; }
 }
 
-/* 移动端：图片固定在上半屏，结果列表在下半屏独立滚动。
-   此前是整页长滚动 —— OCR 框在上、译文在下，对照原文必须来回滚动，
-   两者不可能同屏，直接破坏了这个页面的核心用途。 */
+/* 宽屏没有抽屉，抽屉把手只在移动端出现 */
+.gt-sheet-handle { display: none; }
+
+/* 移动端：图片区吃掉除头栏外的整屏，结果列表收成底部抽屉。
+   此前是 52% 固定分屏 —— 竖版漫画页在半屏高的框里按高度收缩，
+   两侧留白、字小到读不动，而下半屏大多时候是空的「点击 OCR 开始识别」。
+   现在默认只留一条把手（56px），需要对照译文时再把抽屉拉起来。 */
 @media (max-width: 767px) {
   .gt-workbench {
     height: 100dvh;
     overflow: hidden;
+    --gt-sheet-peek: 64px;
+    --gt-sheet-safe: calc(var(--gt-sheet-peek) + env(safe-area-inset-bottom, 0px));
   }
 
   .gt-body {
     flex-direction: column;
     min-height: 0;
     overflow: hidden;
+    position: relative;
   }
 
   .gt-image-panel {
-    flex: 0 0 var(--gt-image-h, 52%);
+    flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
+    /* 给抽屉把手让出位置，图片因此永远不会被压在把手底下 */
+    padding-bottom: var(--gt-sheet-safe);
   }
 
   .gt-page-img {
@@ -2304,56 +2420,100 @@ export default {
     width: auto;
     height: auto;
     object-fit: contain;
+    box-shadow: none;
   }
 
+  /* ── 底部抽屉 ── */
   .gt-sidebar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
     width: 100%;
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
+    height: var(--gt-sheet-h, var(--gt-sheet-peek));
+    max-height: 88dvh;
+    z-index: 6;
     border-left: none;
     border-top: 1px solid var(--border-color);
-    /* 拖拽把手的视觉暗示 */
-    box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.25);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.32);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    transition: height var(--dur-base) var(--ease-out);
   }
 
-  /* 分栏比例三档切换，避免固定比例在不同内容量下都不合适 */
-  .gt-split-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 6px 0 4px;
-    border-bottom: 1px solid var(--border-color);
-    background: var(--row-bg);
+  .gt-sidebar.is-peek { overflow: hidden; }
+  .gt-sidebar.is-dragging { transition: none; }
+
+  .gt-sheet-handle {
+    display: block;
+    box-sizing: border-box;
+    height: var(--gt-sheet-peek);
     position: sticky;
     top: 0;
     z-index: 4;
+    background: var(--row-bg);
+    border-bottom: 1px solid var(--border-color);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: 5px 8px 0;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
-  .gt-split-btn {
-    min-width: 54px;
-    min-height: 32px;
-    padding: 0 10px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-color);
-    background: var(--surface-color);
-    color: var(--muted-color);
-    font-size: 12px;
+  .gt-sidebar.is-dragging .gt-sheet-handle { cursor: grabbing; }
+
+  .gt-sheet-grip {
+    display: block;
+    width: 36px;
+    height: 4px;
+    margin: 0 auto 6px;
+    border-radius: 2px;
+    background: var(--border-color);
+  }
+
+  .gt-sheet-row {
+    display: grid;
+    grid-template-columns: var(--tap-target) 1fr var(--tap-target);
+    align-items: center;
+  }
+
+  .gt-sheet-label {
+    text-align: center;
+    font-size: 13px;
     font-weight: 600;
+    color: var(--text-color);
+  }
+
+  .gt-sheet-count {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--primary-soft-bg);
+    color: var(--primary-on-soft);
+    font-size: 11px;
+    line-height: 18px;
+  }
+
+  .gt-sheet-nav {
+    min-width: var(--tap-target);
+    min-height: var(--tap-target);
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-color);
+    font-size: 20px;
+    line-height: 1;
     cursor: pointer;
   }
 
-  .gt-split-btn.active {
-    background: var(--primary-soft-bg);
-    border-color: var(--primary-soft-border);
-    color: var(--primary-on-soft);
-  }
+  .gt-sheet-nav:disabled { color: var(--faint-color); cursor: default; }
 
   .gt-header { min-height: var(--tap-target); }
   .gt-back-btn { min-width: var(--tap-target); min-height: var(--tap-target); }
 }
 
-/* 宽屏不需要分栏比例切换 */
-.gt-split-toggle { display: none; }
 </style>
