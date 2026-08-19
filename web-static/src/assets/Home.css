@@ -493,95 +493,6 @@
   flex-shrink: 0;
 }
 
-.paginator-mini {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  min-height: 36px;
-  padding: 4px 6px;
-}
-
-.pagination-control {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  flex-wrap: nowrap;
-  white-space: nowrap;
-}
-
-.pag-jump-inline {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 0 4px;
-}
-
-.pag-jump-input {
-  width: 44px;
-  height: 30px;
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-color);
-  color: var(--text-color);
-  font-size: 13px;
-  font-weight: 600;
-  text-align: center;
-  padding: 0 4px;
-}
-
-.pag-jump-input:focus-visible {
-  border-color: var(--primary-color);
-  outline: 2px solid var(--primary-color);
-  outline-offset: 1px;
-}
-
-.pag-jump-total {
-  font-size: 13px;
-  color: var(--muted-color);
-  white-space: nowrap;
-}
-
-.pag-btn {
-  appearance: none;
-  min-width: 30px;
-  height: 30px;
-  border-radius: 6px;
-  background: transparent;
-  border: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--muted-color);
-  cursor: pointer;
-  padding: 0 8px;
-  line-height: 1;
-  transition:
-    background-color var(--dur-fast) var(--ease-out),
-    color var(--dur-fast) var(--ease-out);
-}
-
-.pag-btn:hover:not(:disabled) {
-  background: var(--hover-bg);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-.pag-btn.active {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
-  color: #fff;
-  font-weight: 700;
-}
-
-.pag-btn:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-
 
 .home-pagination-footer {
   padding: 0 14px 14px;
@@ -730,10 +641,6 @@
 }
 
 @media (max-width: 767px) {
-  .pagination-control {
-    gap: 6px;
-  }
-
   /* 窄屏搜索行换行：输入框独占一行，两个按钮平分下一行 */
   .home-search-row {
     flex-wrap: wrap;
