@@ -192,7 +192,7 @@
 }
 
 .digi-error {
-  color: #f87171;
+  color: var(--danger-color);
 }
 
 /* ── 卡片网格 ── */

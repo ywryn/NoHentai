@@ -130,6 +130,6 @@ function handleKeydown(e) {
   min-width: 0;
 }
 .tl-input:focus { border-color: var(--primary-color, #6366f1); }
-.tl-error { color: #f87171; font-size: .85rem; margin: 0; }
+.tl-error { color: var(--danger-color); font-size: .85rem; margin: 0; }
 .tl-hint { font-size: .8rem; opacity: .4; margin: 0; }
 </style>
