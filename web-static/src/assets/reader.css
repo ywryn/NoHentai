@@ -6,7 +6,7 @@
   --reader-text: #f1f5f9;
   --reader-muted: #94a3b8;
   --reader-accent: #60a5fa;
-  --reader-error: #f87171;
+  --reader-error: var(--danger-color);
   --reader-overlay: rgba(0,0,0,0.8);
   --reader-bar-h: 48px;
   --reader-strip-h: 72px;

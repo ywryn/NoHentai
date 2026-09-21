@@ -45,26 +45,37 @@
           :disabled="!imageUrl || ocrProcessing || translating || imagesLoading"
           @click="performOcrAndTranslate"
         >
-          {{ ocrProcessing ? '识别中...' : translating ? '翻译中...' : '翻译' }}
+          {{ ocrProcessing ? '识别中 1/2' : translating ? '翻译中 2/2' : '翻译' }}
         </button>
       </div>
+      <!-- 两步流水线的进度条：替代原来一条接一条的 toast -->
+      <div v-if="ocrProcessing || translating" class="gt-progress" :class="{ 'is-step2': translating }" aria-hidden="true"></div>
     </header>
 
     <!-- Main body -->
     <div class="gt-body">
       <!-- Image panel -->
-      <div class="gt-image-panel" ref="containerRef">
+      <div
+        class="gt-image-panel"
+        ref="containerRef"
+        :class="{ 'is-zoomed': zoom.scale > 1 }"
+        @pointerdown="onStagePointerDown"
+        @wheel="onStageWheel"
+      >
         <div v-if="imageLoading" class="gt-image-placeholder">
           <div class="gt-spinner"></div>
           <span>加载图片...</span>
         </div>
         <div v-else-if="imageError" class="gt-image-placeholder gt-image-error">{{ imageError }}</div>
-        <template v-else-if="imageUrl">
+        <!-- 缩放层：图片与 OCR 框同在一个 transform 下，捏合 / 双击放大时框随图一起走 -->
+        <div v-else-if="imageUrl" class="gt-stage" :class="{ 'is-sliding': pageSliding }" :style="stageStyle">
           <img
             ref="imgRef"
             :src="imageUrl"
             class="gt-page-img"
             alt="manga page"
+            crossorigin="anonymous"
+            draggable="false"
             @load="onImageLoad"
           />
           <!-- OCR boxes overlay -->
@@ -77,19 +88,26 @@
                 'gt-box-selected': selectedBoxIdx === i,
                 'gt-box-translated': !!result.translation,
                 'gt-box-hidden': !showBoxes,
+                'gt-box-has-badge': showTranslation && result.translation && unfitBoxes[result._id],
               }"
               :style="getBoxStyle(result, i)"
               :title="result.translation || result.text"
               @click="onBoxClick(i)"
             >
+              <!-- 放得下就直接叠译文（高瘦框走竖排），放不下退化成序号徽标，避免 3px 的字糊成黑块 -->
               <span
-                v-if="showTranslation && result.translation"
+                v-if="showTranslation && result.translation && !unfitBoxes[result._id]"
                 class="gt-box-trans-text"
+                :class="{ 'gt-box-vertical': isVerticalBox(result), 'gt-box-sfx': result.kind === 'sfx' }"
                 :ref="el => setTransTextRef(el, result._id)"
               >{{ result.translation }}</span>
+              <span
+                v-else-if="showTranslation && result.translation"
+                class="gt-box-badge"
+              >{{ i + 1 }}</span>
             </div>
           </div>
-        </template>
+        </div>
         <div v-else class="gt-image-placeholder gt-image-empty">
           <div class="gt-empty-icon">📖</div>
           <p>从右侧选择页面</p>
@@ -208,6 +226,32 @@
               </button>
             </label>
           </div>
+          <!-- 术语表：与「显示」行同款 chip，展开后编辑区独占一行 -->
+          <div class="gt-cfg-row">
+            <span class="gt-cfg-key">术语</span>
+            <div class="gt-chip-group">
+              <button
+                class="gt-chip gt-chip-count"
+                :class="{ active: glossaryOpen }"
+                type="button"
+                :aria-expanded="glossaryOpen"
+                @click="glossaryOpen = !glossaryOpen"
+              >
+                术语表<span class="gt-chip-badge">{{ Object.keys(glossary).length }}</span>
+              </button>
+            </div>
+          </div>
+          <div v-if="glossaryOpen" class="gt-glossary">
+            <textarea
+              v-model="glossaryText"
+              class="gt-edit-input gt-glossary-input"
+              rows="4"
+              placeholder="每行一条：原文=译文&#10;例：お姉ちゃん=姐姐"
+              spellcheck="false"
+              @blur="commitGlossary"
+            ></textarea>
+            <span class="gt-glossary-hint">按画廊保存，随每次翻译一起提交给模型</span>
+          </div>
           <div class="gt-cfg-row">
             <span class="gt-cfg-key">学习</span>
             <label class="gt-switch-row">
@@ -229,10 +273,18 @@
           </template>
         </div>
 
-        <div class="gt-sidebar-hdr">
+        <!-- 移动端把手上已有标题与条数，这一行只在有「补译」按钮时才显示 -->
+        <div class="gt-sidebar-hdr" :class="{ 'gt-sidebar-hdr-plain': !(missingCount && missingCount < ocrResults.length) }">
           <span class="gt-sidebar-title">识别结果</span>
           <span v-if="ocrResults.length" class="gt-count-badge">{{ ocrResults.length }}</span>
-          <span v-if="ocrResults.some(r => r.translation)" class="gt-translated-badge">已翻译</span>
+          <span v-if="ocrResults.some(r => r.translation) && !missingCount" class="gt-translated-badge">已翻译</span>
+          <button
+            v-else-if="missingCount && missingCount < ocrResults.length"
+            class="gt-chip gt-retranslate"
+            type="button"
+            :disabled="translating"
+            @click="retranslateMissing"
+          >{{ translating ? '补译中…' : `补译 ${missingCount} 条` }}</button>
         </div>
 
         <div v-if="!ocrResults.length" class="gt-sidebar-empty">
@@ -247,7 +299,7 @@
             class="gt-result-item"
             :data-idx="i"
             :class="{ 'gt-result-selected': selectedBoxIdx === i }"
-            @click="selectedBoxIdx = selectedBoxIdx === i ? null : i"
+            @click="onResultClick(i)"
           >
             <div class="gt-result-meta">
               <span class="gt-result-idx">{{ i + 1 }}</span>
@@ -269,11 +321,54 @@
               </span>
             </div>
             <p v-else class="gt-result-orig">{{ result.text }}</p>
-            <p v-if="result.translation" class="gt-result-trans">{{ result.translation }}</p>
+            <!-- 译文：点 ✎ 内联编辑；模型漏译时明确标出而不是悄悄回填原文 -->
+            <div v-if="editingIdx === i" class="gt-result-edit" @click.stop>
+              <textarea
+                ref="editInput"
+                v-model="editingText"
+                class="gt-edit-input"
+                rows="2"
+                @keydown.enter.exact.prevent="commitEdit"
+                @keydown.esc.prevent="cancelEdit"
+              ></textarea>
+              <div class="gt-edit-actions">
+                <button class="gt-chip" type="button" @click="cancelEdit">取消</button>
+                <button class="gt-chip active" type="button" @click="commitEdit">保存</button>
+              </div>
+            </div>
+            <template v-else>
+              <div v-if="result.translation" class="gt-result-trans-row">
+                <p class="gt-result-trans">
+                  <span v-if="result.kind && result.kind !== 'dialogue'" class="gt-kind-tag">{{ kindLabel(result.kind) }}</span>{{ result.translation }}
+                </p>
+                <button class="gt-result-edit-btn" type="button" title="编辑译文" aria-label="编辑译文" @click.stop="startEdit(i)">✎</button>
+              </div>
+              <p v-if="result.translation && result.alt" class="gt-result-alt">备选：{{ result.alt }}</p>
+              <p v-else-if="!result.translation && ocrResults.some(r => r.translation)" class="gt-result-missing">
+                未翻译
+                <button class="gt-link-btn" type="button" @click.stop="startEdit(i)">手动填写</button>
+              </p>
+            </template>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- 移动端：点框后浮在抽屉把手上方的气泡卡，不用拉抽屉就能读原文 + 译文 -->
+    <Transition name="gt-bc">
+      <div v-if="bubbleCard != null && ocrResults[bubbleCard]" class="gt-bubble-card" role="dialog" aria-label="对白详情">
+        <div class="gt-bc-head">
+          <button class="gt-bc-nav" type="button" :disabled="bubbleCard <= 0" aria-label="上一条" @click="stepBubble(-1)">‹</button>
+          <span class="gt-bc-pos">{{ bubbleCard + 1 }} / {{ ocrResults.length }}</span>
+          <button class="gt-bc-nav" type="button" :disabled="bubbleCard >= ocrResults.length - 1" aria-label="下一条" @click="stepBubble(1)">›</button>
+          <button class="gt-bc-close" type="button" aria-label="关闭" @click="closeBubble">×</button>
+        </div>
+        <p class="gt-bc-orig">{{ ocrResults[bubbleCard].text }}</p>
+        <p v-if="ocrResults[bubbleCard].translation" class="gt-bc-trans">{{ ocrResults[bubbleCard].translation }}</p>
+        <p v-else class="gt-bc-trans gt-bc-pending">尚未翻译</p>
+        <p v-if="ocrResults[bubbleCard].alt" class="gt-bc-alt">备选：{{ ocrResults[bubbleCard].alt }}</p>
+      </div>
+    </Transition>
 
     <!-- Word Card -->
     <Transition name="gt-wc">
@@ -341,14 +436,51 @@
 </template>
 
 <script>
+import { loadGalleries } from '@/composables/useGalleryData'
+
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://no-hentai.vercel.app'
 const SESSION_KEY = 'trans_password'
 const TRANS_CACHE_TTL = 3 * 24 * 60 * 60 * 1000
+/* 每画廊术语表：{ 原文: 译文 }，随翻译请求一起送给模型 */
+const GLOSSARY_KEY_PREFIX = 'trans_glossary_'
+const KIND_LABEL = { dialogue: '对白', narration: '旁白', sfx: '拟声' }
 
 /* 移动端底部抽屉的三个档位。peek 与 CSS 里的 --gt-sheet-peek 保持一致 */
 const SHEET_PEEK_PX = 64
 const SHEET_SNAPS = { peek: `${SHEET_PEEK_PX}px`, half: '50dvh', full: '88dvh' }
 const SHEET_ORDER = ['peek', 'half', 'full']
+
+/* 译文叠加层：高宽比超过此值的框按竖排渲染；字号地板（CSS px）以下不再硬塞，改显示序号徽标 */
+const VERTICAL_ASPECT = 1.6
+const MIN_OVERLAY_FONT_PX = 11
+const MAX_BOX_EXPAND_STEPS = 6
+
+/* 图片缩放层 */
+const ZOOM_MAX = 5
+const ZOOM_DBLTAP = 2.5
+const SWIPE_MIN_X = 60
+const SWIPE_MAX_Y = 50
+/* 边缘点击区：与阅读器 BookView 一致的 30 / 40 / 30 */
+const EDGE_ZONE = 0.3
+/* 翻页滑动动效时长（ms），与 --dur-base 对齐 */
+const SLIDE_MS = 200
+
+/** 阅读方向沿用阅读器设置（reader-settings.bookDirection），默认 RTL；两个页面的翻页手势因此一致 */
+function readBookDirection() {
+  try {
+    const s = JSON.parse(localStorage.getItem('reader-settings') || '{}')
+    return s.bookDirection === 'ltr' ? 'ltr' : 'rtl'
+  } catch { return 'rtl' }
+}
+
+const prefersReducedMotion = () =>
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+const isMobile = () => window.innerWidth <= 767
+
+/* 送去 OCR 的图片：长边缩到此值、JPEG 质量 */
+const OCR_MAX_EDGE = 1800
+const OCR_JPEG_QUALITY = 0.88
 
 // ── Kuromoji (CDN lazy-load, singleton) ───────────────────────────────────────
 
@@ -412,14 +544,15 @@ class Rect {
   collision(r) {
     return this.x0 < r.x1 && this.y0 < r.y1 && this.x1 > r.x0 && this.y1 > r.y0
   }
-  distanceTo(r) {
-    const cx1 = (this.x0 + this.x1) / 2, cy1 = (this.y0 + this.y1) / 2
-    const cx2 = (r.x0 + r.x1) / 2,       cy2 = (r.y0 + r.y1) / 2
-    return Math.hypot(cx1 - cx2, cy1 - cy2)
+  /** 两个框边缘之间的空隙（相交为 0）。此前用中心距，对高瘦的竖排列几乎永远超阈值 */
+  gapTo(r) {
+    const dx = Math.max(0, r.x0 - this.x1, this.x0 - r.x1)
+    const dy = Math.max(0, r.y0 - this.y1, this.y0 - r.y1)
+    return Math.hypot(dx, dy)
   }
-  expand(ratio) {
-    const ew = this.w * ratio - this.w, eh = this.h * ratio - this.h
-    return new Rect(this.x0 - ew / 2, this.y0 - eh / 2, this.w + ew, this.h + eh)
+  /** 四周各外扩 px 像素（绝对值，不随框大小变化） */
+  pad(px) {
+    return new Rect(this.x0 - px, this.y0 - px, this.w + px * 2, this.h + px * 2)
   }
 }
 
@@ -427,14 +560,14 @@ function bboxToRect(bbox) {
   return new Rect(bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1])
 }
 
-function findConnected(rect, allRects, used, group, expandRatio, maxDist) {
-  const expanded = rect.expand(expandRatio)
+function findConnected(rect, allRects, used, group, padPx, maxDist) {
+  const expanded = rect.pad(padPx)
   for (const [r, idx] of allRects) {
     if (used.has(idx)) continue
-    if (expanded.collision(r) || rect.distanceTo(r) <= maxDist) {
+    if (expanded.collision(r) || rect.gapTo(r) <= maxDist) {
       group.push(idx)
       used.add(idx)
-      findConnected(r, allRects, used, group, expandRatio, maxDist)
+      findConnected(r, allRects, used, group, padPx, maxDist)
     }
   }
 }
@@ -458,8 +591,32 @@ function convexHull(pts) {
   return [...lower, ...upper]
 }
 
-function mergeOcrResults(items, expandRatio = 1.05, maxDistance = 10, minGroupSize = 2, confidenceThreshold = 0.7) {
+/** 单个框的排版方向：日漫对白绝大多数是高瘦的竖排框 */
+function boxOrientation(bbox) {
+  const w = Math.max(1, bbox[2] - bbox[0])
+  const h = Math.max(1, bbox[3] - bbox[1])
+  return h / w > VERTICAL_ASPECT ? 'vertical' : 'horizontal'
+}
+
+function median(nums) {
+  if (!nums.length) return 0
+  const s = [...nums].sort((a, b) => a - b)
+  const mid = s.length >> 1
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2
+}
+
+/**
+ * 把 OCR 的碎片框合并成对白块，并整理成漫画阅读顺序。
+ * 阈值全部按「单行字号」(所有框短边的中位数 m) 折算，因此 1000px 与 2400px 的扫图表现一致；
+ * 此前 maxDistance 写死 10/40 像素，对高清扫图几乎永远合不上，对小图又过度合并。
+ * `blockLevel` (Google Vision / OCR.Space 已按段落分块) 时放宽阈值。
+ */
+function mergeOcrResults(items, { blockLevel = false, confidenceThreshold = 0.7 } = {}) {
   if (!items.length) return []
+
+  const m = median(items.map(r => Math.min(r.bbox[2] - r.bbox[0], r.bbox[3] - r.bbox[1]))) || 16
+  const pad = m * (blockLevel ? 0.6 : 0.4)
+  const maxDistance = m * (blockLevel ? 1.0 : 0.6)
 
   const rects = items.map((r, i) => [bboxToRect(r.bbox), i])
   rects.sort(([a], [b]) => b.w * b.h - a.w * a.h)
@@ -470,38 +627,53 @@ function mergeOcrResults(items, expandRatio = 1.05, maxDistance = 10, minGroupSi
     if (used.has(idx)) continue
     const group = [idx]
     used.add(idx)
-    findConnected(rect, rects, used, group, expandRatio, maxDistance)
+    findConnected(rect, rects, used, group, pad, maxDistance)
     groups.push(group)
   }
 
   const merged = []
   for (const group of groups) {
-    if (group.length >= minGroupSize) {
-      const sorted = group
-        .map(i => ({ i, r: items[i], cx: (items[i].bbox[0] + items[i].bbox[2]) / 2 }))
-        .sort((a, b) => b.cx - a.cx)
-      const allX = sorted.flatMap(({ r }) => [r.bbox[0], r.bbox[2]])
-      const allY = sorted.flatMap(({ r }) => [r.bbox[1], r.bbox[3]])
+    if (group.length >= 2) {
+      const members = group.map(i => items[i])
+      // 组内方向：竖排按 x 从右到左拼行，横排（旁白 / 拟声 / 标题）按 y 从上到下
+      const vertical = members.filter(r => boxOrientation(r.bbox) === 'vertical').length * 2 >= members.length
+      const sorted = [...members].sort(vertical
+        ? (a, b) => (b.bbox[0] + b.bbox[2]) - (a.bbox[0] + a.bbox[2])
+        : (a, b) => (a.bbox[1] + a.bbox[3]) - (b.bbox[1] + b.bbox[3]))
+      const allX = sorted.flatMap(r => [r.bbox[0], r.bbox[2]])
+      const allY = sorted.flatMap(r => [r.bbox[1], r.bbox[3]])
       const allPts = []
-      for (const { r } of sorted) {
+      for (const r of sorted) {
         if (r.polygon?.length) allPts.push(...r.polygon)
         else {
           const [x1, y1, x2, y2] = r.bbox
           allPts.push([x1, y1], [x2, y1], [x2, y2], [x1, y2])
         }
       }
+      const bbox = [Math.min(...allX), Math.min(...allY), Math.max(...allX), Math.max(...allY)]
       merged.push({
-        text: sorted.map(({ r }) => r.text).join(' '),
-        confidence: sorted.reduce((s, { r }) => s + r.confidence, 0) / sorted.length,
-        bbox: [Math.min(...allX), Math.min(...allY), Math.max(...allX), Math.max(...allY)],
+        // 日文行间不加空格：空格会让 LLM 与 kuromoji 都在错误位置断词
+        text: sorted.map(r => r.text).join(''),
+        confidence: sorted.reduce((s, r) => s + r.confidence, 0) / sorted.length,
+        bbox,
         polygon: convexHull(allPts),
+        orientation: vertical ? 'vertical' : 'horizontal',
         is_merged: true,
         original_count: sorted.length,
-        original_texts: sorted.map(({ r }) => r.text),
+        original_texts: sorted.map(r => r.text),
         translation: null,
       })
     } else {
-      for (const i of group) merged.push({ ...items[i], is_merged: false, original_count: 1, original_texts: [items[i].text], translation: null })
+      for (const i of group) {
+        merged.push({
+          ...items[i],
+          orientation: boxOrientation(items[i].bbox),
+          is_merged: false,
+          original_count: 1,
+          original_texts: [items[i].text],
+          translation: null,
+        })
+      }
     }
   }
 
@@ -609,7 +781,16 @@ export default {
       showBoxes: true,
       showTranslation: true,
       autoTranslate: false,
-      configPanelExpanded: true,
+      /* 手机抽屉里设置默认收起，拉开时先看到的是识别结果 */
+      configPanelExpanded: !isMobile(),
+      /* 图片缩放 / 平移（transform-origin 0 0） */
+      zoom: { scale: 1, tx: 0, ty: 0 },
+      /* 翻页横向位移：拖动中跟手，松手后动画到 ±宽度（滑出）或 0（回弹 / 滑入） */
+      pageOffset: 0,
+      pageSliding: false,
+      bookDirection: readBookDirection(),
+      /* 移动端点框弹出的气泡卡：当前条目下标 */
+      bubbleCard: null,
       /* 移动端底部抽屉：peek 只留把手（图片占满整屏）→ half → full */
       sheetState: 'peek',
       sheetDragging: false,
@@ -618,6 +799,8 @@ export default {
       ocrSource: 'google',
       lastOcrSource: null,
       expandedBboxes: {},
+      /* 字号压到地板仍放不下的框 → 只显示序号徽标 */
+      unfitBoxes: {},
       renderTick: 0,
       transTextRefs: {},
 
@@ -627,6 +810,16 @@ export default {
 
       // Thumbnail lazy load
       loadedThumbPages: {},
+
+      // 作品元数据（标题 / 标签），作为翻译上下文
+      galleryMeta: null,
+      // 术语表
+      glossary: {},
+      glossaryText: '',
+      glossaryOpen: false,
+      // 译文内联编辑
+      editingIdx: null,
+      editingText: '',
 
       // Study mode
       studyMode: false,
@@ -640,22 +833,33 @@ export default {
     totalPages() {
       return this.galleryImages.length
     },
+    missingCount() {
+      return this.ocrResults.filter(r => !r.translation).length
+    },
     /** 抽屉高度：拖拽中用像素跟手，松手后落到档位 */
     sheetHeight() {
       if (this.sheetDragH != null) return `${this.sheetDragH}px`
       return SHEET_SNAPS[this.sheetState] || SHEET_SNAPS.peek
     },
+    stageStyle() {
+      const { scale, tx, ty } = this.zoom
+      const ox = tx + this.pageOffset
+      if (scale === 1 && !ox && !ty) return null
+      return { transform: `translate(${ox}px, ${ty}px) scale(${scale})` }
+    },
   },
 
   watch: {
     renderTick() {
-      if (this.showTranslation && Object.keys(this.transTextRefs).length) {
+      if (this.showTranslation && this.ocrResults.some(r => r.translation)) {
         this.expandedBboxes = {}
+        this.unfitBoxes = {}
         this.$nextTick(() => this.applyTextFit())
       }
     },
     showTranslation(val) {
       this.expandedBboxes = {}
+      this.unfitBoxes = {}
       if (!val) {
         this.transTextRefs = {}
         return
@@ -676,6 +880,11 @@ export default {
     const page = parseInt(this.$route.query.page) || 1
     this.currentPage = page
 
+    this.loadGlossary()
+    loadGalleries().then(list => {
+      this.galleryMeta = list.find(g => String(g.gid) === String(this.gid)) || null
+    })
+
     const savedPwd = sessionStorage.getItem(SESSION_KEY)
     if (savedPwd) {
       this.passwordInput = savedPwd
@@ -691,6 +900,9 @@ export default {
   beforeUnmount() {
     this._ro?.disconnect()
     this._thumbObserver?.disconnect()
+    window.removeEventListener('pointermove', this.onStagePointerMove)
+    window.removeEventListener('pointerup', this.onStagePointerUp)
+    window.removeEventListener('pointercancel', this.onStagePointerUp)
   },
 
   methods: {
@@ -754,16 +966,217 @@ export default {
       window.addEventListener('pointercancel', onUp)
     },
 
-    /** 点击图片上的 OCR 框：移动端顺带把抽屉抬起来并滚到对应条目 */
+    /** 点击图片上的 OCR 框：桌面端高亮列表条目；移动端弹气泡卡（抽屉收到 peek 免得盖住卡） */
     onBoxClick(i) {
+      if (this._suppressClickUntil && Date.now() < this._suppressClickUntil) return
       const next = this.selectedBoxIdx === i ? null : i
       this.selectedBoxIdx = next
-      if (next == null || window.innerWidth > 767) return
-      if (this.sheetState === 'peek') this.setSheet('half')
-      this.$nextTick(() => {
-        const el = this.$refs.sidebarRef?.querySelector(`.gt-result-item[data-idx="${next}"]`)
-        el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-      })
+      if (!isMobile()) return
+      if (next == null) { this.bubbleCard = null; return }
+      this.bubbleCard = next
+      if (this.sheetState !== 'peek') this.setSheet('peek')
+    },
+
+    /** 列表里点条目：移动端若抽屉全开则降到半开，让高亮的框露出来 */
+    onResultClick(i) {
+      this.selectedBoxIdx = this.selectedBoxIdx === i ? null : i
+      if (!isMobile()) return
+      if (this.selectedBoxIdx != null && this.sheetState === 'full') this.setSheet('half')
+    },
+
+    stepBubble(delta) {
+      if (this.bubbleCard == null) return
+      const next = this.bubbleCard + delta
+      if (next < 0 || next >= this.ocrResults.length) return
+      this.bubbleCard = next
+      this.selectedBoxIdx = next
+    },
+
+    closeBubble() {
+      this.bubbleCard = null
+      this.selectedBoxIdx = null
+    },
+
+    // ── 图片缩放 / 平移 / 滑动翻页 ────────────────────────────────────────────
+
+    resetZoom() {
+      this.zoom = { scale: 1, tx: 0, ty: 0 }
+    },
+
+    /** 把平移量限制在「图片至少有一半留在视口内」的范围 */
+    clampZoom(z) {
+      const cont = this.$refs.containerRef
+      if (!cont) return z
+      const w = cont.clientWidth, h = cont.clientHeight
+      const minTx = -w * (z.scale - 0.5), maxTx = w * 0.5
+      const minTy = -h * (z.scale - 0.5), maxTy = h * 0.5
+      return {
+        scale: z.scale,
+        tx: Math.min(maxTx, Math.max(minTx, z.tx)),
+        ty: Math.min(maxTy, Math.max(minTy, z.ty)),
+      }
+    },
+
+    /** 以视口内一点 (px, py) 为锚缩放到 scale：锚点下的图片内容保持不动 */
+    zoomAt(px, py, scale) {
+      const s = Math.min(ZOOM_MAX, Math.max(1, scale))
+      const { scale: s0, tx, ty } = this.zoom
+      const nx = px - (px - tx) * (s / s0)
+      const ny = py - (py - ty) * (s / s0)
+      this.zoom = s === 1 ? { scale: 1, tx: 0, ty: 0 } : this.clampZoom({ scale: s, tx: nx, ty: ny })
+    },
+
+    /** 视口坐标 → 相对图片区左上角 */
+    stagePoint(e) {
+      const r = this.$refs.containerRef.getBoundingClientRect()
+      return { x: e.clientX - r.left, y: e.clientY - r.top }
+    },
+
+    onStageWheel(e) {
+      if (!(e.ctrlKey || e.metaKey)) return
+      e.preventDefault()
+      const p = this.stagePoint(e)
+      this.zoomAt(p.x, p.y, this.zoom.scale * (e.deltaY < 0 ? 1.15 : 1 / 1.15))
+    },
+
+    onStagePointerDown(e) {
+      if (e.pointerType === 'mouse' && e.button !== 0) return
+      if (!this.imageUrl) return
+      if (!this._ptrs) this._ptrs = new Map()
+      const ptrs = this._ptrs
+      ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+      if (ptrs.size === 1) {
+        this._gesture = {
+          kind: 'single', startX: e.clientX, startY: e.clientY, t: Date.now(),
+          tx: this.zoom.tx, ty: this.zoom.ty, moved: 0,
+        }
+      } else if (ptrs.size === 2) {
+        const [a, b] = [...ptrs.values()]
+        const mid = this.stagePoint({ clientX: (a.x + b.x) / 2, clientY: (a.y + b.y) / 2 })
+        this._gesture = {
+          kind: 'pinch', dist: Math.hypot(a.x - b.x, a.y - b.y), scale: this.zoom.scale,
+          mid, tx: this.zoom.tx, ty: this.zoom.ty, moved: 99,
+        }
+      }
+
+      if (ptrs.size === 1) {
+        window.addEventListener('pointermove', this.onStagePointerMove)
+        window.addEventListener('pointerup', this.onStagePointerUp)
+        window.addEventListener('pointercancel', this.onStagePointerUp)
+      }
+    },
+
+    onStagePointerMove(e) {
+      const ptrs = this._ptrs
+      const g = this._gesture
+      if (!ptrs?.has(e.pointerId) || !g) return
+      ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+      if (g.kind === 'pinch' && ptrs.size >= 2) {
+        const [a, b] = [...ptrs.values()]
+        const dist = Math.hypot(a.x - b.x, a.y - b.y)
+        const s = Math.min(ZOOM_MAX, Math.max(1, g.scale * dist / g.dist))
+        const mid = this.stagePoint({ clientX: (a.x + b.x) / 2, clientY: (a.y + b.y) / 2 })
+        // 起始中点下的内容跟着当前中点走
+        const nx = mid.x - (g.mid.x - g.tx) * (s / g.scale)
+        const ny = mid.y - (g.mid.y - g.ty) * (s / g.scale)
+        this.zoom = s === 1 ? { scale: 1, tx: 0, ty: 0 } : this.clampZoom({ scale: s, tx: nx, ty: ny })
+        return
+      }
+
+      if (g.kind === 'single') {
+        const dx = e.clientX - g.startX, dy = e.clientY - g.startY
+        g.moved = Math.max(g.moved, Math.abs(dx), Math.abs(dy))
+        if (this.zoom.scale > 1 && g.moved > 4) {
+          this.zoom = this.clampZoom({ scale: this.zoom.scale, tx: g.tx + dx, ty: g.ty + dy })
+          return
+        }
+        // 未缩放：横向拖动时页面跟手；一旦判定为横向就锁定，避免和抽屉 / 纵向手势打架
+        if (this.zoom.scale === 1 && !this.pageSliding) {
+          if (!g.swiping && g.moved > 8 && Math.abs(dx) > Math.abs(dy) * 1.2) g.swiping = true
+          if (g.swiping) {
+            // 到头了给阻尼，提示没有更多页
+            const canGo = this.canTurnBySwipe(dx)
+            this.pageOffset = canGo ? dx : dx * 0.3
+          }
+        }
+      }
+    },
+
+    /** 横向位移 dx 对应的翻页方向是否还有页可翻 */
+    canTurnBySwipe(dx) {
+      const delta = this.swipeDelta(dx)
+      const target = this.currentPage + delta
+      return target >= 1 && target <= this.totalPages
+    },
+
+    /**
+     * 把「手指向左 / 向右」换算成页码增量，规则与阅读器 BookView 完全一致：
+     * 向左滑 ≡ 点右侧区，RTL 下是上一页；向右滑 ≡ 点左侧区，RTL 下是下一页。
+     */
+    swipeDelta(dx) {
+      const rtl = this.bookDirection === 'rtl'
+      const tapRight = dx < 0
+      return (rtl ? !tapRight : tapRight) ? 1 : -1
+    },
+
+    onStagePointerUp(e) {
+      const ptrs = this._ptrs
+      const g = this._gesture
+      if (!ptrs) return
+      ptrs.delete(e.pointerId)
+      if (ptrs.size > 0) {
+        // 捏合中松开一指：剩下那指从当前位置开始平移，不要跳
+        const [rest] = [...ptrs.values()]
+        this._gesture = { kind: 'single', startX: rest.x, startY: rest.y, t: Date.now(), tx: this.zoom.tx, ty: this.zoom.ty, moved: 99 }
+        return
+      }
+      window.removeEventListener('pointermove', this.onStagePointerMove)
+      window.removeEventListener('pointerup', this.onStagePointerUp)
+      window.removeEventListener('pointercancel', this.onStagePointerUp)
+      this._gesture = null
+      if (!g || g.kind !== 'single') return
+
+      const dx = e.clientX - g.startX, dy = e.clientY - g.startY
+      const dt = Date.now() - g.t
+      // 拖动过就不算点击，免得平移 / 滑动结束时误触框
+      if (g.moved >= 6) this._suppressClickUntil = Date.now() + 350
+
+      // 未缩放时的横向滑动：过阈值就顺着手势滑出翻页，否则回弹
+      if (g.swiping) {
+        const w = this.$refs.containerRef?.clientWidth || window.innerWidth
+        const fast = Math.abs(dx) >= SWIPE_MIN_X && Math.abs(dy) <= SWIPE_MAX_Y && dt < 600
+        const far = Math.abs(dx) >= w * 0.3
+        if ((fast || far) && this.canTurnBySwipe(dx)) {
+          this.turnPage(this.swipeDelta(dx), dx < 0 ? 'left' : 'right')
+        } else {
+          this.animateOffset(0)
+        }
+        return
+      }
+
+      if (g.moved < 6) {
+        // 左右 30% 边缘区：单击直接翻页（与阅读器一致），不参与双击缩放；框上的点击交给框自己
+        if (this.zoom.scale === 1 && !e.target.closest?.('.gt-ocr-box') && this.bubbleCard == null) {
+          const p = this.stagePoint(e)
+          const w = this.$refs.containerRef?.clientWidth || 1
+          if (p.x < w * EDGE_ZONE) { this.onEdgeTap('left'); return }
+          if (p.x > w * (1 - EDGE_ZONE)) { this.onEdgeTap('right'); return }
+        }
+
+        // 中间区双击 / 双击轻点：在点击处放大，已放大则复位
+        const now = Date.now()
+        const last = this._lastTap
+        if (last && now - last.t < 300 && Math.hypot(e.clientX - last.x, e.clientY - last.y) < 30) {
+          this._lastTap = null
+          this._suppressClickUntil = now + 350
+          const p = this.stagePoint(e)
+          this.zoomAt(p.x, p.y, this.zoom.scale > 1 ? 1 : ZOOM_DBLTAP)
+        } else {
+          this._lastTap = { t: now, x: e.clientX, y: e.clientY }
+        }
+      }
     },
 
     // ── Auth ──────────────────────────────────────────────────────────────────
@@ -785,7 +1198,6 @@ export default {
             if (this.$refs.containerRef) this._ro?.observe(this.$refs.containerRef)
           })
           this.loadGalleryImages()
-          loadKuromoji().catch(() => {}) // preload dict while user browses/waits for OCR
         } else {
           this.passwordError = '密码错误'
           sessionStorage.removeItem(SESSION_KEY)
@@ -847,6 +1259,10 @@ export default {
 
     async goToPage(pageNum) {
       this.currentPage = pageNum
+      this.resetZoom()
+      this.bubbleCard = null
+      // 不是由 turnPage 发起的切页（缩略图 / 预取等待）就不带过场
+      if (this._enterFrom == null) this.finishSlide()
       this.$router.replace({
         name: 'GalleryTranslate',
         params: { gid: this.gid },
@@ -875,6 +1291,7 @@ export default {
       if (!img?.pageUrl) {
         this.imageLoading = false
         this.imageError = '无法获取页面 URL'
+        this.finishSlide()
         return
       }
 
@@ -887,33 +1304,106 @@ export default {
         this.imageUrlRaw = data.imageUrl
         this.imageUrl = `${API_BASE}/api/image-proxy?imageUrl=${encodeURIComponent(data.imageUrl)}`
         this.nlParam = data.nlParam
+        // 这一页正在后台预取的话，等它写完缓存再读
+        if (this._prefetch?.[pageNum]) {
+          this.imageLoading = false
+          this.ocrProcessing = true
+          try { await this._prefetch[pageNum] } finally { this.ocrProcessing = false }
+          if (this.currentPage !== pageNum) return
+        }
         const cached = this.loadPageCache(pageNum)
         if (cached) {
           this.ocrResults = cached.ocrResults
           this.lastOcrSource = cached.lastOcrSource
           this.expandedBboxes = {}
-          this.showToast(`已从缓存恢复 ${cached.ocrResults.length} 条结果`, 'info', 2000)
+          this.unfitBoxes = {}
+          this.$nextTick(() => this.applyTextFit())
+          this.maybePrefetchNext()
         } else if (this.autoTranslate) {
           await this.$nextTick()
           await this.performOcrAndTranslate()
         }
       } catch (e) {
         this.imageError = `图片加载失败: ${e.message}`
+        this.finishSlide()
       } finally {
         this.imageLoading = false
       }
     },
 
+    /** 结束 / 取消翻页过场，位移归零 */
+    finishSlide() {
+      this._enterFrom = null
+      this.pageOffset = 0
+      this.pageSliding = false
+    },
+
+    /* ‹ › 按钮与把手：按页码顺序翻，滑动方向按阅读方向推算，让画面运动方向与手势一致 */
     prevPage() {
-      if (this.currentPage > 1) this.goToPage(this.currentPage - 1)
+      if (this.currentPage > 1) this.turnPage(-1)
     },
 
     nextPage() {
-      if (this.currentPage < this.totalPages) this.goToPage(this.currentPage + 1)
+      if (this.currentPage < this.totalPages) this.turnPage(1)
+    },
+
+    /** 点击左 / 右边缘区：RTL 左侧是下一页，与阅读器 onClickLeft/Right 一致 */
+    onEdgeTap(side) {
+      const rtl = this.bookDirection === 'rtl'
+      const delta = (side === 'left') === rtl ? 1 : -1
+      const target = this.currentPage + delta
+      if (target < 1 || target > this.totalPages) return
+      this._suppressClickUntil = Date.now() + 350
+      // 点左侧 ≈ 向右滑（把左边的页拉进来），画面向右走
+      this.turnPage(delta, side === 'left' ? 'right' : 'left')
+    },
+
+    /**
+     * 带过场的翻页：当前页向 outDir 滑出 → 切页 → 新页从另一侧滑入。
+     * outDir 不传时按阅读方向推算；reduced-motion 或页面不可见时直接切换。
+     */
+    turnPage(delta, outDir) {
+      const target = this.currentPage + delta
+      if (target < 1 || target > this.totalPages || this.pageSliding) return
+      if (!outDir) {
+        const rtl = this.bookDirection === 'rtl'
+        // RTL 里下一页在左边：当前页往右退开；LTR 相反
+        outDir = (delta > 0) === rtl ? 'right' : 'left'
+      }
+      if (prefersReducedMotion() || !this.imageUrl) {
+        this.pageOffset = 0
+        this.goToPage(target)
+        return
+      }
+      const w = this.$refs.containerRef?.clientWidth || window.innerWidth
+      const out = outDir === 'left' ? -w : w
+      this.pageSliding = true
+      this.animateOffset(out, () => {
+        // 新页从对侧进场：先无动画放到对侧，图片加载完再滑到 0
+        this._enterFrom = -out
+        this.pageOffset = -out
+        this.goToPage(target)
+      })
+    },
+
+    /** 把 pageOffset 动画到 target，完成后回调（transition 由 .is-sliding 提供） */
+    animateOffset(target, done) {
+      this.pageSliding = true
+      requestAnimationFrame(() => {
+        this.pageOffset = target
+        setTimeout(() => {
+          if (!done) this.pageSliding = false
+          done?.()
+        }, SLIDE_MS + 20)
+      })
     },
 
     onImageLoad() {
       this.renderTick++
+      if (this._enterFrom != null) {
+        this._enterFrom = null
+        this.animateOffset(0)
+      }
     },
 
     // ── OCR ───────────────────────────────────────────────────────────────────
@@ -921,16 +1411,202 @@ export default {
     async performOcrAndTranslate() {
       await this.performOcr()
       if (this.ocrResults.length) await this.performTranslate()
+      this.maybePrefetchNext()
     },
 
-    async getImageBase64() {
-      const res = await fetch(this.imageUrl)
+    /** 等 <img> 解码完成（autoTranslate 时 OCR 往往先于图片加载完被触发） */
+    async ensureImageDecoded(img) {
+      if (!img) throw new Error('图片尚未就绪')
+      if (img.complete && img.naturalWidth) return img
+      await img.decode()
+      return img
+    },
+
+    /**
+     * 把图片缩到长边 ≤ OCR_MAX_EDGE 再转 JPEG base64。
+     * 原来是把原图整个 fetch 回来逐字节拼 base64：3MB 扫图在手机上要几百毫秒，
+     * base64 后再涨 1/3 就撞上 Vercel 4.5MB 请求体上限。缩图后通常只有 300–500KB，
+     * 且 OCR 的 bbox 乘回 scale 即可还原到原图坐标。代理返回了 ACAO: * ，canvas 不会被污染；
+     * 万一被污染（toDataURL 抛 SecurityError）就退回旧的 fetch 路径。
+     */
+    async getOcrPayload(img) {
+      try {
+        const longEdge = Math.max(img.naturalWidth, img.naturalHeight)
+        const ratio = Math.min(1, OCR_MAX_EDGE / longEdge)
+        const w = Math.max(1, Math.round(img.naturalWidth * ratio))
+        const h = Math.max(1, Math.round(img.naturalHeight * ratio))
+        const canvas = document.createElement('canvas')
+        canvas.width = w
+        canvas.height = h
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+        const dataUrl = canvas.toDataURL('image/jpeg', OCR_JPEG_QUALITY)
+        return { b64: dataUrl.slice(dataUrl.indexOf(',') + 1), scale: 1 / ratio }
+      } catch {
+        return { b64: await this.fetchImageBase64(img.src), scale: 1 }
+      }
+    },
+
+    async fetchImageBase64(url) {
+      const res = await fetch(url)
       if (!res.ok) throw new Error(`Failed to fetch image: HTTP ${res.status}`)
-      const buf = await res.arrayBuffer()
-      const bytes = new Uint8Array(buf)
-      let binary = ''
-      for (const b of bytes) binary += String.fromCharCode(b)
-      return btoa(binary)
+      const bytes = new Uint8Array(await res.arrayBuffer())
+      const chunks = []
+      for (let i = 0; i < bytes.length; i += 0x8000) {
+        chunks.push(String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)))
+      }
+      return btoa(chunks.join(''))
+    },
+
+    async postTrans(endpoint, body) {
+      const res = await fetch(`${API_BASE}/api/${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: sessionStorage.getItem(SESSION_KEY), ...body }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.status === 401) {
+        const err = new Error('密码已失效')
+        err.auth = true
+        throw err
+      }
+      if (data.error) throw new Error(data.error)
+      return data
+    },
+
+    /** 对一张已解码的图片跑 OCR → 合并，返回带 _id 的结果数组与来源。纯函数式，不碰 UI 状态 */
+    async ocrImage(img, ocrSource) {
+      const { b64, scale } = await this.getOcrPayload(img)
+      const data = await this.postTrans('trans-ocr', { imageBase64: b64, ocrSource })
+      const raw = scale === 1 ? data.results : data.results.map(r => ({
+        ...r,
+        bbox: r.bbox.map(v => v * scale),
+        polygon: r.polygon ? r.polygon.map(([x, y]) => [x * scale, y * scale]) : null,
+      }))
+      const blockLevel = data.source === 'vision' || data.source === 'ocrspace'
+      const stamp = Date.now()
+      const results = mergeOcrResults(raw, { blockLevel }).map((r, i) => ({ ...r, _id: `${stamp}_${i}` }))
+      return { results, source: data.source }
+    },
+
+    /**
+     * 翻译一组文本，返回与输入等长的数组，每项 { t, kind, alt } 或 null（模型漏译）。
+     * 此前漏译会被回填成原文，界面上看起来像「翻译了但还是日文」。
+     */
+    async translateTexts(texts, pageNum) {
+      const data = await this.postTrans('trans-translate', {
+        texts,
+        ...this.buildTranslateContext(pageNum),
+      })
+      return texts.map((_, i) => {
+        const item = data.translations?.[i]
+        if (!item) return null
+        return typeof item === 'string' ? { t: item, kind: 'dialogue', alt: null } : item
+      })
+    },
+
+    /** 把译文项写回结果：translation 字符串 + kind + alt */
+    applyTranslation(result, item) {
+      return {
+        ...result,
+        translation: item?.t ?? null,
+        kind: item?.kind ?? result.kind ?? null,
+        alt: item?.alt ?? null,
+      }
+    },
+
+    /**
+     * 翻译上下文：作品标题 / 标签让模型把握题材与口吻，上一页的对照保证人名称谓一致，
+     * 术语表由用户在设置里维护。
+     */
+    buildTranslateContext(pageNum) {
+      const ctx = {}
+      if (this.galleryMeta) {
+        ctx.context = {
+          title: this.galleryMeta.title_jpn || this.galleryMeta.title,
+          tags: (this.galleryMeta.tags || []).filter(t => !/^language:/.test(t)),
+        }
+      }
+      const prev = pageNum > 1 ? this.loadPageCache(pageNum - 1) : null
+      if (prev?.ocrResults?.length) {
+        ctx.previous = prev.ocrResults
+          .filter(r => r.translation)
+          .slice(-12)
+          .map(r => [r.text, r.translation])
+      }
+      if (Object.keys(this.glossary).length) ctx.glossary = this.glossary
+      return ctx
+    },
+
+    // ── 术语表 ────────────────────────────────────────────────────────────────
+
+    glossaryKey() {
+      return `${GLOSSARY_KEY_PREFIX}${this.gid}`
+    },
+
+    loadGlossary() {
+      try {
+        const raw = localStorage.getItem(this.glossaryKey())
+        this.glossary = raw ? JSON.parse(raw) : {}
+      } catch { this.glossary = {} }
+      this.glossaryText = Object.entries(this.glossary).map(([k, v]) => `${k}=${v}`).join('\n')
+    },
+
+    /** 文本框格式：每行「原文=译文」 */
+    commitGlossary() {
+      const next = {}
+      for (const line of this.glossaryText.split('\n')) {
+        const idx = line.indexOf('=')
+        if (idx <= 0) continue
+        const k = line.slice(0, idx).trim(), v = line.slice(idx + 1).trim()
+        if (k && v) next[k] = v
+      }
+      this.glossary = next
+      try { localStorage.setItem(this.glossaryKey(), JSON.stringify(next)) } catch {}
+    },
+
+    // ── 译文编辑 / 补译 ───────────────────────────────────────────────────────
+
+    startEdit(i) {
+      this.editingIdx = i
+      this.editingText = this.ocrResults[i].translation || ''
+      this.$nextTick(() => this.$refs.editInput?.[0]?.focus())
+    },
+
+    commitEdit() {
+      const i = this.editingIdx
+      if (i == null) return
+      const text = this.editingText.trim()
+      this.editingIdx = null
+      if (!this.ocrResults[i]) return
+      this.ocrResults = this.ocrResults.map((r, idx) => idx === i ? { ...r, translation: text || null, edited: !!text } : r)
+      this.unfitBoxes = {}
+      this.savePageCache()
+      this.$nextTick(() => this.applyTextFit())
+    },
+
+    cancelEdit() {
+      this.editingIdx = null
+    },
+
+    /** 只把没有译文的条目再送一次 */
+    async retranslateMissing() {
+      const idxs = this.ocrResults.map((r, i) => (r.translation ? -1 : i)).filter(i => i >= 0)
+      if (!idxs.length || this.translating) return
+      this.translating = true
+      const pageNum = this.currentPage
+      try {
+        const items = await this.translateTexts(idxs.map(i => this.ocrResults[i].text), pageNum)
+        if (this.currentPage !== pageNum) return
+        const byIdx = new Map(idxs.map((i, k) => [i, items[k]]))
+        this.ocrResults = this.ocrResults.map((r, i) => byIdx.has(i) && byIdx.get(i) ? this.applyTranslation(r, byIdx.get(i)) : r)
+        this.savePageCache()
+        this.$nextTick(() => this.applyTextFit())
+      } catch (e) {
+        if (e.auth) { this.handleAuthError(); return }
+        this.showToast('补译失败: ' + e.message, 'error')
+      } finally {
+        this.translating = false
+      }
     },
 
     async performOcr() {
@@ -938,36 +1614,18 @@ export default {
       this.ocrProcessing = true
       this.ocrResults = []
       this.selectedBoxIdx = null
-      this.showToast('正在 OCR 识别...', 'info')
+      this.bubbleCard = null
       try {
-        const imageBase64 = await this.getImageBase64()
-        const res = await fetch(`${API_BASE}/api/trans-ocr`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            password: sessionStorage.getItem(SESSION_KEY),
-            imageBase64,
-            ocrSource: this.ocrSource,
-          }),
-        })
-        const data = await res.json()
-        if (res.status === 401) {
-          this.handleAuthError()
-          return
-        }
-        if (data.error) throw new Error(data.error)
-
-        const isVision = data.source === 'vision' || data.source === 'ocrspace'
-        this.lastOcrSource = data.source
+        const img = await this.ensureImageDecoded(this.$refs.imgRef)
+        const { results, source } = await this.ocrImage(img, this.ocrSource)
+        this.lastOcrSource = source
         this.expandedBboxes = {}
-        this.ocrResults = mergeOcrResults(
-          data.results,
-          isVision ? 1.2 : 1.05,
-          isVision ? 40 : 10,
-        ).map((r, i) => ({ ...r, _id: `${Date.now()}_${i}` }))
+        this.unfitBoxes = {}
+        this.ocrResults = results
         this.savePageCache()
-        this.showToast(`识别完成，共 ${this.ocrResults.length} 个文本区域`, 'success')
+        if (!results.length) this.showToast('未识别到文字', 'info')
       } catch (e) {
+        if (e.auth) { this.handleAuthError(); return }
         this.showToast('OCR 失败: ' + e.message, 'error')
       } finally {
         this.ocrProcessing = false
@@ -979,40 +1637,61 @@ export default {
     async performTranslate() {
       if (!this.ocrResults.length) return
       this.translating = true
-      this.showToast(`翻译中，共 ${this.ocrResults.length} 条文本...`, 'info')
+      const pageNum = this.currentPage
       try {
-        const res = await fetch(`${API_BASE}/api/trans-translate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            password: sessionStorage.getItem(SESSION_KEY),
-            texts: this.ocrResults.map(r => r.text),
-          }),
-        })
-        const data = await res.json()
-        if (res.status === 401) {
-          this.handleAuthError()
-          return
-        }
-        if (data.error) throw new Error(data.error)
-
-        this.ocrResults = this.ocrResults.map((r, i) => ({
-          ...r,
-          translation: data.translations[i] ?? null,
-        }))
+        const translations = await this.translateTexts(this.ocrResults.map(r => r.text), pageNum)
+        // 翻译期间用户可能已翻页
+        if (this.currentPage !== pageNum) return
+        this.ocrResults = this.ocrResults.map((r, i) => this.applyTranslation(r, translations[i]))
         this.savePageCache()
-        this.showToast('翻译完成', 'success')
+        const missing = translations.filter(t => !t).length
+        if (missing) this.showToast(`翻译完成，${missing} 条未返回译文`, 'info')
         this.$nextTick(() => this.applyTextFit())
       } catch (e) {
+        if (e.auth) { this.handleAuthError(); return }
         this.showToast('翻译失败: ' + e.message, 'error')
       } finally {
         this.translating = false
       }
     },
 
+    // ── 下一页预取 ────────────────────────────────────────────────────────────
+
+    /** 自动模式下，当前页出结果后就在后台把下一页 OCR + 翻译好写进缓存，翻页零等待 */
+    maybePrefetchNext() {
+      if (!this.autoTranslate) return
+      const next = this.currentPage + 1
+      if (next > this.totalPages) return
+      if (this.loadPageCache(next)) return
+      if (!this._prefetch) this._prefetch = {}
+      if (this._prefetch[next]) return
+      const task = this.prefetchPage(next).catch(() => {}).finally(() => { delete this._prefetch[next] })
+      this._prefetch[next] = task
+    },
+
+    async prefetchPage(pageNum) {
+      const meta = this.galleryImages[pageNum - 1]
+      if (!meta?.pageUrl) return
+      const res = await fetch(`${API_BASE}/api/image-url?pageUrl=${encodeURIComponent(meta.pageUrl)}`)
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.src = `${API_BASE}/api/image-proxy?imageUrl=${encodeURIComponent(data.imageUrl)}`
+      await img.decode()
+      const { results, source } = await this.ocrImage(img, this.ocrSource)
+      let translated = results
+      if (results.length) {
+        const translations = await this.translateTexts(results.map(r => r.text), pageNum)
+        translated = results.map((r, i) => this.applyTranslation(r, translations[i]))
+      }
+      this.writePageCache(pageNum, translated, source)
+    },
+
     deleteResult(i) {
       const id = this.ocrResults[i]._id
       this.ocrResults.splice(i, 1)
+      if (this.bubbleCard != null) this.bubbleCard = null
       delete this.transTextRefs[id]
       if (this.selectedBoxIdx === i) this.selectedBoxIdx = null
       else if (this.selectedBoxIdx > i) this.selectedBoxIdx--
@@ -1025,6 +1704,7 @@ export default {
       this.selectedBoxIdx = null
       this.transTextRefs = {}
       this.expandedBboxes = {}
+      this.unfitBoxes = {}
     },
 
     handleAuthError() {
@@ -1041,22 +1721,41 @@ export default {
       else delete this.transTextRefs[i]
     },
 
+    /** 译文是否按竖排渲染：优先用合并阶段判出的方向，旧缓存没有该字段时按框形状判 */
+    isVerticalBox(result) {
+      if (result.orientation) return result.orientation === 'vertical'
+      return boxOrientation(this.expandedBboxes[result._id] || result.bbox) === 'vertical'
+    },
+
+    /**
+     * 让每条译文在框内放得下：字号不低于 MIN_OVERLAY_FONT_PX（屏幕像素），
+     * 放不下就把框四周各外扩 12 屏幕像素（换算回图片坐标）再试，最多 MAX_BOX_EXPAND_STEPS 次，
+     * 仍不行则标记 unfit，模板改渲染序号徽标。
+     */
     applyTextFit() {
-      const isVision = this.lastOcrSource === 'vision' || this.lastOcrSource === 'ocrspace'
       requestAnimationFrame(async () => {
-        for (const [id, el] of Object.entries(this.transTextRefs)) {
-          if (!el) continue
-          if (!isVision) { fitTextToBox(el); continue }
-          // Vision: try to fit at min 10px, expand bbox reactively if needed
-          for (let step = 0; step <= 10; step++) {
-            const currentEl = this.transTextRefs[id]
-            if (!currentEl) break
-            if (fitTextToBox(currentEl, 10)) break
-            if (step === 10) break
+        const img = this.$refs.imgRef
+        const stepImg = 12 / (this.imageFrame()?.s || 1)
+        for (const id of Object.keys(this.transTextRefs)) {
+          for (let step = 0; ; step++) {
+            const el = this.transTextRefs[id]
+            if (!el) break
+            if (fitTextToBox(el, MIN_OVERLAY_FONT_PX)) break
+            if (step >= MAX_BOX_EXPAND_STEPS) {
+              this.unfitBoxes = { ...this.unfitBoxes, [id]: true }
+              break
+            }
             const result = this.ocrResults.find(r => r._id === id)
             if (!result) break
             const [bx1, by1, bx2, by2] = this.expandedBboxes[id] || result.bbox
-            this.expandedBboxes = { ...this.expandedBboxes, [id]: [bx1 - 15, by1 - 15, bx2 + 15, by2 + 15] }
+            // 外扩后若越过图片边缘就整体平移回来，译文不会被裁掉半截
+            let nx1 = bx1 - stepImg, ny1 = by1 - stepImg, nx2 = bx2 + stepImg, ny2 = by2 + stepImg
+            const iw = img?.naturalWidth || Infinity, ih = img?.naturalHeight || Infinity
+            if (nx1 < 0) { nx2 -= nx1; nx1 = 0 }
+            if (ny1 < 0) { ny2 -= ny1; ny1 = 0 }
+            if (nx2 > iw) { nx1 = Math.max(0, nx1 - (nx2 - iw)); nx2 = iw }
+            if (ny2 > ih) { ny1 = Math.max(0, ny1 - (ny2 - ih)); ny2 = ih }
+            this.expandedBboxes = { ...this.expandedBboxes, [id]: [nx1, ny1, nx2, ny2] }
             await this.$nextTick()
           }
         }
@@ -1065,21 +1764,31 @@ export default {
 
     // ── Box positioning ───────────────────────────────────────────────────────
 
-    getBoxStyle(result, index) {
+    /**
+     * 图片实际绘制区域（相对 .gt-stage）。<img> 的盒子可能比画面大（object-fit: contain 会在盒内留白），
+     * 直接用 clientWidth 换算会让框整体偏移，所以按原图宽高比自己算绘制区域。
+     */
+    imageFrame() {
       const img = this.$refs.imgRef
-      const cont = this.$refs.containerRef
-      if (!img || !cont || !img.naturalWidth) return { display: 'none' }
-      const ir = img.getBoundingClientRect()
-      const cr = cont.getBoundingClientRect()
-      const sx = img.clientWidth / img.naturalWidth
-      const sy = img.clientHeight / img.naturalHeight
+      if (!img || !img.naturalWidth) return null
+      const cw = img.clientWidth, ch = img.clientHeight
+      const s = Math.min(cw / img.naturalWidth, ch / img.naturalHeight)
+      const rw = img.naturalWidth * s, rh = img.naturalHeight * s
+      return { s, x: img.offsetLeft + (cw - rw) / 2, y: img.offsetTop + (ch - rh) / 2 }
+    },
+
+    /* 框的位置相对缩放层（.gt-stage）计算：offsetLeft/Top 与 clientWidth 都不受 transform 影响，
+       所以缩放 / 平移时无需重算，框天然跟着图片走 */
+    getBoxStyle(result, index) {
+      const f = this.imageFrame()
+      if (!f) return { display: 'none' }
       const [x1, y1, x2, y2] = this.expandedBboxes[result._id] || result.bbox
       return {
         position: 'absolute',
-        left: Math.round(ir.left - cr.left + x1 * sx) + 'px',
-        top: Math.round(ir.top - cr.top + y1 * sy) + 'px',
-        width: Math.round((x2 - x1) * sx) + 'px',
-        height: Math.round((y2 - y1) * sy) + 'px',
+        left: Math.round(f.x + x1 * f.s) + 'px',
+        top: Math.round(f.y + y1 * f.s) + 'px',
+        width: Math.round((x2 - x1) * f.s) + 'px',
+        height: Math.round((y2 - y1) * f.s) + 'px',
         zIndex: this.selectedBoxIdx === index ? 20 : 10,
       }
     },
@@ -1202,6 +1911,10 @@ export default {
       return POS_COLOR[pos] || '#6b7280'
     },
 
+    kindLabel(kind) {
+      return KIND_LABEL[kind] || ''
+    },
+
     hasKanji,
     toHiragana,
 
@@ -1213,12 +1926,12 @@ export default {
 
     savePageCache() {
       if (!this.ocrResults.length) return
+      this.writePageCache(this.currentPage, this.ocrResults, this.lastOcrSource)
+    },
+
+    writePageCache(pageNum, ocrResults, lastOcrSource) {
       try {
-        localStorage.setItem(this.cacheKey(this.currentPage), JSON.stringify({
-          ocrResults: this.ocrResults,
-          lastOcrSource: this.lastOcrSource,
-          ts: Date.now(),
-        }))
+        localStorage.setItem(this.cacheKey(pageNum), JSON.stringify({ ocrResults, lastOcrSource, ts: Date.now() }))
       } catch {}
     },
 
@@ -1324,8 +2037,7 @@ export default {
   color: var(--text-color);
   font-size: 14px;
   font-family: inherit;
-  outline: none;
-  transition: border-color 0.15s;
+  transition: border-color var(--dur-fast) var(--ease-out);
 }
 .gt-pwd-input:focus { border-color: var(--primary-color); }
 .gt-pwd-input:disabled { opacity: 0.5; }
@@ -1333,7 +2045,7 @@ export default {
 .gt-pwd-error {
   margin: 0;
   font-size: 12px;
-  color: #f87171;
+  color: var(--danger-color);
 }
 
 .gt-pwd-back {
@@ -1346,13 +2058,14 @@ export default {
   font-family: inherit;
   text-align: left;
   margin-top: 4px;
-  transition: color 0.15s;
+  transition: color var(--dur-fast);
 }
 .gt-pwd-back:hover { color: var(--text-color); }
 
 /* ── Header ──────────────────────────────────────────────────────────────────── */
 
 .gt-header {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1362,6 +2075,32 @@ export default {
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+}
+
+.gt-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: color-mix(in srgb, var(--primary-color) 25%, transparent);
+  overflow: hidden;
+}
+.gt-progress::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 50%;
+  background: var(--primary-color);
+  transform: translateX(-100%);
+  animation: gt-progress-slide 1.2s var(--ease-in-out) infinite;
+}
+.gt-progress.is-step2 { background: color-mix(in srgb, var(--primary-color) 50%, transparent); }
+@keyframes gt-progress-slide {
+  to { transform: translateX(200%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gt-progress::after { animation: none; transform: none; width: 100%; opacity: 0.6; }
 }
 
 .gt-back-btn {
@@ -1375,7 +2114,7 @@ export default {
   font-family: inherit;
   cursor: pointer;
   white-space: nowrap;
-  transition: color 0.15s, background 0.15s;
+  transition: color var(--dur-fast), background var(--dur-fast);
   flex-shrink: 0;
 }
 .gt-back-btn:hover { background: var(--hover-bg); color: var(--text-color); }
@@ -1415,7 +2154,7 @@ export default {
   font-family: inherit;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
+  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast), opacity var(--dur-fast);
 }
 .gt-btn:hover:not(:disabled) { background: var(--hover-bg); border-color: var(--muted-color); }
 .gt-btn:disabled { opacity: 0.4; cursor: default; }
@@ -1432,7 +2171,7 @@ export default {
 
 .gt-btn-danger {
   border-color: rgba(248, 113, 113, 0.4);
-  color: #f87171;
+  color: var(--danger-color);
   background: rgba(248, 113, 113, 0.06);
 }
 .gt-btn-danger:hover:not(:disabled) { background: rgba(248, 113, 113, 0.12); }
@@ -1475,7 +2214,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  transition: color var(--dur-fast), border-color var(--dur-fast), background var(--dur-fast);
 }
 .gt-strip-nav:hover:not(:disabled) {
   color: var(--text-color);
@@ -1501,7 +2240,7 @@ export default {
   overflow: hidden;
   cursor: pointer;
   border: 2px solid transparent;
-  transition: border-color 0.15s, transform 0.1s;
+  transition: border-color var(--dur-fast), transform var(--dur-fast);
 }
 .gt-thumb:hover { border-color: var(--muted-color); transform: scale(1.05); }
 .gt-thumb-active { border-color: var(--primary-color) !important; }
@@ -1561,17 +2300,42 @@ export default {
   padding: 64px 24px;
 }
 
-.gt-image-error { color: #f87171; }
+.gt-image-error { color: var(--danger-color); }
 
 .gt-image-empty { text-align: center; }
 
 .gt-empty-icon { font-size: 40px; }
+
+/* 缩放层：撑满图片区，图片在其中居中；transform 作用在它身上 */
+.gt-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: 0 0;
+  will-change: transform;
+  /* 捏合 / 平移 / 滑动翻页全部自己处理，浏览器别再插手 */
+  touch-action: none;
+}
+
+/* 翻页过场：拖动中无过渡（跟手），松手后 200ms 滑出 / 回弹 / 滑入 */
+.gt-stage.is-sliding { transition: transform var(--dur-base) var(--ease-out); }
+
+/* 图片加载失败 / 错误态的图片区也要能点边缘翻页，光标提示一下 */
+.gt-image-panel:not(.is-zoomed) { cursor: default; }
+
+.gt-image-panel.is-zoomed { cursor: grab; }
+.gt-image-panel.is-zoomed:active { cursor: grabbing; }
 
 .gt-page-img {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
   display: block;
+  user-select: none;
+  -webkit-user-drag: none;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
@@ -1593,7 +2357,7 @@ export default {
   overflow: hidden;
   display: flex;
   align-items: stretch;
-  transition: border-color 0.1s, background 0.1s, box-shadow 0.1s;
+  transition: border-color var(--dur-fast), background var(--dur-fast), box-shadow var(--dur-fast);
 }
 .gt-ocr-box:hover {
   border-color: color-mix(in srgb, var(--primary-color) 68%, white 32%);
@@ -1621,6 +2385,35 @@ export default {
   background: rgba(0, 0, 0, 0.75);
   color: #fff;
   overflow: hidden;
+}
+
+/* 高瘦的对白框按竖排渲染：横排中文塞进 30×150 的框只能一列单字，竖排才是漫画本来的样子 */
+.gt-box-trans-text.gt-box-vertical {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  letter-spacing: 0.04em;
+}
+
+/* 放不下译文的框：只留一个序号徽标，点击后在列表 / 气泡卡里看全文 */
+.gt-ocr-box.gt-box-has-badge { overflow: visible; }
+
+.gt-box-badge {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--primary-color);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
 }
 
 .gt-config-panel {
@@ -1651,7 +2444,7 @@ export default {
 
 .gt-config-toggle-icon {
   color: var(--muted-color);
-  transition: transform 0.18s ease;
+  transition: transform var(--dur-base) var(--ease-out);
 }
 
 .gt-config-toggle-icon.is-open {
@@ -1704,7 +2497,7 @@ export default {
   background: transparent;
   color: var(--muted-color);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--dur-fast), color var(--dur-fast);
 }
 
 .gt-seg-btn.active {
@@ -1740,7 +2533,7 @@ export default {
   background: transparent;
   color: var(--muted-color);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
 }
 
 .gt-chip:hover { color: var(--text-color); border-color: var(--muted-color); }
@@ -1762,7 +2555,7 @@ export default {
   background: transparent;
   color: var(--muted-color);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
 }
 
 .gt-clear-btn:hover:not(:disabled) {
@@ -1787,7 +2580,7 @@ export default {
   border-radius: 999px;
   background: var(--surface-color);
   cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+  transition: background var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out);
 }
 
 .gt-switch.active {
@@ -1808,7 +2601,7 @@ export default {
   background: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
   transform: translateX(0);
-  transition: transform 0.18s ease;
+  transition: transform var(--dur-base) var(--ease-out);
 }
 
 .gt-switch.active .gt-switch-thumb {
@@ -1881,7 +2674,7 @@ export default {
 
 .gt-translated-badge {
   font-size: 11px;
-  color: #4ade80;
+  color: var(--success-color);
   margin-left: auto;
 }
 
@@ -1913,7 +2706,7 @@ export default {
   border: 1px solid var(--border-color);
   background: var(--surface-color);
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color var(--dur-fast), background var(--dur-fast);
 }
 .gt-result-item:hover { background: var(--hover-bg); }
 .gt-result-selected {
@@ -1956,7 +2749,7 @@ export default {
 
 .gt-done-mark {
   font-size: 10px;
-  color: #4ade80;
+  color: var(--success-color);
 }
 
 .gt-result-del {
@@ -1971,7 +2764,7 @@ export default {
   font-size: 14px;
   line-height: 1;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--dur-fast), color var(--dur-fast);
   flex-shrink: 0;
 }
 
@@ -1988,14 +2781,160 @@ export default {
   word-break: break-all;
 }
 
-.gt-result-trans {
-  margin: 8px 0 0;
+.gt-result-trans-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--border-color);
+}
+
+.gt-result-trans {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
   font-size: 12px;
   line-height: 1.5;
   color: var(--primary-color);
   word-break: break-all;
+}
+
+.gt-kind-tag {
+  display: inline-block;
+  margin-right: 5px;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--primary-soft-bg);
+  border: 1px solid var(--primary-soft-border);
+  color: var(--primary-on-soft);
+  font-size: 10px;
+  line-height: 16px;
+  vertical-align: 1px;
+}
+
+.gt-result-edit-btn {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted-color);
+  font-size: 13px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.gt-result-item:hover .gt-result-edit-btn,
+.gt-result-selected .gt-result-edit-btn,
+.gt-result-edit-btn:focus-visible { opacity: 1; }
+.gt-result-edit-btn:hover { background: var(--hover-bg); color: var(--text-color); }
+@media (hover: none) { .gt-result-edit-btn { opacity: 1; } }
+
+.gt-result-alt {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted-color);
+}
+
+.gt-result-missing {
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-color);
+  font-size: 11px;
+  color: var(--muted-color);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.gt-link-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--primary-color);
+  font-size: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.gt-result-edit {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gt-edit-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-color);
+  color: var(--text-color);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+}
+.gt-edit-input:focus { border-color: var(--primary-color); }
+
+.gt-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.gt-retranslate { margin-left: auto; }
+
+.gt-chip-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gt-chip-badge {
+  min-width: 16px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--surface-color);
+  color: var(--muted-color);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 16px;
+  text-align: center;
+}
+.gt-chip.active .gt-chip-badge {
+  background: color-mix(in srgb, var(--primary-color) 22%, transparent);
+  color: var(--primary-color);
+}
+
+/* 展开的术语编辑区：与 key 列对齐（32px + 10px gap） */
+.gt-glossary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-left: 42px;
+}
+.gt-glossary-input { font-size: 12px; line-height: 1.6; }
+.gt-glossary-hint { font-size: 11px; color: var(--muted-color); }
+
+@media (max-width: 767px) {
+  .gt-glossary { margin-left: 0; }
+}
+
+/* 拟声词：不压黑底，半透明底 + 加粗，与对白区分 */
+.gt-box-trans-text.gt-box-sfx {
+  background: rgba(0, 0, 0, 0.45);
+  font-weight: 700;
 }
 
 /* ── Spinners ────────────────────────────────────────────────────────────────── */
@@ -2048,13 +2987,13 @@ export default {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   pointer-events: all;
   color: var(--text-color);
-  animation: gt-toast-in 0.2s ease;
+  animation: gt-toast-in var(--dur-base) ease;
 }
 
 .gt-toast span { flex: 1; }
 
-.gt-toast-success { border-color: rgba(74, 222, 128, 0.35); color: #4ade80; }
-.gt-toast-error   { border-color: rgba(248, 113, 113, 0.35); color: #f87171; }
+.gt-toast-success { border-color: rgba(74, 222, 128, 0.35); color: var(--success-color); }
+.gt-toast-error   { border-color: rgba(248, 113, 113, 0.35); color: var(--danger-color); }
 .gt-toast-info    { color: var(--text-color); }
 
 .gt-toast-close {
@@ -2086,11 +3025,11 @@ export default {
   flex-shrink: 0;
 }
 .gt-source-e-hentai {
-  color: #4ade80;
+  color: var(--success-color);
   border-color: rgba(74, 222, 128, 0.35);
   background: rgba(74, 222, 128, 0.08);
 }
-.gt-source-e-hentai .gt-source-dot { background: #4ade80; }
+.gt-source-e-hentai .gt-source-dot { background: var(--success-color); }
 .gt-source-exhentai {
   color: #a78bfa;
   border-color: rgba(167, 139, 250, 0.35);
@@ -2139,7 +3078,7 @@ export default {
   border-radius: 4px;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.12s;
+  transition: opacity var(--dur-fast);
   z-index: 50;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
@@ -2168,7 +3107,7 @@ export default {
   font-size: 12px;
   padding: 0 1px;
   border-radius: 2px;
-  transition: background 0.1s;
+  transition: background var(--dur-fast);
   user-select: none;
 }
 
@@ -2276,7 +3215,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--dur-fast), color var(--dur-fast);
 }
 .gt-wc-close:hover { background: var(--hover-bg); color: var(--text-color); }
 
@@ -2297,7 +3236,7 @@ export default {
   font-size: 13px;
 }
 
-.gt-wc-err { color: #f87171; }
+.gt-wc-err { color: var(--danger-color); }
 
 .gt-wc-entries {
   padding: 8px 0;
@@ -2337,7 +3276,7 @@ export default {
 
 .gt-wc-common {
   background: rgba(74, 222, 128, 0.12);
-  color: #4ade80;
+  color: var(--success-color);
   border: 1px solid rgba(74, 222, 128, 0.3);
 }
 
@@ -2381,8 +3320,8 @@ export default {
 }
 
 /* Word card transition */
-.gt-wc-enter-active { transition: opacity 0.15s, transform 0.15s; }
-.gt-wc-leave-active { transition: opacity 0.12s, transform 0.12s; }
+.gt-wc-enter-active { transition: opacity var(--dur-fast), transform var(--dur-fast); }
+.gt-wc-leave-active { transition: opacity var(--dur-fast), transform var(--dur-fast); }
 .gt-wc-enter-from, .gt-wc-leave-to { opacity: 0; transform: scale(0.96); }
 
 @media (max-width: 900px) {
@@ -2519,6 +3458,84 @@ export default {
 
   .gt-header { min-height: var(--tap-target); }
   .gt-back-btn { min-width: var(--tap-target); min-height: var(--tap-target); }
+  .gt-header-actions .gt-btn { min-height: var(--tap-target); }
+
+  /* 抽屉内容重排：把手 → 识别结果 → 功能设置 → 缩略图条（只在全开时给）。
+     此前缩略图 + 展开的设置占掉前 ~220px，半开时只露得出一两条结果。 */
+  .gt-sheet-handle { order: -1; }
+  .gt-sidebar-hdr { order: 0; }
+  .gt-sidebar-hdr-plain { display: none; }
+  .gt-sidebar-hdr .gt-sidebar-title, .gt-sidebar-hdr .gt-count-badge { display: none; }
+  .gt-sidebar-empty, .gt-results-list { order: 1; }
+  .gt-config-panel { order: 2; border-top: 1px solid var(--border-color); }
+  .gt-strip { order: 3; }
+  .gt-sidebar:not(.is-full) .gt-strip { display: none; }
+
+  /* ── 气泡卡：浮在抽屉把手上方 ── */
+  .gt-bubble-card {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(var(--gt-sheet-safe) + 10px);
+    z-index: 7;
+    max-height: 42dvh;
+    overflow-y: auto;
+    padding: 10px 14px 12px;
+    border-radius: var(--radius-lg);
+    background: var(--row-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
+  }
+
+  .gt-bc-head {
+    display: grid;
+    grid-template-columns: var(--tap-target) 1fr var(--tap-target) var(--tap-target);
+    align-items: center;
+    margin: -6px -8px 2px;
+  }
+
+  .gt-bc-pos {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted-color);
+  }
+
+  .gt-bc-nav, .gt-bc-close {
+    min-width: var(--tap-target);
+    min-height: var(--tap-target);
+    border: none;
+    background: transparent;
+    color: var(--text-color);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .gt-bc-nav:disabled { color: var(--faint-color); }
+
+  .gt-bc-orig {
+    margin: 0 0 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--muted-color);
+  }
+
+  .gt-bc-trans {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--text-color);
+  }
+  .gt-bc-pending { color: var(--faint-color); font-style: italic; }
+  .gt-bc-alt { margin: 6px 0 0; font-size: 12px; color: var(--muted-color); }
+
+  .gt-bc-enter-active { transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out); }
+  .gt-bc-leave-active { transition: opacity var(--dur-fast) var(--ease-in-out), transform var(--dur-fast) var(--ease-in-out); }
+  .gt-bc-enter-from, .gt-bc-leave-to { opacity: 0; transform: translateY(12px); }
+}
+
+/* 桌面端没有气泡卡（侧栏就是详情） */
+@media (min-width: 768px) {
+  .gt-bubble-card { display: none; }
 }
 
 </style>

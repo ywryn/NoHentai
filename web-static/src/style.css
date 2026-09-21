@@ -69,6 +69,10 @@
   --primary-soft-bg: rgba(129, 140, 248, 0.14);
   --primary-soft-border: rgba(129, 140, 248, 0.42);
   --primary-on-soft: #c7d2fe;
+  /* 语义色：对 --row-bg 分别 9.5 / 6.0 / 10.0 : 1 */
+  --success-color: #4ade80;
+  --danger-color: #f87171;
+  --warning-color: #fbbf24;
   --placeholder-bg: #1a2640;
   --scrollbar-track: rgba(15, 23, 42, 0.35);
   --scrollbar-thumb: rgba(71, 85, 105, 0.8);
@@ -102,6 +106,10 @@
   --primary-soft-bg: rgba(79, 70, 229, 0.1);
   --primary-soft-border: rgba(79, 70, 229, 0.38);
   --primary-on-soft: #4338ca;
+  /* 语义色：对白底分别 5.0 / 6.5 / 5.0 : 1（原先各页硬编码的 #4ade80 在浅色下仅 1.6:1） */
+  --success-color: #15803d;
+  --danger-color: #b91c1c;
+  --warning-color: #b45309;
   --placeholder-bg: #e8e3dc;
   --scrollbar-track: rgba(214, 211, 209, 0.45);
   --scrollbar-thumb: rgba(148, 163, 184, 0.95);

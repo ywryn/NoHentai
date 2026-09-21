@@ -1,28 +1,31 @@
 import { handleTransOptions, setTransCors } from './_trans-cors.js'
-import { Redis } from '@upstash/redis'
+import { getRedis, sha1, cacheGet, cacheSet } from './_redis.js'
 
 const PADDLEOCR_JOB_URL = 'https://paddleocr.aistudio-app.com/api/v2/ocr/jobs'
 const PADDLE_MODEL = 'PP-OCRv5'
 const VISION_MONTHLY_LIMIT = 1000
 const OCR_SPACE_API_URL = 'https://api.ocr.space/parse/image'
-
-function getRedis() {
-  const url = process.env.KV_REST_API_URL
-  const token = process.env.KV_REST_API_TOKEN
-  if (!url || !token) return null
-  return new Redis({ url, token })
-}
+/* OCR 结果按图片内容哈希缓存：同一页重复识别不再消耗 Vision 每月 1000 次配额，换设备也能命中 */
+const OCR_CACHE_TTL = 30 * 24 * 3600
 
 function monthKey() {
   return `vision_ocr_count_${new Date().toISOString().slice(0, 7)}`
 }
 
-async function getAndIncrVisionCount(redis) {
-  if (!redis) return VISION_MONTHLY_LIMIT
-  const key = monthKey()
-  const count = await redis.incr(key)
-  if (count === 1) await redis.expire(key, 35 * 24 * 3600)
-  return count
+/** 本月 Vision 已用次数（只读，不计数） */
+async function getVisionCount(redis) {
+  if (!redis) return 0
+  try { return Number(await redis.get(monthKey())) || 0 } catch { return VISION_MONTHLY_LIMIT }
+}
+
+/** Vision 调用成功后才计数：失败的请求不该吃掉配额 */
+async function incrVisionCount(redis) {
+  if (!redis) return
+  try {
+    const key = monthKey()
+    const count = await redis.incr(key)
+    if (count === 1) await redis.expire(key, 35 * 24 * 3600)
+  } catch {}
 }
 
 function parsePaddleResponse(data) {
@@ -176,7 +179,8 @@ async function callPaddleOCR(b64, apiToken) {
   form.append('optionalPayload', JSON.stringify({
     useDocOrientationClassify: false,
     useDocUnwarping: false,
-    useTextlineOrientation: false,
+    // 漫画对白是竖排，行方向分类关掉后竖排常被拆成横排碎片；多花 ~1s 换召回率
+    useTextlineOrientation: true,
   }))
   form.append('file', new Blob([imgBuffer], { type: 'image/jpeg' }), 'image.jpg')
 
@@ -234,20 +238,26 @@ export default async function handler(req, res) {
   if (!imageBase64) return res.status(400).json({ error: 'imageBase64 is required' })
 
   try {
+    const wanted = ocrSource === 'ocrspace' ? 'ocrspace' : ocrSource === 'paddle' ? 'paddle' : 'google'
+    const cacheKey = `ocr:v1:${wanted}:${sha1(imageBase64)}`
+    const cached = await cacheGet(cacheKey)
+    if (cached?.results) return res.status(200).json({ ...cached, cached: true })
+
     let results, source
 
-    if (ocrSource === 'ocrspace') {
+    if (wanted === 'ocrspace') {
       const ocrSpaceKey = process.env.OCR_SPACE_KEY
       if (!ocrSpaceKey) return res.status(500).json({ error: 'OCR.Space key not configured' })
       results = await callOcrSpace(imageBase64, ocrSpaceKey)
       source = 'ocrspace'
     } else {
-      if (visionKey && ocrSource !== 'paddle') {
+      if (visionKey && wanted === 'google') {
         const redis = getRedis()
-        const count = await getAndIncrVisionCount(redis)
-        if (count <= VISION_MONTHLY_LIMIT) {
+        const count = await getVisionCount(redis)
+        if (count < VISION_MONTHLY_LIMIT) {
           results = await callGoogleVision(imageBase64, visionKey)
           source = 'vision'
+          await incrVisionCount(redis)
         }
       }
 
@@ -258,6 +268,7 @@ export default async function handler(req, res) {
       }
     }
 
+    await cacheSet(cacheKey, { results, source }, OCR_CACHE_TTL)
     return res.status(200).json({ results, source })
   } catch (err) {
     return res.status(500).json({ error: err.message })
