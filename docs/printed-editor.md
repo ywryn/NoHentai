@@ -21,7 +21,7 @@
 
 不要将 token 放入 `VITE_*`、源码、浏览器存储或聊天。平台为 Codex 提供的 GitHub 认证不会自动成为 Vercel 函数的写入凭据。token 到期后需要在 Vercel 更新并重新部署。
 
-如 Vercel 项目的 Ignored Build Step 或 Git 集成只跟踪部分目录，请确认新增的 `api/printed-books.js` 及其引用的 `web-static/src/utils/printedBooks.js` 会部署到后端项目。保留现有部署目录设置；本功能不迁移前后端托管平台。
+如 Vercel 项目的 Ignored Build Step 或 Git 集成只跟踪部分目录，请确认新增的 `api/printed-books.js` 及其引用的 `shared/printedBooks.js` 会部署到后端项目。共享工具位于仓库根包中，避免后端 CommonJS 函数直接加载前端 ESM 包导致启动失败。保留现有部署目录设置；本功能不迁移前后端托管平台。
 
 ## 冲突与备份
 
