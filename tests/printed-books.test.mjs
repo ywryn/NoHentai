@@ -1,6 +1,10 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join, dirname } from 'node:path'
+import { createRequire } from 'node:module'
+import { spawnSync } from 'node:child_process'
 import handler from '../api/printed-books.js'
 import { BOOK_FIELDS, parseBooksCSV, serializeBooksCSV } from '../web-static/src/utils/printedBooks.js'
 import { findBookMatches } from '../web-static/src/utils/printedMatching.js'
@@ -9,6 +13,31 @@ const csv = readFileSync(new URL('../web-static/public/data/future_digi.csv', im
 const books = parseBooksCSV(csv)
 const sample = { ID: 'TEST-001', '书名': '测试书目', '收价': '180', '原价': '320', '日文名': 'テスト', sid: '123', '备注': '', cover: '' }
 const sha = 'a'.repeat(40)
+
+test('backend compiled as CommonJS starts and answers preflight without requiring the frontend ESM package', () => {
+  const require = createRequire(new URL('../web-static/package.json', import.meta.url))
+  const ts = require('typescript')
+  const root = mkdtempSync(join(tmpdir(), 'printed-commonjs-'))
+  try {
+    for (const path of ['api/printed-books.js', 'api/_trans-cors.js', 'shared/printedBooks.js']) {
+      const source = readFileSync(new URL('../' + path, import.meta.url), 'utf8')
+      const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText
+      const destination = join(root, path)
+      mkdirSync(dirname(destination), { recursive: true })
+      writeFileSync(destination, compiled)
+    }
+    const result = spawnSync(process.execPath, ['--no-experimental-require-module', '-e', `
+      const assert = require('node:assert/strict');
+      const handler = require(${JSON.stringify(join(root, 'api/printed-books.js'))}).default;
+      const res = { headers: {}, setHeader(k,v) { this.headers[k]=v }, status(c) { this.code=c;return this }, end() {} };
+      handler({method:'OPTIONS', headers:{origin:'https://nohentai.com'}},res).then(() => {
+        assert.equal(res.code,204);
+        assert.equal(res.headers['Access-Control-Allow-Origin'],'https://nohentai.com');
+      }).catch(e => { console.error(e); process.exitCode=1 });
+    `], { encoding: 'utf8' })
+    assert.equal(result.status, 0, result.stderr)
+  } finally { rmSync(root, { recursive: true, force: true }) }
+})
 
 test('existing CSV including duplicate IDs round-trips without loss', () => {
   assert.deepEqual(parseBooksCSV(serializeBooksCSV(books)), books)
@@ -73,7 +102,11 @@ test('API authentication, GitHub persistence, concurrency and error handling', a
       assert.equal((await call({ action: 'save', password: 'wrong' })).code, 401)
       assert.equal((await call({ action: 'load' })).code, 401)
       assert.equal((await call({}, 'GET')).code, 405)
-      assert.equal((await call({}, 'OPTIONS')).code, 204)
+      const preflight = await call({}, 'OPTIONS')
+      assert.equal(preflight.code, 204)
+      assert.equal(preflight.headers['Access-Control-Allow-Origin'], 'https://nohentai.com')
+      assert.equal(preflight.headers['Access-Control-Allow-Methods'], 'POST, OPTIONS')
+      assert.equal(preflight.headers['Access-Control-Allow-Headers'], 'Content-Type')
       assert.equal(calls.length, 0)
     })
     await t.test('missing configuration fails closed', async () => {
@@ -81,6 +114,9 @@ test('API authentication, GitHub persistence, concurrency and error handling', a
       assert.equal((await call({ action: 'load', password: 'test-password' })).code, 503)
       process.env.PRINTED_GITHUB_TOKEN = 'test-token'
       delete process.env.TRANS_PASSWORD
+      const preflight = await call({}, 'OPTIONS')
+      assert.equal(preflight.code, 204)
+      assert.equal(preflight.headers['Access-Control-Allow-Origin'], 'https://nohentai.com')
       assert.equal((await call({ action: 'load', password: '' })).code, 503)
       process.env.TRANS_PASSWORD = 'test-password'
       assert.equal(calls.length, 0)

@@ -1,5 +1,5 @@
 import { handleTransOptions, setTransCors } from './_trans-cors.js'
-import { parseBooksCSV, serializeBooksCSV } from '../web-static/src/utils/printedBooks.js'
+import { parseBooksCSV, serializeBooksCSV } from '../shared/printedBooks.js'
 
 const CONTENTS_URL = 'https://api.github.com/repos/ywryn/NoHentai/contents/web-static/public/data/future_digi.csv'
 const BRANCH = 'master'
