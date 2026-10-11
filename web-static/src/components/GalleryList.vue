@@ -71,6 +71,7 @@ function tagOf(item) {
         </div>
         <div v-if="item.refId" class="vm-cover-id">{{ item.refId }}</div>
         <div class="vm-cover-title">{{ item.title }}</div>
+        <div v-if="item.noMeta" class="gallery-unlinked-hint">{{ item.noMetaText }}</div>
         <div v-if="item.rating != null || item.date" class="vm-cover-sub">
           <Rating v-if="item.rating != null" :modelValue="item.rating" readonly class="gr-rating" />
           <span v-if="item.date" class="vm-cover-date">{{ item.date }}</span>
@@ -112,7 +113,6 @@ function tagOf(item) {
         <div v-else class="gr-thumb-placeholder" aria-hidden="true">{{ titleChar(item.title) }}</div>
       </div>
       <div class="gr-body">
-        <template v-if="!item.noMeta">
           <div class="gr-top">
             <span v-if="item.badge" class="gr-badge" :class="item.badgeClass">{{ item.badge }}</span>
             <span class="gr-title">{{ item.title }}</span>
@@ -121,6 +121,7 @@ function tagOf(item) {
           <div v-if="item.tags.length" class="gr-tags" :title="item.tags.join(' · ')">
             <span v-for="tag in item.tags" :key="tag" class="gr-tag">{{ tag }}</span>
           </div>
+          <div v-if="item.noMeta" class="gallery-unlinked-hint">{{ item.noMetaText }}</div>
           <div class="gr-meta">
             <Rating v-if="item.rating != null" :modelValue="item.rating" readonly class="gr-rating" />
             <span v-if="item.pages" class="gr-pages">{{ item.pages }}</span>
@@ -128,22 +129,18 @@ function tagOf(item) {
             <span v-if="item.fav" class="gr-fav">♥ {{ item.fav }}</span>
             <span v-if="item.refId" class="gr-ref-id">{{ item.refId }}</span>
           </div>
-        </template>
-        <template v-else>
-          <div class="gr-top">
-            <span class="gr-title">{{ item.title }}</span>
-          </div>
-          <div class="vm-card-empty">
-            <span>{{ item.noMetaText }}</span>
-            <span v-if="item.refId" class="vm-card-id">{{ item.refId }}</span>
-          </div>
-        </template>
       </div>
     </component>
   </div>
 </template>
 
 <style scoped>
+.gallery-unlinked-hint {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted-color);
+}
+
 /* 骨架条目不响应指针，避免加载期误触 */
 .sk-card {
   pointer-events: none;
