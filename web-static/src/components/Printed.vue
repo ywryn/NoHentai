@@ -204,7 +204,6 @@ function showToast(msg) {
 
 function handleGalleryClick(item) {
   if (!item.searchUrl) return
-  window.open(item.searchUrl, '_blank', 'noreferrer')
   showToast('未匹配元数据，已用书名打开 E-Hentai 搜索')
 }
 
