@@ -25,10 +25,10 @@ function titleChar(title) {
 /**
  * 条目本质是导航，必须渲染成真链接：
  * 键盘可 Tab 可达、支持 Cmd/中键新标签页打开、悬停显示目标地址。
- * 只有「无匹配元数据」这类不可导航的条目才退回 button。
+ * 未关联书目仍有外部搜索地址，也使用链接，避免按钮主题改变卡片布局。
  */
 function tagOf(item) {
-  return item.to ? RouterLink : 'button'
+  return item.to ? RouterLink : item.searchUrl ? 'a' : 'button'
 }
 </script>
 
@@ -56,7 +56,10 @@ function tagOf(item) {
       v-for="item in items"
       :key="item.key"
       :to="item.to"
-      :type="item.to ? undefined : 'button'"
+      :href="item.to ? undefined : item.searchUrl"
+      :target="!item.to && item.searchUrl ? '_blank' : undefined"
+      :rel="!item.to && item.searchUrl ? 'noopener noreferrer' : undefined"
+      :type="!item.to && !item.searchUrl ? 'button' : undefined"
       class="vm-cover-card"
       @click="$emit('click', item)"
     >
@@ -104,7 +107,10 @@ function tagOf(item) {
       v-for="item in items"
       :key="item.key"
       :to="item.to"
-      :type="item.to ? undefined : 'button'"
+      :href="item.to ? undefined : item.searchUrl"
+      :target="!item.to && item.searchUrl ? '_blank' : undefined"
+      :rel="!item.to && item.searchUrl ? 'noopener noreferrer' : undefined"
+      :type="!item.to && !item.searchUrl ? 'button' : undefined"
       class="gallery-row"
       @click="$emit('click', item)"
     >
