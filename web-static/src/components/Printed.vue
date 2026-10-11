@@ -130,8 +130,8 @@ const normalizedItems = computed(() =>
       to: gallery ? `/gallery/${item.sid}/` : null,
       thumb: getThumb(item),
       title: item['书名'] || item['日文名'],
-      badge: gallery?.category ?? null,
-      badgeClass: gallery ? (exTypeClassMap[gallery.category] || 'default') : null,
+      badge: gallery?.category || '未关联',
+      badgeClass: gallery ? (exTypeClassMap[gallery.category] || 'default') : 'default',
       tags: gallery ? getTagValues(gallery.tags) : [],
       pages: gallery?.filecount ? `${gallery.filecount}p` : null,
       date: null,
@@ -139,7 +139,7 @@ const normalizedItems = computed(() =>
       fav: null,
       refId: `#${item.ID}`,
       noMeta: !gallery,
-      noMetaText: '暂无匹配元数据 · 点击去 E-Hentai 搜索',
+      noMetaText: '未关联画廊 · 点击去 E-Hentai 搜索',
       /* 未关联画廊时给一条出路，而不是弹个提示了事 */
       searchUrl: gallery ? null : `https://e-hentai.org/?f_search=${encodeURIComponent(bookName)}`,
     }
