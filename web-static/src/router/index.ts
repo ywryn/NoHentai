@@ -26,6 +26,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '实体书单' },
   },
   {
+    path: '/printed/edit',
+    name: 'PrintedEditor',
+    component: () => import('@/components/PrintedEditor.vue'),
+    meta: { title: '编辑实体书单' },
+  },
+  {
     path: '/daily',
     name: 'DailySearch',
     component: () => import('@/components/DailySearch.vue'),

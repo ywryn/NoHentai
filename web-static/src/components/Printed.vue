@@ -7,6 +7,7 @@ import GalleryList from '@/components/GalleryList.vue'
 import Paginator from '@/components/Paginator.vue'
 import { exTypeClassMap } from '@/utils/galleryUtils'
 import { loadGalleries, loadTranslations } from '@/composables/useGalleryData'
+import { parseBooksCSV } from '@/utils/printedBooks'
 import {
   parseQuery,
   passesQuery,
@@ -45,33 +46,6 @@ const searchInputRef = ref()
 
 let toastTimer = null
 let blurTimer = null
-
-function parseCSV(text) {
-  const rows = []
-  let row = [], value = '', inQuotes = false, i = 0
-  while (i < text.length) {
-    const ch = text[i]
-    if (inQuotes) {
-      if (ch === '"') {
-        if (text[i + 1] === '"') { value += '"'; i += 2; continue }
-        inQuotes = false; i++; continue
-      }
-      value += ch; i++; continue
-    }
-    if (ch === '"') { inQuotes = true; i++; continue }
-    if (ch === ',') { row.push(value); value = ''; i++; continue }
-    if (ch === '\n' || ch === '\r') {
-      if (value !== '' || row.length) { row.push(value); rows.push(row); row = []; value = '' }
-      if (ch === '\r' && text[i + 1] === '\n') i++
-      i++; continue
-    }
-    value += ch; i++
-  }
-  if (value !== '' || row.length) { row.push(value); rows.push(row) }
-  if (rows.length < 2) return []
-  const headers = rows[0]
-  return rows.slice(1).map(r => Object.fromEntries(headers.map((h, j) => [h, r[j] ?? ''])))
-}
 
 function getGallery(sid) {
   if (sid == null || sid === '') return null
@@ -256,7 +230,7 @@ onMounted(async () => {
       loadTranslations(),
     ])
     if (!digeRes.ok) throw new Error('future_digi.csv not found')
-    items.value = parseCSV(await digeRes.text())
+    items.value = parseBooksCSV(await digeRes.text())
     galleryMap.value = Object.fromEntries(galleries.map(g => [String(g.gid), g]))
     translationData.value = translations
     const pageFromUrl = parseInt(route.query.page) || 1
@@ -278,6 +252,7 @@ onBeforeUnmount(() => {
   <div class="digi-container">
     <div class="digi-header">
       <h1 class="digi-title">实体书单</h1>
+      <RouterLink to="/printed/edit">编辑书单</RouterLink>
       <div class="digi-stats" v-if="!loading && !error">
         <span>共 {{ items.length }} 部</span>
         <span class="digi-dot">·</span>
