@@ -25,7 +25,7 @@
 
 - §8.2 接入已写好的 `SettingsPanel.vue` / `PageNav.vue` —— 按作者说明，这两个组件开发时即存在明显缺陷而被弃用。移动端设置面板改为在 `ReaderTopBar` 内自带折叠实现，页码跳转由缩略图侧栏与页目录承担。
 - §9 `galleries.json` 拆分/分片 —— 涉及 Python 同步脚本与数据格式变更，超出前端改造范围。当前已通过路由级代码分割 + `StaleWhileRevalidate` 缓解首屏压力。
-- §9 死代码清理 —— `TelegramFeed` / `TagExplorer` 是被主动注释停用的功能而非遗留垃圾，去留应由作者决定。
+- §9 死代码清理 —— `TagExplorer` 是被主动注释停用的功能，去留应由作者决定。
 
 **实测收益**：首屏 JS 由单 chunk 1153 kB（gzip 671 kB）降至约 396 kB（gzip 105 kB）；深色主题次要文字对比度由 2.19:1 提升至 6.51:1。
 
@@ -506,7 +506,7 @@ manifest: { orientation: 'portrait', ... }
 - **无路由级代码分割**：`router/index.ts` 全部使用静态 `import`。首屏就会加载 Chart.js（统计页）、opencc-js（Printed）、`GalleryTranslate.vue`（2295 行 + kuromoji 相关）—— 大部分用户从不访问这些页面。改成 `() => import(...)` 是零风险的显著优化。
 - **9.4MB JSON 首屏加载**（见 §3.7）。
 - **PWA `NetworkFirst` + 10s 超时** 应用在 `/data/*.json` 上：弱网时用户要等满 10 秒才回落到缓存。对这种「一天更新一次」的数据，`StaleWhileRevalidate` 是更好的策略 —— 立即出缓存内容，后台更新。
-- **死代码**：`SettingsPanel.vue`(215) + `PageNav.vue`(114) + `TagExplorer.vue`(260) + `TagExplorer.css`(246) + `TelegramFeed.vue`(1099) ≈ **1934 行**未被路由引用（TelegramFeed 路由已注释）。约占前端源码 16%。
+- **死代码**：`SettingsPanel.vue`(215) + `PageNav.vue`(114) + `TagExplorer.vue`(260) + `TagExplorer.css`(246) ≈ **835 行**未被路由引用。
 - **CSS 全局泄漏**：`Home.vue:448` 和 `DailySearch.vue:192、194` 的 `<style>` 均无 `scoped`，Home.css 的 549 行样式会全局注入并影响其它页面。
 
 ---
