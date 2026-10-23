@@ -6,6 +6,7 @@ import re
 import shutil
 import time
 from pathlib import Path
+from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
@@ -41,16 +42,23 @@ class ExHentaiUtils:
     def extract_favorites(self) -> list:
         result = []
         next_page = self.base_url
+        visited = set()
+        seen_gids = set()
 
         while next_page:
+            if next_page in visited:
+                raise RuntimeError('收藏分页出现循环，同步已终止，保留原数据。')
+            visited.add(next_page)
             self.logger.info(f"正在爬取: {next_page}")
-            response = self.session.get(next_page, timeout=30)
-            if response.status_code != 200:
-                self.logger.error(f"请求失败，状态码: {response.status_code}")
-                break
+            try:
+                response = self.session.get(next_page, timeout=30)
+                response.raise_for_status()
+            except requests.RequestException as exc:
+                raise RuntimeError(f'收藏第 {len(visited)} 页请求失败，不保存部分结果。') from exc
 
             soup = BeautifulSoup(response.content, "html.parser")
             rows = soup.select("table.itg tr")
+            page_count = 0
 
             for row in rows:
                 try:
@@ -61,6 +69,9 @@ class ExHentaiUtils:
                     if not match:
                         continue
                     gid, token = match.groups()
+                    if gid in seen_gids:
+                        raise RuntimeError('收藏分页返回了重复书目，可能未正确翻页，保留原数据。')
+                    seen_gids.add(gid)
 
                     fav_category_elem = row.select_one("div[title]")
                     fav_category = fav_category_elem["title"].strip() if fav_category_elem else "Unknown"
@@ -76,16 +87,18 @@ class ExHentaiUtils:
                             "favTime": fav_time,
                         }
                     )
+                    page_count += 1
+                except RuntimeError:
+                    raise
                 except Exception:
-                    self.logger.exception("解析错误")
+                    raise RuntimeError('收藏条目解析失败，不保存部分结果。')
 
-            next_link = soup.select_one("div.searchnav a#unext")
+            if not page_count:
+                raise RuntimeError(f'收藏第 {len(visited)} 页未解析到书目，可能认证失效、访问受限或页面结构变化，保留原数据。')
+            self.logger.info(f'第 {len(visited)} 页解析 {page_count} 条，累计 {len(result)} 条')
+            next_link = soup.select_one("a#unext[href]")
             if next_link and "href" in next_link.attrs:
-                next_page = (
-                    next_link["href"]
-                    if next_link["href"].startswith("http")
-                    else self.base_url.rsplit("/", 1)[0] + next_link["href"]
-                )
+                next_page = urljoin(next_page, next_link['href'])
             else:
                 next_page = None
 
@@ -104,6 +117,10 @@ class ExHentaiUtils:
 
             if len(data) != len(batch):
                 self.logger.warning(f"第 {batch_num} 批返回数据不完整：期望 {len(batch)} 条，实际 {len(data)} 条")
+                return False, []
+            if {str(meta.get('gid')) for meta in data} != {str(f['gid']) for f in batch}:
+                self.logger.warning(f'第 {batch_num} 批返回的书目 ID 不完整，稍后重试')
+                return False, []
 
             self.logger.info(f"第 {batch_num} 批成功，获取 {len(data)} 条数据")
             return True, data
@@ -192,6 +209,21 @@ class ExHentaiUtils:
         return self.fetch_gallery_metadatas(favorites, max_retries=max_retries, retry_delay=retry_delay)
 
 
+def validate_snapshot(data: list, output_path: Path) -> None:
+    """Reject large unexplained drops even when the upstream returns HTTP 200."""
+    if not data:
+        raise RuntimeError('收藏结果为空，保留原数据。')
+    if output_path.exists():
+        previous = json.loads(output_path.read_text(encoding='utf-8'))
+        if not isinstance(previous, list):
+            raise RuntimeError('现有收藏数据格式异常，保留原文件。')
+        if len(data) < len(previous) * 0.8 and os.getenv('ALLOW_FAVORITES_SHRINK') != '1':
+            raise RuntimeError(
+                f'收藏数量异常下降：{len(previous)} → {len(data)}，超过 20%，拒绝覆盖。'
+                '请检查分页、访问限制及收藏页筛选；确认是主动删除后才可设置 ALLOW_FAVORITES_SHRINK=1。'
+            )
+
+
 def build_logger() -> logging.Logger:
     logger = logging.getLogger("sync_static_galleries")
     if logger.handlers:
@@ -242,6 +274,7 @@ def main() -> int:
 
     try:
         data = client.get_favorites_metadata(max_retries=MAX_RETRIES, retry_delay=RETRY_DELAY_SECONDS)
+        validate_snapshot(data, output_path)
     except RuntimeError as exc:
         logger.error(f"同步失败: {exc}")
         return 1
