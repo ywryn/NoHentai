@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, inject, watch, onBeforeUnmount, onMounted } from 'vue'
+import { computed, ref, inject, watch, nextTick, onBeforeUnmount, onMounted } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { loadGalleries } from '@/composables/useGalleryData'
 import { BOOK_FIELDS, serializeBooksCSV, validateBooks } from '@/utils/printedBooks'
@@ -8,6 +8,7 @@ import AdminIcon from './admin/AdminIcon.vue'
 
 const confirm = inject('adminConfirm')
 const openNavigation = inject('adminOpenNavigation')
+const detailPane = ref(null)
 const detailOpen = ref(false), bookTab = ref('details')
 const props = defineProps({ adminPassword: { type: String, required: true } })
 
@@ -69,6 +70,7 @@ async function unlock() {
 
 function selectBook(index, open = true) {
   detailOpen.value = open; bookTab.value = 'details'
+  nextTick(() => detailPane.value?.scrollTo({ top: 0, behavior: 'instant' }))
   selected.value = index
   const book = books.value[index]
   matchQuery.value = book?.['日文名'] || book?.['书名'] || book?.sid || ''
@@ -152,7 +154,7 @@ onBeforeRouteLeave(leave)
     <template v-if="verified">
       <div class="a-master-detail a-book-layout" :class="{ 'a-detail-open': detailOpen }">
         <aside class="a-card a-master-list"><div class="a-search-row"><div class="a-search-input"><AdminIcon name="search" :size="18" /><input id="book-filter" v-model="filter" aria-label="查找现有书目" type="search" placeholder="搜索书名、编号或备注" /></div></div><div class="a-list-caption"><span>{{ books.length }} 部实体书</span><span>{{ visibleBooks.length }} 个结果</span></div><div class="a-gallery-list a-book-list"><button v-for="{book,index} in visibleBooks" :key="index" class="a-gallery-row" :class="{ 'is-selected': selected === index }" :disabled="saving || loading" @click="selectBook(index)"><span class="a-book-row-icon"><AdminIcon name="book" :size="19" /></span><span class="a-gallery-copy"><strong>{{ book['书名'] || book['日文名'] || '新书目' }}</strong><span>{{ book.ID || '未填写编号' }}<i>·</i>{{ book.sid ? `画廊 ${book.sid}` : '未关联数字版' }}</span></span><AdminIcon name="chevron" :size="15" /></button><div v-if="!visibleBooks.length" class="a-empty"><AdminIcon name="book" :size="30" /><h3>{{ books.length ? '没有匹配的书目' : '开始整理你的书单' }}</h3><p>{{ books.length ? '换个书名或编号试试。' : '添加书目，再关联收藏中的画廊。' }}</p><button v-if="!books.length" class="a-button" @click="addBook">新增书目</button></div></div></aside>
-        <section class="a-card a-detail-pane"><template v-if="activeBook"><button class="a-button a-ghost a-mobile-back" @click="detailOpen = false"><AdminIcon name="back" :size="16" />返回书单</button><div class="a-section-heading"><div><span class="a-eyebrow">BOOK DETAILS</span><h2>{{ activeBook['书名'] || activeBook['日文名'] || '新书目' }}</h2></div><span class="a-badge" :class="activeBook.sid ? 'a-badge-accent' : 'a-badge-neutral'">{{ activeBook.sid ? '已关联数字版' : '未关联' }}</span></div>
+        <section ref="detailPane" class="a-card a-detail-pane"><template v-if="activeBook"><button class="a-button a-ghost a-mobile-back" @click="detailOpen = false"><AdminIcon name="back" :size="16" />返回书单</button><div class="a-section-heading"><div><span class="a-eyebrow">BOOK DETAILS</span><h2>{{ activeBook['书名'] || activeBook['日文名'] || '新书目' }}</h2></div><span class="a-badge" :class="activeBook.sid ? 'a-badge-accent' : 'a-badge-neutral'">{{ activeBook.sid ? '已关联数字版' : '未关联' }}</span></div>
           <div class="a-segmented" role="tablist" aria-label="书目编辑区域"><button id="book-details-tab" role="tab" :aria-selected="bookTab === 'details'" aria-controls="book-details-panel" @click="bookTab = 'details'">书目信息</button><button id="book-gallery-tab" role="tab" :aria-selected="bookTab === 'gallery'" aria-controls="book-gallery-panel" @click="bookTab = 'gallery'">关联画廊<span v-if="activeBook.sid" class="a-dot" /></button></div>
           <fieldset :disabled="saving || loading">
             <div v-show="bookTab === 'details'" id="book-details-panel" role="tabpanel" aria-labelledby="book-details-tab" class="a-form-stack"><div class="a-form-grid"><label class="a-field a-wide">中文书名<input v-model="activeBook['书名']" maxlength="5000" placeholder="输入书目名称" /></label><label class="a-field a-wide">日文书名<input v-model="activeBook['日文名']" maxlength="5000" placeholder="可选" /></label><label class="a-field a-wide">书目编号<input v-model="activeBook.ID" maxlength="5000" placeholder="必填，允许重复编号" /></label><label class="a-field">收价<input v-model="activeBook['收价']" inputmode="decimal" maxlength="5000" placeholder="可选" /></label><label class="a-field">原价<input v-model="activeBook['原价']" inputmode="decimal" maxlength="5000" placeholder="可选" /></label><label class="a-field a-wide">备注<textarea v-model="activeBook['备注']" rows="4" maxlength="5000" placeholder="记录版本、购买信息或其他说明" /></label></div><details class="a-disclosure"><summary>封面设置</summary><label class="a-field">本地封面文件名<input v-model="activeBook.cover" maxlength="5000" placeholder="留空使用关联画廊封面" /><span class="a-field-help">填写已存在的封面文件名，不需要完整路径。</span></label></details><div class="a-rule-footer"><button class="a-text-button" @click="bookTab = 'gallery'">{{ activeBook.sid ? '查看画廊关联' : '关联数字版本' }}<AdminIcon name="chevron" :size="15" /></button><button class="a-text-button a-danger-text" @click="removeBook">删除书目</button></div></div>
