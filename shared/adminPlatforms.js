@@ -5,14 +5,30 @@ export const GITHUB_SECRETS = ['EXHENTAI_BASE_URL', 'EXHENTAI_COOKIE_MEMBER_ID',
 export const VERCEL_SECRETS = ['EXHENTAI_COOKIE_MEMBER_ID', 'EXHENTAI_COOKIE_PASS_HASH', 'EXHENTAI_COOKIE_IGNEOUS', 'LLM_API_KEY', 'LLM_API_BASE', 'LLM_MODEL', 'LLM_JSON_MODE', 'GOOGLE_VISION_API_KEY', 'PADDLEOCR_API_TOKEN', 'OCR_SPACE_KEY', 'TRANS_PASSWORD']
 
 async function vercel(path, { method = 'GET', body } = {}) {
-  if (!process.env.ADMIN_VERCEL_TOKEN || !process.env.ADMIN_VERCEL_PROJECT_ID) throw new AdminError(503, '请配置 ADMIN_VERCEL_TOKEN 和 ADMIN_VERCEL_PROJECT_ID')
+  const missing = ['ADMIN_VERCEL_TOKEN', 'ADMIN_VERCEL_PROJECT_ID'].filter(name => !process.env[name])
+  if (missing.length) throw platformError('not_configured', `尚未连接 Vercel，请配置 ${missing.join('、')}`, { missing })
   const team = process.env.ADMIN_VERCEL_TEAM_ID
-  const response = await fetch(`https://api.vercel.com${path}${team ? `${path.includes('?') ? '&' : '?'}teamId=${encodeURIComponent(team)}` : ''}`, {
-    method, headers: { Authorization: `Bearer ${process.env.ADMIN_VERCEL_TOKEN}`, 'Content-Type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(15000), redirect: 'error',
-  })
-  if (!response.ok) throw new AdminError(502, 'Vercel 请求失败，请检查平台权限、项目 ID 和服务状态')
+  let response
+  try {
+    response = await fetch(`https://api.vercel.com${path}${team ? `${path.includes('?') ? '&' : '?'}teamId=${encodeURIComponent(team)}` : ''}`, {
+      method, headers: { Authorization: `Bearer ${process.env.ADMIN_VERCEL_TOKEN}`, 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(15000), redirect: 'error',
+    })
+  } catch { throw platformError('unreachable', '暂时无法连接 Vercel，请稍后重试') }
+  if (!response.ok) {
+    const errors = {
+      401: ['unauthorized', 'Vercel Token 无效或已过期，请在部署平台替换'],
+      403: ['forbidden', 'Vercel 权限不足，请检查 Token 授权范围和项目所属 Team'],
+      404: ['project_not_found', '未找到 Vercel 项目，请检查项目 ID 和 Team ID'],
+      429: ['rate_limited', 'Vercel 请求过于频繁，请稍后重试'],
+    }
+    const [code, message] = errors[response.status] || ['upstream_error', 'Vercel 平台暂时异常，请稍后重试']
+    throw platformError(code, message)
+  }
   return response.json()
+}
+function platformError(code, message, details = {}) {
+  return Object.assign(new AdminError(503, message), { code, ...details })
 }
 function projectPath() { return `/v9/projects/${encodeURIComponent(process.env.ADMIN_VERCEL_PROJECT_ID || '')}` }
 
@@ -24,7 +40,10 @@ export async function platformStatus() {
   return {
     github: { available: gh.status === 'fulfilled', error: gh.status === 'rejected' ? '无法读取 GitHub Secrets；需要 Secrets 权限' : null,
       secrets: GITHUB_SECRETS.map(name => ({ name, configured: gh.status === 'fulfilled' ? gh.value.secrets.some(s => s.name === name) : null })) },
-    vercel: { available: vc.status === 'fulfilled', error: vc.status === 'rejected' ? 'Vercel 凭证未配置或平台访问失败' : null,
+    vercel: { available: vc.status === 'fulfilled',
+      code: vc.status === 'rejected' ? vc.reason.code || 'upstream_error' : 'connected',
+      missing: vc.status === 'rejected' ? vc.reason.missing || [] : [],
+      error: vc.status === 'rejected' ? vc.reason instanceof AdminError ? vc.reason.message : 'Vercel 返回了无法识别的响应，请稍后重试' : null,
       secrets: VERCEL_SECRETS.map(name => ({ name, configured: vc.status === 'fulfilled' ? vc.value.envs.some(e => e.key === name && e.target?.includes('production')) : null })) },
   }
 }

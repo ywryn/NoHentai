@@ -181,6 +181,29 @@ test('Admin API authentication, allowlists, file versions, platform changes and 
       }
       assert.equal((await call({ action: 'replace-secret', platform: 'vercel', name: 'LLM_API_KEY', value: 'new-key' })).code, 200)
     })
+    await t.test('Vercel diagnostics distinguish missing configuration, authentication, access and network errors', async () => {
+      delete process.env.ADMIN_VERCEL_TOKEN
+      route = () => json({ secrets: [] })
+      const missing = await call({ action: 'platforms' })
+      assert.equal(missing.data.vercel.code, 'not_configured')
+      assert.deepEqual(missing.data.vercel.missing, ['ADMIN_VERCEL_TOKEN'])
+      assert(missing.data.vercel.error.includes('ADMIN_VERCEL_TOKEN'))
+      assert(!missing.data.vercel.error.includes('ADMIN_VERCEL_PROJECT_ID'))
+      process.env.ADMIN_VERCEL_TOKEN = 'vercel-test'
+      for (const [status, code] of [[401, 'unauthorized'], [403, 'forbidden'], [404, 'project_not_found'], [429, 'rate_limited'], [500, 'upstream_error']]) {
+        route = url => url.includes('api.vercel.com') ? json({ error: 'must-not-expose' }, status) : json({ secrets: [] })
+        const result = await call({ action: 'platforms' })
+        assert.equal(result.code, 200)
+        assert.equal(result.data.vercel.available, false)
+        assert.equal(result.data.vercel.code, code)
+        assert.equal(result.data.github.available, true)
+        assert(!JSON.stringify(result.data).includes('must-not-expose'))
+      }
+      route = url => { if (url.includes('api.vercel.com')) throw new Error('secret upstream text'); return json({ secrets: [] }) }
+      const result = await call({ action: 'platforms' })
+      assert.equal(result.data.vercel.code, 'unreachable')
+      assert(!JSON.stringify(result.data).includes('secret upstream text'))
+    })
     await t.test('task dispatch uses fixed workflows and rerun verifies branch and completion', async () => {
       route = (url, options) => {
         if (options.method === 'POST') return new Response(null, { status: 204 })

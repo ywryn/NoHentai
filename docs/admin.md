@@ -1,6 +1,6 @@
 # 无数据库 Admin
 
-入口为 `https://nohentai.com/#/admin`。前端仍由 GitHub Pages 托管，管理 API 仍部署到原 Vercel 项目，不需要新增数据库或托管平台。
+入口为 `https://nohentai.com/#/admin`，登录后进入概览。前端仍由 GitHub Pages 托管，管理 API 仍部署到原 Vercel 项目，不需要新增数据库或托管平台。
 
 ## 功能与数据归属
 
@@ -39,7 +39,7 @@ Vercel 平台管理未配置不影响内容编辑、daily 配置和 GitHub 任�
 
 前端执行完整的 `npm run build`，会依次运行统计生成、Vite 构建和 `postbuild` 发布数据合并。不要用裸 `vite build` 替代完整构建。GitHub Pages 现有工作流已经调用完整命令。
 
-Vercel 保持仓库根目录为 Root Directory，`vercel.json` 已包含 `config/**`，确保后端配置随部署打包。若配置了 Ignored Build Step，请将 `api/**`、`shared/**`、`config/**` 和根依赖变化都纳入；`config/translate.json` 修改必须触发后端部署。如果 Vercel Git 集成未自动构建此类提交，需要在后台点击“重新部署 Vercel 后端”或到平台控制台部署。
+Vercel 保持仓库根目录为 Root Directory，`vercel.json` 已包含 `config/**`，确保后端配置随部署打包。若配置了 Ignored Build Step，请将 `api/**`、`shared/**`、`config/**` 和根依赖变化都纳入；`config/translate.json` 修改必须触发后端部署。如果 Vercel Git 集成未自动构建此类提交，需要在后台凭证管理页点击“重新部署后端”或到平台控制台部署。
 
 首次上线建议先部署具备 `ADMIN_PASSWORD` 的新后端，再发布新前端。核对 Admin 登录、加载、一次测试提交、Actions 发布和发布标记后，再开始正式编辑。此仓库改造的离线测试不会设置任何真实凭证或自动修改线上数据。
 
@@ -98,3 +98,13 @@ npm run build
 ```
 
 接口测试模拟 GitHub / Vercel，不写真实仓库，不调用付费服务。生产环境权限、分支限制和平台部署仍需配置凭证后完成一次线上验收。
+
+## 管理界面与 Vercel 连接排查
+
+后台分为概览、画廊、实体书单、每日筛选、翻译配置、任务与发布、服务测活、凭证管理。桌面使用侧栏导航；手机通过顶栏菜单打开抽屉，列表与编辑详情分屏切换。
+
+画廊字段直接编辑即进入本页草稿，切换记录会保留有效修改，不再需要“应用到草稿”。所有内容编辑器使用底部保存栏；Ctrl/Cmd+S 可保存，离开前会提示未保存修改。保存表示仓库已提交，发布状态仍需在任务页查看。每日规则可调整顺序。实体书单将书目信息与画廊关联分为两个区域。
+
+服务测活不请求平台管理状态，不要求 ADMIN_VERCEL_TOKEN。旧 `/#/admin/system` 跳转到服务测活。平台连接与凭证替换在 `/#/admin/credentials`。
+
+Vercel 未连接不代表服务故障。仅设置 ADMIN_PASSWORD 和 ADMIN_GITHUB_TOKEN 不会获得 Vercel 管理授权。凭证页会列出缺失的 ADMIN_VERCEL_TOKEN / ADMIN_VERCEL_PROJECT_ID；Team 项目可另配 ADMIN_VERCEL_TEAM_ID。变量加入 Production 后需重新部署后端。API 区分未配置、Token 无效或过期（401）、权限不足（403）、项目不存在（404）、请求限流（429）、连接失败和平台异常，错误响应不转发上游原文或密钥。
