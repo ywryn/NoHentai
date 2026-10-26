@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, provide, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, watch, provide, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'
 import AdminIcon from './AdminIcon.vue'
@@ -14,6 +14,8 @@ const storedLogin = readAdminLogin()
 const remember = ref(storedLogin?.remember ?? true), restoring = ref(Boolean(storedLogin))
 const router = useRouter(), route = useRoute(), drawer = ref(null)
 const confirmation = ref(null)
+const boundedWorkspace = computed(() => Boolean(password.value) && ['/admin/galleries', '/admin/printed', '/admin/daily'].includes(route.path))
+watch(boundedWorkspace, fixed => document.documentElement.classList.toggle('admin-workspace-fixed', fixed), { immediate: true })
 provide('adminConfirm', options => confirmation.value.ask(options))
 const navigation = [
   { label: '工作空间', items: [['overview', '概览', 'grid'], ['galleries', '画廊', 'gallery'], ['printed', '实体书单', 'book']] },
@@ -22,7 +24,7 @@ const navigation = [
 ]
 provide('adminOpenNavigation', () => drawer.value?.showModal())
 onMounted(() => { document.documentElement.classList.add('admin-active'); if (storedLogin) restoreLogin() })
-onBeforeUnmount(() => document.documentElement.classList.remove('admin-active'))
+onBeforeUnmount(() => document.documentElement.classList.remove('admin-active', 'admin-workspace-fixed'))
 watch(() => route.path, () => { drawer.value?.close(); window.scrollTo({ top: 0, behavior: 'instant' }) })
 async function verify(credential) {
   const r = await fetch(`${API_BASE}/api/admin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'verify', password: credential }) })
@@ -58,7 +60,7 @@ async function lock() {
 </script>
 
 <template>
-  <div class="admin-shell" :class="{ 'a-locked': !password }">
+  <div class="admin-shell" :class="{ 'a-locked': !password, 'a-workspace-fixed': boundedWorkspace }">
     <AdminConfirm ref="confirmation" />
     <div v-if="restoring" class="a-restore-login" role="status"><span class="a-spinner" />正在恢复登录…</div>
     <template v-else-if="!password">
