@@ -6,6 +6,7 @@ import AdminIcon from './AdminIcon.vue'
 
 const props = defineProps({ adminPassword: { type: String, required: true }, section: { type: String, required: true } })
 const confirm = inject('adminConfirm')
+const openNavigation = inject('adminOpenNavigation')
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://no-hentai.vercel.app'
 const resource = computed(() => props.section === 'galleries' ? 'overrides' : props.section)
 const isEditor = computed(() => ['galleries', 'daily', 'translate'].includes(props.section))
@@ -170,7 +171,7 @@ const statusTone = r => ['failure', 'timed_out', 'action_required'].includes(r.c
 
 <template>
   <div class="a-page" :class="{ 'a-has-savebar': isEditor && data }" :aria-busy="busy">
-    <header class="a-page-heading"><div><span class="a-eyebrow">{{ ['overview','tasks','health','credentials'].includes(section) ? 'OPERATIONS' : 'CONTENT & SETTINGS' }}</span><h1>{{ titles[section][0] }}</h1><p>{{ titles[section][1] }}</p></div><div class="a-heading-actions"><button v-if="isEditor" class="a-button" :disabled="busy || !data" @click="getHistory"><AdminIcon name="clock" :size="16" />修改历史</button><button class="a-button" :disabled="busy" @click="reload"><AdminIcon name="refresh" :size="16" :class="{ 'a-spin': busy }" /><span>{{ section === 'health' ? '重新检测' : '刷新' }}</span></button></div></header>
+    <header class="a-page-heading"><div class="a-page-title"><button class="a-button a-icon-button a-mobile-menu" aria-label="打开管理导航" @click="openNavigation"><AdminIcon name="menu" /></button><div><h1>{{ titles[section][0] }}</h1><p>{{ titles[section][1] }}</p></div></div><div class="a-heading-actions"><button v-if="isEditor" class="a-button" :disabled="busy || !data" @click="getHistory"><AdminIcon name="clock" :size="16" />修改历史</button><button class="a-button" :disabled="busy" @click="reload"><AdminIcon name="refresh" :size="16" :class="{ 'a-spin': busy }" /><span>{{ section === 'health' ? '重新检测' : '刷新' }}</span></button></div></header>
     <div v-if="error" class="a-alert a-alert-error" role="alert"><AdminIcon name="info" /><div>{{ error }}<button v-if="isEditor && data" class="a-text-button" @click="exportDraft">导出当前草稿</button></div></div>
     <div v-if="notice" class="a-alert a-alert-success" role="status"><AdminIcon name="check" /><div>{{ notice }} <RouterLink v-if="lastCommit" to="/admin/tasks">查看发布进度 →</RouterLink><a v-if="lastCommit" :href="`https://github.com/ywryn/NoHentai/commit/${lastCommit}`" target="_blank" rel="noopener noreferrer">查看提交</a></div></div>
     <div v-for="message in overviewErrors" :key="message" class="a-alert a-alert-warning" role="alert"><AdminIcon name="info" />{{ message }}</div>
