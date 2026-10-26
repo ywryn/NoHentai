@@ -7,6 +7,7 @@ import { findBookMatches } from '@/utils/printedMatching'
 import AdminIcon from './admin/AdminIcon.vue'
 
 const confirm = inject('adminConfirm')
+const openNavigation = inject('adminOpenNavigation')
 const detailOpen = ref(false), bookTab = ref('details')
 const props = defineProps({ adminPassword: { type: String, required: true } })
 
@@ -144,7 +145,7 @@ onBeforeRouteLeave(leave)
 
 <template>
   <div class="a-page a-printed-page a-has-savebar" :aria-busy="loading || saving">
-    <header class="a-page-heading"><div><span class="a-eyebrow">CONTENT & COLLECTION</span><h1>实体书单</h1><p>整理书目信息，关联画廊中的数字版本。</p></div><div class="a-heading-actions"><button class="a-button" :disabled="saving || loading || !verified" @click="addBook"><AdminIcon name="plus" :size="16" />新增书目</button><details class="a-more-menu"><summary class="a-button a-icon-button" aria-label="更多书单操作"><AdminIcon name="dots" :size="18" /></summary><div><button :disabled="saving || loading || !verified" @click="exportCSV"><AdminIcon name="download" :size="15" />导出 CSV</button><button :disabled="saving || loading" @click="reload"><AdminIcon name="refresh" :size="15" />重新加载</button><RouterLink to="/printed"><AdminIcon name="arrow" :size="15" />查看公开书单</RouterLink></div></details></div></header>
+    <header class="a-page-heading"><div class="a-page-title"><button class="a-button a-icon-button a-mobile-menu" aria-label="打开管理导航" @click="openNavigation"><AdminIcon name="menu" /></button><div><h1>实体书单</h1><p>整理书目信息，关联画廊中的数字版本。</p></div></div><div class="a-heading-actions"><button class="a-button" :disabled="saving || loading || !verified" @click="addBook"><AdminIcon name="plus" :size="16" />新增书目</button><details class="a-more-menu"><summary class="a-button a-icon-button" aria-label="更多书单操作"><AdminIcon name="dots" :size="18" /></summary><div><button :disabled="saving || loading || !verified" @click="exportCSV"><AdminIcon name="download" :size="15" />导出 CSV</button><button :disabled="saving || loading" @click="reload"><AdminIcon name="refresh" :size="15" />重新加载</button><RouterLink to="/printed"><AdminIcon name="arrow" :size="15" />查看公开书单</RouterLink></div></details></div></header>
     <div v-if="error" class="a-alert a-alert-error" role="alert"><AdminIcon name="info" /><div>{{ error }} <button v-if="verified" class="a-text-button" @click="exportCSV">导出草稿</button></div></div>
     <div v-if="notice" class="a-alert a-alert-success" role="status"><AdminIcon name="check" /><div>{{ notice }} <RouterLink v-if="lastCommit" to="/admin/tasks">查看发布进度 →</RouterLink></div></div>
     <div v-if="!verified" class="a-loading-state"><span v-if="loading" class="a-spinner" /><p>{{ loading ? '正在加载最新书单…' : '书单尚未加载成功' }}</p><button v-if="!loading" class="a-button" @click="unlock">重新加载</button></div>

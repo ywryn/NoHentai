@@ -4,15 +4,20 @@ import { RESOURCES, GALLERIES_PATH, validateDaily, validateOverrides, validateTr
 import { parseBooksCSV, serializeBooksCSV } from '../shared/printedBooks.js'
 import { AdminError, github, readRepoFile, writeRepoFile, REPO, BRANCH } from '../shared/adminGithub.js'
 import { platformStatus, replaceSecret, redeployBackend, checkHealth } from '../shared/adminPlatforms.js'
+import { createAdminSession, readAdminSession } from '../shared/adminSession.js'
 
 const WORKFLOWS = ['deploy.yml', 'sync.yml', 'sync-ex.yml', 'sync-translations.yml']
 function authenticate(password) {
   const expected = process.env.ADMIN_PASSWORD
   if (!expected) throw new AdminError(503, '请在 Vercel 配置独立的 ADMIN_PASSWORD')
   const hash = v => createHash('sha256').update(v).digest()
-  if (typeof password !== 'string' || password.length > 1024 || !timingSafeEqual(hash(password), hash(expected))) {
+  if (typeof password !== 'string' || password.length > 1024) {
     throw new AdminError(401, '管理密码错误，请重新登录')
   }
+  if (timingSafeEqual(hash(password), hash(expected))) return null
+  const session = readAdminSession(password, expected)
+  if (!session) throw new AdminError(401, '登录已失效或凭证错误，请重新登录')
+  return session
 }
 function parse(resource, text) { return resource === 'printed' ? parseBooksCSV(text) : JSON.parse(text) }
 function serialize(resource, data) {
@@ -34,9 +39,9 @@ export default async function handler(req, res) {
   }
   try {
     const body = req.body || {}
-    authenticate(body.password)
+    const session = authenticate(body.password)
     const { action, resource } = body
-    if (action === 'verify') return res.status(200).json({ ok: true, repo: REPO, branch: BRANCH })
+    if (action === 'verify') return res.status(200).json({ ok: true, repo: REPO, branch: BRANCH, session: session || createAdminSession(process.env.ADMIN_PASSWORD) })
     if (['load', 'save', 'history'].includes(action)) {
       if (!Object.hasOwn(RESOURCES, resource)) throw new AdminError(400, '不允许访问此资源')
       const path = RESOURCES[resource]

@@ -10,6 +10,7 @@ import handler from '../api/admin.js'
 import { RESOURCES, GALLERIES_PATH, validateOverrides, mergeGalleries, validateDaily, validateTranslate } from '../shared/adminData.js'
 import { translateConfig } from '../shared/translateConfig.js'
 import { serializeBooksCSV } from '../shared/printedBooks.js'
+import { createAdminSession, readAdminSession } from '../shared/adminSession.js'
 
 const sha = 'a'.repeat(40), newSha = 'b'.repeat(40), commit = 'c'.repeat(40)
 const book = { ID: 'TEST', '书名': '测试', '日文名': '', '收价': '', '原价': '', sid: '123', '备注': '', cover: '' }
@@ -25,7 +26,7 @@ test('Admin and platform helpers can start when bundled as CommonJS serverless f
   const root = mkdtempSync(join(tmpdir(), 'admin-commonjs-'))
   try {
     symlinkSync(new URL('../node_modules', import.meta.url).pathname, join(root, 'node_modules'), 'dir')
-    for (const path of ['api/admin.js', 'api/_trans-cors.js', 'shared/adminData.js', 'shared/adminGithub.js', 'shared/adminPlatforms.js', 'shared/printedBooks.js']) {
+    for (const path of ['api/admin.js', 'api/_trans-cors.js', 'shared/adminData.js', 'shared/adminGithub.js', 'shared/adminPlatforms.js', 'shared/adminSession.js', 'shared/printedBooks.js']) {
       const compiled = ts.transpileModule(readFileSync(new URL('../' + path, import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, esModuleInterop: true } }).outputText
       mkdirSync(dirname(join(root, path)), { recursive: true })
       writeFileSync(join(root, path), compiled)
@@ -38,6 +39,20 @@ test('Admin and platform helpers can start when bundled as CommonJS serverless f
     `], { encoding: 'utf8' })
     assert.equal(result.status, 0, result.stderr)
   } finally { rmSync(root, { recursive: true, force: true }) }
+})
+
+test('remembered sessions expire, reject tampering and are invalidated by password rotation', () => {
+  const now = Date.now()
+  const session = createAdminSession('test-secret', now)
+  assert.deepEqual(readAdminSession(session.token, 'test-secret', now), session)
+  assert.equal(readAdminSession(session.token, 'different-secret', now), null)
+  assert.equal(readAdminSession(session.token, 'test-secret', session.expiresAt), null)
+  assert.equal(readAdminSession(session.token, 'test-secret', now - 1), null)
+  const parts = session.token.split('.')
+  parts[2] = Buffer.from(JSON.stringify({ expiresAt: session.expiresAt + 100000 })).toString('base64url')
+  assert.equal(readAdminSession(parts.join('.'), 'test-secret', now), null)
+  assert.equal(readAdminSession(session.token.slice(0, -43) + '中'.repeat(43), 'test-secret', now), null)
+  assert.equal(session.token.includes('test-secret'), false)
 })
 
 test('source refresh preserves overrides, reset restores source, and empty arrays really clear tags', () => {
@@ -108,6 +123,18 @@ test('Admin API authentication, allowlists, file versions, platform changes and 
       assert.equal((await call({ action: 'dispatch', workflow: '../other.yml' })).code, 400)
       assert.equal((await call({ action: 'replace-secret', platform: 'vercel', name: 'ADMIN_PASSWORD', value: 'new' })).code, 400)
       assert.equal(calls.length, count)
+    })
+    await t.test('login issues a reusable credential without returning the password; old sessions fail after rotation', async () => {
+      const verified = await call({ action: 'verify' })
+      assert.equal(verified.code, 200)
+      const session = verified.data.session
+      assert(!JSON.stringify(session).includes('admin-test'))
+      assert.equal((await call({ action: 'verify', password: session.token })).data.session.token, session.token)
+      process.env.ADMIN_PASSWORD = 'rotated-password'
+      assert.equal((await call({ action: 'verify', password: session.token })).code, 401)
+      process.env.ADMIN_PASSWORD = 'admin-test'
+      const expired = createAdminSession('admin-test', Date.now() - 31 * 86400000)
+      assert.equal((await call({ action: 'verify', password: expired.token })).code, 401)
     })
     await t.test('large gallery files load via their immutable blob SHA and results are paginated', async () => {
       const many = Array.from({ length: 45 }, (_, i) => ({ ...galleries[0], gid: i + 1 }))
