@@ -35,8 +35,10 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/components/admin/Admin.vue'),
     meta: { title: '站点管理', immersive: true },
     children: [
+      { path: '', redirect: '/admin/overview' },
+      { path: 'system', redirect: '/admin/health' },
       { path: 'printed', component: () => import('@/components/PrintedEditor.vue'), meta: { title: '管理书单' } },
-      ...['galleries', 'daily', 'translate', 'tasks', 'system'].map(section => ({
+      ...['overview', 'galleries', 'daily', 'translate', 'tasks', 'health', 'credentials'].map(section => ({
         path: section,
         component: () => import('@/components/admin/AdminPanel.vue'),
         props: { section },
