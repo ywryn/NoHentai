@@ -1,12 +1,13 @@
 <script setup>
-import { computed, ref, onBeforeUnmount } from 'vue'
+import { computed, ref, onBeforeUnmount, onMounted } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { loadGalleries } from '@/composables/useGalleryData'
 import { BOOK_FIELDS, serializeBooksCSV, validateBooks } from '@/utils/printedBooks'
 import { findBookMatches } from '@/utils/printedMatching'
 
+const props = defineProps({ adminPassword: { type: String, required: true } })
+
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://no-hentai.vercel.app'
-const password = ref('')
 const verified = ref(false)
 const loading = ref(false)
 const saving = ref(false)
@@ -34,24 +35,19 @@ const visibleBooks = computed(() => {
 })
 
 async function request(action, body = {}) {
-  const response = await fetch(`${API_BASE}/api/printed-books`, {
+  const response = await fetch(`${API_BASE}/api/admin`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password: password.value, action, ...body }),
+    body: JSON.stringify({ password: props.adminPassword, action, resource: 'printed', ...(body.books ? { data: body.books } : {}), ...(body.sha ? { sha: body.sha } : {}) }),
   })
   const data = await response.json().catch(() => ({}))
   if (!response.ok) throw new Error(data.error || `请求失败（${response.status}）`)
-  return data
+  return action === 'load' ? { ...data, books: data.data } : data
 }
 
 async function unlock() {
-  if (!password.value || loading.value) return
+  if (!props.adminPassword || loading.value) return
   loading.value = true; error.value = ''; notice.value = ''
   try {
-    const response = await fetch(`${API_BASE}/api/trans-verify`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: password.value }),
-    })
-    if (!response.ok) throw new Error(response.status === 401 ? '密码错误' : '密码验证服务暂时不可用')
     const data = await request('load')
     books.value = data.books; sha.value = data.sha; original.value = JSON.stringify(data.books)
     verified.value = true
@@ -95,7 +91,7 @@ async function save() {
   try {
     const data = await request('save', { books: snapshot, sha: sha.value })
     sha.value = data.sha; original.value = JSON.stringify(snapshot); lastCommit.value = data.commit
-    notice.value = '书单已保存，自动部署完成后 Printed 页面会显示更新。'
+    notice.value = '书单已提交，自动部署完成后 Printed 页面会显示更新。' + (data.warnings?.length ? ` ${data.warnings.join('；')}` : '')
   } catch (e) { error.value = e.message || '保存失败，请检查网络' }
   finally { saving.value = false }
 }
@@ -125,15 +121,10 @@ function leave() {
   return !dirty.value || window.confirm('还有未保存的书单修改，确定离开？')
 }
 
-function lock() {
-  if (!leave()) return
-  password.value = ''; verified.value = false; books.value = []; original.value = '[]'
-  sha.value = ''; selected.value = -1; error.value = ''; notice.value = ''; lastCommit.value = ''
-}
-
 function beforeUnload(event) {
   if (dirty.value || saving.value) { event.preventDefault(); event.returnValue = '' }
 }
+onMounted(unlock)
 window.addEventListener('beforeunload', beforeUnload)
 onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
 onBeforeRouteLeave(leave)
@@ -142,15 +133,9 @@ onBeforeRouteLeave(leave)
 <template>
   <div class="printed-editor">
     <header class="editor-heading">
-      <div><h1>编辑实体书单</h1><RouterLink to="/printed">返回书单</RouterLink></div>
-      <button v-if="verified" type="button" :disabled="saving || loading" @click="lock">退出编辑</button>
+      <div><h2>编辑实体书单</h2><RouterLink to="/printed">返回书单</RouterLink></div>
     </header>
-    <form v-if="!verified" class="unlock-form" @submit.prevent="unlock">
-      <p>输入与 OCR / 翻译工作台相同的密码。</p>
-      <label for="printed-password">编辑密码</label>
-      <input id="printed-password" v-model="password" type="password" autocomplete="current-password" required :disabled="loading" />
-      <button type="submit" :disabled="loading">{{ loading ? '正在验证并加载…' : '进入编辑' }}</button>
-    </form>
+    <p v-if="!verified">{{ loading ? '正在读取最新书单…' : '书单尚未加载。' }} <button v-if="!loading" @click="unlock">重试</button></p>
     <p v-if="error" class="message error" role="alert">{{ error }}</p>
     <p v-if="notice" class="message" role="status">{{ notice }} <a v-if="lastCommit" :href="`https://github.com/ywryn/NoHentai/commit/${lastCommit}`" target="_blank" rel="noopener noreferrer">查看保存记录</a></p>
     <template v-if="verified">

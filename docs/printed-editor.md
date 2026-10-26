@@ -1,6 +1,6 @@
 # 实体书单编辑
 
-在 Printed 页面点击“编辑书单”，或访问 `/#/printed/edit`。输入与 OCR / 翻译工作台相同的密码，编辑全部字段、新增或删除书目，并保存全部修改。
+访问 `/#/admin/printed`，使用独立的管理密码登录。旧 `/#/printed/edit` 自动跳转到新入口。可以编辑全部字段、新增或删除书目，并保存全部修改。
 
 编辑器读取 GitHub `master` 上最新的 `web-static/public/data/future_digi.csv`，而不是当前网站部署中的旧副本。保存会向该文件提交一次修改；现有 `Deploy to GitHub Pages` 工作流随后构建发布。成功保存表示仓库提交已完成，网站显示更新需要等待部署完成。
 
@@ -8,20 +8,7 @@
 
 ## Vercel 配置
 
-保留现有 `TRANS_PASSWORD`，另外在承载 `api/` 的 Vercel 项目中配置 **`PRINTED_GITHUB_TOKEN`**：
-
-1. 优先在仓库所有者账号下创建 fine-grained personal access token。
-2. Resource owner 选择仓库所属账号或组织，仅授权 `ywryn/NoHentai`。
-3. Repository permissions 设置 **Contents: Read and write**。Metadata 的默认读取权限即可；不需要 Actions 或 Workflows 写权限。
-4. 如组织要求审批，先完成审批。确认 `master` 的分支规则允许该身份提交修改。
-5. 将 token 安全填写到 Vercel 的 Environment Variables 中，名称为 `PRINTED_GITHUB_TOKEN`，应用于 Production；如需预览环境联调，单独配置所需环境。
-6. 重新部署 Vercel 后端，使新接口和变量生效。GitHub Pages 也需要部署含编辑页面的前端代码。
-
-如果使用的是个人仓库的协作者账号，GitHub fine-grained token 可能无法选择该仓库作为资源，不能只凭协作者 Write 权限假定 token 可用。此时可由仓库所有者生成上述限定仓库的 token，或使用 GitHub App；如采用 classic token，公开仓库需要 `public_repo`，私有仓库需要 `repo`，并确认账号确实具有写权限。
-
-不要将 token 放入 `VITE_*`、源码、浏览器存储或聊天。平台为 Codex 提供的 GitHub 认证不会自动成为 Vercel 函数的写入凭据。token 到期后需要在 Vercel 更新并重新部署。
-
-如 Vercel 项目的 Ignored Build Step 或 Git 集成只跟踪部分目录，请确认新增的 `api/printed-books.js` 及其引用的 `shared/printedBooks.js` 会部署到后端项目。共享工具位于仓库根包中，避免后端 CommonJS 函数直接加载前端 ESM 包导致启动失败。保留现有部署目录设置；本功能不迁移前后端托管平台。
+书单编辑已迁移到统一 Admin。配置独立的 `ADMIN_PASSWORD` 和仓库限定的 `ADMIN_GITHUB_TOKEN`，详细权限、部署顺序与可选平台能力见 [Admin 部署说明](admin.md)。原 `PRINTED_GITHUB_TOKEN` 仅作为兼容回退，`TRANS_PASSWORD` 不再授权写入。旧 `/api/printed-books` 接口返回 410。
 
 ## 冲突与备份
 
@@ -36,7 +23,7 @@
 ```sh
 node --test tests/printed-books.test.mjs
 cd web-static
-npm --ignore-scripts run build
+npm run build
 ```
 
 测试使用模拟 GitHub 响应，不会改动真实仓库或调用付费服务。线上验证需要配置 token 后实际保存一次测试书目，核对 GitHub 提交、Pages 部署及刷新后的书单，再删除测试书目。

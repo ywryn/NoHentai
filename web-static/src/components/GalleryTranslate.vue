@@ -880,6 +880,11 @@ export default {
     const page = parseInt(this.$route.query.page) || 1
     this.currentPage = page
 
+    fetch(`${import.meta.env.BASE_URL}data/translate-config.json`, { cache: 'no-cache' })
+      .then(r => { if (!r.ok) throw new Error(); return r.json() })
+      .then(config => { if (['google', 'paddle', 'ocrspace'].includes(config.defaultOcr)) this.ocrSource = config.defaultOcr })
+      .catch(() => {})
+
     this.loadGlossary()
     loadGalleries().then(list => {
       this.galleryMeta = list.find(g => String(g.gid) === String(this.gid)) || null

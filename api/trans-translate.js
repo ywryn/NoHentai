@@ -1,3 +1,4 @@
+import { translateConfig } from '../shared/translateConfig.js'
 import { handleTransOptions, setTransCors } from './_trans-cors.js'
 import { sha1, cacheGet, cacheSet } from './_redis.js'
 
@@ -93,9 +94,8 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.LLM_API_KEY
   const apiBase = (process.env.LLM_API_BASE || '').replace(/\/+$/, '')
-  const model = process.env.LLM_MODEL || 'gpt-4o-mini'
+  const { model, jsonMode } = translateConfig()
   // 部分 OpenAI 兼容网关不认 response_format，默认不带；确认支持后设 LLM_JSON_MODE=1
-  const jsonMode = process.env.LLM_JSON_MODE === '1'
 
   if (!apiKey || !apiBase) return res.status(500).json({ error: 'LLM not configured' })
   if (!Array.isArray(texts) || !texts.length) return res.status(400).json({ error: 'texts is required' })

@@ -251,7 +251,6 @@ onBeforeUnmount(() => {
   <div class="digi-container">
     <div class="digi-header">
       <h1 class="digi-title">实体书单</h1>
-      <RouterLink to="/printed/edit">编辑书单</RouterLink>
       <div class="digi-stats" v-if="!loading && !error">
         <span>共 {{ items.length }} 部</span>
         <span class="digi-dot">·</span>

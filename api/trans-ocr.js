@@ -1,3 +1,4 @@
+import { translateConfig } from '../shared/translateConfig.js'
 import { handleTransOptions, setTransCors } from './_trans-cors.js'
 import { getRedis, sha1, cacheGet, cacheSet } from './_redis.js'
 
@@ -238,7 +239,8 @@ export default async function handler(req, res) {
   if (!imageBase64) return res.status(400).json({ error: 'imageBase64 is required' })
 
   try {
-    const wanted = ocrSource === 'ocrspace' ? 'ocrspace' : ocrSource === 'paddle' ? 'paddle' : 'google'
+    const selected = ocrSource || translateConfig().defaultOcr
+    const wanted = selected === 'ocrspace' ? 'ocrspace' : selected === 'paddle' ? 'paddle' : 'google'
     const cacheKey = `ocr:v1:${wanted}:${sha1(imageBase64)}`
     const cached = await cacheGet(cacheKey)
     if (cached?.results) return res.status(200).json({ ...cached, cached: true })

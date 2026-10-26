@@ -3,7 +3,8 @@ import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath } from 'url'
 import { dirname, resolve } from 'path'
-import { createReadStream, existsSync } from 'fs'
+import { createReadStream, existsSync, readFileSync } from 'fs'
+import { mergeGalleries } from '../shared/adminData.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -21,6 +22,27 @@ export default defineConfig({
     },
   },
   plugins: [
+    {
+      name: 'admin-preview-data',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          const pathname = req.url?.split('?')[0]
+          if (!['/data/galleries.json', '/data/daily_search.json', '/data/translate-config.json'].includes(pathname || '')) return next()
+          try {
+            const read = (name: string) => JSON.parse(readFileSync(resolve(__dirname, name), 'utf8'))
+            const overrides = read('public/data/gallery-overrides.json')
+            const result = pathname === '/data/galleries.json'
+              ? mergeGalleries(read('public/data/galleries.json'), overrides)
+              : pathname === '/data/daily_search.json'
+                ? read('public/data/daily_search.json').map((g: any) => ({ ...g, galleries: mergeGalleries(g.galleries, overrides) }))
+                : { defaultOcr: read('../config/translate.json').defaultOcr }
+            res.setHeader('Content-Type', 'application/json')
+            res.setHeader('Cache-Control', 'no-store')
+            res.end(JSON.stringify(result))
+          } catch (error) { next(error as Error) }
+        })
+      },
+    },
     {
       name: 'serve-kuromoji-dict',
       configureServer(server) {
@@ -69,12 +91,12 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,svg,png,woff2}'],
         runtimeCaching: [
           {
-            // 数据一天只更新一次：先出缓存保证秒开，再后台刷新。
-            // 原 NetworkFirst + 10s 超时会让弱网用户干等满 10 秒。
-            urlPattern: /\/data\/.*\.json$/,
-            handler: 'StaleWhileRevalidate',
+            // Admin 发布后优先获取新数据；离线时才回退缓存。
+            urlPattern: /\/data\/.*\.(?:json|csv)$/,
+            handler: 'NetworkFirst',
             options: {
               cacheName: 'data-cache',
+              networkTimeoutSeconds: 3,
               expiration: {
                 maxEntries: 20,
                 maxAgeSeconds: 60 * 60 * 24 * 7,

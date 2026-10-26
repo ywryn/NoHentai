@@ -1,3 +1,4 @@
+import { mergeGalleries } from '../../shared/adminData.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -201,7 +202,7 @@ function calculateHeatmapData(galleries) {
 // 主函数
 function generateStats() {
     console.log('Reading data files...');
-    const galleries = readJSON(GALLERIES_PATH);
+    const galleries = mergeGalleries(readJSON(GALLERIES_PATH), readJSON(path.join(DATA_DIR, 'gallery-overrides.json')));
     const translations = readJSON(TRANSLATIONS_PATH);
 
     console.log(`Loaded ${galleries.length} galleries`);
