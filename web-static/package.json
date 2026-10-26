@@ -9,7 +9,8 @@
     "generate-stats": "node scripts/generate-stats.js",
     "prebuild": "npm run generate-stats",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postbuild": "node scripts/publish-data.js"
   },
   "dependencies": {
     "@primevue/themes": "^4.2.0",

@@ -28,8 +28,21 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/printed/edit',
     name: 'PrintedEditor',
-    component: () => import('@/components/PrintedEditor.vue'),
-    meta: { title: '编辑实体书单' },
+    redirect: '/admin/printed',
+  },
+  {
+    path: '/admin',
+    component: () => import('@/components/admin/Admin.vue'),
+    meta: { title: '站点管理', immersive: true },
+    children: [
+      { path: 'printed', component: () => import('@/components/PrintedEditor.vue'), meta: { title: '管理书单' } },
+      ...['galleries', 'daily', 'translate', 'tasks', 'system'].map(section => ({
+        path: section,
+        component: () => import('@/components/admin/AdminPanel.vue'),
+        props: { section },
+        meta: { title: '站点管理' },
+      })),
+    ],
   },
   {
     path: '/daily',

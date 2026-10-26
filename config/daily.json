@@ -1,0 +1,53 @@
+[
+  {
+    "name": "Manga · 80~800p · ★4+",
+    "filters": [
+      "Manga",
+      "Chinese",
+      "80~800p",
+      "★4+",
+      "-webtoon",
+      "-rough TL",
+      "-full censorship"
+    ],
+    "keyword": "language:chinese$ -other:webtoon$ -other:\"rough translation$\" -other:\"full censorship$\"",
+    "categories": 4,
+    "minPages": 80,
+    "maxPages": 800,
+    "minRating": 4,
+    "cutoffDays": 10
+  },
+  {
+    "name": "Doujinshi · 8p+ · ★4+",
+    "filters": [
+      "Doujinshi",
+      "Chinese",
+      "8p+",
+      "★4+",
+      "-webtoon",
+      "-rough TL",
+      "-full censorship"
+    ],
+    "keyword": "language:chinese$ -other:webtoon$ -other:\"rough translation$\" -other:\"full censorship$\"",
+    "categories": 2,
+    "minPages": 8,
+    "maxPages": null,
+    "minRating": 4,
+    "cutoffDays": 5
+  },
+  {
+    "name": "Doujinshi+Manga · Webtoon · CN",
+    "filters": [
+      "Doujinshi",
+      "Manga",
+      "Chinese",
+      "webtoon"
+    ],
+    "keyword": "other:webtoon$ language:chinese$",
+    "categories": 6,
+    "minPages": null,
+    "maxPages": null,
+    "minRating": null,
+    "cutoffDays": 10
+  }
+]

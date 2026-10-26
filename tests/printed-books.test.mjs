@@ -80,90 +80,9 @@ function response() {
   }
 }
 
-test('API authentication, GitHub persistence, concurrency and error handling', async t => {
-  const originalFetch = globalThis.fetch
-  const originalPassword = process.env.TRANS_PASSWORD
-  const originalToken = process.env.PRINTED_GITHUB_TOKEN
-  process.env.TRANS_PASSWORD = 'test-password'
-  process.env.PRINTED_GITHUB_TOKEN = 'test-token'
-  const calls = []
-  let upstream
-  globalThis.fetch = async (url, options) => {
-    calls.push({ url, options })
-    return typeof upstream === 'function' ? upstream() : upstream
-  }
-  const call = async (body, method = 'POST') => {
-    const res = response()
-    await handler({ method, headers: { origin: 'https://nohentai.com' }, body }, res)
-    return res
-  }
-  try {
-    await t.test('unauthorized direct writes and unsupported methods never reach GitHub', async () => {
-      assert.equal((await call({ action: 'save', password: 'wrong' })).code, 401)
-      assert.equal((await call({ action: 'load' })).code, 401)
-      assert.equal((await call({}, 'GET')).code, 405)
-      const preflight = await call({}, 'OPTIONS')
-      assert.equal(preflight.code, 204)
-      assert.equal(preflight.headers['Access-Control-Allow-Origin'], 'https://nohentai.com')
-      assert.equal(preflight.headers['Access-Control-Allow-Methods'], 'POST, OPTIONS')
-      assert.equal(preflight.headers['Access-Control-Allow-Headers'], 'Content-Type')
-      assert.equal(calls.length, 0)
-    })
-    await t.test('missing configuration fails closed', async () => {
-      delete process.env.PRINTED_GITHUB_TOKEN
-      assert.equal((await call({ action: 'load', password: 'test-password' })).code, 503)
-      process.env.PRINTED_GITHUB_TOKEN = 'test-token'
-      delete process.env.TRANS_PASSWORD
-      const preflight = await call({}, 'OPTIONS')
-      assert.equal(preflight.code, 204)
-      assert.equal(preflight.headers['Access-Control-Allow-Origin'], 'https://nohentai.com')
-      assert.equal((await call({ action: 'load', password: '' })).code, 503)
-      process.env.TRANS_PASSWORD = 'test-password'
-      assert.equal(calls.length, 0)
-    })
-    await t.test('loads current CSV and SHA from master with no browser caching', async () => {
-      upstream = new Response(JSON.stringify({ sha, encoding: 'base64', content: Buffer.from(csv).toString('base64') }))
-      const res = await call({ action: 'load', password: 'test-password' })
-      assert.equal(res.code, 200); assert.deepEqual(res.data.books, books); assert.equal(res.data.sha, sha)
-      assert.equal(res.headers['Cache-Control'], 'no-store')
-      assert.equal(res.headers['Access-Control-Allow-Origin'], 'https://nohentai.com')
-      assert(calls.at(-1).url.endsWith('?ref=master'))
-      assert.equal(calls.at(-1).options.headers.Authorization, 'Bearer test-token')
-    })
-    await t.test('rejects invalid version or fields before attempting writes', async () => {
-      const count = calls.length
-      assert.equal((await call({ action: 'save', password: 'test-password', books: [sample] })).code, 400)
-      assert.equal((await call({ action: 'save', password: 'test-password', sha, books: [{ ...sample, sid: 'bad' }] })).code, 400)
-      assert.equal(calls.length, count)
-    })
-    await t.test('writes only the fixed CSV with optimistic SHA and a deployable commit', async () => {
-      upstream = new Response(JSON.stringify({ content: { sha: 'b'.repeat(40) }, commit: { sha: 'c'.repeat(40) } }))
-      const rows = [{ ...sample, '备注': 'Edited, safely' }]
-      const res = await call({ action: 'save', password: 'test-password', sha, books: rows })
-      assert.equal(res.code, 200)
-      const { url, options } = calls.at(-1)
-      assert.equal(options.method, 'PUT')
-      assert.equal(url, 'https://api.github.com/repos/ywryn/NoHentai/contents/web-static/public/data/future_digi.csv')
-      const saved = JSON.parse(options.body)
-      assert.equal(saved.sha, sha); assert.equal(saved.branch, 'master'); assert(!saved.message.includes('[skip ci]'))
-      assert.deepEqual(parseBooksCSV(Buffer.from(saved.content, 'base64').toString('utf8')), rows)
-      assert(!options.body.includes('test-password')); assert(!options.body.includes('test-token'))
-    })
-    await t.test('conflicts, revoked credentials and transport failures do not report success', async () => {
-      for (const status of [409, 422, 401, 403, 404, 500]) {
-        upstream = new Response('{}', { status })
-        const res = await call({ action: 'save', password: 'test-password', sha, books: [sample] })
-        assert.equal(res.code, [409, 422].includes(status) ? 409 : [401, 403, 404].includes(status) ? 503 : 502)
-      }
-      upstream = () => { throw new Error('secret-bearing upstream error') }
-      const res = await call({ action: 'load', password: 'test-password' })
-      assert.equal(res.code, 502); assert(!JSON.stringify(res.data).includes('secret-bearing'))
-    })
-  } finally {
-    globalThis.fetch = originalFetch
-    for (const [name, value] of [['TRANS_PASSWORD', originalPassword], ['PRINTED_GITHUB_TOKEN', originalToken]]) {
-      if (value === undefined) delete process.env[name]
-      else process.env[name] = value
-    }
-  }
+test('legacy printed API is retired and never accepts translation-password writes', async () => {
+  const res = response()
+  await handler({ method: 'POST', headers: { origin: 'https://nohentai.com' }, body: { action: 'save', password: 'old-password' } }, res)
+  assert.equal(res.code, 410)
+  assert.equal(res.headers['Cache-Control'], 'no-store')
 })

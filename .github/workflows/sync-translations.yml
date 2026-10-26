@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   sync:
@@ -36,7 +36,10 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add web-static/public/data/translations.json
           git diff --staged --quiet || git commit -m "更新翻译数据库 [skip ci]"
-          git push
+          # Admin may have committed independent configuration during the scrape.
+          # Rebase preserves it; a real conflict fails the job instead of overwriting.
+          git pull --rebase origin master
+          git push origin HEAD:master
 
   build:
     runs-on: ubuntu-latest
