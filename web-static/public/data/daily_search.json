@@ -10,9 +10,60 @@
       "-rough TL",
       "-full censorship"
     ],
-    "generatedAt": "2026-10-28T23:59:36.685432",
-    "cutoffDate": "2026-10-18",
+    "generatedAt": "2026-10-29T23:55:17.135959",
+    "cutoffDate": "2026-10-19",
     "galleries": [
+      {
+        "gid": 4289469,
+        "token": "e74641aab0",
+        "title": "[Tokihama Jiro] Reijo Kaitou wa Meitantei o Chouai Suru -Tenchi Tantei no Reijo Series- [Chinese] [Amerins漢化] [Digital]",
+        "title_jpn": "[時浜次郎] 麗女怪盗は名探偵を寵愛する-天智探偵の麗女シリーズ- [中国翻訳] [DL版]",
+        "thumb": "https://ehgt.org/w/02/725/68732-1xxb9302.webp",
+        "uploader": "Amerins",
+        "posted": "1793265349",
+        "pages": 229,
+        "rating": "4.20",
+        "category": "Manga",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "artist:tokihama jiro",
+          "male:bondage",
+          "male:condom",
+          "female:beauty mark",
+          "female:big ass",
+          "female:big breasts",
+          "female:garter belt",
+          "female:glasses",
+          "female:hairy",
+          "female:kimono",
+          "female:leotard",
+          "female:milf",
+          "female:nakadashi",
+          "female:nun",
+          "female:stockings",
+          "female:x-ray",
+          "other:story arc",
+          "other:tankoubon"
+        ],
+        "filecount": "229",
+        "filesize": 225212524,
+        "expunged": false,
+        "torrentcount": "1",
+        "torrents": [
+          {
+            "hash": "543e70fbe81931c377f99fcbc6cc57aec7859525",
+            "added": "1793265395",
+            "name": "[時浜次郎] 麗女怪盗は名探偵を寵愛する-天智探偵の麗女シリーズ- [中国翻訳] [DL版] [Amerins漢化].zip",
+            "tsize": "9019",
+            "fsize": "225090509"
+          }
+        ],
+        "parent_gid": "4275519",
+        "parent_key": "cfec5aa5a3",
+        "first_gid": "4263817",
+        "first_key": "238ffba7c1"
+      },
       {
         "gid": 4287185,
         "token": "90fce01612",
@@ -22,15 +73,20 @@
         "uploader": "alfredmeow",
         "posted": "1793183683",
         "pages": 297,
-        "rating": "4.24",
+        "rating": "4.17",
         "category": "Manga",
         "tags": [
           "language:chinese",
           "language:translated",
           "artist:tatsunami youtoku",
+          "male:bondage",
+          "male:exhibitionism",
           "male:gag",
           "male:sole male",
+          "female:ahegao",
+          "female:anal",
           "female:anal intercourse",
+          "female:bdsm",
           "female:beauty mark",
           "female:big ass",
           "female:big breasts",
@@ -41,14 +97,24 @@
           "female:collar",
           "female:corset",
           "female:cosplaying",
+          "female:cunnilingus",
+          "female:double penetration",
+          "female:drunk",
           "female:elf",
+          "female:exhibitionism",
           "female:exposed clothing",
+          "female:femdom",
+          "female:filming",
           "female:garter belt",
           "female:glasses",
           "female:gloves",
           "female:hairy",
           "female:hidden toy",
+          "female:huge breasts",
+          "female:kissing",
+          "female:leotard",
           "female:lingerie",
+          "female:masturbation",
           "female:milf",
           "female:pixie cut",
           "female:ponytail",
@@ -56,8 +122,12 @@
           "female:shibari",
           "female:stockings",
           "female:strap-on",
+          "female:sweating",
+          "female:swimsuit",
+          "female:thigh high boots",
           "female:tiara",
           "mixed:ffm threesome",
+          "mixed:group",
           "other:story arc",
           "other:tankoubon",
           "other:uncensored"
@@ -77,6 +147,42 @@
         ]
       },
       {
+        "gid": 4286742,
+        "token": "1f96863480",
+        "title": "[Oshima Kamome] Contradict | 矛盾相向 Ch. 1-5 + 番外 [Chinese] [纯血A人汉化] [Digital]",
+        "title_jpn": "[大島かもめ] コントラディクト 第1-5話 + 番外 [中国翻訳] [DL版]",
+        "thumb": "https://ehgt.org/w/02/683/41623-5azfk147.webp",
+        "uploader": "纯血A人",
+        "posted": "1793163758",
+        "pages": 205,
+        "rating": "4.29",
+        "category": "Manga",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "artist:oshima kamome",
+          "male:males only",
+          "male:yaoi"
+        ],
+        "filecount": "205",
+        "filesize": 83450422,
+        "expunged": false,
+        "torrentcount": "1",
+        "torrents": [
+          {
+            "hash": "30a6817734c535541d7b06aa761edea8b083bc53",
+            "added": "1793163810",
+            "name": "[大島かもめ] 矛盾相向 Ch. 1-6 + 番外 [中国翻訳] [DL版] [纯血A人汉化].zip",
+            "tsize": "6538",
+            "fsize": "80533620"
+          }
+        ],
+        "parent_gid": "4273821",
+        "parent_key": "25b82d5d09",
+        "first_gid": "4222544",
+        "first_key": "128daab525"
+      },
+      {
         "gid": 4286107,
         "token": "7f8e3a8e7c",
         "title": "[Yonoki] KICHIKU HERO 15 [Chinese]  [Digital]",
@@ -85,7 +191,7 @@
         "uploader": "ssnangua_cn",
         "posted": "1793132578",
         "pages": 203,
-        "rating": "4.54",
+        "rating": "4.58",
         "category": "Manga",
         "tags": [
           "language:chinese",
@@ -117,7 +223,7 @@
         "uploader": "ssnangua_cn",
         "posted": "1793132564",
         "pages": 193,
-        "rating": "4.47",
+        "rating": "4.51",
         "category": "Manga",
         "tags": [
           "language:chinese",
@@ -150,7 +256,7 @@
         "uploader": "ssnangua_cn",
         "posted": "1793132552",
         "pages": 194,
-        "rating": "4.44",
+        "rating": "4.49",
         "category": "Manga",
         "tags": [
           "language:chinese",
@@ -258,7 +364,7 @@
         "uploader": "ssnangua_cn",
         "posted": "1793041729",
         "pages": 178,
-        "rating": "4.41",
+        "rating": "4.43",
         "category": "Manga",
         "tags": [
           "language:chinese",
@@ -369,7 +475,7 @@
         "uploader": "ChenSture",
         "posted": "1793020017",
         "pages": 184,
-        "rating": "4.32",
+        "rating": "4.38",
         "category": "Manga",
         "tags": [
           "language:chinese",
@@ -410,7 +516,7 @@
         "uploader": "ChenSture",
         "posted": "1793020007",
         "pages": 232,
-        "rating": "4.40",
+        "rating": "4.45",
         "category": "Manga",
         "tags": [
           "language:chinese",
@@ -519,7 +625,7 @@
         "uploader": "alfredmeow",
         "posted": "1793011312",
         "pages": 156,
-        "rating": "4.46",
+        "rating": "4.48",
         "category": "Manga",
         "tags": [
           "language:chinese",
@@ -607,7 +713,7 @@
         "uploader": "ssnangua_cn",
         "posted": "1792975121",
         "pages": 178,
-        "rating": "4.58",
+        "rating": "4.53",
         "category": "Manga",
         "tags": [
           "language:chinese",
@@ -639,7 +745,7 @@
         "uploader": "ssnangua_cn",
         "posted": "1792975111",
         "pages": 170,
-        "rating": "4.47",
+        "rating": "4.42",
         "category": "Manga",
         "tags": [
           "language:chinese",
@@ -671,7 +777,7 @@
         "uploader": "ssnangua_cn",
         "posted": "1792943797",
         "pages": 170,
-        "rating": "4.45",
+        "rating": "4.42",
         "category": "Manga",
         "tags": [
           "language:chinese",
@@ -704,7 +810,7 @@
         "uploader": "ssnangua_cn",
         "posted": "1792943782",
         "pages": 162,
-        "rating": "4.34",
+        "rating": "4.30",
         "category": "Manga",
         "tags": [
           "language:chinese",
@@ -821,7 +927,7 @@
         "uploader": "ssnangua_cn",
         "posted": "1792867473",
         "pages": 162,
-        "rating": "4.49",
+        "rating": "4.50",
         "category": "Manga",
         "tags": [
           "language:chinese",
@@ -885,7 +991,7 @@
         "uploader": "ssnangua_cn",
         "posted": "1792851666",
         "pages": 194,
-        "rating": "4.53",
+        "rating": "4.54",
         "category": "Manga",
         "tags": [
           "language:chinese",
@@ -918,7 +1024,7 @@
         "uploader": "ChO_Hentai",
         "posted": "1792845804",
         "pages": 188,
-        "rating": "4.54",
+        "rating": "4.57",
         "category": "Manga",
         "tags": [
           "language:chinese",
@@ -986,7 +1092,7 @@
         "uploader": "bn666",
         "posted": "1792827395",
         "pages": 231,
-        "rating": "4.13",
+        "rating": "4.15",
         "category": "Manga",
         "tags": [
           "language:chinese",
@@ -1074,41 +1180,6 @@
         "parent_key": "fe3eda265d",
         "first_gid": "3878754",
         "first_key": "12d4210421"
-      },
-      {
-        "gid": 4275519,
-        "token": "cfec5aa5a3",
-        "title": "[Tokihama Jiro] Reijo Kaitou wa Meitantei o Chouai Suru -Tenchi Tantei no Reijo Series- [Chinese] [Amerins漢化] [Digital] [ongoing]",
-        "title_jpn": "[時浜次郎] 麗女怪盗は名探偵を寵愛する-天智探偵の麗女シリーズ- [中国翻訳] [DL版] [進行中]",
-        "thumb": "https://ehgt.org/w/02/725/68732-1xxb9302.webp",
-        "uploader": "Amerins",
-        "posted": "1792757750",
-        "pages": 139,
-        "rating": "3.99",
-        "category": "Manga",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "artist:tokihama jiro",
-          "female:big breasts"
-        ],
-        "filecount": "139",
-        "filesize": 138322072,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "a6cc933c45a370f20d0c9f5d31004a2f1435de01",
-            "added": "1792757797",
-            "name": "[時浜次郎] 麗女怪盗は名探偵を寵愛する-天智探偵の麗女シリーズ- [中国翻訳] [DL版] [進行中] [Amerins漢化].zip",
-            "tsize": "5711",
-            "fsize": "138259378"
-          }
-        ],
-        "parent_gid": "4263817",
-        "parent_key": "238ffba7c1",
-        "first_gid": "4263817",
-        "first_key": "238ffba7c1"
       },
       {
         "gid": 4273909,
@@ -1644,65 +1715,6 @@
         "parent_key": "7c612f779c",
         "first_gid": "4257151",
         "first_key": "7c612f779c"
-      },
-      {
-        "gid": 4264516,
-        "token": "410f964654",
-        "title": "[Hiyoshi Hana] Meguriai no Kemono | 廻逢的人外神 [Chinese] [Decensored] [Ongoing] [Digital]",
-        "title_jpn": "[日吉ハナ] 廻逢のケモノ [中国翻訳] [無修正] [進行中] [DL版]",
-        "thumb": "https://ehgt.org/w/02/400/41421-u9b24aeb.webp",
-        "uploader": "娱乐城炸了",
-        "posted": "1792341169",
-        "pages": 147,
-        "rating": "4.58",
-        "category": "Manga",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "artist:hiyoshi hana",
-          "female:big breasts",
-          "female:dark skin",
-          "female:glasses",
-          "female:kemonomimi",
-          "female:pantyhose",
-          "female:schoolgirl uniform",
-          "mixed:ffm threesome",
-          "mixed:group",
-          "other:story arc",
-          "other:tankoubon",
-          "other:uncensored"
-        ],
-        "filecount": "147",
-        "filesize": 152253973,
-        "expunged": false,
-        "torrentcount": "3",
-        "torrents": [
-          {
-            "hash": "55bc25c4a54a6ca5f9d7b0b1a85952295e17aa3b",
-            "added": "1779133836",
-            "name": "[日吉ハナ] 廻逢のケモノ [中国翻訳] [無修正] [DL版] [進行中].zip",
-            "tsize": "6549",
-            "fsize": "80844327"
-          },
-          {
-            "hash": "f1d1b8948aa640b4f3751ef5b426a9ab6bb25a90",
-            "added": "1782922626",
-            "name": "[日吉ハナ] 廻逢のケモノ [中国翻訳] [無修正] [DL版] [進行中].zip",
-            "tsize": "10110",
-            "fsize": "127595492"
-          },
-          {
-            "hash": "ef5fe0441d626a11455e987b79d5b8a94f787a5b",
-            "added": "1792341262",
-            "name": "[日吉ハナ] 廻逢的人外神 [中国翻訳] [無修正] [DL版] [進行中].zip",
-            "tsize": "6150",
-            "fsize": "151118578"
-          }
-        ],
-        "parent_gid": "4024285",
-        "parent_key": "ef270ae197",
-        "first_gid": "3944166",
-        "first_key": "f81a5622bc"
       }
     ]
   },
@@ -1717,9 +1729,906 @@
       "-rough TL",
       "-full censorship"
     ],
-    "generatedAt": "2026-10-28T23:59:41.242527",
-    "cutoffDate": "2026-10-23",
+    "generatedAt": "2026-10-29T23:55:21.841768",
+    "cutoffDate": "2026-10-24",
     "galleries": [
+      {
+        "gid": 4290737,
+        "token": "1583eed5dc",
+        "title": "[mmchair] Daininki na Sensei | 高人气的佳代老师汉化合集 [Chinese]",
+        "title_jpn": "[mmchair] 大人気な先生 [中国翻訳]",
+        "thumb": "https://ehgt.org/w/02/756/01836-4ht7elwo.webp",
+        "uploader": "彼尔姆0000",
+        "posted": "1793310466",
+        "pages": 89,
+        "rating": "4.33",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "parody:original",
+          "artist:mmchair",
+          "male:shotacon",
+          "female:blowjob",
+          "female:breast feeding",
+          "female:nakadashi",
+          "female:teacher",
+          "female:tracksuit",
+          "mixed:group",
+          "mixed:mmf threesome",
+          "other:multi-work series"
+        ],
+        "filecount": "89",
+        "filesize": 173546702,
+        "expunged": false,
+        "torrentcount": "2",
+        "torrents": [
+          {
+            "hash": "02fdaccc9c0ef7d45c4127f5439d4185995efc8b",
+            "added": "1793290102",
+            "name": "[mmchair] Daininki na Sensei _ 高人气的佳代老师汉化合集 [Chinese].zip",
+            "tsize": "6859",
+            "fsize": "169854399"
+          },
+          {
+            "hash": "acadb8874b9d436d277aad05cd42d07e97955e08",
+            "added": "1793310529",
+            "name": "[mmchair] 高人气的佳代老师汉化合集 [中国翻訳].zip",
+            "tsize": "6831",
+            "fsize": "169850056"
+          }
+        ],
+        "parent_gid": "4289968",
+        "parent_key": "51b80aa55f",
+        "first_gid": "4289968",
+        "first_key": "51b80aa55f"
+      },
+      {
+        "gid": 4290416,
+        "token": "69592d301e",
+        "title": "[Ripple Moon] My Milky Roomie: Dairy On The Daily (Ongoing) [Chinese]",
+        "title_jpn": "[漣漪月影] 牛奶好朋友: 浓醇生活 [连载中]",
+        "thumb": "https://ehgt.org/w/01/891/95781-oy050484.webp",
+        "uploader": "dogpasu",
+        "posted": "1793294209",
+        "pages": 54,
+        "rating": "4.23",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "parody:original",
+          "artist:ripple moon",
+          "male:breast feeding",
+          "male:catboy",
+          "male:cowman",
+          "male:furry",
+          "male:horns",
+          "male:lactation",
+          "male:males only",
+          "male:milking",
+          "male:muscle",
+          "male:nipple stimulation",
+          "male:thick eyebrows",
+          "male:yaoi",
+          "other:full color",
+          "other:incomplete",
+          "other:missing cover"
+        ],
+        "filecount": "54",
+        "filesize": 60236076,
+        "expunged": false,
+        "torrentcount": "2",
+        "torrents": [
+          {
+            "hash": "59aeb666a48d06956437ed0d643d77dc262961c0",
+            "added": "1773412977",
+            "name": "[Ripple Moon] My Milky Roomie_ Dairy On The Daily (Ongoing) [Chinese].zip",
+            "tsize": "7883",
+            "fsize": "49031321"
+          },
+          {
+            "hash": "74768abc057ce0c38a97a2be27fea1dec470b5cf",
+            "added": "1793294244",
+            "name": "[漣漪月影] 牛奶好朋友∶ 浓醇生活 [连载中] [中国翻訳].zip",
+            "tsize": "9182",
+            "fsize": "57685508"
+          }
+        ],
+        "parent_gid": "3984363",
+        "parent_key": "0a94d1825f",
+        "first_gid": "3403478",
+        "first_key": "9538327580"
+      },
+      {
+        "gid": 4290322,
+        "token": "43669a37c0",
+        "title": "[Oninarasu] EMT (NTR 1 - 4 &amp; Extras)(2/19/2026)(Re: Zero kara Hajimeru Isekai Seikatsu)",
+        "title_jpn": "[鬼鳴らす] EMT (NTR 1 - 4 &amp; Extras)(2/19/2026)(Re:ゼロから始める異世界生活)",
+        "thumb": "https://ehgt.org/w/00/944/38784-u6ezfgi3.webp",
+        "uploader": "Ineedanadult",
+        "posted": "1793291045",
+        "pages": 172,
+        "rating": "4.22",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "language:english",
+          "parody:re zero kara hajimeru isekai seikatsu",
+          "character:emilia",
+          "character:lucas",
+          "character:ram",
+          "character:subaru natsuki",
+          "artist:oninarasu",
+          "male:bbm",
+          "male:dark skin",
+          "male:low shotacon",
+          "male:shotacon",
+          "female:big breasts",
+          "female:bikini",
+          "female:blowjob",
+          "female:bunny girl",
+          "female:detached sleeves",
+          "female:elf",
+          "female:fingering",
+          "female:impregnation",
+          "female:nakadashi",
+          "female:netorare",
+          "female:swimsuit",
+          "female:thigh high boots",
+          "female:very long hair",
+          "mixed:group"
+        ],
+        "filecount": "172",
+        "filesize": 117584348,
+        "expunged": false,
+        "torrentcount": "1",
+        "torrents": [
+          {
+            "hash": "f684f3fbac00662f7b27d67efa7a003b13e864d4",
+            "added": "1793291079",
+            "name": "[鬼鳴らす] EMT (NTR 1 - 4 &amp; Extras)(2∕19∕2026) (Re∶ゼロから始める異世界生活) [中国翻訳].zip",
+            "tsize": "9064",
+            "fsize": "113406524"
+          }
+        ],
+        "parent_gid": "3797996",
+        "parent_key": "6a79c5ba78",
+        "first_gid": "3547838",
+        "first_key": "355020d18f"
+      },
+      {
+        "gid": 4290180,
+        "token": "7c41ef838f",
+        "title": "[NikomiC Ramen (Nichijou)] Kei-chan ga Nekomi o Osou Hon | 凯伊酱于老师熟睡之时夜袭的本 (Blue Archive) [Chinese] [欶澜汉化组] [Digital]",
+        "title_jpn": "[NikomiC Ramen (日常)] ケイちゃんが寝込みを襲う本 (ブルーアーカイブ) [中国翻訳] [DL版]",
+        "thumb": "https://ehgt.org/w/02/756/26414-2hbmn1a5.webp",
+        "uploader": "ShorelineTrans",
+        "posted": "1793287738",
+        "pages": 21,
+        "rating": "4.27",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "parody:blue archive",
+          "character:kei tendou",
+          "character:sensei",
+          "group:nikomic ramen",
+          "artist:nichijou",
+          "male:sole male",
+          "female:blowjob",
+          "female:halo",
+          "female:schoolgirl uniform",
+          "female:sole female",
+          "female:stockings",
+          "female:very long hair"
+        ],
+        "filecount": "21",
+        "filesize": 193761721,
+        "expunged": false,
+        "torrentcount": "1",
+        "torrents": [
+          {
+            "hash": "33466287d5ed069f8f05af5907f31cc8f2759b73",
+            "added": "1793287781",
+            "name": "[NikomiC Ramen (日常)] 凯伊酱于老师熟睡之时夜袭的本 (Blue Archive) [中国翻訳] [DL版] [欶澜汉化组].zip",
+            "tsize": "6914",
+            "fsize": "169973684"
+          }
+        ]
+      },
+      {
+        "gid": 4290114,
+        "token": "550787c5d3",
+        "title": "[Akaneiro (Rimiki, Yakifugu)] Aoki Shiokaze no Yume (Wuthering Waves) [Chinese]",
+        "title_jpn": "[紅音色 (里美樹、焼フグ)] 青き潮風の夢 (中文版) (鳴潮) [中国語]",
+        "thumb": "https://ehgt.org/w/02/756/11037-btvfs299.webp",
+        "uploader": "HatsuyukiWu",
+        "posted": "1793285899",
+        "pages": 18,
+        "rating": "3.83",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "parody:wuthering waves",
+          "character:cartethyia",
+          "character:denia",
+          "character:rover",
+          "group:akaneiro",
+          "female:bikini",
+          "female:swimsuit",
+          "other:full color"
+        ],
+        "filecount": "18",
+        "filesize": 117514032,
+        "expunged": false,
+        "torrentcount": "1",
+        "torrents": [
+          {
+            "hash": "b2e2841d5fc15cd9ede62942ebd32a2c6480dae7",
+            "added": "1793285969",
+            "name": "[紅音色 (里美樹、焼フグ)] 青き潮風の夢 (版) (鳴潮) [中国语].zip",
+            "tsize": "9091",
+            "fsize": "114225512"
+          }
+        ]
+      },
+      {
+        "gid": 4290018,
+        "token": "fb7fd8c9c7",
+        "title": "[烏天狗調教倶楽部 (でかねこ,胃雑魚)] 大妖怪の烏天狗がモブや触手なんかに負けるわけない。 (アイドリッシュセブン) [Chinese] [逃亡者×真不可视汉化组]",
+        "title_jpn": "[烏天狗調教倶楽部 (でかねこ,胃雑魚)] 大妖怪の烏天狗がモブや触手なんかに負けるわけない。 (アイドリッシュセブン) [中国翻訳]",
+        "thumb": "https://ehgt.org/w/02/739/22495-4auw1wl6.webp",
+        "uploader": "qq3870990",
+        "posted": "1793282771",
+        "pages": 73,
+        "rating": "4.34",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "parody:idolish7",
+          "character:yuki",
+          "male:anal",
+          "male:anal intercourse",
+          "male:beauty mark",
+          "male:males only",
+          "male:nakadashi",
+          "male:shotacon",
+          "male:tentacles",
+          "male:wings",
+          "male:x-ray",
+          "male:yaoi"
+        ],
+        "filecount": "73",
+        "filesize": 204481554,
+        "expunged": false,
+        "torrentcount": "2",
+        "torrents": [
+          {
+            "hash": "708a567d752458c3f14c50b49f875ac644571018",
+            "added": "1793282854",
+            "name": "[烏天狗調教倶楽部 (でかねこ,胃雑魚)] 大妖怪の烏天狗がモブや触手なんかに負けるわけない。 (アイドリッシュセブン) [中国翻訳] [逃亡者×真不可视汉化组].zip",
+            "tsize": "7901",
+            "fsize": "193816027"
+          },
+          {
+            "hash": "59497be067fc1ca12cf20d84aeb46c8b564e43d2",
+            "added": "1793290007",
+            "name": "[烏天狗調教倶楽部 (でかねこ,胃雑魚)] 大妖怪の烏天狗がモブや触手なんかに負けるわけない。 (アイドリッシュセブン) [Chinese].zip",
+            "tsize": "7873",
+            "fsize": "193816027"
+          }
+        ],
+        "parent_gid": "4275348",
+        "parent_key": "382ece41ea",
+        "first_gid": "4275348",
+        "first_key": "382ece41ea"
+      },
+      {
+        "gid": 4289982,
+        "token": "f61d9d2fd7",
+        "title": "(C108) [Aspergillus (Okara)] Summer Junk LOVE (Toaru Kagaku no Railgun) [Chinese] [文妹个人汉化]",
+        "title_jpn": "(C108) [Aspergillus (おから)] Summer Junk LOVE (とある科学の超電磁砲) [中国翻訳]",
+        "thumb": "https://ehgt.org/w/02/753/52541-nyqejgu8.webp",
+        "uploader": "Xiaoxiao1123",
+        "posted": "1793281816",
+        "pages": 26,
+        "rating": "3.94",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "parody:toaru project",
+          "character:mikoto misaka",
+          "character:touma kamijou",
+          "group:aspergillus",
+          "artist:okara",
+          "male:sole male",
+          "female:bikini",
+          "female:small breasts",
+          "female:sole female",
+          "female:swimsuit"
+        ],
+        "filecount": "26",
+        "filesize": 118418938,
+        "expunged": false,
+        "torrentcount": "1",
+        "torrents": [
+          {
+            "hash": "3732b9ae854f4864cc7fbc196394e0a18f377442",
+            "added": "1793281883",
+            "name": "(C108) [Aspergillus (おから)] Summer Junk LOVE (とある科学の超電磁砲) [中国翻訳] [文妹个人汉化].zip",
+            "tsize": "9129",
+            "fsize": "114097500"
+          }
+        ]
+      },
+      {
+        "gid": 4289971,
+        "token": "0d9fc4ad2f",
+        "title": "『肉棒街匪』布田成美～爆乳巨根扶她妈妈对JK小穴无差别播种",
+        "title_jpn": "",
+        "thumb": "https://ehgt.org/w/02/755/96946-2k4ezo67.webp",
+        "uploader": "geed12",
+        "posted": "1793281314",
+        "pages": 73,
+        "rating": "4.28",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "parody:original",
+          "artist:hotaru",
+          "female:ahegao",
+          "female:beauty mark",
+          "female:big breasts",
+          "female:daughter",
+          "female:dickgirl on female",
+          "female:full-packaged futanari",
+          "female:futanari",
+          "female:impregnation",
+          "female:incest",
+          "female:kissing",
+          "female:masturbation",
+          "female:milf",
+          "female:nakadashi",
+          "female:sole dickgirl",
+          "other:full color",
+          "other:mosaic censorship"
+        ],
+        "filecount": "73",
+        "filesize": 104325187,
+        "expunged": false,
+        "torrentcount": "1",
+        "torrents": [
+          {
+            "hash": "be854a17aaefb274dc4ede3d3319ef5a404d121f",
+            "added": "1793281344",
+            "name": "『肉棒街匪』布田成美～爆乳巨根扶她妈妈对JK小穴无差别播种 [中国翻訳].zip",
+            "tsize": "8289",
+            "fsize": "103378165"
+          }
+        ]
+      },
+      {
+        "gid": 4289692,
+        "token": "afe16cdc11",
+        "title": "[No Future/Doro ppusu] Tokumei Shoujo Aigis Pink-manga full collection [Chinese] [紫藤汉化组]",
+        "title_jpn": "特命乙女アイギス・ピンク ～正義のヒロイン、快楽尋問に敗北寸前～ モザイクコミック総集編 [Chinese] [紫藤汉化组]",
+        "thumb": "https://ehgt.org/w/02/755/79086-vfbtzeu2.webp",
+        "uploader": "ntc98",
+        "posted": "1793275027",
+        "pages": 84,
+        "rating": "3.98",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "parody:original",
+          "group:no future",
+          "female:bondage",
+          "female:gag",
+          "female:magical girl",
+          "female:sex toys"
+        ],
+        "filecount": "84",
+        "filesize": 472665105,
+        "expunged": false,
+        "torrentcount": "2",
+        "torrents": [
+          {
+            "hash": "ba2e3dbb0acd162f74f5685488bd060ce8db20d9",
+            "added": "1793275133",
+            "name": "特命乙女アイギス・ピンク ～正義のヒロイン、快楽尋問に敗北寸前～ モザイクコミック総集編 [中国翻訳] [紫藤汉化组].zip",
+            "tsize": "9373",
+            "fsize": "467645082"
+          },
+          {
+            "hash": "8bf33f0f917e54795fbd5eba7bd1f20b2ed2185b",
+            "added": "1793290202",
+            "name": "[No Future_Doro ppusu] Tokumei Shoujo Aigis Pink-manga full collection [Chinese] [紫藤汉化组].zip",
+            "tsize": "9322",
+            "fsize": "467645082"
+          }
+        ]
+      },
+      {
+        "gid": 4289677,
+        "token": "fdb35caa3a",
+        "title": "[Amatou Bisuke] Yuurei-san to Boku ~ Asedaku Berochuu Sex [Chinese] [古月个人汉化]",
+        "title_jpn": "[あまとうビスケ] 幽霊さんと僕〜汗だくベロチューセックス [中国翻訳]",
+        "thumb": "https://ehgt.org/w/02/755/49755-obzunwv8.webp",
+        "uploader": "wabsxg1314",
+        "posted": "1793273922",
+        "pages": 33,
+        "rating": "4.10",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "parody:original",
+          "group:amatou biske",
+          "male:nipple stimulation",
+          "male:shotacon",
+          "male:sole male",
+          "female:big ass",
+          "female:big breasts",
+          "female:blowjob",
+          "female:eye-covering bang",
+          "female:femdom",
+          "female:ghost",
+          "female:hairy",
+          "female:kissing",
+          "female:long tongue",
+          "female:paizuri",
+          "female:saliva",
+          "female:smell",
+          "female:sole female",
+          "female:very long hair"
+        ],
+        "filecount": "33",
+        "filesize": 82023401,
+        "expunged": false,
+        "torrentcount": "1",
+        "torrents": [
+          {
+            "hash": "0d2b6fa8f918d45753f576a1703cdf973ff7f33a",
+            "added": "1793273959",
+            "name": "[あまとうビスケ] 幽霊さんと僕〜汗だくベロチューセックス [中国翻訳].zip",
+            "tsize": "6566",
+            "fsize": "80781645"
+          }
+        ]
+      },
+      {
+        "gid": 4289647,
+        "token": "09085b4bac",
+        "title": "[Tobuchikara (Toriki Cooya)] Ore, Shougo Maso Dorei. 06 | 祥悟君是一个受虐狂奴隶 06 [Chinese] [可樂汉化] [Digital]",
+        "title_jpn": "[飛ぶちから (とりきくーや)] オレ、しょーご マゾどれい。06   [中国翻訳] [DL版]",
+        "thumb": "https://ehgt.org/w/02/755/72357-5j6lvyfo.webp",
+        "uploader": "cindy46082",
+        "posted": "1793273340",
+        "pages": 34,
+        "rating": "4.07",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "parody:original",
+          "group:tobuchikara",
+          "artist:toriki cooya",
+          "male:anal",
+          "male:bdsm",
+          "male:bondage",
+          "male:coprophagia",
+          "male:dilf",
+          "male:facial hair",
+          "male:males only",
+          "male:orgasm denial",
+          "male:rimjob",
+          "male:scat",
+          "male:shotacon",
+          "male:slave",
+          "male:urination",
+          "male:yaoi",
+          "other:multi-work series"
+        ],
+        "filecount": "34",
+        "filesize": 23448523,
+        "expunged": false,
+        "torrentcount": "1",
+        "torrents": [
+          {
+            "hash": "6469fd6e79e78140fddaf8d335f8b273bd4669d1",
+            "added": "1793273351",
+            "name": "[飛ぶちから (とりきくーや)] 祥悟君是一个受虐狂奴隶 06 [中国翻訳] [DL版] [可樂汉化].zip",
+            "tsize": "6942",
+            "fsize": "21386288"
+          }
+        ]
+      },
+      {
+        "gid": 4289611,
+        "token": "42d5be33d1",
+        "title": "CITY OF SAND chapter 4(Chinese)",
+        "title_jpn": "",
+        "thumb": "https://ehgt.org/w/02/606/93696-7tjnnokg.webp",
+        "uploader": "camrodolph",
+        "posted": "1793271371",
+        "pages": 23,
+        "rating": "4.40",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "parody:original",
+          "artist:cl.rudolph",
+          "male:furry",
+          "male:males only",
+          "male:muscle",
+          "male:yaoi"
+        ],
+        "filecount": "23",
+        "filesize": 137645400,
+        "expunged": false,
+        "torrentcount": "1",
+        "torrents": [
+          {
+            "hash": "e6ffe245162c9caa09764cfc5b361a67961fddea",
+            "added": "1793271441",
+            "name": "CITY OF SAND chapter 4 [中国翻訳].zip",
+            "tsize": "10368",
+            "fsize": "131525052"
+          }
+        ],
+        "parent_gid": "4263599",
+        "parent_key": "d77cb50ec8",
+        "first_gid": "4152472",
+        "first_key": "df3216a6da"
+      },
+      {
+        "gid": 4289565,
+        "token": "aa6ea1491a",
+        "title": "[65535th Avenue. (Akahito)] Isekai no Ecchi na Omise ni Kitara Motoita Sekai no Osananajimi ga Detekita Hanashi - It is a story about coming to a brothel in another world and finding a childhood friend from the world you used to live in. | 转生异世界踏入色色的店却发现迎接我的是原世界の青梅竹马 [Chinese] [紫藤汉化组] [Digital]",
+        "title_jpn": "[65535あべぬー。 (赤人)] 異世界のえっちなお店に来たら元いた世界の幼馴染が出てきた話 [中国翻訳] [DL版]",
+        "thumb": "https://ehgt.org/w/02/498/47300-3yr1uc5q.webp",
+        "uploader": "ntc98",
+        "posted": "1793269236",
+        "pages": 66,
+        "rating": "4.46",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "parody:original",
+          "group:65535th avenue",
+          "artist:akahito",
+          "male:scar",
+          "male:sole male",
+          "female:ahegao",
+          "female:big breasts",
+          "female:blowjob",
+          "female:breast feeding",
+          "female:exhibitionism",
+          "female:hidden sex",
+          "female:kissing",
+          "female:nakadashi",
+          "female:paizuri",
+          "female:piss drinking",
+          "female:sole female",
+          "female:swimsuit",
+          "other:multi-work series"
+        ],
+        "filecount": "66",
+        "filesize": 568456236,
+        "expunged": false,
+        "torrentcount": "3",
+        "torrents": [
+          {
+            "hash": "06de6baf891d507f09fa5abf338afa1c9a67d026",
+            "added": "1783664299",
+            "name": "[65535あべぬー。 (赤人)] 異世界のえっちなお店に来たら元いた世界の幼馴染が出てきた話 [中国翻訳] [DL版] [紫藤汉化组].zip",
+            "tsize": "37472",
+            "fsize": "484996885"
+          },
+          {
+            "hash": "cf10f99e101eee6880779e0e49e752770bd0a07e",
+            "added": "1793269314",
+            "name": "[65535あべぬー。 (赤人)] 转生异世界踏入色色的店却发现迎接我的是原世界の青梅竹马 [中国翻訳] [DL版] [紫藤汉化组].zip",
+            "tsize": "10026",
+            "fsize": "501425546"
+          },
+          {
+            "hash": "cf144d4a7186459ec6b5a2aaece206bd4d3fae58",
+            "added": "1793290306",
+            "name": "[65535th Avenue. (Akahito)] Isekai no Ecchi na Omise ni Kitara Motoita Sekai no Osananajimi ga Detekita Hanashi - It is a story about coming to a brothel in another world and.zip",
+            "tsize": "10058",
+            "fsize": "501425546"
+          }
+        ],
+        "parent_gid": "4042460",
+        "parent_key": "59e78a6ff2",
+        "first_gid": "4042241",
+        "first_key": "f7eaedf834"
+      },
+      {
+        "gid": 4289525,
+        "token": "5e7eaa8ac9",
+        "title": "[Shirasudon] Anotoki Futta Moto Inkya no Onna Tomodati ga Ura Aka Haisinsya ni Natteita.丨當初我甩掉的陰沉女竟變成了小帳直播主。 [Chinese]",
+        "title_jpn": "[しらすどん] あのとき振ってしまった元陰キャの女友達が裏垢配信者になっていた。 [中国翻訳]",
+        "thumb": "https://ehgt.org/w/02/755/53580-18dyb8as.webp",
+        "uploader": "alfredmeow",
+        "posted": "1793267952",
+        "pages": 83,
+        "rating": "4.56",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "parody:original",
+          "group:shirasudon",
+          "male:business suit",
+          "male:sole male",
+          "female:beauty mark",
+          "female:big areolae",
+          "female:big ass",
+          "female:big breasts",
+          "female:blowjob",
+          "female:bukkake",
+          "female:collar",
+          "female:double penetration",
+          "female:eyepatch",
+          "female:fingering",
+          "female:glasses",
+          "female:gyaru",
+          "female:kemonomimi",
+          "female:kissing",
+          "female:leg lock",
+          "female:mouth mask",
+          "female:netorare",
+          "female:nipple stimulation",
+          "female:paizuri",
+          "female:school gym uniform",
+          "female:schoolgirl uniform",
+          "female:sex toys",
+          "female:sole female",
+          "female:triple penetration",
+          "female:very long hair",
+          "female:x-ray",
+          "mixed:group",
+          "mixed:mmf threesome",
+          "other:multi-work series"
+        ],
+        "filecount": "83",
+        "filesize": 120827531,
+        "expunged": false,
+        "torrentcount": "1",
+        "torrents": [
+          {
+            "hash": "d73ec0dd55a2b0f23d59134df9531fc8ac58c330",
+            "added": "1793268025",
+            "name": "[しらすどん] あのとき振ってしまった元陰キャの女友達が裏垢配信者になっていた。 [中国翻訳].zip",
+            "tsize": "8880",
+            "fsize": "110630282"
+          }
+        ]
+      },
+      {
+        "gid": 4289521,
+        "token": "83883aec7e",
+        "title": "[Monaka Udon (Monikano)] Stocking-chan no Kousoku Waidan Reviewers (Panty &amp; Stocking with Garterbelt) [Chinese] [靴下汉化组] [Digital]",
+        "title_jpn": "[もなかうどん (モニカノ)] ストッキングちゃんの拘束猥談レビュアーズ (パンティ&amp;ストッキングwithガーターベルト) [中国翻訳] [DL版]",
+        "thumb": "https://ehgt.org/w/02/755/50323-d8wlnyk8.webp",
+        "uploader": "qq3870990",
+        "posted": "1793267739",
+        "pages": 22,
+        "rating": "4.28",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "parody:panty and stocking with garterbelt",
+          "character:stocking anarchy",
+          "group:monaka udon",
+          "artist:monikano",
+          "female:bondage",
+          "female:sex toys",
+          "female:tentacles",
+          "other:full color"
+        ],
+        "filecount": "22",
+        "filesize": 49550599,
+        "expunged": false,
+        "torrentcount": "1",
+        "torrents": [
+          {
+            "hash": "aeb7faabd4840cbd8f71dbe35ade46c019b5a3a3",
+            "added": "1793267773",
+            "name": "[もなかうどん (モニカノ)] ストッキングちゃんの拘束猥談レビュアーズ (パンティ&amp;ストッキングwithガーターベルト) [中国翻訳] [DL版] [靴下汉化组].zip",
+            "tsize": "8046",
+            "fsize": "49448763"
+          }
+        ]
+      },
+      {
+        "gid": 4289485,
+        "token": "c2bac63034",
+        "title": "(Puniket 51) [Hiyashite Katameru (Kumazawa)] Tamako to Rusuban | 和玉子一起看家 [Chinese] [紫藤汉化组]",
+        "title_jpn": "(ぷにけっと51) [ひやしてかためる (熊沢)] たまことるすばん [中国翻訳]",
+        "thumb": "https://ehgt.org/w/02/755/48023-9hcpb3n0.webp",
+        "uploader": "ntc98",
+        "posted": "1793265912",
+        "pages": 36,
+        "rating": "4.14",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "parody:original",
+          "group:hiyashite katameru",
+          "artist:kumasawa",
+          "female:catgirl",
+          "female:kemonomimi",
+          "female:lolicon",
+          "female:sole female"
+        ],
+        "filecount": "36",
+        "filesize": 395998988,
+        "expunged": false,
+        "torrentcount": "1",
+        "torrents": [
+          {
+            "hash": "1e5f3d46fda296902ddb8f430b6e68ee53898761",
+            "added": "1793266001",
+            "name": "(ぷにけっと51) [ひやしてかためる (熊沢)] たまことるすばん [中国翻訳] [紫藤汉化组].zip",
+            "tsize": "7785",
+            "fsize": "386860184"
+          }
+        ]
+      },
+      {
+        "gid": 4288955,
+        "token": "dc92322ef7",
+        "title": "[Kourney]每日回家都跟老爹在色色！[Chinese] (On Going)",
+        "title_jpn": "",
+        "thumb": "https://ehgt.org/w/01/885/73176-11eyawyd.webp",
+        "uploader": "Rengar.tiger",
+        "posted": "1793246543",
+        "pages": 38,
+        "rating": "4.69",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "parody:original",
+          "artist:kourney",
+          "male:anal",
+          "male:anal intercourse",
+          "male:blowjob",
+          "male:catboy",
+          "male:dilf",
+          "male:father",
+          "male:furry",
+          "male:incest",
+          "male:males only",
+          "male:masturbation",
+          "male:muscle",
+          "male:nakadashi",
+          "male:scar",
+          "male:yaoi",
+          "other:full color",
+          "other:uncensored"
+        ],
+        "filecount": "38",
+        "filesize": 37888313,
+        "expunged": false,
+        "torrentcount": "1",
+        "torrents": [
+          {
+            "hash": "d4ec3a93724d0ef93205c24377a65aeb7f1a416c",
+            "added": "1793246595",
+            "name": "[Kourney] 每日回家都跟老爹在色色！ [中国翻訳] (On Going).zip",
+            "tsize": "6041",
+            "fsize": "37128032"
+          }
+        ],
+        "parent_gid": "4272759",
+        "parent_key": "e73f68a9e2",
+        "first_gid": "3396191",
+        "first_key": "6f2a7a124e"
+      },
+      {
+        "gid": 4288743,
+        "token": "e4dcc22dfb",
+        "title": "[Niwakakamikiriyamodoki (ADU, Satou Kuuki)] Holy Crystal Esphére Noyaux insérés [Chinese] [Digital]",
+        "title_jpn": "[ニワカカミキリヤモドキ (ADU、左藤空気)] 聖晶希石エスフェール Noyaux insérés [中国翻訳] [DL版]",
+        "thumb": "https://ehgt.org/w/02/746/58622-5edgtmb2.webp",
+        "uploader": "sinVIII",
+        "posted": "1793234887",
+        "pages": 102,
+        "rating": "4.31",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "parody:original",
+          "group:niwakakamikiriyamodoki",
+          "artist:satou kuuki",
+          "female:corruption",
+          "female:magical girl",
+          "female:netorare",
+          "other:novel"
+        ],
+        "filecount": "102",
+        "filesize": 61802573,
+        "expunged": false,
+        "torrentcount": "2",
+        "torrents": [
+          {
+            "hash": "34ae016837a222abc8f329d8d2146ea5f457a602",
+            "added": "1793234956",
+            "name": "[ニワカカミキリヤモドキ (ADU、左藤空気)] 聖晶希石エスフェール Noyaux insérés [中国翻訳] [DL版].zip",
+            "tsize": "8157",
+            "fsize": "50716662"
+          },
+          {
+            "hash": "8ff81817451db90d107ea23da3cac9ac4749ba6e",
+            "added": "1793260727",
+            "name": "[Niwakakamikiriyamodoki (ADU, Satou Kuuki)] Holy Crystal Esphére Noyaux insérés [Chinese] [Digital].zip",
+            "tsize": "4284",
+            "fsize": "50716662"
+          }
+        ],
+        "parent_gid": "4287785",
+        "parent_key": "ae6d25bc6c",
+        "first_gid": "4280751",
+        "first_key": "1980b078b5"
+      },
+      {
+        "gid": 4288623,
+        "token": "297194e41d",
+        "title": "[Kurukuru] Cool-kei Dansou Onna ni Kanojo Netorareta kara, Wakarasete Yatta 3 | 被冷面系男装女睡走了自己的女朋友于是对其进行调教。3 [Chinese] [白杨汉化组] [Decensored]",
+        "title_jpn": "[くるくる] クール系男装女に彼女寝取られたから、わからせてやった 3 [中国翻訳] [無修正]",
+        "thumb": "https://ehgt.org/w/02/754/52688-bjygtae7.webp",
+        "uploader": "alfredmeow",
+        "posted": "1793229764",
+        "pages": 127,
+        "rating": "4.33",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "parody:original",
+          "artist:kurukuru",
+          "female:beauty mark",
+          "female:big areolae",
+          "female:big breasts",
+          "female:bikini",
+          "female:inverted nipples",
+          "female:nakadashi",
+          "female:pixie cut",
+          "female:schoolgirl uniform",
+          "female:swimsuit",
+          "female:tomboy",
+          "female:x-ray",
+          "other:multi-work series",
+          "other:story arc",
+          "other:uncensored"
+        ],
+        "filecount": "127",
+        "filesize": 35374162,
+        "expunged": false,
+        "torrentcount": "1",
+        "torrents": [
+          {
+            "hash": "9a7dc6c7999e8259b048fb5919eedcb5800d7823",
+            "added": "1793229799",
+            "name": "[くるくる] 被冷面系男装女睡走了自己的女朋友于是对其进行调教。3 [中国翻訳] [無修正] [白杨汉化组].zip",
+            "tsize": "5826",
+            "fsize": "35338202"
+          }
+        ]
+      },
       {
         "gid": 4288178,
         "token": "8c6bcb8910",
@@ -1729,7 +2638,7 @@
         "uploader": "Pigoner704",
         "posted": "1793211837",
         "pages": 17,
-        "rating": "4.42",
+        "rating": "4.48",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -1755,6 +2664,46 @@
         ]
       },
       {
+        "gid": 4287918,
+        "token": "d799126b86",
+        "title": "[Muchi Maro] Etsuran Chuui!!! Ki o Tsukete! (Seitokai ni mo Ana wa Aru!) [Chinese] [阿南個人漢化]",
+        "title_jpn": "[むちまろ] 閲覧注意！！！気を付けて！(生徒会にも穴はある!) [中国翻訳]",
+        "thumb": "https://ehgt.org/w/02/753/59182-qebzeidv.webp",
+        "uploader": "羽咲院boki",
+        "posted": "1793204060",
+        "pages": 15,
+        "rating": "3.98",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "parody:seitokai ni mo ana wa aru",
+          "character:komaro michinoku",
+          "artist:muchi maro",
+          "male:dog",
+          "female:bestiality",
+          "female:big breasts",
+          "female:low bestiality",
+          "female:ryona",
+          "female:schoolgirl uniform",
+          "mixed:mmf threesome",
+          "other:full color"
+        ],
+        "filecount": "15",
+        "filesize": 28296212,
+        "expunged": false,
+        "torrentcount": "1",
+        "torrents": [
+          {
+            "hash": "3f554c47ad0e1348e306273e21ff7ead6c0e7d12",
+            "added": "1793204115",
+            "name": "[むちまろ] 閲覧注意！！！気を付けて！ (生徒会にも穴はある!) [中国翻訳].zip",
+            "tsize": "9029",
+            "fsize": "28257254"
+          }
+        ]
+      },
+      {
         "gid": 4287912,
         "token": "7f371aa1c7",
         "title": "(Shinsun Kemoket 11) [Piporindou (Piporinton)] Shonen to Kemoshota to Spattsu to | 少年、兽太与紧身短裤 [Digital] [Chinese]",
@@ -1763,7 +2712,7 @@
         "uploader": "ZGQ Inc.",
         "posted": "1793203880",
         "pages": 36,
-        "rating": "4.04",
+        "rating": "4.27",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -1795,6 +2744,39 @@
         "first_key": "fffaae6980"
       },
       {
+        "gid": 4287896,
+        "token": "c2c3a8c750",
+        "title": "[Haimitsutou (Yukimochi)] 苏露贝大人修行中! [Chinese] [zc2333] [Digital]",
+        "title_jpn": "[廃蜜灯 (ゆきもち)] そるべ様は修行中! [中国翻訳] [DL版]",
+        "thumb": "https://ehgt.org/w/02/753/53162-8mnl1yuo.webp",
+        "uploader": "zc_online",
+        "posted": "1793203415",
+        "pages": 27,
+        "rating": "4.10",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "parody:original",
+          "group:jagaimo batake",
+          "artist:yukimochi",
+          "female:furry"
+        ],
+        "filecount": "27",
+        "filesize": 29311789,
+        "expunged": false,
+        "torrentcount": "1",
+        "torrents": [
+          {
+            "hash": "40e9295ee0150aeb8b9186fbccb992a22104a4c4",
+            "added": "1793203457",
+            "name": "[廃蜜灯 (ゆきもち)] そるべ様は修行中! [中国翻訳] [DL版] [zc2333].zip",
+            "tsize": "7792",
+            "fsize": "24296163"
+          }
+        ]
+      },
+      {
         "gid": 4287872,
         "token": "d76740f6a8",
         "title": "[Chiizu Ore] Diving-bu Gohoushi Manga &quot;Zenpen&quot; (Blue Archive) [Chinese] [欶澜汉化组]",
@@ -1803,16 +2785,36 @@
         "uploader": "ShorelineTrans",
         "posted": "1793202626",
         "pages": 8,
-        "rating": "4.41",
+        "rating": "4.38",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
           "language:translated",
           "parody:blue archive",
+          "character:kokoro toumi",
+          "character:kotone fuchigami",
+          "character:makina",
+          "character:sayuri",
+          "character:sensei",
           "artist:chiizu ore",
+          "male:big penis",
+          "male:condom",
+          "male:sole male",
+          "female:ahegao",
+          "female:beauty mark",
           "female:big breasts",
+          "female:bikini",
+          "female:glasses",
+          "female:hair buns",
           "female:halo",
-          "female:lolicon"
+          "female:harem",
+          "female:lolicon",
+          "female:nakadashi",
+          "female:swimsuit",
+          "female:tail",
+          "female:tanlines",
+          "female:twintails",
+          "female:x-ray"
         ],
         "filecount": "8",
         "filesize": 118160235,
@@ -1837,7 +2839,7 @@
         "uploader": "sinVIII",
         "posted": "1793201849",
         "pages": 106,
-        "rating": "4.54",
+        "rating": "4.51",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -1873,53 +2875,6 @@
         "first_key": "7c04978661"
       },
       {
-        "gid": 4287785,
-        "token": "ae6d25bc6c",
-        "title": "[Niwakakamikiriyamodoki (ADU, Satou Kuuki)] Holy Crystal Esphére Noyaux insérés [Chinese] [Digital]",
-        "title_jpn": "[ニワカカミキリヤモドキ (ADU、左藤空気)] 聖晶希石エスフェール Noyaux insérés [中国翻訳] [DL版]",
-        "thumb": "https://ehgt.org/w/02/746/58622-5edgtmb2.webp",
-        "uploader": "sinVIII",
-        "posted": "1793200978",
-        "pages": 102,
-        "rating": "4.32",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:original",
-          "group:niwakakamikiriyamodoki",
-          "artist:satou kuuki",
-          "female:corruption",
-          "female:magical girl",
-          "female:netorare",
-          "other:novel"
-        ],
-        "filecount": "102",
-        "filesize": 61797009,
-        "expunged": false,
-        "torrentcount": "2",
-        "torrents": [
-          {
-            "hash": "5a30852757efb1f8c84996e305a077ee1d7958ba",
-            "added": "1793006214",
-            "name": "[Niwakakamikiriyamodoki (ADU, Satou Kuuki)] Holy Crystal Esphére Noyaux insérés [Chinese] [Digital].zip",
-            "tsize": "4164",
-            "fsize": "49109312"
-          },
-          {
-            "hash": "95bc95afeeec40c346c78affa57e4da331f59199",
-            "added": "1793201004",
-            "name": "[ニワカカミキリヤモドキ (ADU、左藤空気)] 聖晶希石エスフェール Noyaux insérés [中国翻訳] [DL版].zip",
-            "tsize": "8157",
-            "fsize": "50711527"
-          }
-        ],
-        "parent_gid": "4285455",
-        "parent_key": "69e40aac82",
-        "first_gid": "4280751",
-        "first_key": "1980b078b5"
-      },
-      {
         "gid": 4287731,
         "token": "eb8c11b0bb",
         "title": "[Karinto] Ojisanhishowa Aisareyokuga Tomaranai | 想被爱的秘书大叔今天也停不下来 [Chinese] [妖玖汉化] [Digital]",
@@ -1928,7 +2883,7 @@
         "uploader": "ug219",
         "posted": "1793199571",
         "pages": 46,
-        "rating": "3.96",
+        "rating": "4.24",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -1981,7 +2936,7 @@
         "uploader": "konata2020",
         "posted": "1793199234",
         "pages": 15,
-        "rating": "4.00",
+        "rating": "4.05",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -1989,13 +2944,15 @@
           "parody:original",
           "group:binbin honpo",
           "artist:guts shihan",
+          "male:bbm",
           "male:sole male",
           "female:blowjob",
           "female:lolicon",
           "female:nakadashi",
           "female:rimjob",
           "female:sole female",
-          "female:stockings"
+          "female:stockings",
+          "female:x-ray"
         ],
         "filecount": "15",
         "filesize": 29790969,
@@ -2012,14 +2969,19 @@
         "uploader": "x392",
         "posted": "1793198864",
         "pages": 41,
-        "rating": "4.08",
+        "rating": "4.12",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
           "language:translated",
           "parody:original",
           "artist:tamuhi",
-          "female:bestiality"
+          "male:dog",
+          "female:bestiality",
+          "female:hidden sex",
+          "female:netorare",
+          "female:swimsuit",
+          "female:tentacles"
         ],
         "filecount": "41",
         "filesize": 59225732,
@@ -2044,7 +3006,7 @@
         "uploader": "x392",
         "posted": "1793198408",
         "pages": 36,
-        "rating": "3.83",
+        "rating": "3.81",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -2082,7 +3044,7 @@
         "uploader": "x392",
         "posted": "1793198062",
         "pages": 29,
-        "rating": "4.34",
+        "rating": "4.42",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -2090,7 +3052,9 @@
           "parody:original",
           "group:mikenekohanten",
           "artist:sakamoto kafka",
+          "female:anal",
           "female:brain fuck",
+          "female:guro",
           "female:monster girl",
           "female:multiple breasts",
           "female:tentacles",
@@ -2120,7 +3084,7 @@
         "uploader": "月下黑猫Elr91",
         "posted": "1793197398",
         "pages": 85,
-        "rating": "4.44",
+        "rating": "4.47",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -2286,7 +3250,7 @@
         "uploader": "ZGQ Inc.",
         "posted": "1793196176",
         "pages": 36,
-        "rating": "4.09",
+        "rating": "4.30",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -2324,11 +3288,12 @@
         "uploader": "cocoamushblue",
         "posted": "1793195458",
         "pages": 942,
-        "rating": "3.93",
+        "rating": "3.83",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
-          "parody:original"
+          "parody:original",
+          "other:compilation"
         ],
         "filecount": "942",
         "filesize": 9884042064,
@@ -2345,7 +3310,7 @@
         "uploader": "ntc98",
         "posted": "1793175478",
         "pages": 78,
-        "rating": "4.26",
+        "rating": "4.36",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -2449,7 +3414,7 @@
         "uploader": "qq3870990",
         "posted": "1793160870",
         "pages": 27,
-        "rating": "4.11",
+        "rating": "4.13",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -2475,6 +3440,46 @@
         ]
       },
       {
+        "gid": 4286651,
+        "token": "12a4977570",
+        "title": "【简体中文版】不要给予二手奴〇自由",
+        "title_jpn": "[250歩の路地 (歩路地)] 中古奴隷に自由を与えるな [中国翻訳]",
+        "thumb": "https://ehgt.org/w/02/752/03843-o8w93wr0.webp",
+        "uploader": "Xianyushao",
+        "posted": "1793158448",
+        "pages": 40,
+        "rating": "4.02",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "language:translated",
+          "parody:original",
+          "group:250ponoroji",
+          "artist:horochi",
+          "female:bestiality",
+          "female:hairy",
+          "female:insect",
+          "female:maggot",
+          "female:netorare",
+          "female:sole female",
+          "female:spider",
+          "mixed:group"
+        ],
+        "filecount": "40",
+        "filesize": 69584292,
+        "expunged": false,
+        "torrentcount": "1",
+        "torrents": [
+          {
+            "hash": "8027167c013175e6dae0aa4b9cafd7166648a4ac",
+            "added": "1793158521",
+            "name": "【简体版】不要给予二手奴〇自由 [中国翻訳].zip",
+            "tsize": "10109",
+            "fsize": "63908160"
+          }
+        ]
+      },
+      {
         "gid": 4286594,
         "token": "e477b9c91b",
         "title": "(C74) [blue+α (Ifuji Shinsen)] SPiCE&#039;S WiFE (Spice and Wolf) [Chinese]",
@@ -2483,7 +3488,7 @@
         "uploader": "ホロ (Horo)",
         "posted": "1793155842",
         "pages": 18,
-        "rating": "4.10",
+        "rating": "4.16",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -2569,7 +3574,7 @@
         "uploader": "廉价包邮萝莉",
         "posted": "1793151027",
         "pages": 45,
-        "rating": "3.90",
+        "rating": "4.11",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -2577,10 +3582,19 @@
           "parody:original",
           "group:mamiana hanten",
           "artist:youkai kubinashi",
+          "female:ahegao",
+          "female:bbw",
+          "female:beauty mark",
+          "female:big ass",
           "female:big breasts",
+          "female:exhibitionism",
+          "female:farting",
           "female:glasses",
           "female:hair buns",
-          "female:scat"
+          "female:huge breasts",
+          "female:miko",
+          "female:scat",
+          "female:urination"
         ],
         "filecount": "45",
         "filesize": 64147304,
@@ -2605,7 +3619,7 @@
         "uploader": "Nagoriha",
         "posted": "1793147633",
         "pages": 18,
-        "rating": "4.10",
+        "rating": "4.14",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -2632,6 +3646,42 @@
             "name": "[チーズカンパニー (ペソ)] 残念美人なポーカーフェイス (東方Project) [中国翻訳] [DL版] [雾雨玲子汉化组].zip",
             "tsize": "6728",
             "fsize": "41157067"
+          }
+        ]
+      },
+      {
+        "gid": 4286386,
+        "token": "484266d537",
+        "title": "[Oninarasu] 隨",
+        "title_jpn": "",
+        "thumb": "https://ehgt.org/w/02/751/81758-8jab4vy5.webp",
+        "uploader": "ninetydollardoujin",
+        "posted": "1793146426",
+        "pages": 16,
+        "rating": "4.05",
+        "category": "Doujinshi",
+        "tags": [
+          "language:chinese",
+          "parody:sword art online",
+          "character:asuna yuuki",
+          "artist:oninarasu",
+          "male:dark skin",
+          "female:big breasts",
+          "female:cheating",
+          "female:netorare",
+          "other:sketch lines"
+        ],
+        "filecount": "16",
+        "filesize": 10815454,
+        "expunged": false,
+        "torrentcount": "1",
+        "torrents": [
+          {
+            "hash": "28bbb0bfee40de1c842a636aeaded720fabf0fd0",
+            "added": "1793179866",
+            "name": "[鬼鳴らす] 隨 (ソードアート・オンライン).zip",
+            "tsize": "13066",
+            "fsize": "10387799"
           }
         ]
       },
@@ -2682,7 +3732,7 @@
         "uploader": "5596577",
         "posted": "1793134145",
         "pages": 66,
-        "rating": "4.36",
+        "rating": "4.42",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -2706,7 +3756,9 @@
           "female:leg lock",
           "female:mind break",
           "female:nakadashi",
+          "female:nipple stimulation",
           "female:rape",
+          "female:schoolgirl uniform",
           "female:sole female",
           "female:squirting",
           "female:x-ray"
@@ -2734,7 +3786,7 @@
         "uploader": "Rogabute",
         "posted": "1793124376",
         "pages": 105,
-        "rating": "3.83",
+        "rating": "3.84",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -2776,7 +3828,7 @@
         "uploader": "ntc98",
         "posted": "1793121839",
         "pages": 46,
-        "rating": "4.30",
+        "rating": "4.34",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -2828,7 +3880,7 @@
         "uploader": "Colt4448",
         "posted": "1793116134",
         "pages": 34,
-        "rating": "4.26",
+        "rating": "4.31",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -2868,7 +3920,7 @@
         "uploader": "GuinS",
         "posted": "1793113506",
         "pages": 83,
-        "rating": "4.12",
+        "rating": "4.18",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -2910,7 +3962,7 @@
         "uploader": "GuinS",
         "posted": "1793113502",
         "pages": 83,
-        "rating": "3.93",
+        "rating": "4.17",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -2967,7 +4019,7 @@
         "uploader": "fifthyuheng9452",
         "posted": "1793113355",
         "pages": 58,
-        "rating": "4.36",
+        "rating": "4.43",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -3004,7 +4056,7 @@
         "uploader": "wabsxg1314",
         "posted": "1793113319",
         "pages": 43,
-        "rating": "4.27",
+        "rating": "4.31",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -3045,7 +4097,7 @@
         "uploader": "wokaoa006",
         "posted": "1793112247",
         "pages": 27,
-        "rating": "4.59",
+        "rating": "4.55",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -3136,7 +4188,7 @@
         "uploader": "ntc98",
         "posted": "1793110097",
         "pages": 32,
-        "rating": "4.35",
+        "rating": "4.37",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -3186,7 +4238,7 @@
         "uploader": "frustrated火布",
         "posted": "1793109642",
         "pages": 25,
-        "rating": "4.43",
+        "rating": "4.45",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -3224,7 +4276,7 @@
         "uploader": "Amerins",
         "posted": "1793108669",
         "pages": 73,
-        "rating": "4.33",
+        "rating": "4.39",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -3266,7 +4318,7 @@
         "uploader": "B_Meow",
         "posted": "1793107299",
         "pages": 48,
-        "rating": "4.48",
+        "rating": "4.53",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -3329,7 +4381,7 @@
         "uploader": "makoto07",
         "posted": "1793104433",
         "pages": 44,
-        "rating": "4.60",
+        "rating": "4.64",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -3374,7 +4426,7 @@
         "uploader": "天帝哥",
         "posted": "1793104239",
         "pages": 37,
-        "rating": "4.74",
+        "rating": "4.75",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -3446,7 +4498,7 @@
         "uploader": "绿茶饼",
         "posted": "1793103798",
         "pages": 69,
-        "rating": "4.39",
+        "rating": "4.42",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -3505,7 +4557,8 @@
           "female:sole female",
           "female:spanking",
           "female:sumata",
-          "female:sweating"
+          "female:sweating",
+          "hikariyo"
         ],
         "filecount": "36",
         "filesize": 158578463,
@@ -3534,7 +4587,7 @@
         "uploader": "alfredmeow",
         "posted": "1793097657",
         "pages": 23,
-        "rating": "4.35",
+        "rating": "4.36",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -3573,7 +4626,7 @@
         "uploader": "彼尔姆0000",
         "posted": "1793069519",
         "pages": 11,
-        "rating": "4.37",
+        "rating": "4.38",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -3613,7 +4666,7 @@
         "uploader": "qq3870990",
         "posted": "1793068365",
         "pages": 24,
-        "rating": "4.54",
+        "rating": "4.57",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -3661,7 +4714,7 @@
         "uploader": "彼尔姆0000",
         "posted": "1793045694",
         "pages": 48,
-        "rating": "4.07",
+        "rating": "4.09",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -3819,7 +4872,7 @@
         "uploader": "ChO_Hentai",
         "posted": "1793036094",
         "pages": 117,
-        "rating": "4.64",
+        "rating": "4.63",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -3863,7 +4916,7 @@
         "uploader": "ChO_Hentai",
         "posted": "1793035994",
         "pages": 107,
-        "rating": "4.62",
+        "rating": "4.59",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -3910,44 +4963,6 @@
             "fsize": "47110517"
           }
         ]
-      },
-      {
-        "gid": 4283516,
-        "token": "3e67fbf0b6",
-        "title": "[CIRCLE ENERGY (Imaki Hitotose)] Tougou Mimori wa Yuuki Yuuna no Omocha de Aru (Yuuki Yuuna wa Yuusha De Aru) [Chinese] [机机机个人翻译] [Digital]",
-        "title_jpn": "[サークルENERGY (新春夏秋冬)] 東郷美○は結○友奈の玩具である (結城友奈は勇者である) [中国翻訳] [DL版]",
-        "thumb": "https://ehgt.org/w/02/748/00341-ucmques4.webp",
-        "uploader": "永远威严的幼月",
-        "posted": "1793031955",
-        "pages": 32,
-        "rating": "3.75",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:yuuki yuuna wa yuusha de aru",
-          "character:mimori tougou",
-          "character:yuuna yuuki",
-          "group:circle energy",
-          "artist:imaki hitotose",
-          "female:bondage",
-          "female:collar",
-          "female:genital piercing",
-          "female:lactation",
-          "female:lolicon",
-          "female:nipple piercing",
-          "female:piercing",
-          "female:pregnant",
-          "female:schoolgirl uniform",
-          "female:sex toys",
-          "female:stockings",
-          "mixed:group"
-        ],
-        "filecount": "32",
-        "filesize": 15143770,
-        "expunged": false,
-        "torrentcount": "0",
-        "torrents": []
       },
       {
         "gid": 4283506,
@@ -4024,7 +5039,7 @@
         "uploader": "5DK",
         "posted": "1793030042",
         "pages": 58,
-        "rating": "4.49",
+        "rating": "4.50",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -4073,7 +5088,7 @@
         "uploader": "ZX_Prime",
         "posted": "1793029459",
         "pages": 35,
-        "rating": "4.63",
+        "rating": "4.67",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -4111,7 +5126,7 @@
         "uploader": "MotherEmperor",
         "posted": "1793027341",
         "pages": 76,
-        "rating": "4.40",
+        "rating": "4.42",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -4166,7 +5181,7 @@
         "uploader": "nanako kim 1145",
         "posted": "1793027324",
         "pages": 29,
-        "rating": "4.66",
+        "rating": "4.68",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -4205,7 +5220,7 @@
         "uploader": "B_Meow",
         "posted": "1793026321",
         "pages": 37,
-        "rating": "4.53",
+        "rating": "4.55",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -4253,7 +5268,7 @@
         "uploader": "DCLⅰang",
         "posted": "1793026110",
         "pages": 11,
-        "rating": "4.25",
+        "rating": "4.28",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -4342,7 +5357,7 @@
         "uploader": "ntc98",
         "posted": "1793020077",
         "pages": 34,
-        "rating": "4.66",
+        "rating": "4.68",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -4406,7 +5421,7 @@
         "uploader": "ChenSture",
         "posted": "1793020009",
         "pages": 50,
-        "rating": "4.50",
+        "rating": "4.52",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -4455,7 +5470,7 @@
         "uploader": "makakoTuT",
         "posted": "1793007470",
         "pages": 56,
-        "rating": "4.33",
+        "rating": "4.57",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -4483,13 +5498,13 @@
       {
         "gid": 4282846,
         "token": "e051e8f11f",
-        "title": "[GC-dan (Wakura)] Arimura Mao wa, Ouji(?)sama♥ (Gakuen IDOLM@STER) [Chinese] [Amerins漢化]",
+        "title": "(C108) [GC-dan (Wakura)] Arimura Mao wa Ooji-sama   (Gakuen iDOLM@STER) [Chinese] [Amerins漢化]",
         "title_jpn": "(C108) [GC団 (わくら)] 有村麻央は、王子(?)さま♥ (学園アイドルマスター) [中国翻訳]",
         "thumb": "https://ehgt.org/w/02/746/00159-gm4aacau.webp",
         "uploader": "Amerins",
         "posted": "1793005889",
         "pages": 20,
-        "rating": "4.40",
+        "rating": "4.46",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -4593,7 +5608,7 @@
         "uploader": "epicfail00",
         "posted": "1793004236",
         "pages": 45,
-        "rating": "4.25",
+        "rating": "4.26",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -4635,7 +5650,7 @@
         "uploader": "zer0ller",
         "posted": "1793002266",
         "pages": 47,
-        "rating": "4.49",
+        "rating": "4.51",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -4718,7 +5733,7 @@
         "uploader": "alfredmeow",
         "posted": "1792994009",
         "pages": 57,
-        "rating": "4.56",
+        "rating": "4.57",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -4763,7 +5778,7 @@
         "uploader": "723709800",
         "posted": "1792993075",
         "pages": 82,
-        "rating": "4.52",
+        "rating": "4.53",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -4861,7 +5876,7 @@
         "uploader": "zc_online",
         "posted": "1792989736",
         "pages": 29,
-        "rating": "4.43",
+        "rating": "4.45",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -4900,7 +5915,7 @@
         "uploader": "atilol82",
         "posted": "1792984179",
         "pages": 38,
-        "rating": "4.57",
+        "rating": "4.53",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -4957,7 +5972,7 @@
         "uploader": "bskslk",
         "posted": "1792981331",
         "pages": 39,
-        "rating": "3.97",
+        "rating": "3.94",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -4998,7 +6013,7 @@
         "uploader": "廉价包邮萝莉",
         "posted": "1792978024",
         "pages": 24,
-        "rating": "4.22",
+        "rating": "4.15",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -5130,7 +6145,7 @@
         "uploader": "ntc98",
         "posted": "1792970914",
         "pages": 40,
-        "rating": "4.56",
+        "rating": "4.52",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -5180,7 +6195,7 @@
         "uploader": "crimsonraes",
         "posted": "1792970436",
         "pages": 26,
-        "rating": "4.51",
+        "rating": "4.48",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -5225,7 +6240,7 @@
         "uploader": "PiggyRen",
         "posted": "1792949397",
         "pages": 17,
-        "rating": "4.30",
+        "rating": "4.32",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -5279,7 +6294,7 @@
         "uploader": "PiggyRen",
         "posted": "1792948822",
         "pages": 13,
-        "rating": "3.84",
+        "rating": "3.87",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -5324,7 +6339,7 @@
         "uploader": "Dustyshirt450",
         "posted": "1792948207",
         "pages": 47,
-        "rating": "4.39",
+        "rating": "4.40",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -5376,7 +6391,7 @@
         "uploader": "KT3170",
         "posted": "1792947980",
         "pages": 45,
-        "rating": "4.68",
+        "rating": "4.69",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -5417,7 +6432,7 @@
         "uploader": "ShorelineTrans",
         "posted": "1792946806",
         "pages": 35,
-        "rating": "4.54",
+        "rating": "4.49",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -5454,7 +6469,7 @@
         "uploader": "ShorelineTrans",
         "posted": "1792946651",
         "pages": 23,
-        "rating": "4.46",
+        "rating": "4.37",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -5475,13 +6490,20 @@
         "filecount": "23",
         "filesize": 85834286,
         "expunged": false,
-        "torrentcount": "1",
+        "torrentcount": "2",
         "torrents": [
           {
             "hash": "4f043ffa370b2a785b3acceb06e3cac8ab063c40",
             "added": "1792947063",
             "name": "[お解りいただけただろうか (海山そぜ)] 徹夜明け、睡眠中、布団の中でケイちゃんが… (ブルーアーカイブ) [中国翻訳] [DL版] [欶澜汉化组].zip",
             "tsize": "13416",
+            "fsize": "84768220"
+          },
+          {
+            "hash": "526e390f34f05497f413b09ff31cc895252138b5",
+            "added": "1793267386",
+            "name": "[お解りいただけただろうか (海山そぜ)] 徹夜明け、睡眠中、布団の中でケイちゃんが… (ブルーアーカイブ) [中国翻訳] [DL版].zip",
+            "tsize": "6937",
             "fsize": "84768220"
           }
         ]
@@ -5495,7 +6517,7 @@
         "uploader": "lucas246",
         "posted": "1792945934",
         "pages": 20,
-        "rating": "4.70",
+        "rating": "4.68",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -5533,7 +6555,7 @@
         "uploader": "ntc98",
         "posted": "1792944206",
         "pages": 59,
-        "rating": "4.50",
+        "rating": "4.48",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -5624,7 +6646,7 @@
         "uploader": "cowvowcow",
         "posted": "1792940892",
         "pages": 31,
-        "rating": "4.51",
+        "rating": "4.49",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -5768,50 +6790,6 @@
         "first_key": "9e14416f86"
       },
       {
-        "gid": 4281124,
-        "token": "6ebadd7ade",
-        "title": "[toriinokage(hitoetsumika)] Siawase Usagi To Bokusakumeiri (Touhou Project) [Digital] [Chinese] [蓬莱汉化组]",
-        "title_jpn": "[とりいのかげ(ひととすみか)] 幸せうさぎと撲朔迷離  (東方Project) [DL版] [中国翻訳] [蓬莱汉化组]",
-        "thumb": "https://ehgt.org/w/02/745/36396-253my6z1.webp",
-        "uploader": "蓬莱里汉化组",
-        "posted": "1792937040",
-        "pages": 28,
-        "rating": "4.12",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:touhou project",
-          "character:tewi inaba",
-          "male:bunny boy",
-          "male:eye-covering bang",
-          "male:shotacon",
-          "male:sole male",
-          "female:blowjob",
-          "female:bunny girl",
-          "female:kemonomimi",
-          "female:lolicon",
-          "female:nakadashi",
-          "female:pregnant",
-          "female:sole female",
-          "mixed:kodomo doushi",
-          "other:kodomo only"
-        ],
-        "filecount": "28",
-        "filesize": 14230303,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "3eed21f3dd4fbc70d30090c18f69354ae877181b",
-            "added": "1792937053",
-            "name": "[とりいのかげ (ひととすみか)] 幸せうさぎと撲朔迷離 (東方Project) [中国翻訳] [DL版] [蓬莱汉化组].zip",
-            "tsize": "8718",
-            "fsize": "13573722"
-          }
-        ]
-      },
-      {
         "gid": 4281097,
         "token": "2d84bd3a5d",
         "title": "[4UU] Nimotsumochi Harem ❤︎ (Fate/Grand Order) [Chinese] [day个人汉化]",
@@ -5820,7 +6798,7 @@
         "uploader": "day233",
         "posted": "1792935800",
         "pages": 10,
-        "rating": "4.25",
+        "rating": "4.29",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -5949,7 +6927,7 @@
         "uploader": "alfredmeow",
         "posted": "1792925716",
         "pages": 15,
-        "rating": "4.37",
+        "rating": "4.35",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -5994,7 +6972,7 @@
         "uploader": "cowvowcow",
         "posted": "1792923120",
         "pages": 82,
-        "rating": "4.50",
+        "rating": "4.51",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -6163,7 +7141,7 @@
         "uploader": "konata2020",
         "posted": "1792918922",
         "pages": 23,
-        "rating": "4.53",
+        "rating": "4.48",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -6211,7 +7189,7 @@
         "uploader": "mayzerg",
         "posted": "1792915347",
         "pages": 25,
-        "rating": "4.41",
+        "rating": "4.33",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -6247,7 +7225,7 @@
         "uploader": "bajizai",
         "posted": "1792914827",
         "pages": 47,
-        "rating": "4.44",
+        "rating": "4.41",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -6302,7 +7280,7 @@
         "uploader": "Huui",
         "posted": "1792914326",
         "pages": 36,
-        "rating": "3.90",
+        "rating": "3.85",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -6345,7 +7323,7 @@
         "uploader": "gjx08",
         "posted": "1792913759",
         "pages": 24,
-        "rating": "4.62",
+        "rating": "4.63",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -6389,7 +7367,7 @@
         "uploader": "Colt4448",
         "posted": "1792910274",
         "pages": 26,
-        "rating": "4.60",
+        "rating": "4.61",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -6430,7 +7408,7 @@
         "uploader": "Iceomtobeo",
         "posted": "1792907172",
         "pages": 9,
-        "rating": "4.00",
+        "rating": "4.08",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -6466,7 +7444,7 @@
         "uploader": "zhousir312",
         "posted": "1792906828",
         "pages": 56,
-        "rating": "3.91",
+        "rating": "3.86",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -6511,7 +7489,7 @@
         "uploader": "1919810qQ@",
         "posted": "1792906388",
         "pages": 26,
-        "rating": "3.87",
+        "rating": "3.80",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -6633,7 +7611,7 @@
         "uploader": "1919810qQ@",
         "posted": "1792893985",
         "pages": 30,
-        "rating": "4.04",
+        "rating": "4.09",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -6664,7 +7642,7 @@
         "uploader": "alfredmeow",
         "posted": "1792881423",
         "pages": 36,
-        "rating": "3.98",
+        "rating": "4.02",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -6700,7 +7678,7 @@
         "uploader": "alfredmeow",
         "posted": "1792881404",
         "pages": 31,
-        "rating": "4.60",
+        "rating": "4.59",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -6756,7 +7734,7 @@
         "uploader": "ChO_Hentai",
         "posted": "1792875205",
         "pages": 99,
-        "rating": "4.61",
+        "rating": "4.59",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -6808,7 +7786,7 @@
         "uploader": "ChO_Hentai",
         "posted": "1792874819",
         "pages": 71,
-        "rating": "4.46",
+        "rating": "4.47",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -6861,7 +7839,7 @@
         "uploader": "ChO_Hentai",
         "posted": "1792874671",
         "pages": 99,
-        "rating": "4.45",
+        "rating": "4.46",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -6907,7 +7885,7 @@
         "uploader": "ChO_Hentai",
         "posted": "1792874399",
         "pages": 31,
-        "rating": "4.45",
+        "rating": "4.44",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -6954,7 +7932,7 @@
         "uploader": "ChO_Hentai",
         "posted": "1792874258",
         "pages": 63,
-        "rating": "4.63",
+        "rating": "4.64",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -7024,7 +8002,7 @@
         "uploader": "ChO_Hentai",
         "posted": "1792874141",
         "pages": 31,
-        "rating": "3.93",
+        "rating": "3.88",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -7068,7 +8046,7 @@
         "uploader": "ChO_Hentai",
         "posted": "1792874063",
         "pages": 43,
-        "rating": "4.41",
+        "rating": "4.42",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -7114,7 +8092,7 @@
         "uploader": "Erc45",
         "posted": "1792862850",
         "pages": 55,
-        "rating": "4.36",
+        "rating": "4.34",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -7230,7 +8208,7 @@
         "uploader": "Iceomtobeo",
         "posted": "1792846228",
         "pages": 15,
-        "rating": "3.93",
+        "rating": "3.98",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -7418,7 +8396,7 @@
         "uploader": "Nuozhe528",
         "posted": "1792843868",
         "pages": 85,
-        "rating": "4.44",
+        "rating": "4.46",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -7551,7 +8529,7 @@
         "uploader": "LanDick",
         "posted": "1792839483",
         "pages": 16,
-        "rating": "4.41",
+        "rating": "4.42",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -7645,7 +8623,7 @@
         "uploader": "zzczzx",
         "posted": "1792836770",
         "pages": 50,
-        "rating": "4.36",
+        "rating": "4.37",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -7743,7 +8721,7 @@
         "uploader": "ShorelineTrans",
         "posted": "1792827200",
         "pages": 23,
-        "rating": "4.39",
+        "rating": "4.38",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -7913,7 +8891,7 @@
         "uploader": "Major Lacho",
         "posted": "1792815782",
         "pages": 25,
-        "rating": "4.13",
+        "rating": "4.05",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -8091,7 +9069,7 @@
         "uploader": "tempuse",
         "posted": "1792805209",
         "pages": 42,
-        "rating": "4.41",
+        "rating": "4.42",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -8144,7 +9122,7 @@
         "uploader": "ninetydollardoujin",
         "posted": "1792804193",
         "pages": 41,
-        "rating": "4.00",
+        "rating": "3.94",
         "category": "Doujinshi",
         "tags": [
           "language:chinese",
@@ -8175,823 +9153,6 @@
             "fsize": "147140144"
           }
         ]
-      },
-      {
-        "gid": 4276209,
-        "token": "dd87f19be4",
-        "title": "[Tomahawk (Akkusu)] Onabon.... Kounai Roshutsu Tsuyudaku Onanie Tsuugaku Challenge de Tomodachi no Mae de Self Bachiboko Renzoku Iki [Chinese] [自給自足君] [Digital]",
-        "title_jpn": "[とまほーく (あっくす)] おなぼん。。。。校内露出つゆだくオナニー通学チャレンジで友達の前でセルフバチボコ連続イキ [中国翻訳] [DL版]",
-        "thumb": "https://ehgt.org/w/02/740/30512-qk41ppg8.webp",
-        "uploader": "doctor007",
-        "posted": "1792778699",
-        "pages": 238,
-        "rating": "4.66",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:original",
-          "group:tomahawk",
-          "artist:akkusu",
-          "female:anal",
-          "female:big areolae",
-          "female:big nipples",
-          "female:big vagina",
-          "female:double penetration",
-          "female:exhibitionism",
-          "female:females only",
-          "female:gaping",
-          "female:masturbation",
-          "female:pixie cut",
-          "female:schoolgirl uniform",
-          "female:sex toys",
-          "female:solo action",
-          "female:squirting",
-          "female:stomach deformation",
-          "other:object insertion only"
-        ],
-        "filecount": "238",
-        "filesize": 759523180,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "37e5d5859d2c7ce7c26cd775b1a1aa435beb5b88",
-            "added": "1792778797",
-            "name": "[とまほーく (あっくす)] おなぼん。。。。校内露出つゆだくオナニー通学チャレンジで友達の前でセルフバチボコ連続イキ [DL官方] [中国翻訳].zip",
-            "tsize": "7443",
-            "fsize": "729625713"
-          }
-        ]
-      },
-      {
-        "gid": 4276201,
-        "token": "aaa464f899",
-        "title": "[みきてゃ] 寻君千百度 [Chinese](四自蝇汉化)",
-        "title_jpn": "[みきてゃ] 何度でも君を見つけて [中国翻訳] [四自蝿漢化]",
-        "thumb": "https://ehgt.org/w/02/740/06651-9fn5jsql.webp",
-        "uploader": "Yonjihae",
-        "posted": "1792778572",
-        "pages": 38,
-        "rating": "4.38",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:knights college",
-          "character:argo northrop",
-          "character:paul pfitzner",
-          "artist:mikitya",
-          "male:anal",
-          "male:anal intercourse",
-          "male:bear boy",
-          "male:furry",
-          "male:males only",
-          "male:muscle",
-          "male:wolf boy",
-          "male:yaoi"
-        ],
-        "filecount": "38",
-        "filesize": 45984110,
-        "expunged": false,
-        "torrentcount": "0",
-        "torrents": []
-      },
-      {
-        "gid": 4276113,
-        "token": "4dd99722a8",
-        "title": "[fukami no kokoro (pogenia)] 在色情直播中快乐堕落？怎么可能啊!! [Digital]",
-        "title_jpn": "[ふかみのこころ (ぽげにあ)] エロ配信で快楽堕ち?するわけないでしょ!! [中国翻訳] [DL版]",
-        "thumb": "https://ehgt.org/w/02/740/28250-0ge3ow40.webp",
-        "uploader": "HestdeR",
-        "posted": "1792775826",
-        "pages": 57,
-        "rating": "4.23",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:original",
-          "group:fukami no kokoro",
-          "female:bloomers",
-          "female:school gym uniform",
-          "female:stockings",
-          "female:twintails"
-        ],
-        "filecount": "57",
-        "filesize": 76963823,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "ce71d82e761f5ec98ccf8b80200c6be08894d040",
-            "added": "1792775851",
-            "name": "[fukami no kokoro (pogenia)] 在色情直播中快乐堕落？怎么可能啊!! [Digital] [中国翻訳] [DL版].zip",
-            "tsize": "6002",
-            "fsize": "73149967"
-          }
-        ]
-      },
-      {
-        "gid": 4275975,
-        "token": "a694aeb95e",
-        "title": "【ぺこ連盟(麻理宮ゆう）】ホープ戦士は負けない2｜希望战士绝不会输2【chinese】",
-        "title_jpn": "【ぺこ連盟(麻理宮ゆう）】ホープ戦士は負けない2",
-        "thumb": "https://ehgt.org/w/02/740/12313-i4mp1b85.webp",
-        "uploader": "Erc45",
-        "posted": "1792772324",
-        "pages": 104,
-        "rating": "4.17",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:japanese",
-          "parody:original",
-          "group:peko renmei",
-          "male:monster",
-          "male:rape",
-          "male:tentacles",
-          "male:yaoi"
-        ],
-        "filecount": "104",
-        "filesize": 52273686,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "78f4fe8b13cd294fe4faf2153b5ee6d5f524539f",
-            "added": "1793054785",
-            "name": "【ぺこ連盟(麻理宮ゆう）】ホープ戦士は負けない2.zip",
-            "tsize": "4057",
-            "fsize": "48256247"
-          }
-        ]
-      },
-      {
-        "gid": 4275946,
-        "token": "0da81b2910",
-        "title": "(C108) [怠惰ぽていと (よるうよ)] 愛い愛いウイとぴあ | 恋心幽生 无忧乌托邦 (Blue Archive) [Chinese] [碧蓝档案百合组]",
-        "title_jpn": "(C108) [怠惰ぽていと (よるうよ)] 愛い愛いウイとぴあ (ブルーアーカイブ) [中国翻訳]",
-        "thumb": "https://ehgt.org/w/02/740/06308-dwyptbii.webp",
-        "uploader": "BA同人组",
-        "posted": "1792771147",
-        "pages": 26,
-        "rating": "4.49",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:blue archive",
-          "character:sensei",
-          "character:ui kozeki",
-          "female:bikini",
-          "female:females only",
-          "female:fingering",
-          "female:glasses",
-          "female:halo",
-          "female:inverted nipples",
-          "female:kissing",
-          "female:nipple stimulation",
-          "female:squirting",
-          "female:swimsuit",
-          "female:x-ray",
-          "female:yuri"
-        ],
-        "filecount": "26",
-        "filesize": 188870184,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "943af6e42d5b5b1a3365c372f2cc024de768560c",
-            "added": "1792771173",
-            "name": "(C108) [怠惰ぽていと (よるうよ)] 愛い愛いウイとぴあ [中国翻訳] [碧蓝档案百合组].zip",
-            "tsize": "7560",
-            "fsize": "187549489"
-          }
-        ]
-      },
-      {
-        "gid": 4275923,
-        "token": "79f81d27d6",
-        "title": "【超义体TEST】超时空辉夜姬",
-        "title_jpn": "超義体TEST",
-        "thumb": "https://ehgt.org/w/02/257/82759-1c328clf.webp",
-        "uploader": "yioyituyu",
-        "posted": "1792770160",
-        "pages": 22,
-        "rating": "4.48",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "parody:chou kaguya-hime",
-          "character:kaguya",
-          "artist:yioyituyu",
-          "female:amputee",
-          "female:females only",
-          "female:fingering",
-          "female:yuri"
-        ],
-        "filecount": "22",
-        "filesize": 46340619,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "8e0154660769f9880e6d2376dcf59a3355f4b730",
-            "added": "1792770201",
-            "name": "超義体TEST [中国翻訳].zip",
-            "tsize": "6697",
-            "fsize": "41787448"
-          }
-        ],
-        "parent_gid": "3898127",
-        "parent_key": "848c9a32f5",
-        "first_gid": "3797670",
-        "first_key": "b414ff4e94"
-      },
-      {
-        "gid": 4275916,
-        "token": "d0faf3627e",
-        "title": "[なんとかなるなる。 ]推しの男の娘とセックスできた話。 | 关于和我推的男娘的床事 [千帝灯汉化]",
-        "title_jpn": "[なんとかなるなる。 ]推しの男の娘とセックスできた話。",
-        "thumb": "https://ehgt.org/w/02/740/01877-4ahs29f1.webp",
-        "uploader": "鱼盐柚子",
-        "posted": "1792769811",
-        "pages": 34,
-        "rating": "4.61",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:original",
-          "group:nantoka narunaru.",
-          "male:anal",
-          "male:bride",
-          "male:crossdressing",
-          "male:exposed clothing",
-          "male:lingerie",
-          "male:stockings",
-          "male:tomgirl",
-          "male:yaoi",
-          "other:mosaic censorship"
-        ],
-        "filecount": "34",
-        "filesize": 92396420,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "f1f8c92c5e579d644ba417ffa7e42941df847bb0",
-            "added": "1792769844",
-            "name": "[なんとかなるなる。 ] 关于和我推的男娘的床事 [中国翻訳].zip",
-            "tsize": "7168",
-            "fsize": "88992447"
-          }
-        ]
-      },
-      {
-        "gid": 4275886,
-        "token": "da8030a488",
-        "title": "[Seika Kairaku Shoten (Gunkan Amaebi)] Haiboku Yuusha wa Shokushufuku ni Kisei Sarete Maou no Geboku ni Narimashita [Chinese] [AnyaKa] [Digital]",
-        "title_jpn": "[聖華快楽書店 (軍艦あまえび)] 敗北勇者は触手服に寄生されて魔王の下僕になりました [中国翻訳] [DL版]",
-        "thumb": "https://ehgt.org/w/02/740/00199-8tttbbpe.webp",
-        "uploader": "月下黑猫Elr91",
-        "posted": "1792768887",
-        "pages": 31,
-        "rating": "4.11",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:original",
-          "group:seika kairaku shoten",
-          "artist:gunkan amaebi",
-          "female:corruption",
-          "female:futanari",
-          "female:group",
-          "female:kemonomimi",
-          "female:kissing",
-          "female:living clothes",
-          "female:nakadashi",
-          "female:possession",
-          "female:squirting",
-          "female:tentacles",
-          "female:x-ray",
-          "female:yuri",
-          "other:multi-work series"
-        ],
-        "filecount": "31",
-        "filesize": 71901692,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "ea4dfecc313c58e36b747b9ab70a75ce2f2365a5",
-            "added": "1792768946",
-            "name": "[聖華快楽書店 (軍艦あまえび)] 敗北勇者は触手服に寄生されて魔王の下僕になりました [中国翻訳] [DL版] [AnyaKa].zip",
-            "tsize": "10680",
-            "fsize": "67046265"
-          }
-        ]
-      },
-      {
-        "gid": 4275728,
-        "token": "950558cf87",
-        "title": "[Kimuchi-tei (Various)] Kemo Nee-san 15 [Chinese] [差不多了翻译] [Digital]",
-        "title_jpn": "[キムチ亭 (よろず)] ケモ姉さん15 [中国翻訳] [DL版]",
-        "thumb": "https://ehgt.org/w/02/736/98175-dmmnkwer.webp",
-        "uploader": "gtx132377",
-        "posted": "1792765379",
-        "pages": 179,
-        "rating": "4.02",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:original",
-          "group:kimuchi-tei",
-          "artist:3circle",
-          "artist:crunchy",
-          "artist:dragoon86",
-          "artist:gudl",
-          "artist:moka",
-          "female:furry",
-          "other:goudoushi"
-        ],
-        "filecount": "179",
-        "filesize": 388762875,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "ca56c7b38ce51a5d1b842d93997c794766b3595a",
-            "added": "1792765450",
-            "name": "[キムチ亭 (よろず)] ケモ姉さん15 [差不多了] [中国翻訳].zip",
-            "tsize": "7545",
-            "fsize": "376122692"
-          }
-        ]
-      },
-      {
-        "gid": 4275601,
-        "token": "e1ca5504ac",
-        "title": "[HERMIT CRAB(千石鹿丸、togi)]小不点半魔  [Dante x Vergil](Devil May Cry) [Chinese]",
-        "title_jpn": "[HERMIT CRAB(千石鹿丸、togi)]ちびデビ [ダンバジ](デビルメイクライ) [中国翻訳]",
-        "thumb": "https://ehgt.org/w/02/689/36216-r0ueevej.webp",
-        "uploader": "Iceomtobeo",
-        "posted": "1792761203",
-        "pages": 31,
-        "rating": "3.96",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:devil may cry",
-          "character:dante",
-          "character:vergil",
-          "artist:togi",
-          "male:brother",
-          "male:males only",
-          "male:twins",
-          "male:yaoi"
-        ],
-        "filecount": "31",
-        "filesize": 12602564,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "8f886e9825c8593169de4b50da64fb5bb73faa49",
-            "added": "1792761252",
-            "name": "[HERMIT CRAB (千石鹿丸、togi)] ちびデビ [ダンバジ] (デビルメイクライ) [中国翻訳].zip",
-            "tsize": "8014",
-            "fsize": "12452768"
-          }
-        ],
-        "parent_gid": "4228311",
-        "parent_key": "13c97ed8c1",
-        "first_gid": "4228311",
-        "first_key": "13c97ed8c1"
-      },
-      {
-        "gid": 4275505,
-        "token": "c286f335d8",
-        "title": "[Hanaya] iintyou wo Chikubi Zeme de Wakarasechaimashita!! | 让烦人的班长不再多管闲事进行乳头调教吧！！ [Chinese] [紫藤汉化组]",
-        "title_jpn": "[華屋] 委員長を乳首責めで分からせちゃいました!! [中国翻訳]",
-        "thumb": "https://ehgt.org/w/02/739/44979-euyurvd1.webp",
-        "uploader": "ntc98",
-        "posted": "1792757193",
-        "pages": 45,
-        "rating": "4.33",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:original",
-          "group:hanaya",
-          "female:ahegao",
-          "female:exhibitionism",
-          "female:lolicon",
-          "female:mesuiki",
-          "female:nipple stimulation",
-          "female:stockings",
-          "female:yuri",
-          "other:mosaic censorship",
-          "other:no penetration",
-          "location:classroom"
-        ],
-        "filecount": "45",
-        "filesize": 143378890,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "ba4a7c806a16529337e6165bd7d9ac78d615b688",
-            "added": "1792757249",
-            "name": "[華屋] 委員長を乳首責めで分からせちゃいました!! [中国翻訳] [紫藤汉化组].zip",
-            "tsize": "9852",
-            "fsize": "123892374"
-          }
-        ]
-      },
-      {
-        "gid": 4275488,
-        "token": "6f7d1554e2",
-        "title": "[無道叡智] melody of memories 记忆的旋律 (えちえちでごめんね)[阳头个人汉化]",
-        "title_jpn": "[無道叡智] melody of memories 记忆的旋律 (えちえちでごめんね)[阳头个人汉化]",
-        "thumb": "https://ehgt.org/w/02/654/90153-hl7d14ps.webp",
-        "uploader": "RTJ_Let2",
-        "posted": "1792756287",
-        "pages": 23,
-        "rating": "4.43",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:original",
-          "artist:mdo-h",
-          "male:sole male",
-          "female:blowjob",
-          "female:collar",
-          "female:daughter",
-          "female:leash",
-          "female:nakadashi",
-          "female:sole female",
-          "female:urination",
-          "mixed:incest"
-        ],
-        "filecount": "23",
-        "filesize": 170483685,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "08189d660239a3da2aa55a6cf41370794201cdd0",
-            "added": "1792756352",
-            "name": "[無道叡智] melody of memories 记忆的旋律 (えちえちでごめんね) [阳头个人汉化] [中国翻訳].zip",
-            "tsize": "6586",
-            "fsize": "161956267"
-          }
-        ]
-      },
-      {
-        "gid": 4275447,
-        "token": "4ab951df97",
-        "title": "[Unemployed Metal] 漢謨漏比法典 [Chinese] [沒有漢化]（Ongoing）",
-        "title_jpn": "[メタル無職] カスみたいな法律 [中国翻訳]（進行中）",
-        "thumb": "https://ehgt.org/w/02/561/35047-6wsf0uhi.webp",
-        "uploader": "x392",
-        "posted": "1792754153",
-        "pages": 53,
-        "rating": "4.27",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:original",
-          "male:ryona",
-          "female:blowjob",
-          "female:exhibitionism",
-          "female:forced exposure",
-          "female:futanari",
-          "female:futanarization",
-          "female:hairy",
-          "female:lolicon",
-          "female:small breasts",
-          "female:small penis",
-          "female:witch",
-          "other:no penetration"
-        ],
-        "filecount": "53",
-        "filesize": 123544625,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "35f60284a73b03d70af7c14d5e9f813de709e9cb",
-            "added": "1792754184",
-            "name": "[メタル無職] カスみたいな法律 (進行中) [中国翻訳] [沒有漢化] （Ongoing）.zip",
-            "tsize": "9289",
-            "fsize": "116467353"
-          }
-        ],
-        "parent_gid": "4263096",
-        "parent_key": "719660bb1d",
-        "first_gid": "4106362",
-        "first_key": "8cced47c92"
-      },
-      {
-        "gid": 4275436,
-        "token": "b4fcd28fbc",
-        "title": "[Master of Tea &amp; Chaos Studio (Sencha Bashira, Mugicha Bashira)] Yosei Shoukan 3-goushitsu Lacy ~Kasshoku Hada Elf o Shimei Shita Dotei Orc~ 1 | 精灵妓院 3号技师蕾西～指名了褐色肌肤精灵的处男兽人先生～ 1 [Chinese] [白杨汉化组] [Decensored]",
-        "title_jpn": "[茶の魔王 (煎茶柱、麥茶柱)] 妖精娼館 3号室レイシー 〜褐色肌エルフを指名した童貞オーク〜 1 [中国翻訳] [無修正]",
-        "thumb": "https://ehgt.org/w/02/739/36122-owykqc2c.webp",
-        "uploader": "RavenCHN",
-        "posted": "1792753276",
-        "pages": 55,
-        "rating": "4.52",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:original",
-          "artist:sencha bashira",
-          "male:big penis",
-          "male:muscle",
-          "male:nipple stimulation",
-          "male:orc",
-          "male:sole male",
-          "male:tall man",
-          "male:virginity",
-          "female:big breasts",
-          "female:dark skin",
-          "female:elf",
-          "female:emotionless sex",
-          "female:mouth mask",
-          "female:nakadashi",
-          "female:prostitution",
-          "female:sole female",
-          "other:multi-work series",
-          "other:uncensored"
-        ],
-        "filecount": "55",
-        "filesize": 405631909,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "1cf7519c3347ec0ae5e2324f053c204ff54ec2c9",
-            "added": "1792753370",
-            "name": "妖精娼館 3号室レイシー 〜褐色肌エルフを指名した童貞オーク〜 1 [中国翻訳] [無修正].zip",
-            "tsize": "8068",
-            "fsize": "400593077"
-          }
-        ]
-      },
-      {
-        "gid": 4275394,
-        "token": "1c74e36186",
-        "title": "[Horizontal World (Matanonki)] Horizontal Archive -Iro Ai Raku Mu- | 水平檔案-色・愛・落・夢-總集篇 (Blue Archive) [Chinese] [Decensored] [Digital]",
-        "title_jpn": "[Horizontal World (またのんき▼)] ホリゾンタルアーカイブ -色・愛・落・夢- (ブルーアーカイブ) [中国翻訳] [無修正] [DL版]",
-        "thumb": "https://ehgt.org/w/02/739/31607-n09ey7i2.webp",
-        "uploader": "beta_ecchi",
-        "posted": "1792750841",
-        "pages": 193,
-        "rating": "4.79",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:blue archive",
-          "character:iroha natsume",
-          "character:mari iochi",
-          "character:miyako tsukiyuki",
-          "character:mutsuki asagi",
-          "character:sensei",
-          "group:horizontal world",
-          "artist:kinnotama",
-          "male:sole male",
-          "male:teacher",
-          "female:blowjob",
-          "female:halo",
-          "female:kemonomimi",
-          "female:kissing",
-          "female:leg lock",
-          "female:lolicon",
-          "female:nakadashi",
-          "female:nun",
-          "female:ponytail",
-          "female:squirting",
-          "female:sumata",
-          "female:sweating",
-          "female:swimsuit",
-          "female:unusual pupils",
-          "female:very long hair",
-          "female:x-ray",
-          "other:soushuuhen",
-          "other:uncensored"
-        ],
-        "filecount": "193",
-        "filesize": 368266683,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "dee4499c621871cd604e494f9c55bb596399b387",
-            "added": "1792750904",
-            "name": "[またのんき▼] 水平檔案-色・愛・落・夢-總集篇 [chinese] [中国翻訳] [dl] [uncen].zip",
-            "tsize": "7295",
-            "fsize": "360860404"
-          }
-        ]
-      },
-      {
-        "gid": 4275387,
-        "token": "6e9008283e",
-        "title": "(C108) [SKK (Syoukaki, Osakana)] DOLLS&#039; Diaries COLLECTION (Girls&#039; Frontline) [Chinese] [欶澜汉化组]",
-        "title_jpn": "(C108) [SKK (消火器、ヲさかな)] DOLLS&#039; Diaries COLLECTION (ドールズフロントライン) [中国翻訳]",
-        "thumb": "https://ehgt.org/w/02/739/22191-m4ehr2pv.webp",
-        "uploader": "ShorelineTrans",
-        "posted": "1792750383",
-        "pages": 54,
-        "rating": "4.46",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:girls frontline",
-          "character:dp-12",
-          "character:dsr-50",
-          "character:vsk-94",
-          "group:skk",
-          "artist:osakana",
-          "artist:syoukaki",
-          "male:muscle",
-          "female:ahegao",
-          "female:asphyxiation",
-          "female:big ass",
-          "female:big breasts",
-          "female:blowjob",
-          "female:nakadashi",
-          "female:nipple stimulation",
-          "female:paizuri",
-          "female:pantyhose",
-          "female:pixie cut",
-          "female:rape",
-          "female:ryona"
-        ],
-        "filecount": "54",
-        "filesize": 169409038,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "8d21023e70e24b0e1dafcc86bce2792dc4a21790",
-            "added": "1792750418",
-            "name": "(C108) [SKK (消火器、ヲさかな)] DOLLS&#039; Diaries COLLECTION (ドールズフロントライン) [中国翻訳] [欶澜汉化组].zip",
-            "tsize": "6885",
-            "fsize": "169147098"
-          }
-        ]
-      },
-      {
-        "gid": 4275348,
-        "token": "382ece41ea",
-        "title": "[烏天狗調教倶楽部 (でかねこ,胃雑魚)] 大妖怪の烏天狗がモブや触手なんかに負けるわけない。 (アイドリッシュセブン) [Chinese] [逃亡者×真不可视汉化组]",
-        "title_jpn": "[烏天狗調教倶楽部 (でかねこ,胃雑魚)] 大妖怪の烏天狗がモブや触手なんかに負けるわけない。 (アイドリッシュセブン) [中国翻訳]",
-        "thumb": "https://ehgt.org/w/02/739/22495-4auw1wl6.webp",
-        "uploader": "qq3870990",
-        "posted": "1792748492",
-        "pages": 73,
-        "rating": "4.57",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:idolish7",
-          "character:yuki",
-          "male:anal",
-          "male:anal intercourse",
-          "male:beauty mark",
-          "male:males only",
-          "male:nakadashi",
-          "male:shotacon",
-          "male:tentacles",
-          "male:wings",
-          "male:x-ray",
-          "male:yaoi"
-        ],
-        "filecount": "73",
-        "filesize": 205092651,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "fcfe5b0c8bb67511ce52c4876d2f9fbc7ba312a0",
-            "added": "1792748551",
-            "name": "[烏天狗調教倶楽部 (でかねこ,胃雑魚)] 大妖怪の烏天狗がモブや触手なんかに負けるわけない。 (アイドリッシュセブン) [中国翻訳] [逃亡者×真不可视汉化组].zip",
-            "tsize": "7921",
-            "fsize": "194378484"
-          }
-        ]
-      },
-      {
-        "gid": 4275066,
-        "token": "7182d16173",
-        "title": "[Tokumori Ajillo (Satou Yachil)] Tsukatsuki Rio no Kaishi Kata 3 | 調月莉央的放鬆法3 (Blue Archive) [Chinese] [小羌寶個人漢化] [Digital]",
-        "title_jpn": "[特盛アヒージョ (佐藤八千流)] 調月リオの解し方3 (ブルーアーカイブ) [中国翻訳] [DL版]",
-        "thumb": "https://ehgt.org/w/02/738/70126-c2wtvf2m.webp",
-        "uploader": "Wowowowss",
-        "posted": "1792737875",
-        "pages": 20,
-        "rating": "3.93",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:blue archive",
-          "character:rio tsukatsuki",
-          "group:tokumori ajillo",
-          "artist:satou yachil",
-          "male:sole male",
-          "female:anal",
-          "female:anal intercourse",
-          "female:bbw",
-          "female:big areolae",
-          "female:big ass",
-          "female:big breasts",
-          "female:bikini",
-          "female:enema",
-          "female:exposed clothing",
-          "female:focus anal",
-          "female:halo",
-          "female:huge breasts",
-          "female:paizuri",
-          "female:rimjob",
-          "female:sole female",
-          "female:squirting",
-          "female:stockings",
-          "female:swimsuit",
-          "female:x-ray",
-          "other:multi-work series"
-        ],
-        "filecount": "20",
-        "filesize": 26853298,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "7d7a8ca91a2da285b6e68d1de80f362c2c98f7ab",
-            "added": "1792737918",
-            "name": "[特盛アヒージョ (佐藤八千流)] 調月莉央的放鬆法3 (Blue Archive) [小羌寶個人漢化] [中国翻訳] [DL版].zip",
-            "tsize": "7358",
-            "fsize": "22727127"
-          }
-        ],
-        "parent_gid": "4275064",
-        "parent_key": "817b597bc7",
-        "first_gid": "4275064",
-        "first_key": "817b597bc7"
-      },
-      {
-        "gid": 4274825,
-        "token": "b864432888",
-        "title": "[Iiwake-Gaisya (Shigemiya Kyouhei)] Reimu to Alice to... | 灵梦与爱丽丝与... (Touhou Project) [Chinese] [不做主角汉化组] [Digital]",
-        "title_jpn": "[いいわけ会社 (樹宮匡平)] 霊夢とアリスと... (東方Project) [中国翻訳] [DL版]",
-        "thumb": "https://ehgt.org/w/02/738/37661-g7tyxncs.webp",
-        "uploader": "hakre98",
-        "posted": "1792726570",
-        "pages": 21,
-        "rating": "4.07",
-        "category": "Doujinshi",
-        "tags": [
-          "language:chinese",
-          "language:translated",
-          "parody:touhou project",
-          "character:alice margatroid",
-          "character:reimu hakurei",
-          "group:iiwake-gaisya",
-          "artist:shigemiya kyouhei",
-          "female:big breasts",
-          "female:blowjob",
-          "female:miko",
-          "mixed:ffm threesome",
-          "mixed:group"
-        ],
-        "filecount": "21",
-        "filesize": 165682134,
-        "expunged": false,
-        "torrentcount": "1",
-        "torrents": [
-          {
-            "hash": "9d684d3208a9a496d25e85a856c3ae862fce0274",
-            "added": "1792726649",
-            "name": "[いいわけ会社 (樹宮匡平)] 灵梦与爱丽丝与… (Touhou Project) [中国翻訳].zip",
-            "tsize": "5882",
-            "fsize": "144089746"
-          }
-        ]
       }
     ]
   },
@@ -9003,8 +9164,8 @@
       "Chinese",
       "webtoon"
     ],
-    "generatedAt": "2026-10-28T23:59:41.880218",
-    "cutoffDate": "2026-10-18",
+    "generatedAt": "2026-10-29T23:55:22.516440",
+    "cutoffDate": "2026-10-19",
     "galleries": [
       {
         "gid": 4280958,
@@ -9015,7 +9176,7 @@
         "uploader": "alfredmeow",
         "posted": "1792929362",
         "pages": 109,
-        "rating": "2.90",
+        "rating": "2.87",
         "category": "Manga",
         "tags": [
           "language:chinese",
