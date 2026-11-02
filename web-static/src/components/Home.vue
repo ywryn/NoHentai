@@ -215,7 +215,7 @@ import Popover from 'primevue/popover'
 import GalleryList from '@/components/GalleryList.vue'
 import Paginator from '@/components/Paginator.vue'
 import { exTypeList, exTypeDotColors, exTypeClassMap, formatTimestamp } from '@/utils/galleryUtils'
-import { loadGalleryPage, loadTagSuggestions } from '@/composables/useGalleryData'
+import { loadGalleryPage, loadTagSuggestions, watchPublicRevision } from '@/composables/useGalleryData'
 import {
   SEARCH_SYNTAX_HELP,
   parseQuery,
@@ -447,6 +447,7 @@ async function fetchPage() {
   } finally { if (version === requestVersion) loading.value = false }
 }
 watch(() => [route.query.q, route.query.type, route.query.page], fetchPage, { immediate: true })
+const stopRevision = watchPublicRevision(fetchPage)
 watch(() => route.query.q, q => { searchQuery.value = String(q || '') })
 watch(searchQuery, value => {
   clearTimeout(suggestionTimer)
@@ -465,7 +466,7 @@ watch(searchQuery, value => {
 })
 onBeforeUnmount(() => {
   clearTimeout(debounceTimer); clearTimeout(blurTimer); clearTimeout(suggestionTimer)
-  pageController?.abort(); suggestionController?.abort()
+  pageController?.abort(); suggestionController?.abort(); stopRevision()
 })
 </script>
 

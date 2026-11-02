@@ -1,6 +1,6 @@
 # Vultr 独立服务器部署与迁移
 
-架构为 Nginx 静态前端 + 同域 FastAPI + SQLite（WAL）+ 单实例同步 worker + systemd timer。GitHub 仅保存源码，生产内容和任务状态不再提交 Git。第三方收藏、词典、翻译、OCR 仍通过相应服务获取；Python 替代的是原 Serverless 业务逻辑。
+架构为 Nginx 静态前端 + 同域 FastAPI + SQLite（WAL）+ 单实例同步 worker（数据库调度）+ systemd 备份 timer。GitHub 仅保存源码，生产内容和任务状态不再提交 Git。第三方收藏、词典、翻译、OCR 仍通过相应服务获取；Python 替代的是原 Serverless 业务逻辑。
 
 ## 1. 准备服务器
 
@@ -65,7 +65,8 @@ sudo sh deploy/publish-frontend.sh
 sudo cp deploy/systemd/nohentai-* /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now nohentai-api.service nohentai-worker.service
-sudo systemctl enable --now nohentai-sync.timer nohentai-backup.timer
+sudo systemctl disable --now nohentai-sync.timer
+sudo systemctl enable --now nohentai-backup.timer
 curl --fail http://127.0.0.1:8000/api/health
 sudo systemctl list-timers 'nohentai-*'
 ```
@@ -100,11 +101,11 @@ sudo certbot --nginx -d 你的域名 -d www.你的域名 --redirect
 - 首页数量、每日分组、统计和实体书单与最终迁移快照一致。
 - 管理密码登录、刷新恢复、退出撤销；翻译密码不能管理内容。
 - 编辑一条标题 / 书目，刷新公开页面立即生效，再还原测试内容。
-- 两个浏览器编辑同一资源，旧版本保存得到冲突，草稿可导出。
+- 两个浏览器编辑同一条目，旧版本保存得到冲突，草稿可导出。
 - admin 配置凭证，确认只返回配置状态，不返回明文。
 - 手动执行一次全量同步，确认任务完成、数据版本变化、人工修改仍在。
 - 使用真实画廊验证阅读器图片、词典以及各已配置 OCR / 翻译服务。
-- 检查 timer 下一次运行时间、worker 心跳与数据库备份。
+- 在后台确认各项调度时间与时区、worker 心跳和备份；新安装 / 升级的调度默认暂停，验收后按需启用。
 
 旧浏览器的 Service Worker 更新后，业务 JSON / CSV 使用 NetworkOnly。旧 Vercel admin 会话在新服务器失效，需重新登录；浏览器之前打开的页面请刷新。
 
@@ -127,7 +128,7 @@ sudo systemctl start nohentai-backup.service
 
 ```sh
 sudo systemctl start nohentai-backup.service
-sudo systemctl stop nohentai-worker
+sudo systemctl stop nohentai-api nohentai-worker
 cd /opt/nohentai
 sudo git pull --ff-only
 sudo .venv/bin/pip install -r backend/requirements.lock.txt
@@ -142,11 +143,11 @@ sudo systemctl start nohentai-worker
 
 worker 运行中不要替换 Python 代码。计划维护时先查看任务状态，等待当前任务结束后再停止 worker、更新代码；上面更新命令用于已无运行任务时。systemd 停止会终止整个任务进程组；若强制停止，重启后中断任务显示失败，可以重跑。数据库目录在 checkout 外，不受 pull / 前端发布影响。
 
-管理密码修改 `/etc/nohentai/nohentai.env` 后重启 API；加密主密钥不要直接替换。后台写过的业务凭证优先于环境文件；替换时建议始终使用 admin 管理同一项，避免两个配置来源混淆。
+首次启动从 `ADMIN_PASSWORD` 创建账户，之后在后台“账户与会话”修改密码；环境文件不再轮换数据库密码。忘记密码使用本机 `reset-admin --password-file`，见下方命令。加密主密钥不要直接替换。后台写过的业务凭证优先于环境文件；替换时建议始终使用 admin 管理同一项，避免两个配置来源混淆。
 
 ## 7. 备份、恢复与回退
 
-每天 UTC 19:45 及每次同步开始前使用 SQLite Backup API 生成一致性备份，保留最近七份，路径为 `/var/lib/nohentai/backups`。这表示七个快照，不一定覆盖七天；频繁手动同步会更快轮换。应把数据库快照和单独保存的主密钥 / 环境文件复制到服务器以外的位置。
+每天 UTC 19:45 及每次同步开始前使用 SQLite Backup API 生成一致性备份，保留最近七份，路径为 `/var/lib/nohentai/backups`。这表示七个快照，不一定覆盖七天；频繁手动同步会更快轮换。有上传封面时同时生成同名 `.media.zip`，恢复时将其中 WebP 放回数据目录的 uploads/。应把数据库、配套媒体以及单独保存的主密钥 / 环境文件复制到服务器以外的位置。
 
 恢复时停写并保留当前完整目录（包含 WAL/SHM），不要只复制在线 `.sqlite3` 文件：
 
@@ -159,10 +160,11 @@ sudo mv /var/lib/nohentai /var/lib/nohentai.before-restore
 sudo install -d -o nohentai -g nohentai -m 0700 /var/lib/nohentai
 sudo install -o nohentai -g nohentai -m 0600 /root/restore.sqlite3 /var/lib/nohentai/nohentai.sqlite3
 sudo systemctl start nohentai-api nohentai-worker
-sudo systemctl start nohentai-sync.timer nohentai-backup.timer
+sudo systemctl start nohentai-backup.timer
+# 数据库内的调度状态来自所恢复的快照，请在后台确认。
 ```
 
-目录备份名已存在时改用新名字，勿覆盖。恢复快照会同时恢复当时的内容、配置、加密凭证、会话与任务状态；恢复后建议轮换管理密码以使旧会话失效。使用对应加密密钥，否则无法读取凭证。前端可把 current 符号链接切回先前 release，但后端降级前必须确认数据库 schema 兼容；本版拒绝高于 1 的 schema。
+目录备份名已存在时改用新名字，勿覆盖。恢复快照会同时恢复当时的内容、配置、加密凭证、会话与任务状态；恢复后建议轮换管理密码以使旧会话失效。使用对应加密密钥，否则无法读取凭证。前端可把 current 符号链接切回先前 release，但后端降级前必须确认数据库 schema 兼容；本版 schema 为 2，拒绝高于 2 的数据库；旧 schema 1 代码不能读取升级后的库。
 
 确认主动批量取消收藏，需要绕过 20% 保护时，先停止常驻 worker，在具备生产环境变量的本机维护终端执行：
 
@@ -182,3 +184,23 @@ sudo systemctl start nohentai-worker
 ## 参考
 
 实现依据 [FastAPI 运行部署](https://fastapi.tiangolo.com/deployment/manually/)、[Python SQLite 事务与备份](https://docs.python.org/3/library/sqlite3.html)、[systemd timer](https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html)。本地自动化不证明 Vultr 网络、来源站 Cookie 或付费服务凭证有效，最终上线按上面的验收步骤验证。
+
+## schema 1 升级到 schema 2
+
+先通过 SQLite Backup API 生成一致性快照，并把回退用快照复制到七份轮换目录之外。保存当前代码 commit、Nginx 配置和静态 release 路径；在副本上调用新版本 `db.initialize()`，比较来源、覆盖、书目、规则、凭证和快照数据，执行 `PRAGMA integrity_check`。迁移保留旧历史并为书目 / 规则分配稳定内部 ID，重复启动不会重建 ID。
+
+正式升级时停止 API 和 worker，重新备份最终库，安装锁定依赖（包含 Pillow），更新代码，然后以服务用户和生产环境运行迁移。启动 API 验证后再启动 worker 和发布前端。新调度默认关闭，不要同时启用旧 sync.timer。已有 HTTPS 的 Nginx 只合并新 API 压缩规则和 `/media/` 代理，不能覆盖为仓库 HTTP 模板。
+
+迁移失败会回滚事务。若上线验收失败需要回退，保持 API / worker 停止，使用新的空数据目录恢复停写前 schema 1 快照，恢复旧代码与静态 release，再启动；不能只降级代码。升级后已产生写入时，先备份并评估数据合并，不直接覆盖。
+
+本机密码恢复（新密码文件需预先创建为 0600；命令不在参数中暴露密码）：
+
+```sh
+sudo systemd-run --wait --pipe --collect --uid=nohentai --gid=nohentai \
+  -p WorkingDirectory=/opt/nohentai \
+  -p EnvironmentFile=/etc/nohentai/nohentai.env \
+  -p Environment=NOHENTAI_DATA_DIR=/var/lib/nohentai \
+  /opt/nohentai/.venv/bin/python -m backend.cli reset-admin --password-file /var/lib/nohentai/new-admin-password
+```
+
+文件应仅允许 nohentai 用户读取，重置完成后立即删除。原始初始密码文件不再反映后台修改后的密码。

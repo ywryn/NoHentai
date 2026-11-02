@@ -12,14 +12,12 @@ FIELDS = {'title', 'uploader', 'category', 'gid', 'tag'}
 LIST_FIELDS = ('gid', 'title', 'title_jpn', 'thumb', 'category', 'filecount', 'posted', 'rating', 'favCategory')
 # Keep source and overrides separate; apply the same merge and visibility rules
 # inside SQLite before ANY filtering, counts, ordering or LIMIT/OFFSET.
-VISIBLE = '''WITH effective AS MATERIALIZED (
- SELECT g.gid, g.position,
- CASE WHEN json_extract(r.data, '$."' || g.gid || '"') IS NULL THEN g.data
- ELSE json_patch(g.data, json_extract(r.data, '$."' || g.gid || '"')) END AS data
- FROM galleries g JOIN resources r ON r.name='overrides'
+VISIBLE = """WITH effective AS MATERIALIZED (
+ SELECT g.gid,g.position,CASE WHEN p.data IS NULL THEN g.data ELSE json_patch(g.data,p.data) END AS data
+ FROM galleries g LEFT JOIN gallery_overrides p ON p.gid=g.gid
 ), visible AS MATERIALIZED (
- SELECT * FROM effective WHERE COALESCE(json_extract(data, '$.hidden'), 0)=0
-)'''
+ SELECT * FROM effective WHERE COALESCE(json_extract(data,'$.hidden'),0)=0
+)"""
 
 
 def parse_query(query):
@@ -225,3 +223,35 @@ def gallery_detail(gid, source='favorites'):
             details.append({'tag': tag, 'namespace': namespace, 'value': value, 'tag_cn': detail.get('name', ''),
                             'intro': detail.get('intro', ''), 'links': detail.get('links', '')})
         return {'gallery': gallery, 'tagDetails': details}
+
+
+def tags_page(namespace='all', query='', page=1):
+    with db.connect() as con:
+        revision = db.snapshot(con, 'catalog-revision')
+    return cached_tags(str(settings.DB_PATH), revision, namespace, query.lower().strip(), page)
+
+
+@lru_cache(maxsize=32)
+def cached_tags(database_path, revision, namespace, query, page):
+    from collections import Counter
+    with db.connect() as con:
+        con.execute('PRAGMA temp_store=MEMORY')
+        con.execute('BEGIN')
+        index = translations(con)
+        freq = dict(con.execute(VISIBLE + " SELECT t.value,COUNT(*) FROM visible,json_each(json_extract(data,'$.tags')) t GROUP BY t.value"))
+    counts = Counter()
+    items = []
+    for tag, detail in index.items():
+        ns = detail['namespace']
+        if ns in ('rows','reclass'):
+            continue
+        counts[ns] += 1
+        if namespace != 'all' and namespace != ns:
+            continue
+        if query and query not in detail['value'].lower() and query not in detail.get('name','').lower():
+            continue
+        items.append({'ns':ns,'key':detail['value'],'name':detail.get('name',''),'intro':detail.get('intro',''),'freq':freq.get(tag,0)})
+    items.sort(key=lambda item:(-item['freq'],item['key']))
+    total = len(items)
+    page = min(page, max(1,math.ceil(total/200)))
+    return {'items':items[(page-1)*200:page*200],'page':page,'total':total,'namespaces':list(counts), 'counts':{'all':sum(counts.values()),**counts}}

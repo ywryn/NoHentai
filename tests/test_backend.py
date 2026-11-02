@@ -79,6 +79,7 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(self.admin('logout').status_code, 200)
         self.assertEqual(self.admin('runs').status_code, 401)
         token = security.login(os.environ['ADMIN_PASSWORD'], 'another')['token']
+        security.change_password(os.environ['ADMIN_PASSWORD'], 'rotated-password-123456')
         os.environ['ADMIN_PASSWORD'] = 'rotated-password-123456'
         self.assertEqual(self.admin('runs', password=token).status_code, 401)
         token = security.login(os.environ['ADMIN_PASSWORD'], 'another')['token']
@@ -286,8 +287,8 @@ class BackendTests(unittest.TestCase):
     def test_full_migration_matches_repository_and_refuses_second_import(self):
         # Clear fixture tables, then exercise the real one-time migration.
         with db.connect() as con:
-            con.execute('DELETE FROM resources')
-            con.execute('DELETE FROM galleries')
+            for table in ('resources','resource_versions','galleries','books','daily_rules','gallery_overrides'):
+                con.execute(f'DELETE FROM {table}')
         initialize_data()
         source = json.loads((settings.ROOT / 'web-static/public/data/galleries.json').read_text())
         self.assertEqual(len(self.client.get('/data/galleries.json').json()), len(source))

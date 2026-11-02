@@ -23,3 +23,9 @@ def encryption_key():
 def origins():
     return [v.strip().rstrip('/') for v in os.getenv(
         'ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',') if v.strip()]
+
+DEFAULTS = {
+    'MAX_RETRIES': '5', 'RETRY_DELAY_SECONDS': '2', 'LLM_TIMEOUT_SECONDS': '90',
+    'LLM_CONCURRENCY': '2', 'OCR_CONCURRENCY': '2', 'VISION_MONTHLY_LIMIT': '1000',
+}
+BUSINESS_NAMES = tuple(dict.fromkeys((*SECRET_NAMES, *DEFAULTS)))

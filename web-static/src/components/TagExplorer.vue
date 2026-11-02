@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch, nextTick, onBeforeUnmount } from 'vue'
 import ToggleSwitch from 'primevue/toggleswitch'
+import { watchPublicRevision } from '@/composables/useGalleryData'
 import { useTheme } from '@/composables/useTheme'
 
 const baseUrl = import.meta.env.BASE_URL
@@ -8,39 +9,8 @@ const { isDark } = useTheme()
 
 // ── 数据 ──────────────────────────────────────────────
 const namespaces = ref([])
-const freqMap = ref({})
 const loading = ref(true)
 const error = ref('')
-
-onMounted(async () => {
-  try {
-    const [transRes, galRes] = await Promise.all([
-      fetch(`${baseUrl}data/translations.json`),
-      fetch(`${baseUrl}data/galleries.json`),
-    ])
-    if (!transRes.ok) throw new Error('translations.json not found')
-
-    const transJson = await transRes.json()
-    const skip = new Set(['rows', 'reclass'])
-    namespaces.value = transJson.data.filter(n => !skip.has(n.namespace))
-
-    if (galRes.ok) {
-      const galleries = await galRes.json()
-      const freq = {}
-      for (const g of galleries) {
-        for (const tag of (g.tags || [])) {
-          freq[tag] = (freq[tag] || 0) + 1
-        }
-      }
-      freqMap.value = freq
-    }
-  } catch (e) {
-    error.value = '数据加载失败：' + e.message
-  } finally {
-    loading.value = false
-  }
-})
-
 // ── 状态 ──────────────────────────────────────────────
 const isChinese = ref(true)
 const searchQuery = ref('')
@@ -87,50 +57,18 @@ function nsColor(ns) {
 // ── 计算 ──────────────────────────────────────────────
 const nsList = computed(() => namespaces.value.map(n => n.namespace))
 
-const allTags = computed(() => {
-  const result = []
-  for (const ns of namespaces.value) {
-    for (const [key, val] of Object.entries(ns.data)) {
-      result.push({
-        ns: ns.namespace,
-        key,
-        name: val.name || '',
-        intro: val.intro || '',
-        freq: freqMap.value[`${ns.namespace}:${key}`] || 0,
-      })
-    }
-  }
-  return result
-})
-
-const nsTags = computed(() => {
-  if (activeNs.value === 'all') return allTags.value
-  return allTags.value.filter(t => t.ns === activeNs.value)
-})
-
-const filtered = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
-  const base = q
-    ? nsTags.value.filter(t => t.key.toLowerCase().includes(q) || t.name.toLowerCase().includes(q))
-    : nsTags.value
-  return [...base].sort((a, b) => b.freq - a.freq || a.key.localeCompare(b.key))
-})
-
-const totalCount = computed(() => filtered.value.length)
-const totalPages = computed(() => Math.ceil(totalCount.value / PAGE_SIZE))
-
-const paginated = computed(() => {
-  const start = (currentPage.value - 1) * PAGE_SIZE
-  return filtered.value.slice(start, start + PAGE_SIZE)
-})
-
-const nsCount = computed(() => {
-  const map = { all: allTags.value.length }
-  for (const ns of namespaces.value) {
-    map[ns.namespace] = Object.keys(ns.data).length
-  }
-  return map
-})
+const paginated = ref([]), totalCount = ref(0), nsCount = ref({all:0})
+const totalPages = computed(() => Math.max(1,Math.ceil(totalCount.value/PAGE_SIZE)))
+let timer, controller, sequence=0
+async function loadTags(){
+ controller?.abort();controller=new AbortController();const ticket=++sequence;loading.value=true;error.value=''
+ try{const params=new URLSearchParams({namespace:activeNs.value,q:searchQuery.value,page:String(currentPage.value)});const response=await fetch(`/api/tags?${params}`,{signal:controller.signal});if(!response.ok)throw new Error('标签接口暂时不可用');const result=await response.json();if(ticket!==sequence)return;paginated.value=result.items;totalCount.value=result.total;nsCount.value=result.counts;namespaces.value=result.namespaces.map(namespace=>({namespace}));if(currentPage.value!==result.page)currentPage.value=result.page}
+ catch(e){if(ticket===sequence&&e.name!=='AbortError')error.value=e.message}finally{if(ticket===sequence)loading.value=false}
+}
+watch([activeNs,searchQuery,currentPage],()=>{clearTimeout(timer);timer=setTimeout(loadTags,200)})
+let stopRevision
+onMounted(()=>{loadTags();stopRevision=watchPublicRevision(loadTags)})
+onBeforeUnmount(()=>{stopRevision?.();clearTimeout(timer);controller?.abort()})
 
 function prevPage() { if (currentPage.value > 1) currentPage.value-- }
 function nextPage() { if (currentPage.value < totalPages.value) currentPage.value++ }
@@ -174,10 +112,12 @@ function hideTooltip() {
 
 <template>
   <div class="tag-explorer-wrapper">
-    <div v-if="loading" class="loading">Loading...</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
+    <div v-if="loading && !namespaces.length" class="loading">Loading...</div>
+    <div v-else-if="error && !namespaces.length" class="error">{{ error }}</div>
 
     <template v-else>
+      <p v-if="error" class="error" role="alert">{{error}}</p>
+      <p v-if="loading" role="status">正在更新结果…</p>
       <!-- 顶栏：搜索 + 语言切换 -->
       <div class="toolbar">
         <input

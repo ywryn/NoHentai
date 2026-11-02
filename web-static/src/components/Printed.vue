@@ -1,13 +1,12 @@
 <script setup>
-import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import * as OpenCC from 'opencc-js'
+import { watchPublicRevision } from '@/composables/useGalleryData'
 import { useViewMode } from '@/composables/useViewMode'
 import GalleryList from '@/components/GalleryList.vue'
 import Paginator from '@/components/Paginator.vue'
 import { exTypeClassMap } from '@/utils/galleryUtils'
-import { loadGalleries, loadTranslations } from '@/composables/useGalleryData'
-import { parseBooksCSV } from '@/utils/printedBooks'
 import {
   parseQuery,
   passesQuery,
@@ -68,7 +67,7 @@ function getTagValues(tags) {
 }
 
 function getThumb(item) {
-  if (item?.cover) return `/printed-cover/${encodeURIComponent(item.cover)}`
+  if (item?.cover) return /^[a-f0-9]{32}\.webp$/.test(item.cover) ? `/media/${item.cover}` : `/printed-cover/${encodeURIComponent(item.cover)}`
   const sid = item?.sid
   if (!sid && sid !== 0) return null
   return galleryMap.value[String(sid)]?.thumb ?? null
@@ -221,27 +220,29 @@ watch(currentPage, v => {
   router.replace({ query })
 })
 
-onMounted(async () => {
+let stopRevision
+async function loadBooks() {
+  const previousPage = parseInt(route.query.page) || currentPage.value
   try {
-    const [digeRes, galleries, translations] = await Promise.all([
-      fetch('/data/future_digi.csv'),
-      loadGalleries(),
-      loadTranslations(),
-    ])
-    if (!digeRes.ok) throw new Error('future_digi.csv not found')
-    items.value = parseBooksCSV(await digeRes.text())
-    galleryMap.value = Object.fromEntries(galleries.map(g => [String(g.gid), g]))
-    translationData.value = translations
-    const pageFromUrl = parseInt(route.query.page) || 1
-    if (pageFromUrl > 1) currentPage.value = pageFromUrl
+    const response = await fetch('/api/books')
+    if (!response.ok) throw new Error('书单接口暂时不可用')
+    const result = await response.json()
+    items.value = result.items.map(item => item.book)
+    galleryMap.value = Object.fromEntries(result.items.filter(item=>item.gallery).map(item=>[String(item.gallery.gid),item.gallery]))
+    translationData.value = result.translations
+    await nextTick()
+    currentPage.value = Math.max(1, Math.min(previousPage, Math.ceil(filteredItems.value.length/perPage.value)||1))
+    error.value = ''
   } catch (e) {
     error.value = '数据加载失败：' + e.message
   } finally {
     loading.value = false
   }
-})
+}
+onMounted(() => { loadBooks(); stopRevision=watchPublicRevision(loadBooks) })
 
 onBeforeUnmount(() => {
+  stopRevision?.()
   clearTimeout(toastTimer)
   clearTimeout(blurTimer)
 })

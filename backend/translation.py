@@ -65,7 +65,7 @@ def translate(body):
     payload = {'model': cfg['model'], 'messages': messages, 'temperature': .3, 'max_tokens': 4000}
     if cfg['jsonMode']:
         payload['response_format'] = {'type': 'json_object'}
-    data = json_request('POST', base + '/chat/completions', headers={'Authorization': 'Bearer ' + api_key}, json=payload)
+    data = json_request('POST', base + '/chat/completions', headers={'Authorization': 'Bearer ' + api_key}, json=payload, timeout=float(credential('LLM_TIMEOUT_SECONDS') or 90))
     content = data['choices'][0]['message']['content']
     try:
         parsed = json.loads(content[content.index('{'):content.rindex('}') + 1])
@@ -199,7 +199,7 @@ def ocr(body):
                     results.append({'text': ''.join(w['WordText'] for w in words), 'confidence': .85, 'bbox': bounds(points), 'polygon': None})
         source = 'ocrspace'
     elif selected == 'google' and credential('GOOGLE_VISION_API_KEY') and db.reserve(
-            'vision:' + datetime.now(timezone.utc).strftime('%Y-%m'), 1000, 35 * 86400):
+            'vision:' + datetime.now(timezone.utc).strftime('%Y-%m'), int(float(credential('VISION_MONTHLY_LIMIT') or 1000)), 35 * 86400):
         # Reserve BEFORE the request so concurrent requests cannot exceed quota.
         data = json_request('POST', 'https://vision.googleapis.com/v1/images:annotate',
                             params={'key': credential('GOOGLE_VISION_API_KEY')}, json={'requests': [{

@@ -55,13 +55,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { watchPublicRevision } from '@/composables/useGalleryData'
 import { useViewMode } from '@/composables/useViewMode'
 import GalleryList from '@/components/GalleryList.vue'
 import Paginator from '@/components/Paginator.vue'
 import { exTypeClassMap, formatTimestamp, enrichTags } from '@/utils/galleryUtils'
-import { loadTranslations } from '@/composables/useGalleryData'
 
 const { viewMode } = useViewMode()
 
@@ -135,15 +135,11 @@ watch(viewMode, () => { paginate(1) })
 
 async function loadData() {
   try {
-    const [dailyRes, translations] = await Promise.all([
-      fetch(`${baseUrl}data/daily_search.json`),
-      loadTranslations(),
-    ])
-    if (dailyRes.ok) {
-      const data = await dailyRes.json()
-      groups.value = Array.isArray(data) ? data : []
-    }
-    translationData.value = translations
+    const response = await fetch('/api/daily')
+    if (!response.ok) throw new Error('每日结果暂时不可用')
+    const result = await response.json()
+    groups.value = result.groups
+    translationData.value = result.translations
   } catch (e) {
     console.error('Error loading daily_search data:', e)
   }
@@ -168,7 +164,16 @@ const normalizedItems = computed(() => results.value.map(item => ({
 })))
 
 
+let stopRevision
+onBeforeUnmount(()=>stopRevision?.())
 onMounted(async () => {
+  stopRevision=watchPublicRevision(async()=>{
+    const previous=currentGroup.value, page=currentPage.value
+    await loadData()
+    const index=groups.value.findIndex(g=>previous?.groupId ? g.groupId===previous.groupId : g.name===previous?.name)
+    currentGroupIndex.value=index>=0?index:0
+    paginate(Math.max(1,Math.min(page,Math.ceil(currentGalleries.value.length/perPage.value)||1)))
+  })
   loading.value = true
   await loadData()
   const groupFromUrl = parseInt(route.query.group) || 1

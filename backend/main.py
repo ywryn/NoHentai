@@ -2,9 +2,9 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException, Body, Query
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, Response, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from . import admin, db, settings, public, media, translation, security, catalog
+from . import admin, db, settings, public, media, translation, security, catalog, services, media_store, operations
 from cryptography.fernet import Fernet
 
 
@@ -21,7 +21,7 @@ async def lifespan(app):
 
 app = FastAPI(title='NoHentai', lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 app.add_middleware(CORSMiddleware, allow_origins=settings.origins(), allow_methods=['GET', 'POST'],
-                   allow_headers=['Content-Type'], allow_credentials=False)
+                   allow_headers=['Content-Type', 'X-CSRF-Token'], allow_credentials=False)
 
 
 @app.middleware('http')
@@ -77,9 +77,65 @@ def health():
     return {'ok': True}
 
 
+@app.get('/api/admin/session')
+def current_session(request: Request):
+    session = security.session(request.cookies.get(security.COOKIE))
+    return {'ok': True, 'session': {k: session[k] for k in ('expiresAt', 'csrf')}}
+
+
 @app.post('/api/admin')
 def admin_api(request: Request, body: dict = Body(...)):
-    return safely(admin.handle, body, request.client.host)
+    body = dict(body)
+    cookie_mode = body.get('mode') == 'cookie' or not body.get('password')
+    if body.get('action') == 'verify' and body.get('mode') == 'cookie':
+        session = safely(security.login, body.get('password'), request.client.host, body.get('remember') is True, request.headers.get('user-agent', ''))
+        response = JSONResponse({'ok': True, 'session': {k: session[k] for k in ('expiresAt', 'csrf')}})
+        response.set_cookie(security.COOKIE, session['token'], httponly=True, secure=request.url.scheme == 'https',
+                            samesite='strict', path='/api', max_age=30*86400 if body.get('remember') is True else None)
+        return response
+    if not body.get('password'):
+        token = request.cookies.get(security.COOKIE)
+        session = security.session(token)
+        if not request.headers.get('x-csrf-token') or not security.hmac.compare_digest(request.headers['x-csrf-token'], session['csrf']):
+            raise HTTPException(403, '会话验证失败，请刷新页面重试')
+        body['password'] = token
+    result = safely(admin.handle, body, request.client.host)
+    response = JSONResponse(result)
+    if cookie_mode and (body.get('action') in ('logout', 'logout-all', 'change-password') or result.get('relogin')):
+        response.delete_cookie(security.COOKIE, path='/api', httponly=True, secure=request.url.scheme == 'https', samesite='strict')
+    return response
+
+
+@app.get('/api/admin/backups/{name}')
+def download_backup(request: Request, name: str):
+    security.session(request.cookies.get(security.COOKIE))
+    return FileResponse(operations.backup_file(name), filename=name, media_type='application/octet-stream', headers={'Cache-Control': 'no-store'})
+
+
+@app.get('/media/{filename}')
+def cover_file(filename: str):
+    return FileResponse(media_store.find(filename), media_type='image/webp', headers={'Cache-Control': 'public, max-age=31536000, immutable'})
+
+
+@app.get('/api/revision')
+def revision():
+    with db.connect() as con:
+        return {'catalog': db.snapshot(con, 'catalog-revision'), 'content': db.snapshot(con, 'release', {}).get('commit')}
+
+
+@app.get('/api/daily')
+def daily_api():
+    return safely(public.daily)
+
+
+@app.get('/api/tags')
+def tag_page_api(namespace: str = Query('all', max_length=100), q: str = Query('', max_length=200), page: int = Query(1, ge=1, le=100000)):
+    return safely(catalog.tags_page, namespace, q, page)
+
+
+@app.get('/api/books')
+def books_api():
+    return safely(public.books)
 
 
 @app.get('/api/galleries')
@@ -154,14 +210,16 @@ def verify_api(request: Request, body: dict = Body(...)):
 def translate_api(request: Request, body: dict = Body(...)):
     trans_auth(request, body)
     limit(request, 'translate', 30)
-    return safely(translation.translate, body)
+    with services.slot('translate'):
+        return safely(translation.translate, body)
 
 
 @app.post('/api/trans-ocr')
 def ocr_api(request: Request, body: dict = Body(...)):
     trans_auth(request, body)
     limit(request, 'ocr', 30)
-    return safely(translation.ocr, body)
+    with services.slot('ocr'):
+        return safely(translation.ocr, body)
 
 
 @app.api_route('/api/printed-books', methods=['GET', 'POST'])
