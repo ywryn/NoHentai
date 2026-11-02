@@ -48,7 +48,7 @@ npm ci
 npm run build
 ```
 
-`npm test` 依赖先安装 `web-static` 的依赖。Python 测试使用临时 SQLite 和模拟上游，不调用付费服务。前端完整构建会移除 `dist/data`，运行时数据统一由 Python 提供。
+`npm test` 依赖先安装 `web-static` 的依赖。Python 测试使用临时 SQLite 和模拟上游，不调用付费服务。前端完整构建会移除 `dist/data`，运行时数据统一由 Python 提供。首页使用 `/api/galleries` 的服务器分页和高级搜索，详情按 ID 查询；兼容的全量 JSON 接口不再参与首页加载。
 
 可选浏览器联调（需要本机 Nginx 和 Chromium，使用临时数据库，不访问第三方服务）：
 

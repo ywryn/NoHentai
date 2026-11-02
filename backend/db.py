@@ -38,6 +38,7 @@ def initialize():
             raise RuntimeError('数据库版本高于此代码版本，拒绝降级启动')
         con.executescript('''
         CREATE TABLE IF NOT EXISTS galleries (gid TEXT PRIMARY KEY, position INTEGER NOT NULL, data TEXT NOT NULL);
+        CREATE INDEX IF NOT EXISTS galleries_position ON galleries(position);
         CREATE TABLE IF NOT EXISTS books (position INTEGER PRIMARY KEY, data TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS resources (name TEXT PRIMARY KEY, data TEXT NOT NULL, version TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS snapshots (name TEXT PRIMARY KEY, data TEXT NOT NULL, updated_at TEXT NOT NULL);

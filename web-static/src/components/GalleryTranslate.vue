@@ -436,7 +436,7 @@
 </template>
 
 <script>
-import { loadGalleries } from '@/composables/useGalleryData'
+import { loadGallery } from '@/composables/useGalleryData'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 const SESSION_KEY = 'trans_password'
@@ -886,9 +886,9 @@ export default {
       .catch(() => {})
 
     this.loadGlossary()
-    loadGalleries().then(list => {
-      this.galleryMeta = list.find(g => String(g.gid) === String(this.gid)) || null
-    })
+    loadGallery(this.gid).then(result => {
+      this.galleryMeta = result.gallery
+    }).catch(() => { this.galleryMeta = null })
 
     const savedPwd = sessionStorage.getItem(SESSION_KEY)
     if (savedPwd) {

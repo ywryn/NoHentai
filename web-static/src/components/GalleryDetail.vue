@@ -186,10 +186,9 @@
 <script>
 import Rating from "primevue/rating";
 import ToggleSwitch from "primevue/toggleswitch";
-import { enrichTags, exTypeClassMap } from '@/utils/galleryUtils';
-import { loadGalleries, loadTranslations } from '@/composables/useGalleryData';
+import { exTypeClassMap } from '@/utils/galleryUtils';
+import { loadGallery } from '@/composables/useGalleryData';
 
-const baseUrl = import.meta.env.BASE_URL;
 const API_BASE = import.meta.env.VITE_API_BASE || '';
 const THUMBS_PER_PAGE = 20;
 
@@ -250,64 +249,9 @@ export default {
       this.error = null;
 
       try {
-        const source = this.$route.query.source;
-
-        if (source === 'daily') {
-          const [dailyGroups, translations] = await Promise.all([
-            fetch(`${baseUrl}data/daily_search.json`).then(r => r.json()),
-            loadTranslations(),
-          ]);
-          let gallery = null;
-          if (Array.isArray(dailyGroups)) {
-            for (const group of dailyGroups) {
-              const found = (group.galleries || []).find(item =>
-                item.gid && item.gid.toString() === this.itemId.toString()
-              );
-              if (found) { gallery = found; break; }
-            }
-          }
-          if (gallery) {
-            this.galleryData = {
-              ...gallery,
-              tags: Array.isArray(gallery.tags) ? enrichTags(gallery.tags, translations) : gallery.tags,
-            };
-          } else {
-            this.error = `未找到 ID 为 ${this.itemId} 的画廊`;
-          }
-          return;
-        }
-
-        const [galleries, translations] = await Promise.all([
-          loadGalleries(),
-          loadTranslations(),
-        ]);
-
-        let gallery = galleries.find(item =>
-          item.gid && item.gid.toString() === this.itemId.toString()
-        );
-
-        if (!gallery) {
-          try {
-            const dailyGroups = await fetch(`${baseUrl}data/daily_search.json`).then(r => r.json());
-            if (Array.isArray(dailyGroups)) {
-              for (const group of dailyGroups) {
-                const found = (group.galleries || []).find(item =>
-                  item.gid && item.gid.toString() === this.itemId.toString()
-                );
-                if (found) { gallery = found; break; }
-              }
-            }
-          } catch {}
-        }
-
-        if (gallery) {
-          this.galleryData = {
-            ...gallery,
-            tags: Array.isArray(gallery.tags) ? enrichTags(gallery.tags, translations) : gallery.tags,
-          };
-        } else {
-          this.error = `未找到 ID 为 ${this.itemId} 的画廊`;
-        }
+        const source = this.$route.query.source === 'daily' ? 'daily' : 'favorites';
+        const result = await loadGallery(this.itemId, source);
+        this.galleryData = { ...result.gallery, tags: result.tagDetails };
       } catch (error) {
         console.error("Error fetching gallery data:", error);
         this.error = `画廊数据加载失败：${error.message}`;
