@@ -5,7 +5,7 @@ from app.daily_config import validate_groups
 
 CATEGORIES = ['Doujinshi', 'Manga', 'Artist CG', 'Game CG', 'Western', 'Non-H', 'Image Set', 'Cosplay', 'Asian Porn', 'Misc']
 BOOK_FIELDS = ['ID', '书名', '收价', '原价', '日文名', 'sid', '备注', 'cover']
-PATCH_FIELDS = {'title', 'title_jpn', 'tags', 'category', 'uploader', 'hidden'}
+PATCH_FIELDS = {'title', 'title_jpn', 'tags', 'category', 'uploader', 'hidden', 'thumb'}
 
 
 def check(value, message):
@@ -32,6 +32,8 @@ def validate(name, value):
             for k, v in patch.items():
                 if k == 'hidden':
                     check(type(v) is bool, '隐藏状态必须为布尔值')
+                elif k == 'thumb':
+                    check(isinstance(v,str) and re.fullmatch(r'/media/[a-f0-9]{32}\.webp',v), '覆盖封面需使用已上传的图片')
                 elif k == 'tags':
                     check(isinstance(v, list) and len(v) <= 500 and all(text(t, 200) for t in v), '标签不正确')
                 elif k == 'category':

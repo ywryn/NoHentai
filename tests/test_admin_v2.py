@@ -234,6 +234,58 @@ class AdminV2Tests(fixtures.BackendTests):
         self.assertTrue(backups[0]['media'])
         self.assertEqual(self.client.get('/api/admin/backups/not-a-backup.sqlite3').status_code,404)
 
+    def test_progress_journal_handles_daily_batches_and_never_records_raw_secrets(self):
+        import logging
+        job=self.claim('daily')
+        with db.connect() as con:con.execute("INSERT INTO job_steps(job_id,name,status) VALUES (?,'daily','in_progress')",(job,))
+        handler=jobs.Progress(job,'daily')
+        for message in ('正在处理每日分组 1/2','第 3 页找到 25 个画廊','开始获取元数据，共 4 批，每批最多 25 条','请求第 1 批，共 25 条','第 1 批成功，获取 25 条','第 1 批成功，获取 25 条','第 1 轮重试，处理 3 个失败批次','第 2 批请求失败: Cookie=secret https://provider.example/?key=secret'):
+            handler.emit(logging.LogRecord('app.exhentai_search',logging.WARNING if '失败:' in message else logging.INFO,'',0,message,(),None))
+        detail=self.admin('job-detail',runId=job)
+        self.assertEqual(detail.status_code,200,detail.text)
+        self.assertNotIn('secret',detail.text);self.assertNotIn('provider.example',detail.text)
+        progress=detail.json()['run']['steps'][0]['progress']
+        self.assertEqual(progress['pages'],3);self.assertEqual(progress['completedBatches'],1);self.assertEqual(progress['totalBatches'],4)
+        self.assertTrue(any(e['level']=='warning' for e in detail.json()['events']))
+        cursor=detail.json()['events'][-1]['id']
+        jobs.event(job,'daily','下一分组')
+        self.assertEqual(len(self.admin('job-detail',runId=job,after=cursor).json()['events']),1)
+        self.assertEqual(self.client.post('/api/admin',json={'action':'job-detail','runId':job}).status_code,401)
+        self.assertEqual(self.admin('job-detail',runId='bad').status_code,400)
+
+    def test_gallery_cover_override_is_validated_versioned_and_public(self):
+        image=Image.new('RGB',(100,150),'navy');stream=io.BytesIO();image.save(stream,format='PNG')
+        media=self.admin('media-upload',imageBase64=base64.b64encode(stream.getvalue()).decode()).json()
+        original=self.admin('record',kind='gallery',id='123').json()
+        saved=self.admin('record-save',kind='gallery',id='123',version=original['version'],data={'thumb':media['url']})
+        self.assertEqual(saved.status_code,200,saved.text)
+        self.assertEqual(self.client.get('/api/galleries/123').json()['gallery']['thumb'],media['url'])
+        self.assertEqual(self.client.get('/api/galleries').json()['items'][0]['thumb'],media['url'])
+        self.assertEqual(self.client.get('/api/books').json()['items'][0]['gallery']['thumb'],media['url'])
+        for value in ('https://example.com/cover.png','/media/'+('0'*32)+'.webp','/etc/passwd'):
+            self.assertEqual(self.admin('record-save',kind='gallery',id='123',version=saved.json()['version'],data={'thumb':value}).status_code,400)
+        history=self.admin('record-history',kind='gallery',id='123').json()['items']
+        self.assertEqual(self.admin('record-restore',historyId=history[-1]['id'],version=saved.json()['version']).status_code,200)
+        self.assertNotIn('thumb',self.client.get('/api/galleries/123').json()['gallery'])
+
+    def test_overview_all_success_marks_each_published_dataset_fresh(self):
+        job=self.claim('all')
+        with patch.object(jobs,'collect_favorites',return_value=[GALLERY]),patch.object(jobs,'collect_translations',return_value={'data':[]}),patch.object(jobs,'collect_daily',return_value=[]):jobs.execute(job)
+        result=self.admin('overview').json()
+        for kind in ('favorites','translations','daily'):self.assertEqual(result['successes'][kind]['id'],job)
+        detail=self.admin('job-detail',runId=job).json()
+        self.assertEqual(detail['events'][-1]['stage'],'publish')
+
+    def test_schema_2_upgrade_preserves_current_records_and_jobs(self):
+        job=jobs.enqueue('favorites')
+        before=self.admin('records',kind='book').json()['items']
+        with db.connect() as con:
+            con.execute('DROP TABLE job_events');con.execute('PRAGMA user_version=2')
+        db.initialize();db.initialize()
+        self.assertEqual(self.admin('records',kind='book').json()['items'],before)
+        self.assertEqual(jobs.runs()[0]['id'],job)
+        with db.connect() as con:self.assertEqual(con.execute('PRAGMA user_version').fetchone()[0],3)
+
     def test_migration_is_idempotent_and_preserves_v1_data(self):
         path=Path(self.tmp.name)/'legacy.sqlite3'
         con=sqlite3.connect(path)
@@ -256,7 +308,7 @@ class AdminV2Tests(fixtures.BackendTests):
                 self.assertEqual(db.resource(con,'printed')[0],[BOOK,BOOK])
                 self.assertEqual(db.resource(con,'daily')[0],self.daily)
                 self.assertEqual(db.resource(con,'overrides')[0],{'123':{'title':'manual'}})
-                self.assertEqual(con.execute('PRAGMA user_version').fetchone()[0],2)
+                self.assertEqual(con.execute('PRAGMA user_version').fetchone()[0],3)
                 self.assertIsNone(con.execute("SELECT 1 FROM resources WHERE name='printed'").fetchone())
                 self.assertEqual(con.execute('SELECT title FROM galleries').fetchone()[0],'source')
             db.initialize()

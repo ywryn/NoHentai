@@ -6,6 +6,10 @@ import { invalidateGalleryData } from '@/composables/useGalleryData'
 import { CATEGORIES } from '../../../../shared/adminData.js'
 import AdminIcon from './AdminIcon.vue'
 import RecordHistory from './RecordHistory.vue'
+import GallerySearchInput from './GallerySearchInput.vue'
+import GalleryPreview from './GalleryPreview.vue'
+import GalleryTagEditor from './GalleryTagEditor.vue'
+import {exTypeDotColors} from '@/utils/galleryUtils'
 const props = defineProps({ kind: { type: String, required: true } })
 const confirm = inject('adminConfirm'), navigation = inject('adminOpenNavigation')
 const titles = { gallery: '画廊', book: '实体书单', daily: '每日筛选' }
@@ -14,14 +18,14 @@ const selected = ref(null), data = ref(null), original = ref(''), loading = ref(
 const history = ref(null), matchQuery = ref(''), matches = ref([]), matching = ref(false), linked = ref(null)
 const dirty = computed(() => data.value !== null && JSON.stringify(data.value) !== original.value)
 const effective = computed(() => ({ ...(selected.value?.source || {}), ...(data.value || {}) }))
-const labels = [['title','展示标题'], ['title_jpn','日文标题'], ['category','分类'], ['uploader','上传者'], ['tags','标签']]
+const labels = [['title','展示标题'], ['title_jpn','日文标题'], ['uploader','上传者']]
 const categoryMask = [['Misc',1],['Doujinshi',2],['Manga',4],['Artist CG',8],['Game CG',16],['Image Set',32],['Cosplay',64],['Asian Porn',128],['Non-H',256],['Western',512]]
 let searchTimer, matchTimer, sequence = 0, matchSequence = 0
 const clone = value => JSON.parse(JSON.stringify(value))
 function name(item) { return props.kind === 'gallery' ? item.effective.title_jpn || item.effective.title || `#${item.id}` : props.kind === 'book' ? item.data['书名'] || item.data['日文名'] || '新书目' : item.data.name }
 function apply(item) {
   selected.value = clone(item); data.value = clone(item.data); original.value = JSON.stringify(data.value)
-  notice.value = ''; error.value = ''; matches.value = []; linked.value = null
+  notice.value = ''; error.value = ''; matches.value = []; linked.value = item.gallery || null; matchQuery.value = ''
   if (props.kind === 'book' && data.value.sid) findLinked(data.value.sid)
 }
 async function findLinked(gid) {
@@ -102,11 +106,13 @@ async function upload(event) {
   if (file.size > 8*1024*1024) { error.value = '封面最大 8MB'; return }
   await perform(async () => {
     const encoded = await new Promise((resolve,reject) => { const reader = new FileReader(); reader.onload=()=>resolve(String(reader.result).split(',')[1]); reader.onerror=reject; reader.readAsDataURL(file) })
-    const result = await adminRequest('media-upload', { imageBase64: encoded }); data.value.cover = result.filename
-    notice.value = '封面已上传，请保存当前书目以应用。'
+    const result = await adminRequest('media-upload', { imageBase64: encoded }); if(props.kind==='gallery')data.value.thumb=result.url;else data.value.cover = result.filename
+    notice.value = '封面已上传，保存当前条目后应用。'
   })
   event.target.value = ''
 }
+function linkGallery(gallery){data.value.sid=String(gallery.gid);linked.value=gallery;matches.value=[];matchQuery.value='';notice.value='已选择关联画廊，请核对封面并保存。'}
+function rowThumb(item){return props.kind==='gallery'?item.effective.thumb:item.data.cover?coverUrl(item.data.cover):item.gallery?.thumb}
 function exportDraft() { downloadDraft(`${props.kind}-draft.json`, { id:selected.value?.id, version:selected.value?.version, data:data.value }) }
 function beforeUnload(event) { if (dirty.value || busy.value) { event.preventDefault(); event.returnValue='' } }
 function shortcut(event) { if ((event.ctrlKey||event.metaKey) && event.key.toLowerCase()==='s') { event.preventDefault(); save() } }
@@ -140,17 +146,21 @@ onBeforeUnmount(()=>{ clearTimeout(searchTimer);clearTimeout(matchTimer);window.
     <div v-if="error" class="a-alert a-alert-error" role="alert">{{ error }} <a v-if="errorStatus===401" href="#/admin" target="_blank">新标签页登录</a><button v-if="data" class="a-text-button" @click="exportDraft">导出草稿</button></div>
     <div v-if="notice" class="a-alert a-alert-success" role="status">{{ notice }} <RouterLink v-if="kind==='daily'" to="/admin/tasks">查看任务</RouterLink></div>
     <div class="a-master-detail a-gallery-layout" :class="{'a-detail-open':detailOpen}">
-      <aside class="a-card a-master-list"><div class="a-search-row"><input v-model="query" class="v2-input" aria-label="查找条目" :placeholder="kind==='gallery' ? '标题、画廊 ID、链接或标签语法' : '搜索名称、编号或备注'" /></div><div class="a-list-caption">共 {{ total }} 条 <span v-if="loading">正在加载…</span></div><div class="a-gallery-list"><button v-for="item in list" :key="item.id" class="a-gallery-row" :class="{'is-selected':selected?.id===item.id}" @click="choose(item)"><span class="a-gallery-copy"><strong>{{ name(item) }}</strong><span>{{ kind==='gallery' ? '#'+item.id : kind==='book' ? item.data.ID : item.data.filters?.join(' · ') }}</span><span v-if="kind==='gallery' && Object.keys(item.data).length" class="a-badge a-badge-accent">人工覆盖</span></span><AdminIcon name="chevron" /></button><p v-if="!loading&&!list.length" class="a-empty">没有匹配的条目</p></div><footer class="a-pagination"><button class="a-button" :disabled="page<=1||loading" @click="load(page-1)">上一页</button><span>{{page}} / {{pages}}</span><button class="a-button" :disabled="page>=pages||loading" @click="load(page+1)">下一页</button></footer></aside>
+      <aside class="a-card a-master-list"><div class="a-search-row"><GallerySearchInput v-if="kind==='gallery'" v-model="query" @submit="load(1)"/><input v-else v-model="query" class="v2-input" aria-label="查找条目" placeholder="搜索名称、编号或备注" /></div><div class="a-list-caption">共 {{ total }} 条 <span v-if="loading">正在加载…</span></div><div class="a-gallery-list"><button v-for="item in list" :key="item.id" class="a-gallery-row" :class="{'is-selected':selected?.id===item.id}" @click="choose(item)"><img v-if="rowThumb(item)" class="ops-list-cover" :src="rowThumb(item)" alt="条目封面" referrerpolicy="no-referrer" @error="$event.target.style.visibility='hidden'"/><span class="a-gallery-copy"><strong>{{ name(item) }}</strong><span v-if="kind==='gallery'" class="ops-category" :style="{'--category':exTypeDotColors[item.effective.category]}">{{item.effective.category}}</span><span>{{ kind==='gallery' ? '#'+item.id : kind==='book' ? item.data.ID : item.data.filters?.join(' · ') }}</span><span v-if="kind==='gallery' && Object.keys(item.data).length" class="a-badge a-badge-accent">人工覆盖</span></span><AdminIcon name="chevron" /></button><p v-if="!loading&&!list.length" class="a-empty">没有匹配的条目</p></div><footer class="a-pagination"><button class="a-button" :disabled="page<=1||loading" @click="load(page-1)">上一页</button><span>{{page}} / {{pages}}</span><button class="a-button" :disabled="page>=pages||loading" @click="load(page+1)">下一页</button></footer></aside>
       <section class="a-card a-detail-pane"><template v-if="data"><button class="a-button a-mobile-back" @click="detailOpen=false">返回列表</button><div class="a-section-heading"><h2>{{ kind==='gallery' ? '编辑画廊展示信息' : kind==='book' ? '书目信息' : '搜索规则' }}</h2><button class="a-button" @click="exportDraft">导出草稿</button></div>
         <fieldset :disabled="busy" class="a-form-stack">
           <template v-if="kind==='gallery'">
+            <div class="ops-cover-editor"><GalleryPreview :gallery="effective"/><div class="ops-cover-controls"><span class="ops-kicker">封面管理</span><p>{{data.thumb?'使用人工覆盖封面':'跟随来源封面'}}</p><label class="a-button ops-upload">更换封面<input type="file" accept="image/png,image/jpeg,image/webp" aria-label="上传画廊封面" @change="upload"/></label><button v-if="data.thumb" type="button" class="a-text-button" @click="delete data.thumb">恢复来源封面</button><small>PNG / JPEG / WebP，最大 8MB</small></div></div>
+            <div class="a-field-block"><label class="a-field-label">分类</label><div class="ops-category-picker"><button v-for="category in CATEGORIES" :key="category" type="button" :aria-pressed="effective.category===category" class="ops-category" :style="{'--category':exTypeDotColors[category]}" @click="data.category=category">{{category}}<span v-if="effective.category===category"> ✓</span></button></div><div class="a-field-foot"><span>{{Object.hasOwn(data,'category')?'人工值':'跟随来源'}} · 来源：{{selected.source.category}}</span><button v-if="Object.hasOwn(data,'category')" type="button" class="a-text-button" @click="delete data.category">恢复来源值</button></div></div>
+
             <div v-for="[field,label] in labels" :key="field" class="a-field-block"><label :for="'record-'+field" class="a-field-label">{{label}}</label><textarea v-if="field==='tags'" :id="'record-'+field" rows="4" :value="effective.tags?.join('\n')" @input="data.tags=$event.target.value.split('\n').map(t=>t.trim()).filter(Boolean)" /><select v-else-if="field==='category'" :id="'record-'+field" :value="effective.category" @change="data.category=$event.target.value"><option v-for="category in [...new Set([...CATEGORIES,selected.source.category].filter(Boolean))]" :key="category">{{category}}</option></select><input v-else :id="'record-'+field" :value="effective[field]||''" @input="data[field]=$event.target.value" /><div class="a-field-foot"><span>{{Object.hasOwn(data,field)?'人工值':'跟随来源'}} · 来源：{{Array.isArray(selected.source[field])?selected.source[field].join('、'):selected.source[field]||'未提供'}}</span><button v-if="Object.hasOwn(data,field)" type="button" class="a-text-button" @click="delete data[field]">恢复来源值</button></div></div>
+            <div class="a-field-block"><GalleryTagEditor :model-value="effective.tags||[]" :names="selected.tagNames||{}" @update:model-value="data.tags=$event"/><div class="a-field-foot"><span>{{Object.hasOwn(data,'tags')?'人工标签':'跟随来源标签'}}</span><button v-if="Object.hasOwn(data,'tags')" type="button" class="a-text-button" @click="delete data.tags">恢复来源标签</button></div></div>
             <label class="a-switch-row"><span>在公开列表中显示</span><input type="checkbox" :checked="!effective.hidden" @change="data.hidden=!$event.target.checked" /></label><button type="button" class="a-button" @click="remove">恢复全部来源值</button>
           </template>
           <template v-else-if="kind==='book'">
             <div class="a-form-grid"><label v-for="[key,label] in [['书名','中文书名'],['日文名','日文书名'],['ID','书目编号（允许重复）'],['收价','收价'],['原价','原价']]" :key="key" class="a-field">{{label}}<input v-model="data[key]" maxlength="5000" /></label><label class="a-field a-wide">备注<textarea v-model="data['备注']" rows="3" /></label></div>
             <div class="v2-cover"><img v-if="data.cover" :src="coverUrl(data.cover)" alt="当前封面" /><label class="a-field">上传封面<input type="file" accept="image/jpeg,image/png,image/webp" @change="upload" /><small>最大 8MB，自动生成 WebP；保存书目后应用。</small></label><button v-if="data.cover" class="a-button" @click="data.cover=''">移除自定义封面</button></div>
-            <label class="a-field">关联画廊 ID<input v-model="data.sid" inputmode="numeric" /></label><p v-if="linked" class="a-inline-note">当前关联：{{linked.title_jpn||linked.title}}</p><label class="a-field">查找关联画廊<input v-model="matchQuery" placeholder="画廊 ID、链接、书名、作者或标签" /></label><p v-if="matching">正在搜索…</p><div class="a-matches"><article v-for="gallery in matches" :key="gallery.gid"><div><strong>{{gallery.title_jpn||gallery.title}}</strong><small>#{{gallery.gid}} · {{gallery.category}}</small></div><button class="a-button" @click="data.sid=String(gallery.gid);linked=gallery">关联</button></article></div>
+            <section class="ops-link-panel"><div class="ops-section-title"><div><span class="ops-kicker">画廊关联</span><h3>核对封面，确认是同一本书</h3></div><button v-if="data.sid" type="button" class="a-text-button" @click="data.sid='';linked=null">解除关联</button></div><GalleryPreview :gallery="linked"/><p v-if="data.sid&&!linked" class="ops-muted">已有站外关联 #{{data.sid}}，暂未找到来源信息；可保留或重新选择。</p><GallerySearchInput v-model="matchQuery" label="关联画廊" placeholder="输入画廊 ID、链接、书名或标签检索…" :help="false"/><p v-if="matching" class="ops-muted" role="status">正在查找候选画廊…</p><div v-if="matches.length" class="ops-gallery-matches"><button v-for="gallery in matches" :key="gallery.gid" type="button" :aria-label="'关联画廊 '+gallery.gid" @click="linkGallery(gallery)"><GalleryPreview :gallery="gallery" compact/><span class="ops-pick-label">选择此画廊 <AdminIcon name="arrow" :size="15"/></span></button></div><p v-else-if="matchQuery&&!matching" class="ops-muted">没有匹配的画廊，试试标题、ID 或标签。</p></section>
           </template>
           <template v-else>
             <label class="a-field">分组名称<input v-model="data.name" maxlength="120" /></label><label class="a-field">搜索表达式<textarea v-model="data.keyword" rows="3" /></label><label class="a-field">展示标签（每行一个）<textarea :value="data.filters.join('\n')" @input="data.filters=$event.target.value.split('\n').map(t=>t.trim()).filter(Boolean)" /></label><div class="v2-check-grid"><label v-for="[name,mask] in categoryMask" :key="mask"><input type="checkbox" :checked="Boolean(data.categories & mask)" @change="data.categories=$event.target.checked?data.categories|mask:data.categories&~mask" />{{name}}</label></div><div class="a-form-grid"><label v-for="[key,label,min,max] in [['minPages','最少页数',1,100000],['maxPages','最多页数',1,100000],['minRating','最低评分',2,5],['cutoffDays','回溯天数',1,365]]" :key="key" class="a-field">{{label}}<input type="number" :value="data[key]" :min="min" :max="max" @input="data[key]=$event.target.value===''?null:Number($event.target.value)" /></label></div><button class="a-button a-primary" :disabled="dirty||!selected.id" @click="runRule">立即同步此分组</button><p class="a-field-help">保存只更新规则；同步成功后才更新公开结果。调度时间在任务页设置。</p>

@@ -182,7 +182,10 @@ def suggest_tags(token):
     token = token.strip().lower()
     if len(token) < 2 or '$' in token or token.startswith(('-', '~')):
         return {'items': []}
-    needle = (token.split(':')[1] if ':' in token else token).strip('"')
+    prefix=token.split(':',1)[0] if ':' in token else None
+    if prefix in FIELDS-{'tag'}:return {'items':[]}
+    namespace=ALIASES.get(prefix,prefix) if prefix and prefix!='tag' else None
+    needle = (token.split(':',1)[1] if ':' in token else token).strip('"')
     if not needle:
         return {'items': []}
     with db.connect() as con:
@@ -190,6 +193,7 @@ def suggest_tags(token):
     results = []
     for tag, detail in index.items():
         value, ns, cn = detail['value'].lower(), detail['namespace'].lower(), detail.get('name', '').lower()
+        if namespace and ns!=namespace:continue
         score = 0 if value == needle else 1 if value.startswith(needle) else 2 if cn.startswith(needle) else 3 if ns.startswith(needle) else 4 if needle in value else 5 if needle in cn else -1
         if score >= 0:
             results.append({'tag': tag, 'namespace': detail['namespace'], 'value': detail['value'], 'tag_cn': detail.get('name', ''), 'score': score})

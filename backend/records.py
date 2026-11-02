@@ -3,6 +3,7 @@ import json
 import math
 import re
 import uuid
+from fastapi import HTTPException
 from . import db, catalog
 from .security import fail
 from .validation import validate
@@ -28,14 +29,16 @@ def dto(r):
     return {'id': r['id'], 'position': r['position'], 'data': json.loads(r['data']), 'version': r['version'], 'updatedAt': r['updated_at']}
 
 
-def gallery_dto(con, gid):
+def gallery_dto(con, gid, index=None):
     original = con.execute('SELECT data FROM galleries WHERE gid=?', (gid,)).fetchone()
     patch = row(con, 'gallery', gid)
     if not original and not patch:
         fail(404, '画廊不存在')
     source = json.loads(original[0]) if original else {'gid': gid}
     data = json.loads(patch['data']) if patch else {}
-    return {'id': gid, 'source': source, 'data': data, 'effective': dict(source, **data),
+    if index is None:index = catalog.translations(con)
+    tag_names = {tag: index.get(tag,{}).get('name','') for tag in dict(source,**data).get('tags',[])}
+    return {'tagNames':tag_names, 'id': gid, 'source': source, 'data': data, 'effective': dict(source, **data),
             'version': patch['version'] if patch else '0', 'updatedAt': patch['updated_at'] if patch else None}
 
 
@@ -48,7 +51,13 @@ def load(kind, record_id):
         found = row(con, kind, record_id)
         if not found:
             fail(404, '记录不存在，可能已被删除')
-        return dto(found)
+        result=dto(found)
+        if kind=='book' and found['gallery_gid']:
+            try: result['gallery']=gallery_dto(con,found['gallery_gid'])['effective']
+            except HTTPException as exc:
+                if exc.status_code!=404:raise
+                result['gallery']=None
+        return result
 
 
 def list_records(kind, query='', page=1):
@@ -71,13 +80,20 @@ def list_records(kind, query='', page=1):
             total = con.execute(cte + f' SELECT COUNT(*) FROM visible WHERE {condition}', params).fetchone()[0]
             page = min(page, max(1, math.ceil(total / 30)))
             ids = [r[0] for r in con.execute(cte + f' SELECT gid FROM visible WHERE {condition} ORDER BY position LIMIT 30 OFFSET ?', params + [(page-1)*30])]
-            items = [gallery_dto(con, gid) for gid in ids]
+            index=catalog.translations(con)
+            items = [gallery_dto(con, gid, index) for gid in ids]
         else:
             condition = "EXISTS(SELECT 1 FROM json_each(data) v WHERE instr(unicode_lower(CAST(v.value AS TEXT)),?)>0)" if query else '1'
             params = [query.lower()] if query else []
             total = con.execute(f'SELECT COUNT(*) FROM {TABLES[kind]} WHERE {condition}', params).fetchone()[0]
             page = min(page, max(1, math.ceil(total / 30)))
             items = [dto(r) for r in con.execute(f'SELECT * FROM {TABLES[kind]} WHERE {condition} ORDER BY position LIMIT 30 OFFSET ?', params + [(page-1)*30])]
+        if kind=='book':
+            for item in items:
+                gid=item['data'].get('sid')
+                source=con.execute('SELECT data FROM galleries WHERE gid=?',(gid,)).fetchone() if gid else None
+                patch=con.execute('SELECT data FROM gallery_overrides WHERE gid=?',(gid,)).fetchone() if source else None
+                item['gallery']=dict(json.loads(source[0]),**(json.loads(patch[0]) if patch else {})) if source else None
         return {'items': items, 'total': total, 'page': page, 'pages': max(1, math.ceil(total/30))}
 
 
@@ -106,6 +122,8 @@ def write(con, kind, record_id, expected, data, delete=False, message='保存条
         if not current and not con.execute('SELECT 1 FROM galleries WHERE gid=?', (record_id,)).fetchone():
             fail(400, '不能为不存在的画廊新增覆盖')
         data = validate('overrides', {record_id: {} if delete else data})[record_id]
+        if data.get('thumb') and not con.execute('SELECT 1 FROM media WHERE filename=?',(data['thumb'].split('/')[-1],)).fetchone():
+            fail(400,'覆盖封面不存在，请先上传')
         delete = False  # Versioned tombstone keeps resetting safe across concurrent editors.
     elif not delete:
         data = validate('printed', [data])[0] if kind == 'book' else validate('daily', [data])[0]

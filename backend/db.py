@@ -34,7 +34,7 @@ def connect():
 def initialize():
     with connect() as con:
         con.execute('PRAGMA journal_mode=WAL')
-        if con.execute('PRAGMA user_version').fetchone()[0] > 2:
+        if con.execute('PRAGMA user_version').fetchone()[0] > 3:
             raise RuntimeError('数据库版本高于此代码版本，拒绝降级启动')
         con.executescript('''
         CREATE TABLE IF NOT EXISTS galleries (gid TEXT PRIMARY KEY, position INTEGER NOT NULL, data TEXT NOT NULL);

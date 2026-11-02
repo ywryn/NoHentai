@@ -2,7 +2,7 @@
 import json
 import uuid
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 
 def upgrade(con, now):
@@ -14,6 +14,9 @@ def upgrade(con, now):
     con.execute('BEGIN IMMEDIATE')
     # Recheck after acquiring the write lock (multiple Uvicorn processes start).
     if con.execute('PRAGMA user_version').fetchone()[0] >= SCHEMA_VERSION:
+        return
+    if con.execute('PRAGMA user_version').fetchone()[0] == 2:
+        upgrade_events(con)
         return
     statements = [
         'CREATE TABLE resource_versions(name TEXT PRIMARY KEY, version TEXT NOT NULL)',
@@ -73,3 +76,10 @@ def upgrade(con, now):
     for group in ('favorites', 'translate', 'ocr'):
         con.execute('INSERT INTO service_versions VALUES (?,?)', (group, uuid.uuid4().hex))
     con.execute('PRAGMA user_version=2')
+    upgrade_events(con)
+
+
+def upgrade_events(con):
+    con.execute("CREATE TABLE job_events(id INTEGER PRIMARY KEY, job_id INTEGER NOT NULL REFERENCES jobs(id) ON DELETE CASCADE, stage TEXT NOT NULL, level TEXT NOT NULL, message TEXT NOT NULL, data_json TEXT NOT NULL, created_at TEXT NOT NULL)")
+    con.execute('CREATE INDEX job_events_lookup ON job_events(job_id,id)')
+    con.execute('PRAGMA user_version=3')
