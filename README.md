@@ -61,3 +61,5 @@ npm run build
 .venv/bin/python -m playwright install --with-deps chromium
 .venv/bin/python tests/browser_smoke.py
 ```
+
+统计页使用 `/api/stats`，SQL 聚合结果按数据版本和 UTC 日期缓存在 SQLite，所有 API 进程共享，旧统计地址保持兼容。

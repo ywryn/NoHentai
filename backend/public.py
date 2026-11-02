@@ -6,6 +6,8 @@ FILES = {'galleries.json', 'daily_search.json', 'future_digi.csv', 'translations
 
 
 def dataset(name):
+    if name=='stats.json':
+        return stats.current()
     with db.connect() as con:
         con.execute('BEGIN')
         patches, version = db.resource(con, 'overrides')
@@ -19,8 +21,6 @@ def dataset(name):
             return db.snapshot(con, 'translations', {'data': []})
         if name == 'translate-config.json':
             return {'defaultOcr': db.resource(con, 'translate')[0]['defaultOcr']}
-        if name == 'stats.json':
-            return stats.generate(merge(db.galleries(con), patches), db.snapshot(con, 'translations', {'data': []}))
         if name == 'release.json':
             return db.snapshot(con, 'release', {'commit': version, 'builtAt': db.now()})
     raise KeyError(name)

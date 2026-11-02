@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request, HTTPException, Body, Query
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from . import admin, db, settings, public, media, translation, security, catalog, services, media_store, operations
+from . import admin, db, settings, public, media, translation, security, catalog, services, media_store, operations, stats
 from cryptography.fernet import Fernet
 
 
@@ -131,6 +131,11 @@ def daily_api():
 @app.get('/api/tags')
 def tag_page_api(namespace: str = Query('all', max_length=100), q: str = Query('', max_length=200), page: int = Query(1, ge=1, le=100000)):
     return safely(catalog.tags_page, namespace, q, page)
+
+
+@app.get('/api/stats')
+def statistics_api():
+    return safely(stats.current)
 
 
 @app.get('/api/books')

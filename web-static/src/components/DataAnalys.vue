@@ -8,10 +8,11 @@
             </div>
             <div class="summary-card">
                 <span class="summary-label">收录总数</span>
-                <strong class="summary-value">{{ stats.total_count }}</strong>
+                <strong class="summary-value">{{ loadingStats && !statsLoaded ? '—' : stats.total_count }}</strong>
             </div>
         </div>
 
+        <div v-if="statsError" class="stats-load-error" role="alert"><span>{{statsError}}</span><button type="button" @click="fetchStats">重新加载</button></div>
         <section class="data-panel heatmap-section">
             <div class="panel-header">
                 <div>
@@ -89,7 +90,6 @@
 </template>
 
 <script>
-import { ref, onMounted, watch } from "vue";
 import Chart from "primevue/chart";
 import TagCountTable from "@/components/TagCountTable.vue";
 import ToggleSwitch from "primevue/toggleswitch";
@@ -101,7 +101,6 @@ import { MatrixController, MatrixElement } from 'chartjs-chart-matrix';
 // 注册 matrix 图表类型
 ChartJS.register(MatrixController, MatrixElement);
 
-const baseUrl = import.meta.env.BASE_URL;
 export default {
     components: { Chart, ToggleSwitch, TagCountTable },
     setup() {
@@ -110,6 +109,9 @@ export default {
     },
     data() {
         return {
+            loadingStats: false,
+            statsLoaded: false,
+            statsError: "",
             stats: {
                 total_count: 0,
                 categories: {},
@@ -152,7 +154,14 @@ export default {
         };
     },
     mounted() {
-        this.fetchPrecomputedStats();
+        this.fetchStats();
+        window.addEventListener("focus",this.refreshVisibleStats);
+        document.addEventListener("visibilitychange",this.refreshVisibleStats);
+    },
+    beforeUnmount() {
+        this._statsController?.abort();
+        window.removeEventListener("focus",this.refreshVisibleStats);
+        document.removeEventListener("visibilitychange",this.refreshVisibleStats);
     },
     watch: {
         isDark: {
@@ -177,10 +186,14 @@ export default {
         }
     },
     methods: {
-        async fetchPrecomputedStats() {
+        refreshVisibleStats() { if(document.visibilityState==='visible')this.fetchStats(); },
+        async fetchStats() {
+            if(this.loadingStats)return;
+            this.loadingStats=true;this.statsError='';
+            const controller=new AbortController();this._statsController=controller;
             try {
-                // 读取预计算的统计数据
-                const response = await fetch(`${baseUrl}data/stats.json`);
+                const response = await fetch('/api/stats',{signal:controller.signal,cache:'no-store'});
+                if(!response.ok)throw new Error('统计加载失败（HTTP '+response.status+'）');
                 const precomputed = await response.json();
 
                 // 加载基础统计
@@ -197,9 +210,10 @@ export default {
 
                 // 加载热力图数据
                 this.initHeatmapFromPrecomputed(precomputed.heatmap);
+                this.statsLoaded=true;
             } catch (error) {
-                console.error("Failed to fetch precomputed stats:", error);
-            }
+                if(error.name!=='AbortError')this.statsError=error.message||'统计加载失败，请重试';
+            } finally {this.loadingStats=false;}
         },
         updateQuarterlyChart() {
             let data = this.fullQuarterlyData;
