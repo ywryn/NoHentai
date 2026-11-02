@@ -3,7 +3,7 @@ import json
 import math
 import re
 from functools import lru_cache
-from . import db
+from . import db, settings
 from .security import fail
 
 ALIASES = {'f': 'female', 'm': 'male', 'a': 'artist', 'p': 'parody', 'c': 'character', 'l': 'language',
@@ -130,6 +130,15 @@ def translations(con):
 
 
 def list_galleries(query='', types='', page=1, per_page=30):
+    # Each process checks a shared revision. Source sync, overrides and tag
+    # translations bump it in the SAME write transaction as their data.
+    with db.connect() as con:
+        revision = db.snapshot(con, 'catalog-revision')
+    return cached_page(str(settings.DB_PATH), revision, query, types, page, per_page)
+
+
+@lru_cache(maxsize=64)
+def cached_page(database_path, revision, query, types, page, per_page):
     if len(query) > 2000 or len(types) > 1000:
         fail(400, '搜索条件过长')
     condition, params = filter_sql(query)
@@ -158,7 +167,7 @@ def list_galleries(query='', types='', page=1, per_page=30):
         counts, category_counts, total = json.loads(row['counts']), json.loads(row['matched_counts']), row['total']
         page = min(page, max(1, math.ceil(total / per_page)))
         rows = json.loads(row['items'])
-        index = translations(con)
+        index = translations(con) if rows else {}
         items = []
         for gallery in rows:
             item = {k: gallery.get(k) for k in LIST_FIELDS}

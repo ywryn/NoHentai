@@ -52,6 +52,7 @@ def initialize():
             conclusion TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, summary TEXT NOT NULL DEFAULT '');
         PRAGMA user_version=1;
         ''')
+        con.execute("INSERT OR IGNORE INTO snapshots VALUES ('catalog-revision',?,?)", (dumps(uuid.uuid4().hex), now()))
     os.chmod(settings.DB_PATH, 0o600)
 
 
@@ -68,6 +69,8 @@ def put_resource(con, name, data, message='管理后台保存'):
     con.execute('INSERT OR REPLACE INTO resources VALUES (?,?,?)', (name, text, version))
     con.execute('INSERT INTO history(resource,version,data,created_at,message) VALUES (?,?,?,?,?)',
                 (name, version, text, now(), message))
+    if name == 'overrides':
+        put_snapshot(con, 'catalog-revision', uuid.uuid4().hex)
     if name == 'printed':
         con.execute('DELETE FROM books')
         con.executemany('INSERT INTO books VALUES (?,?)', [(i, dumps(b)) for i, b in enumerate(data)])
@@ -81,6 +84,8 @@ def snapshot(con, name, default=None):
 
 def put_snapshot(con, name, data):
     con.execute('INSERT OR REPLACE INTO snapshots VALUES (?,?,?)', (name, dumps(data), now()))
+    if name == 'translations':
+        put_snapshot(con, 'catalog-revision', uuid.uuid4().hex)
 
 
 def replace_galleries(con, data, allow_shrink=False):
@@ -94,6 +99,7 @@ def replace_galleries(con, data, allow_shrink=False):
         raise ValueError('收藏数量下降超过 20%，保留原数据；确认主动删除后通过 CLI 显式允许')
     con.execute('DELETE FROM galleries')
     con.executemany('INSERT INTO galleries VALUES (?,?,?)', [(str(g['gid']), i, dumps(g)) for i, g in enumerate(data)])
+    put_snapshot(con, 'catalog-revision', uuid.uuid4().hex)
 
 
 def galleries(con):
