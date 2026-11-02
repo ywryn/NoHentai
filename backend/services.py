@@ -121,6 +121,30 @@ def save(group, expected, values, operations=None):
         if expected != version(con, group):
             fail(409, '服务配置已更新，请重新加载后保存')
         config, _ = db.resource(con, 'translate')
+        # Preserve versions, test results and audit history for identical writes.
+        changed_values={}
+        for name,value in values.items():
+            if name in config:
+                if config[name]!=value:changed_values[name]=value
+                continue
+            normal=con.execute('SELECT value_json FROM service_settings WHERE name=?',(name,)).fetchone()
+            secret=con.execute('SELECT ciphertext FROM credentials WHERE name=?',(name,)).fetchone()
+            if FIELDS[name][2]=='secret':
+                same=not normal and secret and Fernet(settings.encryption_key()).decrypt(secret[0].encode()).decode()==value
+            else:
+                same=normal and not secret and json.loads(normal[0])==value
+            if not same:changed_values[name]=value
+        changed_operations={}
+        for name,operation in operations.items():
+            normal=con.execute('SELECT value_json FROM service_settings WHERE name=?',(name,)).fetchone()
+            secret=con.execute('SELECT ciphertext FROM credentials WHERE name=?',(name,)).fetchone()
+            if operation=='inherit' and not normal and not secret:continue
+            if operation=='clear':
+                if FIELDS[name][2]=='secret' and not normal and secret and Fernet(settings.encryption_key()).decrypt(secret[0].encode())==b'':continue
+                if FIELDS[name][2]!='secret' and normal and not secret and json.loads(normal[0])=='':continue
+            changed_operations[name]=operation
+        values,operations=changed_values,changed_operations
+        if not values and not operations:return {'ok':True,'unchanged':True,'message':'内容未发生变化，无需保存'}
         for name, value in values.items():
             if name in config:
                 config[name] = value

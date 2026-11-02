@@ -140,6 +140,13 @@ def write(con, kind, record_id, expected, data, delete=False, message='保存条
         fail(404, '记录已经不存在')
     if delete and kind == 'daily' and con.execute('SELECT COUNT(*) FROM daily_rules').fetchone()[0] <= 1:
         fail(400, '至少保留一个每日分组；暂停执行请关闭调度')
+    if not delete and (current or kind=='gallery'):
+        def comparable(value):
+            result=dict(value or {})
+            if kind=='gallery' and 'tags' in result:result['tags']=sorted(set(result['tags']))
+            return result
+        if comparable(before)==comparable(data):
+            return {'id':record_id,'version':actual,'historyId':None,'warnings':warnings,'deleted':False,'unchanged':True}
     record_id = record_id or uuid.uuid4().hex
     version = uuid.uuid4().hex
     if delete:

@@ -29,9 +29,11 @@ def save(kind, expected, enabled, hour, minute, zone):
         fail(400, '时区无效')
     with db.connect() as con:
         con.execute('BEGIN IMMEDIATE')
-        row = con.execute('SELECT version FROM schedules WHERE kind=?', (kind,)).fetchone()
-        if not row or row[0] != expected:
+        row = con.execute('SELECT * FROM schedules WHERE kind=?', (kind,)).fetchone()
+        if not row or row['version'] != expected:
             fail(409, '调度已更新，请重新加载')
+        if (row['enabled'],row['hour'],row['minute'],row['timezone'])==(int(enabled),hour,minute,zone):
+            return {'ok':True,'unchanged':True}
         con.execute('UPDATE schedules SET enabled=?,hour=?,minute=?,timezone=?,next_run_at=?,version=? WHERE kind=?',
                     (int(enabled), hour, minute, zone, next_run(hour, minute, zone) if enabled else None, uuid.uuid4().hex, kind))
         con.execute('INSERT INTO history(resource,version,data,created_at,message) VALUES (?,?,?,?,?)',

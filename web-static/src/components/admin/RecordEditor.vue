@@ -9,6 +9,7 @@ import RecordHistory from './RecordHistory.vue'
 import GallerySearchInput from './GallerySearchInput.vue'
 import GalleryPreview from './GalleryPreview.vue'
 import GalleryTagEditor from './GalleryTagEditor.vue'
+import {sameContent, recordDraft} from '@/utils/adminDrafts'
 import {exTypeDotColors} from '@/utils/galleryUtils'
 const props = defineProps({ kind: { type: String, required: true } })
 const confirm = inject('adminConfirm'), navigation = inject('adminOpenNavigation')
@@ -16,7 +17,10 @@ const titles = { gallery: '画廊', book: '实体书单', daily: '每日筛选' 
 const list = ref([]), total = ref(0), page = ref(1), pages = ref(1), query = ref('')
 const selected = ref(null), data = ref(null), original = ref(''), loading = ref(true), busy = ref(false), error = ref(''), errorStatus = ref(0), notice = ref(''), detailOpen = ref(false)
 const history = ref(null), matchQuery = ref(''), matches = ref([]), matching = ref(false), linked = ref(null)
-const dirty = computed(() => data.value !== null && JSON.stringify(data.value) !== original.value)
+const savedData = computed(() => original.value ? JSON.parse(original.value) : {})
+const draft = computed(() => recordDraft(props.kind,data.value||{},savedData.value,selected.value?.source||{}))
+const dirty = computed(() => data.value !== null && (!selected.value?.id || !sameContent(draft.value,recordDraft(props.kind,savedData.value,savedData.value,selected.value?.source||{}))))
+function editGallery(field,value){data.value=recordDraft('gallery',{...data.value,[field]:value},savedData.value,selected.value.source)}
 const effective = computed(() => ({ ...(selected.value?.source || {}), ...(data.value || {}) }))
 const labels = [['title','展示标题'], ['title_jpn','日文标题'], ['uploader','上传者']]
 const categoryMask = [['Misc',1],['Doujinshi',2],['Manga',4],['Artist CG',8],['Game CG',16],['Image Set',32],['Cosplay',64],['Asian Porn',128],['Non-H',256],['Western',512]]
@@ -68,12 +72,12 @@ async function perform(fn) {
 async function save() {
   if (!dirty.value || !data.value) return false
   return perform(async () => {
-    const snapshot = clone(data.value)
+    const snapshot = clone(draft.value)
     const result = await adminRequest('record-save', { kind: props.kind, id: selected.value.id, version: selected.value.version, data: snapshot })
     selected.value = { ...selected.value, id: result.id, version: result.version, data: snapshot }
     original.value = JSON.stringify(snapshot); invalidateGalleryData()
     await load()
-    notice.value = (props.kind === 'daily' ? '规则已保存。执行同步后会更新公开结果。' : '当前条目已保存，后续访问立即生效。') + (result.warnings?.length ? ' '+result.warnings.join('；') : '')
+    notice.value = result.unchanged ? '内容未发生变化，无需保存。' : (props.kind === 'daily' ? '规则已保存。执行同步后会更新公开结果。' : '当前条目已保存，后续访问立即生效。') + (result.warnings?.length ? ' '+result.warnings.join('；') : '')
   })
 }
 async function remove() {
@@ -131,7 +135,7 @@ async function refreshFocused(){
  const id=selected.value.id
  try{const fresh=await adminRequest('record',{kind:props.kind,id});if(selected.value?.id!==id)return
   if(fresh.version!==selected.value.version){if(dirty.value)error.value='当前条目已在其他设备更新，草稿保持不变；请导出后重新加载并合并。';else apply(fresh)}
-  else if(props.kind==='gallery'&&JSON.stringify(fresh.source)!==JSON.stringify(selected.value.source)){selected.value.source=fresh.source;notice.value='来源数据已更新，人工覆盖保持不变。'}
+  else if(props.kind==='gallery'&&!sameContent(fresh.source,selected.value.source)){selected.value.source=fresh.source;notice.value='来源数据已更新，人工覆盖保持不变。'}
  }catch(e){if(e.status===404)error.value='此条目已在其他设备删除，当前草稿仍保留。'}
 }
 window.addEventListener('focus',refreshFocused)
@@ -151,11 +155,11 @@ onBeforeUnmount(()=>{ clearTimeout(searchTimer);clearTimeout(matchTimer);window.
         <fieldset :disabled="busy" class="a-form-stack">
           <template v-if="kind==='gallery'">
             <div class="ops-cover-editor"><GalleryPreview :gallery="effective"/><div class="ops-cover-controls"><span class="ops-kicker">封面管理</span><p>{{data.thumb?'使用人工覆盖封面':'跟随来源封面'}}</p><label class="a-button ops-upload">更换封面<input type="file" accept="image/png,image/jpeg,image/webp" aria-label="上传画廊封面" @change="upload"/></label><button v-if="data.thumb" type="button" class="a-text-button" @click="delete data.thumb">恢复来源封面</button><small>PNG / JPEG / WebP，最大 8MB</small></div></div>
-            <div class="a-field-block"><label class="a-field-label">分类</label><div class="ops-category-picker"><button v-for="category in CATEGORIES" :key="category" type="button" :aria-pressed="effective.category===category" class="ops-category" :style="{'--category':exTypeDotColors[category]}" @click="data.category=category">{{category}}<span v-if="effective.category===category"> ✓</span></button></div><div class="a-field-foot"><span>{{Object.hasOwn(data,'category')?'人工值':'跟随来源'}} · 来源：{{selected.source.category}}</span><button v-if="Object.hasOwn(data,'category')" type="button" class="a-text-button" @click="delete data.category">恢复来源值</button></div></div>
+            <div class="a-field-block"><label class="a-field-label">分类</label><div class="ops-category-picker"><button v-for="category in CATEGORIES" :key="category" type="button" :aria-pressed="effective.category===category" class="ops-category" :style="{'--category':exTypeDotColors[category]}" @click="editGallery('category',category)">{{category}}<span v-if="effective.category===category"> ✓</span></button></div><div class="a-field-foot"><span>{{Object.hasOwn(data,'category')?'人工值':'跟随来源'}} · 来源：{{selected.source.category}}</span><button v-if="Object.hasOwn(data,'category')" type="button" class="a-text-button" @click="delete data.category">恢复来源值</button></div></div>
 
-            <div v-for="[field,label] in labels" :key="field" class="a-field-block"><label :for="'record-'+field" class="a-field-label">{{label}}</label><textarea v-if="field==='tags'" :id="'record-'+field" rows="4" :value="effective.tags?.join('\n')" @input="data.tags=$event.target.value.split('\n').map(t=>t.trim()).filter(Boolean)" /><select v-else-if="field==='category'" :id="'record-'+field" :value="effective.category" @change="data.category=$event.target.value"><option v-for="category in [...new Set([...CATEGORIES,selected.source.category].filter(Boolean))]" :key="category">{{category}}</option></select><input v-else :id="'record-'+field" :value="effective[field]||''" @input="data[field]=$event.target.value" /><div class="a-field-foot"><span>{{Object.hasOwn(data,field)?'人工值':'跟随来源'}} · 来源：{{Array.isArray(selected.source[field])?selected.source[field].join('、'):selected.source[field]||'未提供'}}</span><button v-if="Object.hasOwn(data,field)" type="button" class="a-text-button" @click="delete data[field]">恢复来源值</button></div></div>
-            <div class="a-field-block"><GalleryTagEditor :model-value="effective.tags||[]" :names="selected.tagNames||{}" @update:model-value="data.tags=$event"/><div class="a-field-foot"><span>{{Object.hasOwn(data,'tags')?'人工标签':'跟随来源标签'}}</span><button v-if="Object.hasOwn(data,'tags')" type="button" class="a-text-button" @click="delete data.tags">恢复来源标签</button></div></div>
-            <label class="a-switch-row"><span>在公开列表中显示</span><input type="checkbox" :checked="!effective.hidden" @change="data.hidden=!$event.target.checked" /></label><button type="button" class="a-button" @click="remove">恢复全部来源值</button>
+            <div v-for="[field,label] in labels" :key="field" class="a-field-block"><label :for="'record-'+field" class="a-field-label">{{label}}</label><textarea v-if="field==='tags'" :id="'record-'+field" rows="4" :value="effective.tags?.join('\n')" @input="data.tags=$event.target.value.split('\n').map(t=>t.trim()).filter(Boolean)" /><select v-else-if="field==='category'" :id="'record-'+field" :value="effective.category" @change="data.category=$event.target.value"><option v-for="category in [...new Set([...CATEGORIES,selected.source.category].filter(Boolean))]" :key="category">{{category}}</option></select><input v-else :id="'record-'+field" :value="effective[field]||''" @input="editGallery(field,$event.target.value)" /><div class="a-field-foot"><span>{{Object.hasOwn(data,field)?'人工值':'跟随来源'}} · 来源：{{Array.isArray(selected.source[field])?selected.source[field].join('、'):selected.source[field]||'未提供'}}</span><button v-if="Object.hasOwn(data,field)" type="button" class="a-text-button" @click="delete data[field]">恢复来源值</button></div></div>
+            <div class="a-field-block"><GalleryTagEditor :model-value="effective.tags||[]" :names="selected.tagNames||{}" @update:model-value="editGallery('tags',$event)"/><div class="a-field-foot"><span>{{Object.hasOwn(data,'tags')?'人工标签':'跟随来源标签'}}</span><button v-if="Object.hasOwn(data,'tags')" type="button" class="a-text-button" @click="delete data.tags">恢复来源标签</button></div></div>
+            <label class="a-switch-row"><span>在公开列表中显示</span><input type="checkbox" :checked="!effective.hidden" @change="editGallery('hidden',!$event.target.checked)" /></label><button type="button" class="a-button" @click="remove">恢复全部来源值</button>
           </template>
           <template v-else-if="kind==='book'">
             <div class="a-form-grid"><label v-for="[key,label] in [['书名','中文书名'],['日文名','日文书名'],['ID','书目编号（允许重复）'],['收价','收价'],['原价','原价']]" :key="key" class="a-field">{{label}}<input v-model="data[key]" maxlength="5000" /></label><label class="a-field a-wide">备注<textarea v-model="data['备注']" rows="3" /></label></div>
