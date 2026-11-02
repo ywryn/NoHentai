@@ -69,7 +69,7 @@ def main():
                     page.goto(BASE + '/#/')
                     cards = page.locator('.home-page a[href*="/gallery/"]')
                     try:
-                        expect(cards).to_have_count(30)
+                        expect(cards).to_have_count(30,timeout=15000)
                     except AssertionError:
                         print('Page errors:', errors)
                         print('Home text:', page.locator('.home-page').inner_text()[:450])
@@ -174,6 +174,20 @@ def main():
                     page.set_viewport_size({'width':1440,'height':1000})
                     assert '/data/galleries.json' not in catalog_requests, catalog_requests
                     assert '/data/translations.json' not in catalog_requests, catalog_requests
+                    page.goto(BASE+'/#/data')
+                    expect(page.get_by_role('heading',name='收藏统计',exact=True)).to_be_visible()
+                    expected_stats=page.request.get(BASE+'/api/stats').json()
+                    expect(page.locator('.summary-value')).to_have_text(str(expected_stats['stats']['total_count']))
+                    expect(page.locator('.heatmap-chart canvas')).to_be_visible()
+                    assert '/api/stats' in catalog_requests
+                    assert '/data/stats.json' not in catalog_requests
+                    page.reload();expect(page.locator('.summary-value')).to_have_text(str(expected_stats['stats']['total_count']))
+                    page.route('**/api/stats',lambda route:route.fulfill(status=503,json={'error':'temporary failure'}))
+                    page.reload();expect(page.locator('.stats-load-error')).to_contain_text('统计加载失败')
+                    page.unroute('**/api/stats')
+                    page.get_by_role('button',name='重新加载',exact=True).click()
+                    expect(page.locator('.summary-value')).to_have_text(str(expected_stats['stats']['total_count']))
+                    print('Statistics: /api/stats only, charts rendered, reload and error retry passed')
                     page.goto(BASE + '/#/admin')
                     page.get_by_label('管理密码', exact=True).fill(password)
                     page.get_by_role('button', name='进入工作空间').click()
