@@ -3,8 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath } from 'url'
 import { dirname, resolve } from 'path'
-import { createReadStream, existsSync, readFileSync } from 'fs'
-import { mergeGalleries } from '../shared/adminData.js'
+import { createReadStream, existsSync } from 'fs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -14,6 +13,10 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 3000,
+    proxy: {
+      '/api': 'http://127.0.0.1:8000',
+      '/data': 'http://127.0.0.1:8000',
+    },
   },
   resolve: {
     alias: {
@@ -22,27 +25,6 @@ export default defineConfig({
     },
   },
   plugins: [
-    {
-      name: 'admin-preview-data',
-      configureServer(server) {
-        server.middlewares.use((req, res, next) => {
-          const pathname = req.url?.split('?')[0]
-          if (!['/data/galleries.json', '/data/daily_search.json', '/data/translate-config.json'].includes(pathname || '')) return next()
-          try {
-            const read = (name: string) => JSON.parse(readFileSync(resolve(__dirname, name), 'utf8'))
-            const overrides = read('public/data/gallery-overrides.json')
-            const result = pathname === '/data/galleries.json'
-              ? mergeGalleries(read('public/data/galleries.json'), overrides)
-              : pathname === '/data/daily_search.json'
-                ? read('public/data/daily_search.json').map((g: any) => ({ ...g, galleries: mergeGalleries(g.galleries, overrides) }))
-                : { defaultOcr: read('../config/translate.json').defaultOcr }
-            res.setHeader('Content-Type', 'application/json')
-            res.setHeader('Cache-Control', 'no-store')
-            res.end(JSON.stringify(result))
-          } catch (error) { next(error as Error) }
-        })
-      },
-    },
     {
       name: 'serve-kuromoji-dict',
       configureServer(server) {
@@ -87,21 +69,14 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // 只缓存静态资源，数据 JSON 走网络优先
+        // 只缓存静态资源，数据库内容始终访问后端。
         globPatterns: ['**/*.{js,css,html,ico,svg,png,woff2}'],
         runtimeCaching: [
           {
-            // Admin 发布后优先获取新数据；离线时才回退缓存。
+            // 管理保存后立即生效，避免回退旧快照。
             urlPattern: /\/data\/.*\.(?:json|csv)$/,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'data-cache',
-              networkTimeoutSeconds: 3,
-              expiration: {
-                maxEntries: 20,
-                maxAgeSeconds: 60 * 60 * 24 * 7,
-              },
-            },
+            handler: 'NetworkOnly',
+
           },
         ],
       },

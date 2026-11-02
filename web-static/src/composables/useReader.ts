@@ -2,7 +2,7 @@
 import { ref, reactive, computed } from 'vue'
 import type { InjectionKey } from 'vue'
 
-const API_BASE = (import.meta as any).env?.VITE_API_BASE ?? 'https://no-hentai.vercel.app'
+const API_BASE = (import.meta as any).env?.VITE_API_BASE ?? ''
 const SETTINGS_KEY = 'reader-settings'
 
 export interface PageInfo {

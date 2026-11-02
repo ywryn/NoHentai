@@ -190,7 +190,7 @@ import { enrichTags, exTypeClassMap } from '@/utils/galleryUtils';
 import { loadGalleries, loadTranslations } from '@/composables/useGalleryData';
 
 const baseUrl = import.meta.env.BASE_URL;
-const API_BASE = import.meta.env.VITE_API_BASE || 'https://no-hentai.vercel.app';
+const API_BASE = import.meta.env.VITE_API_BASE || '';
 const THUMBS_PER_PAGE = 20;
 
 export default {

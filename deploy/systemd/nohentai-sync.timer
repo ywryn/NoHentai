@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily NoHentai sync at 20:00 UTC (04:00 Asia/Shanghai)
+
+[Timer]
+OnCalendar=*-*-* 20:00:00 UTC
+Persistent=true
+Unit=nohentai-sync.service
+
+[Install]
+WantedBy=timers.target

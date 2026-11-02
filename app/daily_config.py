@@ -7,7 +7,10 @@ FIELDS = {'name', 'filters', 'keyword', 'categories', 'minPages', 'maxPages', 'm
 
 
 def load_groups(path=CONFIG_PATH):
-    groups = json.loads(Path(path).read_text(encoding='utf-8'))
+    return validate_groups(json.loads(Path(path).read_text(encoding='utf-8')))
+
+
+def validate_groups(groups):
     if not isinstance(groups, list) or not 1 <= len(groups) <= 20:
         raise ValueError('每日筛选需要 1–20 个分组')
     names = set()

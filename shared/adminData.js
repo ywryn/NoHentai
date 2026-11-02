@@ -1,10 +1,3 @@
-export const RESOURCES = Object.freeze({
-  printed: 'web-static/public/data/future_digi.csv',
-  overrides: 'web-static/public/data/gallery-overrides.json',
-  daily: 'config/daily.json',
-  translate: 'config/translate.json',
-})
-export const GALLERIES_PATH = 'web-static/public/data/galleries.json'
 export const CATEGORIES = ['Doujinshi', 'Manga', 'Artist CG', 'Game CG', 'Western', 'Non-H', 'Image Set', 'Cosplay', 'Asian Porn', 'Misc']
 export const OVERRIDE_FIELDS = ['title', 'title_jpn', 'tags', 'category', 'uploader', 'hidden']
 

@@ -20,3 +20,9 @@ export function loadTranslations() {
   }
   return _translationsPromise
 }
+
+// Clear after admin writes or successful sync; the next page reads SQLite again.
+export function invalidateGalleryData() {
+  _galleriesPromise = null
+  _translationsPromise = null
+}

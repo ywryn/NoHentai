@@ -7,11 +7,12 @@ ExHentai Gallery Search API Implementation in Python
 
 import json
 import logging
+import re
 import os
 import time
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple, Union
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit, urljoin
 
 from dotenv import load_dotenv
 
@@ -126,7 +127,13 @@ class ExHentaiSession:
 
     def get(self, url: str, **kwargs) -> requests.Response:
         """发送GET请求"""
-        return self.session.get(url, timeout=30, **kwargs)
+        parsed = urlsplit(url)
+        if parsed.scheme != 'https' or parsed.hostname != 'exhentai.org' or parsed.port not in (None, 443):
+            raise ValueError('搜索分页来源不正确')
+        response = self.session.get(url, timeout=30, allow_redirects=False, **kwargs)
+        if response.status_code in (301, 302, 303, 307, 308):
+            raise ValueError('来源发生重定向，请检查登录状态')
+        return response
 
     def post(self, url: str, **kwargs) -> requests.Response:
         """发送POST请求"""
@@ -264,7 +271,8 @@ class GalleryListParser:
             # 画廊列表：table.itg 下每个 tr（跳过表头）
             table = soup.find("table", class_="itg")
             if not table:
-                logger.warning("未找到画廊列表表格")
+                if not re.search(r'No hits found|No unfiltered results found', soup.get_text(' ', strip=True), re.I):
+                    result['error'] = '未找到搜索列表或明确的空结果标记，拒绝覆盖旧数据'
                 return result
 
             for row in table.find_all("tr"):
@@ -274,9 +282,15 @@ class GalleryListParser:
                 try:
                     gallery = GalleryListParser._parse_row(row)
                     if gallery:
-                        result["galleries"].append(gallery)
-                except Exception as e:
-                    logger.warning(f"解析单行失败: {e}")
+                        result['galleries'].append(gallery)
+                    elif row.select_one('a[href*="/g/"]'):
+                        raise ValueError('无法解析画廊条目')
+                except Exception:
+                    result['error'] = '搜索条目解析失败，拒绝发布部分结果'
+                    return result
+            if not result['galleries'] and not re.search(r'No hits found|No unfiltered results found', soup.get_text(' ', strip=True), re.I):
+                result['error'] = '搜索列表无可解析条目，拒绝覆盖旧数据'
+                return result
 
             # 翻页：ExHentai用游标分页，直接取 a#unext 的完整 href
             next_link = soup.find("a", id="unext")
@@ -430,7 +444,7 @@ class GalleryApiClient:
 
         if failed_batches:
             nums = [str(n) for _, _, n in failed_batches]
-            logger.error(f"经过 {max_retries} 次重试后，批次 {', '.join(nums)} 仍失败，将保留原始数据")
+            raise RuntimeError(f"元数据批次 {', '.join(nums)} 重试后仍失败，拒绝发布部分结果")
 
         # 按原顺序合并：直接用 API 完整 meta 覆盖，严格保留原始字段名
         result = []
@@ -455,6 +469,9 @@ class GalleryApiClient:
             data = response.json().get("gmetadata", [])
             if len(data) != len(batch):
                 logger.warning(f"第 {batch_num} 批数据不完整：期望 {len(batch)} 条，实际 {len(data)} 条")
+                return False, []
+            if any(str(meta.get("gid")) != str(gallery["gid"]) or meta.get("error") for gallery, meta in zip(batch, data)):
+                return False, []
             logger.info(f"第 {batch_num} 批成功，获取 {len(data)} 条")
             return True, data
         except Exception as e:
@@ -555,8 +572,13 @@ class ExHentaiGallerySearch:
             all_galleries: List[Dict] = []
             next_url: Optional[str] = builder.build()
             page_num = 0
+            visited = set()
+            seen_gids = set()
 
             while next_url:
+                if next_url in visited or page_num >= 1000:
+                    raise RuntimeError("搜索分页循环或超过 1000 页，拒绝部分结果")
+                visited.add(next_url)
                 page_num += 1
                 logger.info(f"获取第 {page_num} 页: {next_url}")
 
@@ -574,6 +596,13 @@ class ExHentaiGallerySearch:
                 if not galleries:
                     break
 
+                for gallery in galleries:
+                    gid = str(gallery["gid"])
+                    if gid in seen_gids:
+                        raise RuntimeError("搜索分页出现重复画廊，拒绝部分结果")
+                    seen_gids.add(gid)
+                if cutoff_dt is not None and any(not g.get('posted') or _parse_posted(g['posted']) == datetime.min for g in galleries):
+                    raise RuntimeError('搜索条目日期缺失或格式异常，拒绝部分结果')
                 all_galleries.extend(galleries)
 
                 # 判断是否需要继续翻页
@@ -588,7 +617,7 @@ class ExHentaiGallerySearch:
                     logger.info(f"最后一条 posted={last_posted!r} 已早于截止日期，停止翻页")
                     break
 
-                next_url = parse_result.get("next_url")
+                next_url = urljoin(next_url, parse_result["next_url"]) if parse_result.get("next_url") else None
                 if not next_url:
                     break
 

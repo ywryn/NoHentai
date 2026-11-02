@@ -438,7 +438,7 @@
 <script>
 import { loadGalleries } from '@/composables/useGalleryData'
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'https://no-hentai.vercel.app'
+const API_BASE = import.meta.env.VITE_API_BASE || ''
 const SESSION_KEY = 'trans_password'
 const TRANS_CACHE_TTL = 3 * 24 * 60 * 60 * 1000
 /* 每画廊术语表：{ 原文: 译文 }，随翻译请求一起送给模型 */
@@ -1430,7 +1430,7 @@ export default {
     /**
      * 把图片缩到长边 ≤ OCR_MAX_EDGE 再转 JPEG base64。
      * 原来是把原图整个 fetch 回来逐字节拼 base64：3MB 扫图在手机上要几百毫秒，
-     * base64 后再涨 1/3 就撞上 Vercel 4.5MB 请求体上限。缩图后通常只有 300–500KB，
+     * base64 后再涨 1/3；缩图能降低上传耗时与 OCR 服务负担，通常只有 300–500KB，
      * 且 OCR 的 bbox 乘回 scale 即可还原到原图坐标。代理返回了 ACAO: * ，canvas 不会被污染；
      * 万一被污染（toDataURL 抛 SecurityError）就退回旧的 fetch 路径。
      */
