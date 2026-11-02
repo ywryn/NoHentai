@@ -234,6 +234,60 @@ class AdminV2Tests(fixtures.BackendTests):
         self.assertTrue(backups[0]['media'])
         self.assertEqual(self.client.get('/api/admin/backups/not-a-backup.sqlite3').status_code,404)
 
+    def test_identical_records_skip_versions_history_and_catalog_invalidation(self):
+        with db.connect() as con:
+            before_history=con.execute('SELECT COUNT(*) FROM record_history').fetchone()[0]
+            before_revision=db.snapshot(con,'catalog-revision')
+            before_release=db.snapshot(con,'release')
+        response=self.admin('record-save',kind='gallery',id='123',version='0',data={})
+        self.assertTrue(response.json()['unchanged']);self.assertEqual(response.json()['version'],'0')
+        for kind in ('book','daily'):
+            record=self.admin('records',kind=kind).json()['items'][0]
+            saved=self.admin('record-save',kind=kind,id=record['id'],version=record['version'],data=record['data'])
+            self.assertTrue(saved.json()['unchanged']);self.assertEqual(saved.json()['version'],record['version'])
+        with db.connect() as con:
+            self.assertEqual(con.execute('SELECT COUNT(*) FROM record_history').fetchone()[0],before_history)
+            self.assertEqual(db.snapshot(con,'catalog-revision'),before_revision)
+            self.assertEqual(db.snapshot(con,'release'),before_release)
+        explicit=self.admin('record-save',kind='gallery',id='123',version='0',data={'title':'source'})
+        self.assertNotEqual(explicit.json()['version'],'0')
+        repeated=self.admin('record-save',kind='gallery',id='123',version=explicit.json()['version'],data={'title':'source'})
+        self.assertTrue(repeated.json()['unchanged'])
+        self.assertEqual(self.admin('record-save',kind='gallery',id='123',version='0',data={'title':'source'}).status_code,409)
+        reset=self.admin('record-delete',kind='gallery',id='123',version=explicit.json()['version'])
+        self.assertNotEqual(reset.json()['version'],explicit.json()['version'])
+
+    def test_noop_tag_order_and_legacy_save_do_not_create_new_versions(self):
+        saved=self.admin('record-save',kind='gallery',id='123',version='0',data={'tags':['artist:a','female:b']}).json()
+        result=self.admin('record-save',kind='gallery',id='123',version=saved['version'],data={'tags':['female:b','artist:a']}).json()
+        self.assertTrue(result['unchanged']);self.assertEqual(result['version'],saved['version'])
+        current=self.admin('load',resource='printed').json()
+        result=self.admin('save',resource='printed',sha=current['sha'],data=current['data']).json()
+        self.assertTrue(result['unchanged']);self.assertEqual(result['sha'],current['sha'])
+
+    def test_noop_service_saves_preserve_test_version_and_secret_ciphertext(self):
+        group=next(g for g in services.status()['groups'] if g['id']=='translate')
+        self.assertTrue(services.save('translate',group['version'],{'model':None})['unchanged'])
+        services.save('translate',group['version'],{'LLM_API_KEY':'test-secret-retained'})
+        group=next(g for g in services.status()['groups'] if g['id']=='translate')
+        with db.connect() as con:
+            before=tuple(con.execute("SELECT * FROM credentials WHERE name='LLM_API_KEY'").fetchone())
+            count=con.execute('SELECT COUNT(*) FROM history').fetchone()[0]
+        self.assertTrue(services.save('translate',group['version'],{'LLM_API_KEY':'test-secret-retained'})['unchanged'])
+        self.assertEqual(next(g for g in services.status()['groups'] if g['id']=='translate')['version'],group['version'])
+        with db.connect() as con:
+            self.assertEqual(tuple(con.execute("SELECT * FROM credentials WHERE name='LLM_API_KEY'").fetchone()),before)
+            self.assertEqual(con.execute('SELECT COUNT(*) FROM history').fetchone()[0],count)
+        services.save('translate',group['version'],{}, {'LLM_API_KEY':'clear'})
+        group=next(g for g in services.status()['groups'] if g['id']=='translate')
+        self.assertTrue(services.save('translate',group['version'],{}, {'LLM_API_KEY':'clear'})['unchanged'])
+
+    def test_noop_schedule_save_keeps_next_run_and_version(self):
+        row=schedules.listing()['items'][0]
+        result=schedules.save(row['kind'],row['version'],bool(row['enabled']),row['hour'],row['minute'],row['timezone'])
+        self.assertTrue(result['unchanged'])
+        self.assertEqual(schedules.listing()['items'][0],row)
+
     def test_progress_journal_handles_daily_batches_and_never_records_raw_secrets(self):
         import logging
         job=self.claim('daily')

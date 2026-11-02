@@ -90,6 +90,8 @@ def handle(body, ip):
                         warnings.append(f'保留 {len(missing)} 条已有的站外画廊关联')
                 elif any(gid not in ids and gid not in current for gid in data):
                     fail(400, '新增覆盖的画廊 ID 不存在')
+            if current==data:
+                return {'sha':version,'commit':version,'warnings':warnings,'unchanged':True}
             version = db.put_resource(con, name, data)
             db.put_snapshot(con, 'release', {'commit': version, 'builtAt': db.now()})
             return {'sha': version, 'commit': version, 'warnings': warnings}

@@ -2,18 +2,19 @@
 import { ref, computed, inject, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import {useRoute} from 'vue-router'
 import { onBeforeRouteLeave } from 'vue-router'
+import {serviceChanges,serviceOperations} from '@/utils/adminDrafts'
 import { adminRequest, formatDate } from '@/utils/adminApi'
 const route=useRoute()
 const navigation=inject('adminOpenNavigation'), confirm=inject('adminConfirm')
 const groups=ref([]),error=ref(''),notice=ref(''),busy=ref(false),loading=ref(true)
 const sourceName={database:'后台配置',environment:'服务器启动配置',default:'系统默认'}
 const choiceName=value=>({google:'Google Vision',paddle:'PaddleOCR',ocrspace:'OCR.Space',true:'开启',false:'关闭',null:'沿用环境默认'})[String(value)]||String(value)
-function dirty(group) {return JSON.stringify(group.values)!==group.original||Object.values(group.secrets).some(Boolean)||Object.keys(group.operations).length>0}
+function dirty(group) {return Object.keys(serviceChanges(group.values,JSON.parse(group.original))).length>0||Object.values(group.secrets).some(Boolean)||Object.keys(serviceOperations(group)).length>0}
 const anyDirty=computed(()=>groups.value.some(dirty))
 async function load(replaceId=null){loading.value=true;try{const result=await adminRequest('services');const previous=groups.value;groups.value=result.groups.map(group=>{const draft=previous.find(item=>item.id===group.id);if(group.id!==replaceId&&draft&&dirty(draft))return draft;const values=Object.fromEntries(group.fields.filter(f=>f.type!=='secret').map(f=>[f.key,f.value]));return {...group,values,original:JSON.stringify(values),secrets:{},operations:{}}})}catch(e){error.value=e.message}finally{loading.value=false}}
-async function save(group){busy.value=true;error.value='';notice.value='';try{
- const values={...group.values,...Object.fromEntries(Object.entries(group.secrets).filter(([,v])=>v))};if(values.model==='')values.model=null
- await adminRequest('service-save',{service:group.id,version:group.version,values,operations:group.operations});await load(group.id);notice.value=`${group.label}已保存，后续请求或新任务使用新配置。`
+async function save(group){if(busy.value||!dirty(group))return;busy.value=true;error.value='';notice.value='';try{
+ const values={...serviceChanges(group.values,JSON.parse(group.original)),...Object.fromEntries(Object.entries(group.secrets).filter(([,v])=>v))};if(values.model==='')values.model=null
+ const result=await adminRequest('service-save',{service:group.id,version:group.version,values,operations:serviceOperations(group)});await load(group.id);notice.value=result.unchanged?'内容未发生变化，无需保存。':`${group.label}已保存，后续请求或新任务使用新配置。`
 }catch(e){error.value=e.message}finally{busy.value=false}}
 async function test(group){
  if(dirty(group)){error.value='请先保存配置，再测试已保存的服务。';return}

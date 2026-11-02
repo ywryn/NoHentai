@@ -1,5 +1,6 @@
 <script setup>
 import { ref, inject, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import {sameContent,scheduleDraft} from '@/utils/adminDrafts'
 import AdminIcon from './AdminIcon.vue'
 import {useRoute} from 'vue-router'
 import { onBeforeRouteLeave } from 'vue-router'
@@ -25,8 +26,8 @@ async function dispatch(kind){if(!await confirm({title:`启动${labels[kind]}？
 async function all(){if(!await confirm({title:'分别同步全部数据？',description:'收藏、标签翻译和每日搜索将作为三个独立任务执行，各自成功后生效。',confirmLabel:'启动三个任务'}))return;await perform(async()=>{await adminRequest('dispatch-all');notice.value='三个同步任务已排队。'})}
 async function cancel(run){if(!await confirm({title:'取消此任务？',description:'正在抓取的任务会终止，尚未发布的数据不会覆盖现有结果。',confirmLabel:'取消任务',danger:true}))return;await perform(async()=>{await adminRequest('job-cancel',{runId:run.id});notice.value='取消请求已提交。'})}
 async function retry(run,original){if(!await confirm({title:original?'重试失败步骤？':'按当前配置重新执行？',description:original?'使用原任务的冻结配置，复用已成功步骤；原规则若已被修改，发布时仍会进行版本检查。':'全部步骤使用当前配置重新执行。',confirmLabel:original?'重试失败步骤':'重新执行'}))return;await perform(async()=>{await adminRequest('rerun',{runId:run.id,original});notice.value='任务已排队。'})}
-function scheduleDirty(s){return s.original!==JSON.stringify({enabled:s.enabled,hour:s.hour,minute:s.minute,timezone:s.timezone})}
-async function save(s){await perform(async()=>{await adminRequest('schedule-save',{kind:s.kind,version:s.version,enabled:s.enabled,hour:Number(s.hour),minute:Number(s.minute),timezone:s.timezone});s.original=JSON.stringify({enabled:s.enabled,hour:s.hour,minute:s.minute,timezone:s.timezone});notice.value='调度已保存，worker 会在十秒内读取新配置。'})}
+function scheduleDirty(s){return !sameContent(JSON.parse(s.original),scheduleDraft(s))}
+async function save(s){if(!scheduleDirty(s))return;await perform(async()=>{await adminRequest('schedule-save',{kind:s.kind,version:s.version,...scheduleDraft(s)});s.original=JSON.stringify({enabled:s.enabled,hour:s.hour,minute:s.minute,timezone:s.timezone});notice.value='调度已保存，worker 会在十秒内读取新配置。'})}
 onMounted(async()=>{await load();if(route.query.run){const run=runs.value.find(r=>r.id===Number(route.query.run));if(run)details(run)}clockTimer=setInterval(()=>now.value=Date.now(),1000);timer=setInterval(async()=>{if(polling||busy.value||document.visibilityState!=='visible')return;polling=true;try{const result=await adminRequest('runs');runs.value=result.runs;if(selected.value&&live.value)await refreshDetails()}catch(e){error.value=e.message}finally{polling=false}},2000)})
 const dirty=computed(()=>schedules.value.some(scheduleDirty))
 function beforeUnload(e){if(dirty.value){e.preventDefault();e.returnValue=''}}
