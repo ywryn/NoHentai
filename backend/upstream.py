@@ -13,7 +13,11 @@ MAX_IMAGE = 24 * 1024 * 1024
 def validate_url(url, gallery=False, image=False):
     try:
         p = urlsplit(url)
-        if p.scheme != 'https' or not p.hostname or p.username or p.password or p.port not in (None, 443):
+        if p.scheme != 'https' or not p.hostname or p.username or p.password:
+            raise ValueError()
+        # H@H nodes serve HTTPS images on user-configured unprivileged ports.
+        hath = image and p.hostname.lower().endswith('.hath.network')
+        if p.port not in (None,443) and not (hath and 1024 <= p.port <= 65535):
             raise ValueError()
         host = p.hostname.lower()
         if gallery and host not in GALLERY_HOSTS:

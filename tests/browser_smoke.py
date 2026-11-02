@@ -24,6 +24,8 @@ BASE = 'http://127.0.0.1:18080'
 def main():
     assert (ROOT / 'web-static/dist/index.html').exists(), 'Run npm run build first'
     assert not (ROOT / 'web-static/dist/data').exists(), 'Mutable data must not ship in dist'
+    protected_paths=[Path('/var/lib/nginx')/name for name in ('body','proxy','fastcgi','uwsgi','scgi')]
+    protected_owners={path:(path.stat().st_uid,path.stat().st_gid,path.stat().st_mode) for path in protected_paths if path.exists()}
     with tempfile.TemporaryDirectory() as temporary:
         tmp = Path(temporary)
         password = secrets.token_urlsafe(24)
@@ -37,7 +39,7 @@ def main():
         config = config.replace('127.0.0.1:8000', '127.0.0.1:18000')
         config = config.replace('server_name nohentai.com www.nohentai.com;', 'server_name 127.0.0.1;')
         header = 'user root;\n' if os.geteuid() == 0 else ''
-        (tmp / 'nginx.conf').write_text(header + f'pid {tmp}/nginx.pid;\nerror_log {tmp}/nginx-error.log;\nevents {{}}\nhttp {{\naccess_log off;\ninclude /etc/nginx/mime.types;\n' + config + '\n}')
+        (tmp / 'nginx.conf').write_text(header + f'pid {tmp}/nginx.pid;\nerror_log {tmp}/nginx-error.log;\nevents {{}}\nhttp {{\naccess_log off;\ninclude /etc/nginx/mime.types;\nclient_body_temp_path {tmp}/client-body;\nproxy_temp_path {tmp}/proxy-temp;\nfastcgi_temp_path {tmp}/fastcgi-temp;\nuwsgi_temp_path {tmp}/uwsgi-temp;\nscgi_temp_path {tmp}/scgi-temp;\n' + config + '\n}')
         processes = []
         with (tmp / 'services.log').open('w') as log:
             try:
@@ -53,6 +55,8 @@ def main():
                     time.sleep(.1)
                 else:
                     raise RuntimeError('Services failed to start')
+                large=httpx.post(BASE+'/api/trans-ocr',json={'password':'','imageBase64':'A'*300000},timeout=15)
+                assert large.status_code==401,('large OCR request must reach backend',large.status_code)
                 with sync_playwright() as p:
                     browser = p.chromium.launch(headless=True)
                     page = browser.new_page(viewport={'width': 1440, 'height': 1000})
@@ -100,6 +104,36 @@ def main():
                     assert '/data/translations.json' not in catalog_requests, catalog_requests
                     assert any(path.startswith('/api/galleries/') for path in catalog_requests), catalog_requests
                     print('Homepage/detail: server pagination, query, category, URL restore; zero full-data downloads')
+                    from PIL import Image
+                    import io
+                    ocr_image=io.BytesIO();Image.new('RGB',(400,2600),'white').save(ocr_image,format='PNG')
+                    ocr_mode={'value':'server-error'}
+                    def fake_ocr(route):
+                        if ocr_mode['value']=='server-error':route.fulfill(status=500,content_type='text/html',body='<html>nginx failure</html>')
+                        elif ocr_mode['value']=='malformed':route.fulfill(json={})
+                        else:route.fulfill(json={'results':[],'source':'vision'})
+                    media_routes=[re.compile(r'/api/gallery-images\?'),re.compile(r'/api/image-url\?'),re.compile(r'/api/image-proxy\?'),re.compile(r'/api/trans-ocr$')]
+                    page.route(media_routes[0],lambda route:route.fulfill(json={'gid':first_gid,'total':2,'source':'e-hentai','images':[{'pageNum':i,'pageUrl':f'https://e-hentai.org/s/testing/{first_gid}-{i}','thumbSprite':'','thumbX':0,'thumbW':100,'thumbH':142} for i in (1,2)]}))
+                    page.route(media_routes[1],lambda route:route.fulfill(json={'imageUrl':'https://ehgt.org/test.png','nlParam':None}))
+                    page.route(media_routes[2],lambda route:route.fulfill(content_type='image/png',body=ocr_image.getvalue()))
+                    page.route(media_routes[3],fake_ocr)
+                    page.goto(BASE+f'/#/gallery/{first_gid}/translate?token=abcdef1234&page=2')
+                    page.get_by_placeholder('输入密码',exact=True).fill(env['TRANS_PASSWORD'])
+                    page.get_by_role('button',name='进入',exact=True).click()
+                    expect(page.locator('.gt-page-img')).to_be_visible()
+                    page.wait_for_function('document.querySelector(".gt-page-img")?.naturalHeight===2600')
+                    page.get_by_role('button',name='翻译',exact=True).click()
+                    expect(page.get_by_text('OCR 失败: 服务器处理请求失败，请稍后重试',exact=True)).to_be_visible()
+                    ocr_mode['value']='malformed'
+                    page.get_by_role('button',name='翻译',exact=True).click()
+                    expect(page.get_by_text('OCR 失败: 识别服务未返回有效结果，请重试或切换 OCR 服务',exact=True)).to_be_visible()
+                    ocr_mode['value']='empty'
+                    page.get_by_role('button',name='翻译',exact=True).click()
+                    expect(page.get_by_text('未识别到文字',exact=True)).to_be_visible()
+                    assert 'undefined' not in page.locator('body').inner_text()
+                    page.goto(BASE+'/#/printed')
+                    for pattern in media_routes:page.unroute(pattern)
+                    print('OCR regression: large request reaches backend; scaled image handles HTML 500, missing results and empty OCR without JavaScript errors')
                     page.goto(BASE + '/#/printed')
                     expect(page.get_by_role('heading',name='实体书单',exact=True)).to_be_visible()
                     expect(page.locator('.digi-container a[href*="/gallery/"]').first).to_be_visible()
@@ -340,6 +374,8 @@ def main():
                     except subprocess.TimeoutExpired:
                         process.kill()
                         process.wait()
+                for path,owner in protected_owners.items():
+                    assert (path.stat().st_uid,path.stat().st_gid,path.stat().st_mode)==owner,('test changed production temp directory',str(path))
 
 
 if __name__ == '__main__':
