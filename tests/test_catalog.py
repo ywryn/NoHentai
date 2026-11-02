@@ -86,6 +86,16 @@ console.log(JSON.stringify(queries.map(q=>source.filter(g=>passesQuery(g,parseQu
         self.assertEqual(self.client.get('/api/galleries/123').status_code, 404)
         self.assertEqual(self.client.get('/api/galleries/not-an-id').status_code, 400)
 
+    def test_cached_page_updates_after_source_refresh_and_category_patch(self):
+        self.assertEqual(self.client.get('/api/galleries').json()['items'][0]['title'], 'source')
+        with db.connect() as con:
+            db.replace_galleries(con, [dict(GALLERY, title='refreshed')])
+        self.assertEqual(self.client.get('/api/galleries').json()['items'][0]['title'], 'refreshed')
+        self.assertEqual(self.save('overrides', {'123': {'category': 'Doujinshi'}}).status_code, 200)
+        response = self.client.get('/api/galleries').json()
+        self.assertEqual(response['categoryCounts'], {'Doujinshi': 1})
+        self.assertEqual(response['items'][0]['category'], 'Doujinshi')
+
 
 # unittest would otherwise rerun all inherited integration tests for this class.
 for name in list(fixtures.BackendTests.__dict__):

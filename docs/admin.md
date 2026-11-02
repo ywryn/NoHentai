@@ -14,7 +14,7 @@
 | 同步队列与结果 | `jobs`；排队、运行状态与结果摘要可在后台查看 |
 | 服务凭证 | `credentials` 中 Fernet 加密；未覆盖的值回退服务器环境变量 |
 
-首页通过 `/api/galleries` 在 SQLite 中执行搜索、分类计数与分页，每次返回当前页（默认 30 条，最多 100 条）及对应标签文案；详情使用 `/api/galleries/{gid}`，标签联想使用 `/api/tags/suggestions`。首页与详情不下载完整收藏或翻译库。
+首页通过 `/api/galleries` 在 SQLite 中执行搜索、分类计数与分页，每次返回当前页（默认 30 条，最多 100 条）及对应标签文案；详情使用 `/api/galleries/{gid}`，标签联想使用 `/api/tags/suggestions`。首页与详情不下载完整收藏或翻译库。后端分页结果使用有上限的进程内缓存，每次请求先检查 SQLite 中的版本；收藏同步、人工覆盖和标签翻译更新在同一事务内更新版本，所有 API 进程随即使用新结果。浏览器仍获取最新数据，不依赖长期缓存。
 
 其他兼容页面仍可使用 `/data/galleries.json`、`daily_search.json`、`future_digi.csv`、`stats.json`、`translations.json` 等路径。这些都是 API 响应，来自数据库。统计按当前数据计算。隐藏同时作用于收藏、每日列表和统计，书单独立保留。隐藏控制展示，不构成私有访问权限。
 
