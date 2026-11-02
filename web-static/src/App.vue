@@ -22,31 +22,31 @@ const navItems = [
     to: '/',
     label: '首页',
     title: 'Home',
-    icon: 'M3 10.5l9-7 9 7V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z',
+    icon: 'M3 10.5 12 3l9 7.5M5 9v12h5v-7h4v7h5V9',
   },
   {
     to: '/data',
     label: '统计',
     title: 'Data Analys',
-    icon: 'M4 19h16v2H4zM6 10h3v7H6zM11 6h3v11h-3zM16 12h3v5h-3z',
+    icon: 'M4 20h16M7 16v-5M12 16V5M17 16V8',
   },
   {
     to: '/printed',
     label: '书单',
     title: 'Printed',
-    icon: 'M18 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM6 4h5v8l-2.5-1.5L6 12V4z',
+    icon: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 3H20v19H6.5A2.5 2.5 0 0 1 4 19.5v-14A2.5 2.5 0 0 1 6.5 3ZM9 3v7l2-1 2 1V3',
   },
   {
     to: '/daily',
     label: '每日',
     title: 'Daily Search',
-    icon: 'M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm12 8v9H5v-9h14zm-8.5 1.5a3 3 0 1 0 1.79 5.41l1.65 1.65 1.06-1.06-1.65-1.65A3 3 0 0 0 10.5 11.5zm0 1.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z',
+    icon: 'M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm4 11 2 2 4-4',
   },
   {
     to: '/translate',
     label: '翻译',
     title: 'Translate',
-    icon: 'M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z',
+    icon: 'M3 5h12M9 3v2M5 5c1 6 5 9 9 10M13 5c-1 6-5 9-9 10m9 6 4-11 4 11M14.5 17h5',
   },
 ]
 
@@ -84,7 +84,7 @@ onMounted(() => {
     <!-- 移动端底部标签栏：常驻可达，触控目标 ≥ 44px -->
     <nav class="tab-bar" v-if="!isImmersivePage" aria-label="主导航">
       <RouterLink v-for="item in navItems" :key="item.to" :to="item.to" class="tab-item">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="item.icon" /></svg>
+        <span class="tab-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="item.icon" /></svg></span>
         <span>{{ item.label }}</span>
       </RouterLink>
     </nav>
@@ -217,48 +217,48 @@ onMounted(() => {
 
   .tab-bar {
     position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    left: 50%;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    width: calc(100% - 24px);
+    max-width: 460px;
+    box-sizing: border-box;
     z-index: var(--z-nav);
     display: flex;
-    background: color-mix(in srgb, var(--row-bg) 92%, transparent);
-    backdrop-filter: saturate(180%) blur(12px);
-    -webkit-backdrop-filter: saturate(180%) blur(12px);
-    border-top: 1px solid var(--row-border);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    gap: 4px;
+    padding: 5px;
+    background: color-mix(in srgb, var(--row-bg) 96%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--row-border);
+    border-radius: 20px;
+    box-shadow: 0 6px 28px #14203912, 0 1px 3px #14203906;
   }
-
-  @supports not (backdrop-filter: blur(12px)) {
+  @supports not (backdrop-filter: blur(16px)) {
     .tab-bar { background: var(--row-bg); }
   }
-
   .tab-item {
     flex: 1;
-    min-height: var(--tap-target);
-    padding: 7px 2px 6px;
+    min-width: 0;
+    min-height: 54px;
+    padding: 4px 2px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 3px;
+    border-radius: 14px;
     text-decoration: none;
     color: var(--muted-color);
     font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    transition: color var(--dur-fast) var(--ease-out);
+    font-weight: 500;
+    transition: color .18s, background .18s;
     -webkit-tap-highlight-color: transparent;
   }
-
-  .tab-item svg {
-    width: 21px;
-    height: 21px;
-    fill: currentColor;
-  }
-
-  .tab-item.router-link-exact-active { color: var(--primary-color); }
-
+  .tab-icon { display: grid; place-items: center; width: 34px; height: 27px; border-radius: 9px; }
+  .tab-item svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; }
+  .tab-item.router-link-exact-active { color: var(--primary-color); background: var(--primary-soft-bg); font-weight: 650; }
+  .tab-item:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 1px; }
   /* 顶栏右侧图标按钮在移动端放大到触控标准 */
   .nav-actions :deep(button) {
     width: 40px;
@@ -267,7 +267,7 @@ onMounted(() => {
 
   /* 为底栏让出空间，避免最后一行内容被遮挡 */
   .app-shell.has-tabbar .route-shell {
-    padding-bottom: calc(var(--tap-target) + 12px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
   }
 }
 

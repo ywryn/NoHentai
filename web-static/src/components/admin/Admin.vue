@@ -11,11 +11,12 @@ import '@/assets/admin.css'
 import '@/assets/admin-v2.css'
 const { isDark, toggleTheme } = useTheme()
 const session=ref(null),input=ref(''),remember=ref(true),busy=ref(false),error=ref(''),showPassword=ref(false),restoring=ref(true)
-const router=useRouter(),route=useRoute(),drawer=ref(null),confirmation=ref(null)
+const router=useRouter(),route=useRoute(),drawer=ref(null),confirmation=ref(null),navigationOpen=ref(false)
 const boundedWorkspace=computed(()=>Boolean(session.value)&&['/admin/galleries','/admin/printed','/admin/daily'].includes(route.path))
 watch(boundedWorkspace,fixed=>document.documentElement.classList.toggle('admin-workspace-fixed',fixed),{immediate:true})
 provide('adminConfirm',options=>confirmation.value.ask(options))
-provide('adminOpenNavigation',()=>drawer.value?.showModal())
+provide('adminNavigationOpen',navigationOpen)
+provide('adminOpenNavigation',()=>{drawer.value?.showModal();navigationOpen.value=Boolean(drawer.value?.open)})
 const navigation=[
  {label:'内容管理',items:[['overview','概览','grid'],['galleries','画廊','gallery'],['printed','实体书单','book'],['daily','每日筛选','filter']]},
  {label:'运行与配置',items:[['services','服务配置','key'],['tasks','任务与调度','tasks'],['health','服务状态','pulse']]},
@@ -62,7 +63,7 @@ onBeforeUnmount(()=>{document.documentElement.classList.remove('admin-active','a
       <div class="a-main">
         <main id="admin-content" class="a-content"><div v-if="error" class="a-alert a-alert-error" role="alert">{{ error }}</div><router-view v-slot="{ Component }"><component :is="Component" :key="$route.path"  /></router-view></main>
       </div>
-      <dialog ref="drawer" class="a-nav-drawer" aria-label="管理导航" @click="e => { if (e.target === drawer) drawer.close() }"><div class="a-drawer-header"><span class="a-brand"><span class="a-brand-symbol">の</span>NoHentai</span><button class="a-button a-icon-button" aria-label="关闭管理导航" @click="drawer.close()"><AdminIcon name="close" /></button></div><nav aria-label="手机管理功能"><div v-for="group in navigation" :key="group.label" class="a-nav-group"><p>{{ group.label }}</p><RouterLink v-for="[path,label,icon] in group.items" :key="path" :to="`/admin/${path}`" @click="route.path === `/admin/${path}` && drawer.close()"><AdminIcon :name="icon" /><span>{{ label }}</span></RouterLink></div></nav><div class="a-sidebar-footer"><RouterLink to="/"><AdminIcon name="arrow" />查看网站</RouterLink><AdminPrivacyToggle /><button @click="toggleTheme">{{ isDark ? '切换浅色外观' : '切换深色外观' }}</button><button @click="lock"><AdminIcon name="logout" />退出管理</button></div></dialog>
+      <dialog id="admin-navigation" ref="drawer" class="a-nav-drawer" @close="navigationOpen=false" aria-label="管理导航" @click="e => { if (e.target === drawer) drawer.close() }"><div class="a-drawer-header"><span class="a-brand"><span class="a-brand-symbol">の</span>NoHentai</span><button class="a-button a-icon-button" aria-label="关闭管理导航" @click="drawer.close()"><AdminIcon name="close" /></button></div><nav aria-label="手机管理功能"><div v-for="group in navigation" :key="group.label" class="a-nav-group"><p>{{ group.label }}</p><RouterLink v-for="[path,label,icon] in group.items" :key="path" :to="`/admin/${path}`" @click="route.path === `/admin/${path}` && drawer.close()"><AdminIcon :name="icon" /><span>{{ label }}</span></RouterLink></div></nav><div class="a-sidebar-footer"><RouterLink to="/"><AdminIcon name="arrow" />查看网站</RouterLink><AdminPrivacyToggle /><button @click="toggleTheme">{{ isDark ? '切换浅色外观' : '切换深色外观' }}</button><button @click="lock"><AdminIcon name="logout" />退出管理</button></div></dialog>
     </template>
   </div>
 </template>
