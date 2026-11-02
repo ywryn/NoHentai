@@ -29,3 +29,12 @@ test('configuration validation rejects secret leakage, unknown fields and invali
   assert.throws(() => validateTranslate({ model: 'test', defaultOcr: 'unknown', jsonMode: false }), /OCR/)
 
 })
+
+
+test('tag suggestions respect namespace aliases in public and admin search', async () => {
+  const {suggestTags} = await import('../web-static/src/utils/gallerySearch.js')
+  const entries=['artist','female'].map(namespace=>({namespace,data:{test:{name:'测试'}}}))
+  assert.deepEqual(suggestTags('f:te',entries).map(item=>item.namespace),['female'])
+  assert.deepEqual(suggestTags('female:测试',entries).map(item=>item.namespace),['female'])
+  assert.deepEqual(suggestTags('title:te',entries),[])
+})

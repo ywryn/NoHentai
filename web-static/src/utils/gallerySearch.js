@@ -252,10 +252,14 @@ export function suggestTags(token, translations, limit = 8) {
   ).replace(/^"|"$/g, '')
   if (!needle) return []
 
+  const prefix = normalizedToken.includes(':') ? normalizedToken.split(':', 1)[0] : null
+  if (prefix && GALLERY_FIELDS.includes(prefix) && prefix !== 'tag') return []
+  const requestedNamespace = prefix && prefix !== 'tag' ? (NAMESPACE_ALIASES[prefix] || prefix) : null
   const out = []
   for (const entry of translations) {
     const namespace = entry.namespace
     const nsLower = namespace.toLowerCase()
+    if (requestedNamespace && nsLower !== requestedNamespace) continue
     for (const [value, detail] of Object.entries(entry.data || {})) {
       const valueLower = value.toLowerCase()
       const cnLower = (detail?.name || '').toLowerCase()

@@ -73,6 +73,13 @@ console.log(JSON.stringify(queries.map(q=>source.filter(g=>passesQuery(g,parseQu
         self.assertEqual(self.save('overrides', {'123': {'hidden': True}}).status_code, 200)
         self.assertEqual(self.client.get('/api/galleries').json()['total'], 0)
 
+    def test_suggestions_respect_namespace_aliases_and_skip_non_tag_fields(self):
+        with db.connect() as con:
+            db.put_snapshot(con,'translations',{'data':[{'namespace':ns,'data':{'test':{'name':'测试'}}} for ns in ('artist','female')]})
+        for query,expected in [('f:te',['female']),('female:测试',['female']),('a:te',['artist']),('title:te',[])]:
+            result=self.client.get('/api/tags/suggestions',params={'token':query}).json()['items']
+            self.assertEqual([item['namespace'] for item in result],expected)
+
     def test_detail_queries_one_gallery_with_daily_fallback_and_hiding(self):
         response = self.client.get('/api/galleries/123')
         self.assertEqual(response.status_code, 200)

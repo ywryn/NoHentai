@@ -24,6 +24,28 @@ class JobCancelled(JobFailure):
 KINDS = {'all': '全量同步', 'favorites': '同步收藏', 'translations': '同步标签翻译', 'daily': '同步每日搜索'}
 
 
+def event(job_id, stage, message, level='info', data=None, con=None):
+    # Only locally authored messages enter this journal. Never persist raw logs.
+    if con is None:
+        with db.connect() as connection:
+            return event(job_id,stage,message,level,data,connection)
+    con.execute('INSERT INTO job_events(job_id,stage,level,message,data_json,created_at) VALUES (?,?,?,?,?,?)',
+                (job_id,stage,level,message,db.dumps(data or {}),db.now()))
+    con.execute('DELETE FROM job_events WHERE job_id=? AND id NOT IN (SELECT id FROM job_events WHERE job_id=? ORDER BY id DESC LIMIT 2000)',(job_id,job_id))
+
+
+def detail(job_id, after=None):
+    if type(job_id) is not int or (after is not None and (type(after) is not int or after<0)):
+        fail(400,'任务参数不正确')
+    run=next((r for r in runs() if r['id']==job_id),None)
+    if not run:
+        fail(404,'任务不存在或已不在最近运行列表中')
+    with db.connect() as con:
+        rows=con.execute('SELECT * FROM (SELECT * FROM job_events WHERE job_id=? AND id>? ORDER BY id DESC LIMIT 2000) ORDER BY id',(job_id,after or 0)).fetchall()
+        first=con.execute('SELECT MIN(id) FROM job_events WHERE job_id=?',(job_id,)).fetchone()[0]
+    return {'run':run,'events':[{'id':r['id'],'stage':r['stage'],'level':r['level'],'message':r['message'],'data':json.loads(r['data_json']),'at':r['created_at']} for r in rows], 'retainedFrom':first}
+
+
 def freeze(con, rule_id=None, kind='all'):
     groups, version = db.resource(con, 'daily')
     rows = con.execute('SELECT id,data,version FROM daily_rules ORDER BY position').fetchall()
@@ -59,6 +81,7 @@ def enqueue_in(con, kind, rule_id=None, parent=None, original=False):
     stamp = db.now()
     job_id = con.execute("INSERT INTO jobs(kind,status,created_at,updated_at,config_json,config_ciphertext,parent_id) VALUES (?,'queued',?,?,?,?,?)",
                          (kind, stamp, stamp, config, ciphertext, parent['id'] if parent else None)).lastrowid
+    event(job_id,'queue','任务已排队，等待 worker 领取',con=con)
     if original:
         for step in con.execute("SELECT * FROM job_steps WHERE job_id=? AND status='success' AND result_json IS NOT NULL", (parent['id'],)).fetchall():
             con.execute("INSERT INTO job_steps(job_id,name,status,finished_at,progress_json,result_json,summary) VALUES (?,?,'success',?,?,?,?)",
@@ -106,8 +129,10 @@ def cancel(job_id):
             fail(404, '任务不存在')
         if row['status'] == 'queued':
             con.execute("UPDATE jobs SET status='completed',conclusion='cancelled',cancel_requested=1,summary='已取消排队',updated_at=? WHERE id=?", (db.now(), job_id))
+            event(job_id,'queue','已取消排队',con=con)
         elif row['status'] == 'in_progress':
             con.execute('UPDATE jobs SET cancel_requested=1 WHERE id=?', (job_id,))
+            event(job_id,'queue','已请求取消，正在等待抓取进程终止','warning',con=con)
     return {'ok': True}
 
 
@@ -120,17 +145,40 @@ def cancelled(job_id):
 class Progress(logging.Handler):
     def __init__(self, job_id, step):
         super().__init__()
-        self.job_id, self.step, self.updated = job_id, step, 0
+        self.job_id,self.step,self.progress,self.last_message=job_id,step,{},None
+        self.completed=set()
     def emit(self, record):
-        message = record.getMessage()
-        page = re.search(r'第\s*(\d+)\s*页.*累计\s*(\d+)\s*条', message)
-        batch = re.search(r'第\s*(\d+)\s*批', message)
-        if not (page or batch) or time.monotonic()-self.updated < .2:
+        if record.name not in ('favorites','app.exhentai_search','app.sync_translations'):
             return
-        self.updated = time.monotonic()
-        progress = {'pages': int(page[1]), 'items': int(page[2])} if page else {'batch': int(batch[1])}
+        raw=record.getMessage()
+        message=None; values={}; level='info'
+        if match:=re.match(r'正在处理每日分组 (\d+)/(\d+)',raw):
+            self.progress={};self.completed.clear()
+            values={'group':int(match[1]),'totalGroups':int(match[2]),'phase':'pages'};message=f'开始每日分组 {match[1]} / {match[2]}'
+        elif raw in ('正在下载标签词典','标签词典下载完成，正在解析校验'):
+            message=raw
+        elif match:=re.match(r'第\s*(\d+)\s*页解析\s*(\d+)\s*条，累计\s*(\d+)\s*条',raw):
+            values={'pages':int(match[1]),'items':int(match[3]),'phase':'pages'};message=f'收藏列表第 {match[1]} 页，本页 {match[2]} 条，累计 {match[3]} 条'
+        elif match:=re.match(r'第\s*(\d+)\s*页找到\s*(\d+)\s*个画廊',raw):
+            values={'pages':int(match[1]),'pageItems':int(match[2]),'phase':'pages'};message=f'每日搜索第 {match[1]} 页，找到 {match[2]} 个画廊'
+        elif match:=re.match(r'开始获取元数据，共\s*(\d+)\s*批',raw):
+            values={'totalBatches':int(match[1]),'completedBatches':0,'phase':'metadata'};message=f'开始补全元数据，共 {match[1]} 批'
+        elif match:=re.match(r'第\s*(\d+)\s*批成功，获取\s*(\d+)\s*条',raw):
+            self.completed.add(int(match[1]));done=len(self.completed)
+            values={'batch':int(match[1]),'completedBatches':done,'phase':'metadata'};message=f'元数据第 {match[1]} 批完成，获取 {match[2]} 条'
+        elif match:=re.match(r'(?:正在请求|请求)第\s*(\d+)\s*批，共\s*(\d+)\s*条',raw):
+            values={'batch':int(match[1]),'phase':'metadata'};message=f'正在请求元数据第 {match[1]} 批（{match[2]} 条）'
+        elif match:=re.match(r'第\s*(\d+)\s*轮重试，处理\s*(\d+)\s*个失败批次',raw):
+            values={'retry':int(match[1])};message=f'第 {match[1]} 轮重试，剩余 {match[2]} 个批次';level='warning'
+        elif raw.startswith(('正在爬取:', '获取第 ')):
+            message='正在请求下一页列表'
+        elif record.levelno>=logging.WARNING:
+            message='上游请求异常，正在重试或检查完整性；失败时保留当前数据';level='warning'
+        if not message or (message==self.last_message and not values):return
+        self.last_message=message;self.progress.update(values)
         with db.connect() as con:
-            con.execute('UPDATE job_steps SET progress_json=? WHERE job_id=? AND name=?', (db.dumps(progress), self.job_id, self.step))
+            con.execute('UPDATE job_steps SET progress_json=? WHERE job_id=? AND name=?',(db.dumps(self.progress),self.job_id,self.step))
+            event(self.job_id,self.step,message,level,values,con)
 
 
 def collect_favorites():
@@ -152,7 +200,11 @@ def collect_favorites():
 
 def collect_translations():
     from app.sync_translations import download_with_retry, validate_and_parse
-    return validate_and_parse(download_with_retry())
+    logger=logging.getLogger('app.sync_translations')
+    logger.info('正在下载标签词典')
+    content=download_with_retry()
+    logger.info('标签词典下载完成，正在解析校验')
+    return validate_and_parse(content)
 
 
 def collect_daily(groups):
@@ -169,7 +221,8 @@ def collect_daily(groups):
             raise JobFailure('每日搜索需要完整的 ExHentai Cookie')
         search.session.session.cookies.set(key, value, domain='exhentai.org', path='/')
     output = []
-    for group in groups:
+    for index,group in enumerate(groups):
+        logging.getLogger('app.exhentai_search').info(f'正在处理每日分组 {index+1}/{len(groups)}')
         builder = ExHentaiUrlBuilder().set_keyword(group['keyword']).set_only_category(group['categories'])
         builder.min_pages, builder.max_pages, builder.min_rating = group['minPages'], group['maxPages'], group['minRating']
         builder.advsearch = any(group[k] is not None for k in ('minPages', 'maxPages', 'minRating'))
@@ -185,6 +238,7 @@ def collect_daily(groups):
 def execute(job_id, allow_shrink=False):
     from .cli import backup
     backup()
+    event(job_id,'backup','同步前一致性备份已完成')
     with db.connect() as con:
         row = con.execute("SELECT * FROM jobs WHERE id=? AND status='in_progress'", (job_id,)).fetchone()
         if not row:
@@ -207,7 +261,9 @@ def execute(job_id, allow_shrink=False):
             if checkpoint and checkpoint[0]:
                 collected[stage] = json.loads(checkpoint[0])
                 reused_favorites = reused_favorites or stage=='favorites'
+                event(job_id,stage,'复用原任务已成功的检查点')
                 continue
+            event(job_id,stage,'开始执行：'+KINDS[stage])
             handler = Progress(job_id, stage)
             logging.getLogger().setLevel(logging.INFO)
             logging.getLogger().addHandler(handler)
@@ -218,11 +274,13 @@ def execute(job_id, allow_shrink=False):
                     for group in collected[stage]:
                         if group['name'] in config['ruleIds']:
                             group['groupId'] = config['ruleIds'][group['name']]
+                event(job_id,stage,'抓取完成，正在校验结果')
                 count = len(collected[stage]) if stage == 'favorites' else sum(len(g.get('galleries', [])) for g in collected[stage]) if stage == 'daily' else sum(len(g.get('data', {})) for g in collected[stage].get('data', []))
                 with db.connect() as con:
                     con.execute("UPDATE job_steps SET status='success',finished_at=?,result_json=?,summary=? WHERE job_id=? AND name=?",
                                 (db.now(), db.dumps(collected[stage]), f'已获取 {count} 条记录', job_id, stage))
             except Exception:
+                event(job_id,stage,'步骤执行失败，尚未发布的数据已保留','error')
                 with db.connect() as con:
                     con.execute("UPDATE job_steps SET status='failure',finished_at=?,summary='步骤失败，保留先前数据' WHERE job_id=? AND name=?", (db.now(), job_id, stage))
                 raise
@@ -255,6 +313,7 @@ def execute(job_id, allow_shrink=False):
                     data = [g for g in previous if g.get('groupId') != config['ruleId'] and g.get('name') not in names] + data
                 db.put_snapshot(con, stage, data)
         db.put_snapshot(con, 'release', {'commit': f'job-{job_id}', 'builtAt': db.now()})
+        event(job_id,'publish','完整性与版本检查通过，数据已事务发布',con=con)
         con.execute("UPDATE jobs SET status='completed',conclusion='success',updated_at=?,summary=? WHERE id=?", (db.now(), '同步完成，数据已发布', job_id))
         # Bound checkpoint storage; preserve failed jobs so they can be retried.
         con.execute("UPDATE job_steps SET result_json=NULL WHERE job_id IN (SELECT id FROM jobs WHERE conclusion='success' ORDER BY id DESC LIMIT -1 OFFSET 10)")
@@ -279,6 +338,7 @@ def work(once=False):
                         if not row['config_json']:
                             config,ciphertext=freeze(con,kind=row['kind'])
                             con.execute('UPDATE jobs SET config_json=?,config_ciphertext=? WHERE id=?',(config,ciphertext,row['id']))
+                        event(row[0],'queue','worker 已领取任务',con=con)
                         con.execute("UPDATE jobs SET status='in_progress',updated_at=? WHERE id=?", (db.now(), row[0]))
                 if row:
                     conclusion, message = 'failure', '同步进程异常，原数据已保留'
@@ -301,6 +361,7 @@ def work(once=False):
                     if process.returncode == 0:
                         conclusion, message = 'success', '同步完成'
                     with db.connect() as con:
+                        event(row[0],'finish',message,'info' if conclusion=='success' else 'error',con=con)
                         con.execute("UPDATE jobs SET status='completed',conclusion=?,summary=?,updated_at=? WHERE id=? AND status='in_progress'",
                                     (conclusion, message, db.now(), row[0]))
                         con.execute("UPDATE job_steps SET status=?,finished_at=? WHERE job_id=? AND status='in_progress'", (conclusion, db.now(), row[0]))
@@ -357,5 +418,6 @@ def record_failure(job_id, message, conclusion='failure'):
     with db.connect() as con:
         row = con.execute('SELECT summary FROM jobs WHERE id=?', (job_id,)).fetchone()
         stage = row[0] if row else ''
+        event(job_id,'finish',message,'error',con=con)
         con.execute("UPDATE jobs SET status='completed',conclusion=?,summary=?,updated_at=? WHERE id=? AND status='in_progress'",
                     (conclusion, f'{stage}。{message}', db.now(), job_id))

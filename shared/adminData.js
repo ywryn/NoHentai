@@ -1,5 +1,5 @@
 export const CATEGORIES = ['Doujinshi', 'Manga', 'Artist CG', 'Game CG', 'Western', 'Non-H', 'Image Set', 'Cosplay', 'Asian Porn', 'Misc']
-export const OVERRIDE_FIELDS = ['title', 'title_jpn', 'tags', 'category', 'uploader', 'hidden']
+export const OVERRIDE_FIELDS = ['title', 'title_jpn', 'tags', 'category', 'uploader', 'hidden', 'thumb']
 
 function check(condition, message) { if (!condition) throw new Error(message) }
 function object(value) { return value !== null && typeof value === 'object' && !Array.isArray(value) }
@@ -15,6 +15,7 @@ export function validateOverrides(value) {
     for (const [key, v] of Object.entries(patch)) {
       check(OVERRIDE_FIELDS.includes(key), `不允许覆盖字段：${key}`)
       if (key === 'hidden') check(typeof v === 'boolean', '隐藏状态必须是布尔值')
+      else if (key === 'thumb') check(typeof v === 'string' && /^\/media\/[a-f0-9]{32}\.webp$/.test(v), '覆盖封面需使用已上传的图片')
       else if (key === 'tags') check(strings(v, 500, 200), '标签必须是字符串数组')
       else if (key === 'category') check(CATEGORIES.includes(v), '画廊分类不正确')
       else check(text(v, 5000), `字段 ${key} 不正确`)

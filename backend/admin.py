@@ -100,6 +100,8 @@ def handle(body, ip):
         return jobs.cancel(body.get('runId'))
     if action == 'dispatch-all':
         return {'ids': [jobs.enqueue(kind) for kind in ('favorites','translations','daily')]}
+    if action == 'job-detail':
+        return jobs.detail(body.get('runId'),body.get('after'))
     if action == 'runs':
         return {'runs': jobs.runs()}
     if action == 'dispatch':
