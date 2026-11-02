@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 from fastapi import HTTPException
 from backend import media, translation
+from backend.upstream import validate_url
 
 HTML = b'''<div id="gdd"><div class="gdt1">Length:</div><div>2 pages</div></div>
 <div id="gdt"><a href="https://e-hentai.org/s/abcdef/123-1"><div style="width:100px;height:142px;background:url(https://ehgt.org/sprite.jpg) -100px 0 no-repeat"></div></a></div>
@@ -40,6 +41,31 @@ class MediaTests(unittest.TestCase):
             result = media.lookup('本')['results'][0]
         self.assertEqual(result['word'], '本')
         self.assertEqual(result['jlpt'], ['N5'])
+
+    def test_hath_https_custom_ports_are_image_only_and_keep_public_dns_checks(self):
+        public=[(0,0,0,'',('91.193.7.122',8809))]
+        with patch('socket.getaddrinfo',return_value=public):
+            self.assertEqual(validate_url('https://node.example.hath.network:8809/image.webp',image=True),'https://node.example.hath.network:8809/image.webp')
+            for url in ('http://node.hath.network:8809/image','https://node.hath.network:22/image','https://ehgt.org:8809/image','https://node.hath.network.evil.example:8809/image','https://user:pass@node.hath.network:8809/image'):
+                with self.assertRaises(HTTPException):validate_url(url,image=True)
+            with self.assertRaises(HTTPException):validate_url('https://node.hath.network:8809/image')
+            with self.assertRaises(HTTPException):validate_url('https://exhentai.org:8809/g/123/token/',gallery=True)
+        with patch('socket.getaddrinfo',return_value=[(0,0,0,'',('127.0.0.1',8809))]):
+            with self.assertRaises(HTTPException):validate_url('https://node.hath.network:8809/image',image=True)
+
+    def test_custom_port_image_redirects_are_revalidated_without_forwarding_cookies(self):
+        import httpx
+        from backend import upstream
+        requests=[]
+        def handle(request):
+            requests.append(request)
+            return httpx.Response(302,headers={'location':'https://second.hath.network:8809/image'})
+        actual_client=httpx.Client
+        with patch.object(upstream.httpx,'Client',side_effect=lambda **kwargs:actual_client(transport=httpx.MockTransport(handle),**kwargs)),patch('socket.getaddrinfo',side_effect=[[(0,0,0,'',('91.193.7.122',8809))],[(0,0,0,'',('127.0.0.1',8809))]]),patch.object(upstream,'cookies') as cookies:
+            with self.assertRaises(HTTPException):upstream.fetch('https://first.hath.network:8809/image',image=True)
+        self.assertEqual(len(requests),1)
+        self.assertNotIn('cookie',requests[0].headers)
+        cookies.assert_not_called()
 
     def test_ocr_bounding_boxes_and_provider_parsers(self):
         paddle = translation.parse_paddle({'result': {'ocrResults': [{'prunedResult': {

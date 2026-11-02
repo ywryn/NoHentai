@@ -436,6 +436,7 @@
 </template>
 
 <script>
+import {readTranslationResponse,scaleOcrResults} from '@/utils/translationApi'
 import { loadGallery } from '@/composables/useGalleryData'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
@@ -1468,25 +1469,14 @@ export default {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: sessionStorage.getItem(SESSION_KEY), ...body }),
       })
-      const data = await res.json().catch(() => ({}))
-      if (res.status === 401) {
-        const err = new Error('密码已失效')
-        err.auth = true
-        throw err
-      }
-      if (data.error) throw new Error(data.error)
-      return data
+      return readTranslationResponse(res)
     },
 
     /** 对一张已解码的图片跑 OCR → 合并，返回带 _id 的结果数组与来源。纯函数式，不碰 UI 状态 */
     async ocrImage(img, ocrSource) {
       const { b64, scale } = await this.getOcrPayload(img)
       const data = await this.postTrans('trans-ocr', { imageBase64: b64, ocrSource })
-      const raw = scale === 1 ? data.results : data.results.map(r => ({
-        ...r,
-        bbox: r.bbox.map(v => v * scale),
-        polygon: r.polygon ? r.polygon.map(([x, y]) => [x * scale, y * scale]) : null,
-      }))
+      const raw = scaleOcrResults(data,scale)
       const blockLevel = data.source === 'vision' || data.source === 'ocrspace'
       const stamp = Date.now()
       const results = mergeOcrResults(raw, { blockLevel }).map((r, i) => ({ ...r, _id: `${stamp}_${i}` }))

@@ -208,3 +208,11 @@ sudo systemd-run --wait --pipe --collect --uid=nohentai --gid=nohentai \
 ## schema 2 升级到 schema 3
 
 停写并保留一致性回退备份后，使用新代码初始化数据库，将事务新增 job_events 表及索引。内容、记录版本、任务、凭证、账户和会话保持不变。历史任务仍保留摘要，无法追溯升级前未采集的日志。部署前检查无运行任务，先验证数据库副本；旧代码不接受 schema 3，回退需旧代码与对应旧库一起恢复。
+
+## 大图片请求与测试目录隔离
+
+OCR 图片请求会超过 Nginx 内存请求体缓冲，落盘到 client_body_temp_path。生产 `/var/lib/nginx/body` 以及 `/var/lib/nginx/proxy` 的目录及其分层子目录应由实际 Nginx worker 用户（本机 www-data）拥有并可写；不能将其变成 root 私有目录。否则大请求会在到达 API 前返回 HTML 500。
+
+浏览器测试的 Nginx 实例必须显式设置独立的 client_body_temp_path、proxy_temp_path、fastcgi_temp_path、uwsgi_temp_path 和 scgi_temp_path，全部位于临时目录；不能复用编译默认路径。tests/browser_smoke.py 现在检查大 OCR 请求能到达后端，且测试前后生产临时目录所有者和权限保持不变。
+
+图片代理允许受信任 H@H 子域名通过 HTTPS 的非特权自定义端口获取图片；其他来源仍限制标准 HTTPS 端口。域名、公网 DNS、逐跳重定向与不向 H@H 转发 Cookie 的约束保留。
