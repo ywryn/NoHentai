@@ -5,6 +5,7 @@ Run from the repository: .venv/bin/python tests/browser_smoke.py
 No external requests, paid services, or production data are modified.
 """
 import os
+import re
 from pathlib import Path
 import secrets
 import subprocess
@@ -59,6 +60,46 @@ def main():
                     errors = []
                     page.on('pageerror', lambda error: errors.append(str(error)))
                     page.route('**/*', lambda route: route.continue_() if urlsplit(route.request.url).hostname == '127.0.0.1' else route.abort())
+                    catalog_requests = []
+                    page.on('request', lambda request: catalog_requests.append(urlsplit(request.url).path))
+                    page.goto(BASE + '/#/')
+                    cards = page.locator('.home-page a[href*="/gallery/"]')
+                    try:
+                        expect(cards).to_have_count(30)
+                    except AssertionError:
+                        print('Page errors:', errors)
+                        print('Home text:', page.locator('.home-page').inner_text()[:450])
+                        print('Requests:', catalog_requests)
+                        print('First home anchor:', page.locator('.home-page a').first.evaluate('(a)=>a.outerHTML.slice(0,600)'))
+                        print('Home links:', page.locator('.home-page a').evaluate_all('(links) => links.slice(0,3).map(a=>a.getAttribute("href"))'))
+                        raise
+                    first_href = cards.first.get_attribute('href')
+                    first_gid = re.search(r'/gallery/([0-9]+)', first_href)[1]
+                    page.get_by_role('button', name='下一页', exact=True).first.click()
+                    expect(page).to_have_url(BASE + '/#/?page=2')
+                    expect(cards).to_have_count(30)
+                    expect(cards.first).not_to_have_attribute('href', first_href)
+                    page.reload()
+                    expect(page).to_have_url(BASE + '/#/?page=2')
+                    expect(cards).to_have_count(30)
+                    search = page.get_by_role('combobox', name='搜索画廊')
+                    search.fill('gid:' + first_gid)
+                    search.press('Enter')
+                    expect(cards).to_have_count(1)
+                    expect(cards.first).to_have_attribute('href', first_href)
+                    page.get_by_role('button', name='清空搜索词', exact=True).click()
+                    expect(cards).to_have_count(30)
+                    page.locator('.home-filter-btn').click()
+                    page.get_by_label('Manga', exact=False).first.check()
+                    expect(page).to_have_url(BASE + '/#/?type=Manga')
+                    expect(cards).to_have_count(30)
+                    page.keyboard.press('Escape')
+                    cards.first.click()
+                    expect(page.locator('.gallery-detail-page')).to_be_visible()
+                    assert '/data/galleries.json' not in catalog_requests, catalog_requests
+                    assert '/data/translations.json' not in catalog_requests, catalog_requests
+                    assert any(path.startswith('/api/galleries/') for path in catalog_requests), catalog_requests
+                    print('Homepage/detail: server pagination, query, category, URL restore; zero full-data downloads')
                     page.goto(BASE + '/#/admin')
                     page.get_by_label('管理密码', exact=True).fill(password)
                     page.get_by_role('button', name='进入工作空间').click()
@@ -94,7 +135,7 @@ def main():
                     expect(page.get_by_label('管理密码', exact=True)).to_be_visible()
                     assert not errors, errors
                     browser.close()
-                print('Browser smoke passed: all admin pages, login restore/logout, gallery/config save, queue and result dialog')
+                print('Browser smoke passed: homepage pagination/search/detail plus all admin pages, saves, login and queue')
             finally:
                 for process in reversed(processes):
                     process.terminate()

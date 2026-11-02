@@ -1,10 +1,10 @@
 """Run with: uvicorn backend.main:app --host 127.0.0.1 --port 8000"""
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, HTTPException, Body
+from fastapi import FastAPI, Request, HTTPException, Body, Query
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
-from . import admin, db, settings, public, media, translation, security
+from . import admin, db, settings, public, media, translation, security, catalog
 from cryptography.fernet import Fernet
 
 
@@ -80,6 +80,22 @@ def health():
 @app.post('/api/admin')
 def admin_api(request: Request, body: dict = Body(...)):
     return safely(admin.handle, body, request.client.host)
+
+
+@app.get('/api/galleries')
+def catalog_api(q: str = Query('', max_length=2000), types: str = Query('', max_length=1000),
+                page: int = Query(1, ge=1, le=100000), per_page: int = Query(30, ge=1, le=100)):
+    return safely(catalog.list_galleries, q, types, page, per_page)
+
+
+@app.get('/api/galleries/{gid}')
+def detail_api(gid: str, source: str = Query('favorites', pattern='^(favorites|daily)$')):
+    return safely(catalog.gallery_detail, gid, source)
+
+
+@app.get('/api/tags/suggestions')
+def suggestions_api(token: str = Query('', max_length=2000)):
+    return safely(catalog.suggest_tags, token)
 
 
 @app.get('/data/{name}')

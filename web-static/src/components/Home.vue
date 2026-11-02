@@ -6,7 +6,7 @@
           <div class="home-copy">
             <div class="home-eyebrow">
               NoHentai · 共 {{ totalRecords }} 部
-              <span v-if="isFiltered" class="home-eyebrow-sub">（已筛选自 {{ allGalleries.length }} 部）</span>
+              <span v-if="isFiltered" class="home-eyebrow-sub">（已筛选自 {{ totalAll }} 部）</span>
             </div>
           </div>
         </div>
@@ -137,6 +137,7 @@
       </div>
 
       <section class="home-content-panel">
+        <div v-if="error" role="alert"><p>{{ error }}</p><button type="button" @click="fetchPage">重新加载</button></div>
         <div class="toolbar" v-if="totalPages > 1">
           <Paginator :page="currentPage" :total="totalPages" @go="goToPage" />
         </div>
@@ -208,22 +209,19 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Popover from 'primevue/popover'
 import GalleryList from '@/components/GalleryList.vue'
 import Paginator from '@/components/Paginator.vue'
-import { exTypeList, exTypeDotColors, exTypeClassMap, formatTimestamp, enrichTags } from '@/utils/galleryUtils'
-import { loadGalleries, loadTranslations } from '@/composables/useGalleryData'
+import { exTypeList, exTypeDotColors, exTypeClassMap, formatTimestamp } from '@/utils/galleryUtils'
+import { loadGalleryPage, loadTagSuggestions } from '@/composables/useGalleryData'
 import {
   SEARCH_SYNTAX_HELP,
   parseQuery,
   parsedTerms,
-  passesQuery,
-  matchGalleryTerm,
   activeToken,
   applySuggestion,
-  suggestTags,
 } from '@/utils/gallerySearch'
 
 const PER_PAGE = 30
@@ -232,15 +230,27 @@ const DEBOUNCE_MS = 220
 const router = useRouter()
 const route = useRoute()
 
-const searchQuery = ref('')
-/** 防抖后的查询词，真正参与过滤 */
-const appliedQuery = ref('')
-const allGalleries = ref([])
-const translationData = ref(null)
-const activeTypes = ref([])
-const currentPage = ref(1)
-const perPage = ref(PER_PAGE)
-const loading = ref(true)
+function setQuery(patch) {
+  const query = { ...route.query, ...patch }
+  for (const key of Object.keys(query)) if (query[key] === undefined || query[key] === '') delete query[key]
+  if (JSON.stringify(query) !== JSON.stringify(route.query)) router.replace({ query })
+}
+const searchQuery = ref(String(route.query.q || ''))
+const appliedQuery = computed({
+  get: () => String(route.query.q || ''),
+  set: q => { if (q.trim() !== String(route.query.q || '')) setQuery({ q: q.trim(), page: undefined }) },
+})
+const activeTypes = computed({
+  get: () => String(route.query.type || '').split(',').filter(Boolean),
+  set: types => setQuery({ type: types.join(','), page: undefined }),
+})
+const currentPage = computed({
+  get: () => Math.max(1, Number.parseInt(route.query.page) || 1),
+  set: page => setQuery({ page: page > 1 ? String(page) : undefined }),
+})
+const pageItems = ref([]), totalRecords = ref(0), totalAll = ref(0)
+const typeCounts = ref({}), totalTypeCounts = ref({}), tagSuggestions = ref([])
+const perPage = ref(PER_PAGE), loading = ref(true), error = ref('')
 
 const searchInputRef = ref()
 const searchHelpPopover = ref()
@@ -256,30 +266,6 @@ let blurTimer = null
 
 const parsedQuery = computed(() => parseQuery(appliedQuery.value.trim()))
 const activeTerms = computed(() => parsedTerms(parsedQuery.value))
-
-/** 先只应用文本条件，分类计数基于这一层，方便用户预判点下去有多少结果 */
-const queryFiltered = computed(() => {
-  if (!appliedQuery.value.trim()) return allGalleries.value
-  const parsed = parsedQuery.value
-  return allGalleries.value.filter(item => passesQuery(item, parsed, matchGalleryTerm))
-})
-
-const typeCounts = computed(() => {
-  const counts = {}
-  for (const item of queryFiltered.value) {
-    counts[item.category] = (counts[item.category] || 0) + 1
-  }
-  return counts
-})
-
-/* 全量计数只用于排序，保证列表顺序不随输入抖动 */
-const totalTypeCounts = computed(() => {
-  const counts = {}
-  for (const item of allGalleries.value) {
-    counts[item.category] = (counts[item.category] || 0) + 1
-  }
-  return counts
-})
 
 /**
  * 分类选项。
@@ -308,24 +294,11 @@ const categoryLabel = computed(() => {
   return `${activeTypes.value[0]} +${n - 1}`
 })
 
-const filtered = computed(() => {
-  if (!activeTypes.value.length) return queryFiltered.value
-  const set = new Set(activeTypes.value)
-  return queryFiltered.value.filter(item => set.has(item.category))
-})
-
-const totalRecords = computed(() => filtered.value.length)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalRecords.value / perPage.value)))
 const isFiltered = computed(() => activeTerms.value.length > 0 || activeTypes.value.length > 0)
 
-const pageItems = computed(() => {
-  const start = (currentPage.value - 1) * perPage.value
-  return filtered.value.slice(start, start + perPage.value)
-})
-
 const normalizedItems = computed(() =>
   pageItems.value.map(item => {
-    const tags = Array.isArray(item.tags) ? enrichTags(item.tags, translationData.value) : []
     return {
       key: item.gid,
       gid: item.gid,
@@ -334,7 +307,7 @@ const normalizedItems = computed(() =>
       title: item.title_jpn || item.title,
       badge: item.category,
       badgeClass: exTypeClassMap[item.category] || 'default',
-      tags: tags.slice(0, 8).map(t => t.tag_cn || t.value),
+      tags: item.tagLabels || [],
       pages: item.filecount ? `${item.filecount}p` : null,
       date: item.posted ? formatTimestamp(item.posted) : null,
       rating: item.rating,
@@ -347,10 +320,6 @@ const normalizedItems = computed(() =>
 )
 
 /* ── 标签联想 ─────────────────────────────────────────────────── */
-
-const tagSuggestions = computed(() =>
-  suggestTags(activeToken(searchQuery.value).text, translationData.value?.data)
-)
 
 const suggestOpen = computed(() => !suggestDismissed.value && tagSuggestions.value.length > 0)
 
@@ -409,22 +378,9 @@ function flushQuery() {
   suggestDismissed.value = true
 }
 
-/* 条件变化后回到第 1 页，并把状态同步到 URL 以便后退恢复与分享 */
-watch([appliedQuery, activeTypes], () => { currentPage.value = 1 })
-
-watch([appliedQuery, activeTypes, currentPage], () => {
-  const query = {}
-  const q = appliedQuery.value.trim()
-  if (q) query.q = q
-  if (activeTypes.value.length) query.type = activeTypes.value.join(',')
-  if (currentPage.value > 1) query.page = String(currentPage.value)
-  router.replace({ query })
-}, { deep: true })
-
 function toggleType(type) {
-  const i = activeTypes.value.indexOf(type)
-  if (i >= 0) activeTypes.value.splice(i, 1)
-  else activeTypes.value.push(type)
+  activeTypes.value = activeTypes.value.includes(type)
+    ? activeTypes.value.filter(t => t !== type) : [...activeTypes.value, type]
 }
 
 function removeTerm(term) {
@@ -447,8 +403,8 @@ function clearQuery() {
 
 function clearAll() {
   searchQuery.value = ''
-  activeTypes.value = []
-  flushQuery()
+  clearTimeout(debounceTimer)
+  setQuery({ q: undefined, type: undefined, page: undefined })
 }
 
 function goToPage(page) {
@@ -472,26 +428,44 @@ function applyExample(example) {
   searchInputRef.value?.focus()
 }
 
-/* ── 初始化 ───────────────────────────────────────────────────── */
-
-onMounted(async () => {
-  const q = String(route.query.q || '')
-  const type = String(route.query.type || '')
-  searchQuery.value = q
-  appliedQuery.value = q
-  activeTypes.value = type ? type.split(',').filter(Boolean) : []
-
-  allGalleries.value = await loadGalleries()
-  currentPage.value = parseInt(route.query.page) || 1
-  loading.value = false
-
-  /* 翻译数据后到：只影响标签文案，不再重跑整个过滤与分页 */
-  translationData.value = await loadTranslations()
+/* Query state lives in the URL. Abort obsolete requests and ignore stale replies. */
+let pageController, suggestionController, suggestionTimer, requestVersion = 0
+async function fetchPage() {
+  pageController?.abort()
+  pageController = new AbortController()
+  const version = ++requestVersion
+  loading.value = true; error.value = ''
+  try {
+    const result = await loadGalleryPage({ q: appliedQuery.value, types: activeTypes.value.join(','),
+      page: currentPage.value, per_page: perPage.value }, pageController.signal)
+    if (version !== requestVersion) return
+    pageItems.value = result.items; totalRecords.value = result.total; totalAll.value = result.totalAll
+    typeCounts.value = result.categoryCounts; totalTypeCounts.value = result.totalCategoryCounts
+    if (result.page !== currentPage.value) currentPage.value = result.page
+  } catch (e) {
+    if (version === requestVersion && e.name !== 'AbortError') error.value = e.message || '画廊加载失败，请重试'
+  } finally { if (version === requestVersion) loading.value = false }
+}
+watch(() => [route.query.q, route.query.type, route.query.page], fetchPage, { immediate: true })
+watch(() => route.query.q, q => { searchQuery.value = String(q || '') })
+watch(searchQuery, value => {
+  clearTimeout(suggestionTimer)
+  suggestionController?.abort()
+  tagSuggestions.value = []
+  const token = activeToken(value).text
+  if (token.length < 2 || token.includes('$') || token.startsWith('-') || token.startsWith('~')) return
+  const controller = new AbortController()
+  suggestionController = controller
+  suggestionTimer = setTimeout(async () => {
+    try {
+      const result = await loadTagSuggestions(token, controller.signal)
+      if (!controller.signal.aborted) tagSuggestions.value = result.items
+    } catch { /* Suggestions are optional; the search remains usable. */ }
+  }, 150)
 })
-
 onBeforeUnmount(() => {
-  clearTimeout(debounceTimer)
-  clearTimeout(blurTimer)
+  clearTimeout(debounceTimer); clearTimeout(blurTimer); clearTimeout(suggestionTimer)
+  pageController?.abort(); suggestionController?.abort()
 })
 </script>
 

@@ -26,3 +26,23 @@ export function invalidateGalleryData() {
   _galleriesPromise = null
   _translationsPromise = null
 }
+
+const apiBase = import.meta.env.VITE_API_BASE || ''
+async function publicRequest(path, signal) {
+  const response = await fetch(`${apiBase}${path}`, { signal })
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}))
+    throw new Error(body.error || `加载失败（${response.status}）`)
+  }
+  return response.json()
+}
+export function loadGalleryPage(params, signal) {
+  return publicRequest(`/api/galleries?${new URLSearchParams(params)}`, signal)
+}
+export function loadTagSuggestions(token, signal) {
+  return publicRequest(`/api/tags/suggestions?${new URLSearchParams({ token })}`, signal)
+}
+
+export function loadGallery(gid, source = 'favorites') {
+  return publicRequest(`/api/galleries/${encodeURIComponent(gid)}?${new URLSearchParams({ source })}`)
+}
