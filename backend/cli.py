@@ -3,6 +3,7 @@ import argparse
 import json
 import os
 import sqlite3
+import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 from . import db, settings
@@ -21,7 +22,7 @@ def initialize_data(source=None):
     daily, translations = read(directory / 'daily_search.json'), read(directory / 'translations.json')
     with db.connect() as con:
         con.execute('BEGIN IMMEDIATE')
-        if con.execute('SELECT 1 FROM resources LIMIT 1').fetchone():
+        if con.execute('SELECT 1 FROM resources LIMIT 1').fetchone() or con.execute('SELECT 1 FROM resource_versions LIMIT 1').fetchone():
             raise RuntimeError('数据库已导入，拒绝重复导入覆盖线上编辑')
         db.replace_galleries(con, galleries)
         for name, value in resources.items():
@@ -44,8 +45,18 @@ def backup():
         finally:
             target.close()
     os.chmod(path, 0o600)
+    uploads = settings.DATA_DIR / 'uploads'
+    if uploads.exists() and any(uploads.iterdir()):
+        media_path = path.with_suffix('.media.zip')
+        with zipfile.ZipFile(media_path, 'w', compression=zipfile.ZIP_STORED) as archive:
+            for file in uploads.glob('*.webp'):
+                archive.write(file, arcname=file.name)
+        os.chmod(media_path, 0o600)
     # Encrypted credentials are included; encryption key is intentionally separate.
     for old in sorted(directory.glob('nohentai-*.sqlite3'), reverse=True)[7:]:
+        media_path = old.with_suffix('.media.zip')
+        if media_path.exists():
+            media_path.unlink()
         old.unlink()
     return path
 
@@ -57,6 +68,8 @@ def main():
     init.add_argument('--source', type=Path)
     sub.add_parser('backup')
     sub.add_parser('generate-key')
+    reset = sub.add_parser('reset-admin')
+    reset.add_argument('--password-file', type=Path, required=True)
     queue = sub.add_parser('enqueue')
     queue.add_argument('kind', choices=['all', 'favorites', 'translations', 'daily'])
     worker = sub.add_parser('worker')
@@ -73,7 +86,19 @@ def main():
         print(Fernet.generate_key().decode())
         return
     db.initialize()
-    if args.command == 'init':
+    if args.command == 'reset-admin':
+        from .security import hash_password, credential, digest
+        import hmac
+        password = args.password_file.read_text().strip()
+        if not 16 <= len(password) <= 1024 or password.startswith('replace_with_'):
+            raise ValueError('密码需为 16–1024 字符的独立密码')
+        if hmac.compare_digest(digest(password), digest(credential('TRANS_PASSWORD'))):
+            raise ValueError('管理密码不能与翻译密码相同')
+        with db.connect() as con:
+            con.execute('INSERT OR REPLACE INTO accounts VALUES (1,?,?)', (hash_password(password), db.now()))
+            con.execute('DELETE FROM sessions')
+        print('管理密码已重置，全部会话已撤销')
+    elif args.command == 'init':
         initialize_data(args.source)
     elif args.command == 'backup':
         print(backup())
@@ -87,9 +112,12 @@ def main():
         from .jobs import run_foreground
         print(f'同步完成：{run_foreground(args.kind, args.allow_favorites_shrink)}')
     elif args.command == '_execute':
-        from .jobs import execute, JobFailure, record_failure
+        from .jobs import execute, JobFailure, JobCancelled, record_failure
         try:
             execute(args.id, args.allow_favorites_shrink)
+        except JobCancelled as exc:
+            record_failure(args.id, str(exc), 'cancelled')
+            raise SystemExit(1)
         except JobFailure as exc:
             record_failure(args.id, str(exc))
             raise SystemExit(1)

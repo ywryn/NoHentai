@@ -46,3 +46,23 @@ export function loadTagSuggestions(token, signal) {
 export function loadGallery(gid, source = 'favorites') {
   return publicRequest(`/api/galleries/${encodeURIComponent(gid)}?${new URLSearchParams({ source })}`)
 }
+
+// Public screens refresh when revisited without polling background tabs.
+export function watchPublicRevision(onChange) {
+  let revision = null, busy = false, stopped = false
+  async function check() {
+    if (busy || stopped || document.visibilityState !== 'visible') return
+    busy = true
+    try {
+      const data = await publicRequest('/api/revision')
+      const next = JSON.stringify(data)
+      if (revision !== null && revision !== next && !stopped) await onChange()
+      revision = next
+    } catch { /* Existing content remains available; manual refresh can retry. */ }
+    finally { busy = false }
+  }
+  check()
+  window.addEventListener('focus', check)
+  document.addEventListener('visibilitychange', check)
+  return () => { stopped = true; window.removeEventListener('focus', check); document.removeEventListener('visibilitychange', check) }
+}

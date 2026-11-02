@@ -34,9 +34,13 @@ npm ci
 npm run dev
 ```
 
-打开 `http://localhost:3000`。管理入口为 `/#/admin`。Vite 将 `/api` 和 `/data` 代理到 Python。首次导入包含仓库当前的收藏、每日结果、标签翻译、书单及配置；不需要立即抓取，也不会覆盖仓库源文件。再次导入会拒绝执行。
+打开 `http://localhost:3000`。管理入口为 `/#/admin`。Vite 将 `/api`、`/data` 和 `/media` 代理到 Python。首次导入包含仓库当前的收藏、每日结果、标签翻译、书单及配置；不需要立即抓取，也不会覆盖仓库源文件。再次导入会拒绝执行。
 
 服务器部署、切换及恢复步骤见 [Vultr 部署](docs/vultr-deployment.md)。后台行为见 [Admin](docs/admin.md)，同步机制见 [数据同步](docs/data-sync.md)。
+
+## 管理与维护
+
+后台支持逐条编辑与历史恢复、封面上传、分组服务配置、持久化任务与调度、Cookie 登录和账户会话管理。首次从 `ADMIN_PASSWORD` 创建管理员后，密码由数据库管理。调度默认暂停，在服务凭证验证后通过后台启用；旧 `nohentai-sync.timer` 保持关闭。schema 1 自动事务升级到 schema 2，上线前必须备份并验证副本，降级需恢复对应旧库。
 
 ## 验证
 

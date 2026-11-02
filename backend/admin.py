@@ -1,6 +1,6 @@
 import json
 import time
-from . import db, jobs, security, settings
+from . import db, jobs, security, settings, records, services, schedules, operations
 from .validation import validate, merge
 from .security import fail
 
@@ -17,6 +17,52 @@ def handle(body, ip):
         with db.connect() as con:
             con.execute('DELETE FROM sessions WHERE digest=?', (security.digest(token),))
         return {'ok': True}
+    if action == 'audit-events':
+        with db.connect() as con:
+            rows=con.execute("SELECT resource,message,created_at,data FROM history WHERE resource NOT IN ('printed','overrides','daily') ORDER BY id DESC LIMIT 100").fetchall()
+        return {'items':[{'resource':r['resource'],'message':r['message'],'date':r['created_at'],'fields':json.loads(r['data']).get('fields',[]) if r['data'].startswith('{') else []} for r in rows]}
+    if action == 'overview':
+        return operations.overview()
+    if action == 'services':
+        return services.status()
+    if action == 'service-save':
+        return services.save(body.get('service'), body.get('version'), body.get('values'), body.get('operations'))
+    if action == 'service-test':
+        return services.test(body.get('service'))
+    if action == 'schedules':
+        return schedules.listing()
+    if action == 'schedule-save':
+        return schedules.save(body.get('kind'), body.get('version'), body.get('enabled'), body.get('hour'), body.get('minute'), body.get('timezone'))
+    if action == 'backups':
+        return operations.backups()
+    if action == 'backup-create':
+        from .cli import backup
+        return {'name': backup().name}
+    if action == 'media-upload':
+        from .media_store import upload
+        return upload(body.get('imageBase64'))
+    if action == 'records':
+        return records.list_records(body.get('kind'), str(body.get('query') or ''), body.get('page') or 1)
+    if action == 'record':
+        return records.load(body.get('kind'), str(body.get('id') or ''))
+    if action in ('record-save', 'record-delete'):
+        return records.save(body.get('kind'), body.get('id'), body.get('version'), body.get('data'), action == 'record-delete')
+    if action == 'record-history':
+        return records.history(body.get('kind'), body.get('id'))
+    if action == 'record-restore':
+        return records.restore(body.get('historyId'), body.get('version'))
+    if action == 'record-reorder':
+        return records.reorder(body.get('kind'), body.get('id'), body.get('direction'), body.get('version'))
+    if action == 'sessions':
+        return security.list_sessions(token)
+    if action == 'session-revoke':
+        return security.revoke_session(body.get('id'))
+    if action == 'logout-all':
+        with db.connect() as con:
+            con.execute('DELETE FROM sessions')
+        return {'ok': True, 'relogin': True}
+    if action == 'change-password':
+        return security.change_password(body.get('currentPassword'), body.get('newPassword'))
     if action in ('load', 'save', 'history'):
         if not isinstance(name, str) or name not in RESOURCES:
             fail(400, '不允许访问此资源')
@@ -48,27 +94,18 @@ def handle(body, ip):
             db.put_snapshot(con, 'release', {'commit': version, 'builtAt': db.now()})
             return {'sha': version, 'commit': version, 'warnings': warnings}
     if action == 'gallery-search':
-        query = str(body.get('query') or '').strip().lower()[:200]
-        try:
-            page = max(1, min(10000, int(body.get('page') or 1)))
-        except (ValueError, TypeError):
-            fail(400, '分页不正确')
-        with db.connect() as con:
-            con.execute('BEGIN')
-            source = db.galleries(con)
-            patches, _ = db.resource(con, 'overrides')
-        originals = {str(g['gid']): g for g in source}
-        all_items = [g for g in merge(source, patches, True) if not query or any(
-            query in str(v or '').lower() for v in [g['gid'], g.get('title'), g.get('title_jpn'), g.get('uploader'), *g.get('tags', [])])]
-        return {'total': len(all_items), 'page': page, 'items': [
-            {'gallery': g, 'source': originals[str(g['gid'])], 'override': patches.get(str(g['gid']), {})}
-            for g in all_items[(page - 1) * 30:page * 30]]}
+        result = records.list_records('gallery', str(body.get('query') or ''), body.get('page') or 1)
+        return {**result, 'items': [{'gallery': r['effective'], 'source': r['source'], 'override': r['data']} for r in result['items']]}
+    if action == 'job-cancel':
+        return jobs.cancel(body.get('runId'))
+    if action == 'dispatch-all':
+        return {'ids': [jobs.enqueue(kind) for kind in ('favorites','translations','daily')]}
     if action == 'runs':
         return {'runs': jobs.runs()}
     if action == 'dispatch':
-        return {'accepted': True, 'id': jobs.enqueue(body.get('workflow'))}
+        return {'accepted': True, 'id': jobs.enqueue(body.get('workflow'), body.get('ruleId'))}
     if action == 'rerun':
-        return {'accepted': True, 'id': jobs.rerun(body.get('runId'))}
+        return {'accepted': True, 'id': jobs.rerun(body.get('runId'), body.get('original') is True)}
     if action == 'platforms':
         return {'server': {'available': True, 'secrets': [
             {'name': name, 'configured': bool(security.credential(name))} for name in settings.SECRET_NAMES]}}
