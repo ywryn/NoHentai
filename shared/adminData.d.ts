@@ -21,8 +21,6 @@ export interface TranslateConfig {
   defaultOcr: 'google' | 'paddle' | 'ocrspace'
   jsonMode: boolean | null
 }
-export const RESOURCES: Readonly<Record<'printed' | 'overrides' | 'daily' | 'translate', string>>
-export const GALLERIES_PATH: string
 export const CATEGORIES: string[]
 export const OVERRIDE_FIELDS: string[]
 export function validateOverrides(value: unknown): Record<string, GalleryOverride>

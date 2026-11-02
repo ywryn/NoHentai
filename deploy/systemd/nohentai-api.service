@@ -1,0 +1,25 @@
+[Unit]
+Description=NoHentai Python API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=nohentai
+Group=nohentai
+WorkingDirectory=/opt/nohentai
+EnvironmentFile=/etc/nohentai/nohentai.env
+Environment=NOHENTAI_DATA_DIR=/var/lib/nohentai
+ExecStart=/opt/nohentai/.venv/bin/uvicorn backend.main:app --host 127.0.0.1 --port 8000 --workers 2 --proxy-headers --forwarded-allow-ips=127.0.0.1 --no-access-log
+Restart=on-failure
+RestartSec=5
+UMask=0077
+StateDirectory=nohentai
+StateDirectoryMode=0700
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/nohentai
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,27 @@
+[Unit]
+Description=NoHentai durable sync worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=nohentai
+Group=nohentai
+WorkingDirectory=/opt/nohentai
+EnvironmentFile=/etc/nohentai/nohentai.env
+Environment=NOHENTAI_DATA_DIR=/var/lib/nohentai
+ExecStart=/opt/nohentai/.venv/bin/python -m backend.cli worker
+Restart=on-failure
+RestartSec=5
+UMask=0077
+StateDirectory=nohentai
+StateDirectoryMode=0700
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/nohentai
+KillMode=control-group
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

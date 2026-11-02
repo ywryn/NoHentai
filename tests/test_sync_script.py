@@ -56,6 +56,20 @@ class SyncIntegrityTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, '重复书目'):
             self.client.extract_favorites()
 
+    def test_pagination_cannot_send_cookies_to_another_host(self):
+        self.client.session.get.return_value = page(1, 'https://evil.example/favorites')
+        with self.assertRaisesRegex(RuntimeError, '来源不正确'):
+            self.client.extract_favorites()
+        self.assertEqual(self.client.session.get.call_count, 1)
+
+    def test_metadata_order_preserves_favorite_associations(self):
+        response = Mock()
+        response.json.return_value = {'gmetadata': [{'gid': 2}, {'gid': 1}]}
+        with patch.object(sync.requests, 'post', return_value=response):
+            ok, data = self.client._fetch_single_batch_with_result('https://example.com', [{'gid': '1', 'token': 'a'}, {'gid': '2', 'token': 'b'}], 1)
+        self.assertTrue(ok)
+        self.assertEqual([g['gid'] for g in data], [1, 2])
+
     def test_exact_4214_to_2000_regression_keeps_original_file(self):
         with tempfile.TemporaryDirectory() as temp:
             target = Path(temp) / 'galleries.json'
