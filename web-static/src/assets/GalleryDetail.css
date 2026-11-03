@@ -812,11 +812,10 @@
 .gd-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .gd-actions .gd-action{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:46px;padding:11px 20px;border:1px solid transparent;border-radius:10px;font-size:13px;font-weight:650;line-height:1.5;text-decoration:none;transition:background .15s,border-color .15s,box-shadow .15s}
 .gd-action svg{width:19px;height:19px;flex-shrink:0}
-.gd-actions .gd-action-primary{background:var(--primary-color);border-color:var(--primary-color);color:#fff;box-shadow:0 3px 10px color-mix(in srgb,var(--primary-color) 14%,transparent)}
-.my-app-dark .gd-actions .gd-action-primary{color:#151c34}
-.gd-actions .gd-action-primary:hover{background:var(--primary-color-hover);border-color:var(--primary-color-hover)}
-.gd-actions .gd-action-secondary{background:var(--surface-color);border-color:var(--border-color);color:var(--text-color)}
-.gd-actions .gd-action-secondary:hover{background:var(--primary-soft-bg);border-color:var(--primary-soft-border);color:var(--primary-on-soft)}
+.gd-actions .gd-action-primary{background:var(--surface-color);border-color:color-mix(in srgb,var(--text-color) 16%,var(--border-color));color:var(--title-color);box-shadow:0 1px 2px var(--shadow-color)}
+.gd-actions .gd-action-primary:hover{background:var(--hover-bg);border-color:color-mix(in srgb,var(--text-color) 30%,var(--border-color));color:var(--title-color)}
+.gd-actions .gd-action-secondary{background:transparent;border-color:var(--border-color);color:var(--text-color)}
+.gd-actions .gd-action-secondary:hover{background:var(--surface-color);border-color:color-mix(in srgb,var(--text-color) 16%,var(--border-color));color:var(--title-color)}
 .gd-action-arrow{margin-left:8px;opacity:.8}
 .gd-actions .gd-action:active{box-shadow:none}
 .gd-actions .gd-action:focus-visible{outline:2px solid var(--primary-color);outline-offset:3px}
