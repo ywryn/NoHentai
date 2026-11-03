@@ -13,6 +13,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from cryptography.fernet import Fernet
 from . import db, settings, security
+from app.daily_config import conditions
 from .security import credential, fail
 
 class JobFailure(Exception):
@@ -230,7 +231,7 @@ def collect_daily(groups):
         result = search.search_with_builder(builder, fetch_details=True, cutoff_date=cutoff)
         if not result['success']:
             raise JobFailure('每日搜索分组抓取失败，保留上一份完整快照')
-        output.append({'name': group['name'], 'filters': group['filters'], 'generatedAt': db.now(),
+        output.append({'name': group['name'], 'conditions': conditions(group), 'generatedAt': db.now(),
                        'cutoffDate': cutoff, 'galleries': result['galleries']})
     return output
 
@@ -291,6 +292,11 @@ def execute(job_id, allow_shrink=False):
         if con.execute('SELECT cancel_requested FROM jobs WHERE id=?', (job_id,)).fetchone()[0]:
             raise JobCancelled('任务已取消，数据保留')
         if 'daily' in collected:
+            frozen = {group['name']: group for group in config['daily']}
+            for group in collected['daily']:
+                group.pop('filters', None)
+                if group['name'] in frozen:
+                    group['conditions'] = conditions(frozen[group['name']])
             if config.get('ruleId'):
                 current = con.execute('SELECT version FROM daily_rules WHERE id=?', (config['ruleId'],)).fetchone()
                 if not current or current[0] != config['ruleVersions'].get(config['ruleId']):

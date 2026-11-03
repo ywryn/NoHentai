@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from . import db, catalog
 from .security import fail
 from .validation import validate
+from app.daily_config import without_display_labels
 
 TABLES = {'gallery': 'gallery_overrides', 'book': 'books', 'daily': 'daily_rules'}
 RESOURCES = {'gallery': 'overrides', 'book': 'printed', 'daily': 'daily'}
@@ -25,8 +26,11 @@ def row(con, kind, record_id):
     return con.execute(f'SELECT * FROM {TABLES[kind]} WHERE {key_field(kind)}=?', (record_id,)).fetchone()
 
 
-def dto(r):
-    return {'id': r['id'], 'position': r['position'], 'data': json.loads(r['data']), 'version': r['version'], 'updatedAt': r['updated_at']}
+def dto(r, kind=None):
+    data = json.loads(r['data'])
+    if kind == 'daily':
+        data = without_display_labels(data)
+    return {'id': r['id'], 'position': r['position'], 'data': data, 'version': r['version'], 'updatedAt': r['updated_at']}
 
 
 def gallery_dto(con, gid, index=None):
@@ -51,7 +55,7 @@ def load(kind, record_id):
         found = row(con, kind, record_id)
         if not found:
             fail(404, '记录不存在，可能已被删除')
-        result=dto(found)
+        result=dto(found,kind)
         if kind=='book' and found['gallery_gid']:
             try: result['gallery']=gallery_dto(con,found['gallery_gid'])['effective']
             except HTTPException as exc:
@@ -87,7 +91,7 @@ def list_records(kind, query='', page=1):
             params = [query.lower()] if query else []
             total = con.execute(f'SELECT COUNT(*) FROM {TABLES[kind]} WHERE {condition}', params).fetchone()[0]
             page = min(page, max(1, math.ceil(total / 30)))
-            items = [dto(r) for r in con.execute(f'SELECT * FROM {TABLES[kind]} WHERE {condition} ORDER BY position LIMIT 30 OFFSET ?', params + [(page-1)*30])]
+            items = [dto(r,kind) for r in con.execute(f'SELECT * FROM {TABLES[kind]} WHERE {condition} ORDER BY position LIMIT 30 OFFSET ?', params + [(page-1)*30])]
         if kind=='book':
             for item in items:
                 gid=item['data'].get('sid')
@@ -115,6 +119,8 @@ def write(con, kind, record_id, expected, data, delete=False, message='保存条
     if expected != actual:
         fail(409, '该条目已更新，请导出草稿后重新加载并合并')
     before = json.loads(current['data']) if current else None
+    if kind == 'daily' and before is not None:
+        before = without_display_labels(before)
     warnings = []
     if kind == 'gallery':
         if not re.fullmatch(r'[1-9][0-9]{0,14}', record_id or ''):

@@ -368,6 +368,43 @@ class AdminV2Tests(fixtures.BackendTests):
             db.initialize()
             with db.connect() as con:self.assertEqual([r[0] for r in con.execute('SELECT id FROM books ORDER BY position')],ids)
 
+    def test_daily_conditions_are_frozen_and_legacy_labels_do_not_dirty_rules(self):
+        rule=self.admin('records',kind='daily').json()['items'][0]
+        original=dict(rule['data'])
+        with db.connect() as con:
+            con.execute('UPDATE daily_rules SET data=? WHERE id=?',(db.dumps(dict(original,filters=['misleading'])),rule['id']))
+        clean=self.admin('record',kind='daily',id=rule['id']).json()
+        self.assertNotIn('filters',clean['data'])
+        no_op=self.admin('record-save',kind='daily',id=rule['id'],version=rule['version'],data=clean['data']).json()
+        self.assertTrue(no_op['unchanged'])
+        job=self.claim('daily')
+        payload=[{'name':g['name'],'generatedAt':'2026-11-03T03:00:00+00:00','galleries':[GALLERY],'filters':['obsolete']} for g in self.daily]
+        with patch.object(jobs,'collect_daily',return_value=payload):jobs.execute(job)
+        saved=self.admin('record-save',kind='daily',id=rule['id'],version=rule['version'],data=dict(original,keyword='changed',minPages=99,maxPages=999))
+        self.assertEqual(saved.status_code,200,saved.text)
+        for url in ('/api/daily','/data/daily_search.json'):
+            result=self.client.get(url).json()
+            groups=result['groups'] if isinstance(result,dict) else result
+            first=next(g for g in groups if g['name']==original['name'])
+            self.assertNotIn('filters',first)
+            self.assertEqual(first['conditions']['keyword'],original['keyword'])
+            self.assertEqual(first['conditions']['minPages'],original['minPages'])
+        # Old snapshots recover the matching frozen job, rather than today's rule.
+        with db.connect() as con:
+            groups=db.snapshot(con,'daily',[])
+            for group in groups:group.pop('conditions',None)
+            db.put_snapshot(con,'daily',groups)
+        recovered=self.client.get('/api/daily').json()['groups'][0]
+        self.assertEqual(recovered['conditions']['keyword'],original['keyword'])
+        self.assertEqual(recovered['conditionsSource'],'snapshot')
+        # A legacy import without checkpoints is explicitly described as current.
+        with db.connect() as con:
+            db.put_snapshot(con,'daily',[{'name':original['name'],'galleries':[],'filters':['obsolete']}])
+        fallback=self.client.get('/api/daily').json()['groups'][0]
+        self.assertEqual(fallback['conditionsSource'],'current')
+        self.assertEqual(fallback['conditions']['keyword'],'changed')
+        self.assertNotIn('filters',fallback)
+
 
 for name in list(fixtures.BackendTests.__dict__):
     if name.startswith('test_'):setattr(AdminV2Tests,name,None)

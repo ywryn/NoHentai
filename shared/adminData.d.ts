@@ -8,7 +8,6 @@ export interface GalleryOverride {
 }
 export interface DailyGroup {
   name: string
-  filters: string[]
   keyword: string
   categories: number
   minPages: number | null
