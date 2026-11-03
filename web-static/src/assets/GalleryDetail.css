@@ -808,25 +808,16 @@
   gap: 10px;
 }
 
-.translate-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 26px;
-  padding: 0 10px;
-  border-radius: 6px;
-  border: 1px solid rgba(100, 108, 255, 0.4);
-  background: rgba(100, 108, 255, 0.06);
-  color: var(--primary-color);
-  font-size: 11px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-  white-space: nowrap;
-  letter-spacing: 0.03em;
-}
-.translate-btn:hover {
-  background: rgba(100, 108, 255, 0.12);
-  border-color: var(--primary-color);
-}
+/* Primary actions stay available before preview thumbnails are loaded. */
+.gd-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.gd-actions .gd-action{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:46px;padding:11px 20px;border:1px solid transparent;border-radius:10px;font-size:13px;font-weight:650;line-height:1.5;text-decoration:none;transition:background .15s,border-color .15s,box-shadow .15s}
+.gd-action svg{width:19px;height:19px;flex-shrink:0}
+.gd-actions .gd-action-primary{background:var(--primary-color);border-color:var(--primary-color);color:#fff;box-shadow:0 3px 10px color-mix(in srgb,var(--primary-color) 14%,transparent)}
+.my-app-dark .gd-actions .gd-action-primary{color:#151c34}
+.gd-actions .gd-action-primary:hover{background:var(--primary-color-hover);border-color:var(--primary-color-hover)}
+.gd-actions .gd-action-secondary{background:var(--surface-color);border-color:var(--border-color);color:var(--text-color)}
+.gd-actions .gd-action-secondary:hover{background:var(--primary-soft-bg);border-color:var(--primary-soft-border);color:var(--primary-on-soft)}
+.gd-action-arrow{margin-left:8px;opacity:.8}
+.gd-actions .gd-action:active{box-shadow:none}
+.gd-actions .gd-action:focus-visible{outline:2px solid var(--primary-color);outline-offset:3px}
+@media(max-width:767px){.gd-actions{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:10px}.gd-actions .gd-action{width:100%;min-height:46px;padding:11px 14px}.gd-action-arrow{margin-left:auto}}
