@@ -19,6 +19,17 @@
             <p v-if="galleryData.title_jpn" class="subtitle">{{ galleryData.title_jpn }}</p>
           </div>
 
+          <nav v-if="galleryData.token" class="gd-actions" aria-label="画廊操作">
+            <RouterLink class="gd-action gd-action-primary" :to="{name:'GalleryReader',params:{gid:itemId},query:{token:galleryData.token,page:'1'}}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v15M3 4h5a4 4 0 0 1 4 2 4 4 0 0 1 4-2h5v15h-5a4 4 0 0 0-4 2 4 4 0 0 0-4-2H3Z"/></svg>
+              <span>开始阅读</span><span class="gd-action-arrow" aria-hidden="true">→</span>
+            </RouterLink>
+            <RouterLink class="gd-action gd-action-secondary" :to="{name:'GalleryTranslate',params:{gid:itemId},query:{token:galleryData.token,page:'1'}}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h12M9 3v2M5 5c1 6 5 9 9 10M13 5c-1 6-5 9-9 10m9 6 4-11 4 11M14.5 17h5"/></svg>
+              <span>翻译</span>
+            </RouterLink>
+          </nav>
+
           <!-- 以下两块由 margin-top:auto 推到底部，与封面栏底边对齐 -->
           <div class="gd-meta-row">
             <div class="gd-meta-item gd-meta-rating">
@@ -127,12 +138,6 @@
               <span class="thumb-source-dot"></span>{{ thumbSource === 'exhentai' ? 'Ex' : 'E' }}
             </span>
             <span v-if="thumbTotal" class="thumb-total-badge">{{ thumbTotal }} 页</span>
-            <button
-              v-if="thumbExpanded && galleryData?.token"
-              class="translate-btn"
-              @click="openTranslate"
-              title="打开翻译工作台"
-            >翻译</button>
           </div>
         </div>
 
@@ -359,14 +364,6 @@ export default {
         name: 'GalleryReader',
         params: { gid: this.itemId },
         query: { page: pageNum, token: this.galleryData.token },
-      });
-    },
-
-    openTranslate() {
-      this.$router.push({
-        name: 'GalleryTranslate',
-        params: { gid: this.itemId },
-        query: { token: this.galleryData.token, page: 1 },
       });
     },
 
