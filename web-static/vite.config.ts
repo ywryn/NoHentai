@@ -72,6 +72,8 @@ export default defineConfig({
       workbox: {
         // 只缓存静态资源，数据库内容始终访问后端。
         globPatterns: ['**/*.{js,css,html,ico,svg,png,woff2}'],
+        // Backend responses and attachments must never become the SPA shell.
+        navigateFallbackDenylist: [/^\/(?:api|data|media)(?:\/|$)/],
         runtimeCaching: [
           {
             // 管理保存后立即生效，避免回退旧快照。

@@ -59,7 +59,8 @@ def main():
                 assert large.status_code==401,('large OCR request must reach backend',large.status_code)
                 with sync_playwright() as p:
                     browser = p.chromium.launch(headless=True)
-                    page = browser.new_page(viewport={'width': 1440, 'height': 1000})
+                    context = browser.new_context(viewport={'width': 1440, 'height': 1000})
+                    page = context.new_page()
                     page.set_default_timeout(20000)
                     errors = []
                     page.on('pageerror', lambda error: errors.append(str(error)))
@@ -364,6 +365,29 @@ def main():
                     page.get_by_role('button',name='立即备份',exact=True).click()
                     expect(page.locator('.a-alert-success')).to_be_visible()
                     expect(page.get_by_role('link',name='下载数据库').first).to_be_visible()
+                    await_sw="async()=>{await navigator.serviceWorker.ready;if(!navigator.serviceWorker.controller)await new Promise(resolve=>navigator.serviceWorker.addEventListener('controllerchange',resolve,{once:true}));return true}"
+                    assert page.evaluate(await_sw)
+                    before_download=page.url
+                    with page.expect_download() as pending_download:
+                        page.get_by_role('link',name='下载数据库').first.click()
+                    downloaded=pending_download.value
+                    assert downloaded.suggested_filename.endswith('.sqlite3')
+                    with Path(downloaded.path()).open('rb') as backup_stream:
+                        assert backup_stream.read(16)==b'SQLite format 3\x00'
+                    assert page.url==before_download
+                    # Also exercise a normal navigation, as in bookmarks and older clients.
+                    page.get_by_role('link',name='下载数据库').first.evaluate('(el)=>el.removeAttribute("download")')
+                    with page.expect_download() as pending_navigation:
+                        page.get_by_role('link',name='下载数据库').first.click()
+                    assert pending_navigation.value.suggested_filename==downloaded.suggested_filename
+                    assert page.url==before_download
+                    # Navigation fallback must not turn backend errors into the homepage.
+                    probe=page.context.new_page()
+                    response=probe.goto(BASE+'/api/not-a-real-api')
+                    assert response.status==404 and 'application/json' in response.headers['content-type']
+                    assert 'Not Found' in probe.locator('body').inner_text()
+                    probe.close()
+
                     page.locator('.a-sidebar').get_by_role('link',name='账户与会话',exact=True).click()
                     page.get_by_label('当前密码',exact=True).fill(password)
                     new_password=secrets.token_urlsafe(24)
