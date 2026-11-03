@@ -42,7 +42,7 @@
       <div class="gt-header-actions">
         <button
           class="gt-btn gt-btn-primary"
-          :disabled="!imageUrl || ocrProcessing || translating || imagesLoading"
+          :disabled="!imageUrl || imageError || imageLoading || ocrProcessing || translating || imagesLoading"
           @click="performOcrAndTranslate"
         >
           {{ ocrProcessing ? '识别中 1/2' : translating ? '翻译中 2/2' : '翻译' }}
@@ -66,7 +66,7 @@
           <div class="gt-spinner"></div>
           <span>加载图片...</span>
         </div>
-        <div v-else-if="imageError" class="gt-image-placeholder gt-image-error">{{ imageError }}</div>
+        <div v-else-if="imageError" class="gt-image-placeholder gt-image-error" role="alert"><span>{{ imageError }}</span><button class="gt-btn" @pointerdown.stop @click.stop="retryCurrentImage(true)">重新加载图片</button></div>
         <!-- 缩放层：图片与 OCR 框同在一个 transform 下，捏合 / 双击放大时框随图一起走 -->
         <div v-else-if="imageUrl" class="gt-stage" :class="{ 'is-sliding': pageSliding }" :style="stageStyle">
           <img
@@ -77,6 +77,7 @@
             crossorigin="anonymous"
             draggable="false"
             @load="onImageLoad"
+            @error="onImageError"
           />
           <!-- OCR boxes overlay -->
           <div v-if="ocrResults.length && renderTick >= 0" class="gt-boxes-layer">
@@ -181,7 +182,7 @@
           <div class="gt-spinner-sm"></div>
           <span>加载缩略图...</span>
         </div>
-        <div v-else-if="imagesError" class="gt-strip gt-strip-error">{{ imagesError }}</div>
+        <div v-else-if="imagesError" class="gt-strip gt-strip-error" role="alert"><span>{{ imagesError }}</span><button class="gt-btn" @click="loadGalleryImages">重新加载页面列表</button></div>
 
         <!-- Config panel -->
         <div class="gt-config-panel" :class="{ 'gt-config-panel-collapsed': !configPanelExpanded }">
@@ -771,6 +772,8 @@ export default {
       imageUrlRaw: null,
       imageLoading: false,
       imageError: null,
+      imageAutoRetried: false,
+      imageRequestId: 0,
       nlParam: null,
 
       // OCR / translate state
@@ -904,6 +907,7 @@ export default {
   },
 
   beforeUnmount() {
+    this.imageRequestId++
     this._ro?.disconnect()
     this._thumbObserver?.disconnect()
     window.removeEventListener('pointermove', this.onStagePointerMove)
@@ -1218,6 +1222,7 @@ export default {
     // ── Gallery images ────────────────────────────────────────────────────────
 
     async loadGalleryImages() {
+      if (this.imagesLoading) return
       if (!this.token) {
         this.imagesError = '缺少 token 参数'
         return
@@ -1226,12 +1231,13 @@ export default {
       this.imagesError = null
       try {
         const res = await fetch(`${API_BASE}/api/gallery-images?gid=${this.gid}&token=${this.token}`)
-        const data = await res.json()
+        const data = await res.json().catch(() => ({}))
         if (data.error === 'exhentai_blocked') {
           this.imagesError = 'ExHentai 独占画廊，服务器无法访问缩略图'
-        } else if (data.error) {
-          throw new Error(data.error)
+        } else if (data.error || !res.ok) {
+          throw new Error(data.error || '获取页面列表失败，请重试')
         } else {
+          if (!Array.isArray(data.images) || !data.images.length) throw new Error('未获取到页面列表，请重试')
           this.galleryImages = data.images.slice(0, data.total)
           this.thumbSource = data.source || null
           // Compute sprite count and max offset for thumbnail rendering
@@ -1264,6 +1270,8 @@ export default {
     // ── Page navigation ───────────────────────────────────────────────────────
 
     async goToPage(pageNum) {
+      const requestId = ++this.imageRequestId
+      this.imageAutoRetried = false
       this.currentPage = pageNum
       this.resetZoom()
       this.bubbleCard = null
@@ -1278,6 +1286,7 @@ export default {
       this.selectedBoxIdx = null
       this.imageUrl = null
       this.imageUrlRaw = null
+      this.nlParam = null
       this.imageError = null
       this.imageLoading = true
 
@@ -1305,8 +1314,11 @@ export default {
         const res = await fetch(
           `${API_BASE}/api/image-url?pageUrl=${encodeURIComponent(img.pageUrl)}`
         )
+        if (!res.ok) throw new Error('获取图片地址失败，请重试')
         const data = await res.json()
+        if (requestId !== this.imageRequestId) return
         if (data.error) throw new Error(data.error)
+        if (!data.imageUrl) throw new Error('未返回有效图片地址')
         this.imageUrlRaw = data.imageUrl
         this.imageUrl = `${API_BASE}/api/image-proxy?imageUrl=${encodeURIComponent(data.imageUrl)}`
         this.nlParam = data.nlParam
@@ -1315,7 +1327,7 @@ export default {
           this.imageLoading = false
           this.ocrProcessing = true
           try { await this._prefetch[pageNum] } finally { this.ocrProcessing = false }
-          if (this.currentPage !== pageNum) return
+          if (requestId !== this.imageRequestId) return
         }
         const cached = this.loadPageCache(pageNum)
         if (cached) {
@@ -1330,10 +1342,49 @@ export default {
           await this.performOcrAndTranslate()
         }
       } catch (e) {
+        if (requestId !== this.imageRequestId) return
         this.imageError = `图片加载失败: ${e.message}`
         this.finishSlide()
       } finally {
-        this.imageLoading = false
+        if (requestId === this.imageRequestId) this.imageLoading = false
+      }
+    },
+
+    onImageError() {
+      if (!this.imageAutoRetried) {
+        this.imageAutoRetried = true
+        this.retryCurrentImage()
+      } else {
+        this.imageError = '图片加载失败，请重试或稍后再试'
+        this.finishSlide()
+      }
+    },
+
+    async retryCurrentImage(manual = false) {
+      if (this.imageLoading) return
+      const pageNum = this.currentPage
+      const page = this.galleryImages[pageNum - 1]
+      if (!page?.pageUrl) { this.loadGalleryImages(); return }
+      if (manual) this.imageAutoRetried = true
+      const requestId = ++this.imageRequestId
+      this.imageLoading = true
+      this.imageError = null
+      this.imageUrl = null
+      try {
+        const source = new URL(page.pageUrl)
+        if (this.nlParam) source.searchParams.set('nl', this.nlParam)
+        const response = await fetch(`${API_BASE}/api/image-url?pageUrl=${encodeURIComponent(source.href)}`)
+        if (!response.ok) throw new Error('获取图片地址失败，请重试')
+        const data = await response.json()
+        if (requestId !== this.imageRequestId) return
+        if (data.error || !data.imageUrl) throw new Error(data.error || '未返回有效图片地址')
+        this.imageUrlRaw = data.imageUrl
+        this.nlParam = data.nlParam
+        this.imageUrl = `${API_BASE}/api/image-proxy?imageUrl=${encodeURIComponent(data.imageUrl)}`
+      } catch (e) {
+        if (requestId === this.imageRequestId) this.imageError = `图片加载失败: ${e.message}`
+      } finally {
+        if (requestId === this.imageRequestId) this.imageLoading = false
       }
     },
 
@@ -2295,7 +2346,8 @@ export default {
   padding: 64px 24px;
 }
 
-.gt-image-error { color: var(--danger-color); }
+.gt-image-error { color: var(--danger-color); gap:14px; text-align:center; padding:20px; }
+.gt-strip-error{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 
 .gt-image-empty { text-align: center; }
 

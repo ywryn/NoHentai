@@ -75,7 +75,7 @@ const routes: RouteRecordRaw[] = [
     path: '/translate',
     name: 'TranslateLookup',
     component: () => import('@/components/TranslateLookup.vue'),
-    meta: { title: '日文查词' },
+    meta: { title: '翻译入口' },
   },
 ]
 
