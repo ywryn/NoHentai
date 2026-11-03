@@ -38,3 +38,7 @@ test('tag suggestions respect namespace aliases in public and admin search', asy
   assert.deepEqual(suggestTags('female:测试',entries).map(item=>item.namespace),['female'])
   assert.deepEqual(suggestTags('title:te',entries),[])
 })
+
+test('legacy daily display labels are ignored while real conditions are preserved', () => {
+  assert.deepEqual(validateDaily(daily.map(group => ({ ...group, filters: ['obsolete'] }))), daily)
+})

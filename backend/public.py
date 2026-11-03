@@ -1,5 +1,6 @@
 import json
 from . import db, stats
+from .daily import result_groups
 from .validation import merge, books_csv
 
 FILES = {'galleries.json', 'daily_search.json', 'future_digi.csv', 'translations.json', 'translate-config.json', 'stats.json', 'release.json'}
@@ -14,7 +15,7 @@ def dataset(name):
         if name == 'galleries.json':
             return merge(db.galleries(con), patches)
         if name == 'daily_search.json':
-            return [dict(g, galleries=merge(g['galleries'], patches)) for g in db.snapshot(con, 'daily', [])]
+            return [dict(g, galleries=merge(g['galleries'], patches)) for g in result_groups(con)]
         if name == 'future_digi.csv':
             return books_csv([json.loads(r[0]) for r in con.execute('SELECT data FROM books ORDER BY position')])
         if name == 'translations.json':
@@ -59,7 +60,7 @@ def daily():
     with db.connect() as con:
         con.execute('BEGIN')
         patches, _ = db.resource(con, 'overrides')
-        groups = [dict(g, galleries=merge(g.get('galleries', []), patches)) for g in db.snapshot(con, 'daily', [])]
+        groups = [dict(g, galleries=merge(g.get('galleries', []), patches)) for g in result_groups(con)]
         index = catalog.translations(con)
         tags = {tag for group in groups for g in group['galleries'] for tag in g.get('tags', [])}
         translated = {}

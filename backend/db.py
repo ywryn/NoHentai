@@ -7,6 +7,7 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from . import settings
+from app.daily_config import without_display_labels
 
 
 def now():
@@ -67,6 +68,8 @@ def resource(con, name):
         else:
             table = 'books' if name == 'printed' else 'daily_rules'
             data = [json.loads(r[0]) for r in con.execute(f'SELECT data FROM {table} ORDER BY position')]
+        if name == 'daily':
+            data = [without_display_labels(group) for group in data]
         return data, row['version']
     row = con.execute('SELECT * FROM resources WHERE name=?', (name,)).fetchone()
     if not row:
