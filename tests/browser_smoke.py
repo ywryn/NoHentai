@@ -310,8 +310,9 @@ def main():
                     expect(page.locator('.v2-run')).to_contain_text('已取消')
                     page.locator('.v2-run').get_by_role('button',name='日志与进度',exact=True).click()
                     expect(page.get_by_role('log',name='任务执行日志')).to_contain_text('已取消排队')
-                    page.screenshot(path='/tmp/nohentai-admin-v3-tasks.png',full_page=True)
-                    page.get_by_role('button',name='关闭任务详情').click()
+                    expect(page.locator('.ops-config-details')).to_be_visible()
+                    page.mouse.click(20,500)
+                    expect(page.locator('.ops-task-drawer')).not_to_be_visible()
                     progress_job=admin('dispatch',workflow='favorites')['id']
                     def publish_progress(batch):
                         code="from backend import db,jobs;import logging;con=db.connect();c=con.__enter__();c.execute(\"UPDATE jobs SET status='in_progress' WHERE id=?\",("+str(progress_job)+",));c.execute(\"INSERT OR IGNORE INTO job_steps(job_id,name,status) VALUES (?,'favorites','in_progress')\",("+str(progress_job)+",));con.__exit__(None,None,None);h=jobs.Progress("+str(progress_job)+",'favorites');h.emit(logging.LogRecord('favorites',20,'',0,'开始获取元数据，共 4 批',(),None));h.emit(logging.LogRecord('favorites',20,'',0,'第 "+str(batch)+" 批成功，获取 25 条',(),None))"
@@ -322,8 +323,34 @@ def main():
                     expect(page.get_by_role('log',name='任务执行日志')).to_contain_text('元数据第 1 批完成')
                     publish_progress(2)
                     expect(page.get_by_role('log',name='任务执行日志')).to_contain_text('元数据第 2 批完成')
-                    page.screenshot(path='/tmp/nohentai-admin-v3-tasks.png',full_page=True)
+                    expect(page.locator('.ops-config-details')).to_have_count(0)
+                    # Seed a long log in one subprocess so imports do not dominate this test.
+                    subprocess.run([sys.executable,'-c',"from backend import jobs;[jobs.event("+str(progress_job)+",'favorites','元数据第 '+str(batch)+' 批完成') for batch in range(3,30)]"],cwd=ROOT,env=env,check=True)
+                    page.locator('.ops-log-heading').get_by_role('button',name='刷新',exact=True).click()
+                    expect(page.get_by_role('log')).to_contain_text('元数据第 29 批完成')
+                    log_view=page.get_by_role('log')
+                    log_view.evaluate('(el)=>{el.scrollTop=0;el.dispatchEvent(new Event("scroll"))}')
+                    expect(page.get_by_label('跟随最新',exact=True)).not_to_be_checked()
+                    publish_progress(30)
+                    expect(log_view).to_contain_text('元数据第 30 批完成')
+                    assert log_view.evaluate('(el)=>el.scrollTop')==0
+                    page.get_by_label('跟随最新',exact=True).check()
+                    page.wait_for_timeout(100)
+                    assert log_view.evaluate('(el)=>el.scrollHeight-el.clientHeight-el.scrollTop')<3
+                    # A completed task must preserve the reader's position across idle polls.
+                    subprocess.run([sys.executable,'-c',"from backend import db;con=db.connect();c=con.__enter__();c.execute(\"UPDATE jobs SET status='completed',conclusion='success' WHERE id=?\",("+str(progress_job)+",));con.__exit__(None,None,None)"],cwd=ROOT,env=env,check=True)
+                    log_view.evaluate('(el)=>{el.scrollTop=0;el.dispatchEvent(new Event("scroll"))}')
+                    page.wait_for_timeout(4500)
+                    assert log_view.evaluate('(el)=>el.scrollTop')==0
                     page.get_by_role('button',name='关闭任务详情').click()
+                    for dark in (False,True):
+                        page.locator('html').evaluate('(el,dark)=>el.classList.toggle("my-app-dark",dark)',dark)
+                        for selector in ('.ops-launch','.ops-run-title'):
+                            button=page.locator(selector).first
+                            button.hover()
+                            page.wait_for_timeout(200)
+                            assert button.evaluate('''el=>{const sample=document.createElement('span');sample.style.backgroundColor='var(--a-soft)';el.append(sample);const expected=getComputedStyle(sample).backgroundColor;sample.remove();return getComputedStyle(el).backgroundColor===expected}''')
+                    page.locator('html').evaluate('(el)=>el.classList.remove("my-app-dark")')
                     page.get_by_role('tab',name='每日调度').click()
                     hour=page.get_by_label('收藏同步执行小时',exact=True)
                     original_hour=hour.input_value()
