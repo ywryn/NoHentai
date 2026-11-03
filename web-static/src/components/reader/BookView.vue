@@ -133,6 +133,8 @@ function onTouchEnd(e: TouchEvent) {
 }
 .spread:not(.spread-double) .page-slot {
   flex: 0 0 auto;
+  /* Loading and error overlays are absolute; reserve width before the image exists. */
+  min-width: min(240px, 100%);
   max-height: 100%;
 }
 .spread-double:not(.spread-rtl) .page-slot:first-child { justify-content: flex-end; }

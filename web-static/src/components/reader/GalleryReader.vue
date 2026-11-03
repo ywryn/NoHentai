@@ -9,6 +9,7 @@
     <!-- Init error -->
     <div v-else-if="initError" class="gr-center gr-error">
       <p>{{ initError }}</p>
+      <button class="reader-btn" @click="init(gid, token, startPage)">重新加载页面列表</button>
       <button class="reader-btn" @click="exit">← 返回详情</button>
     </div>
 

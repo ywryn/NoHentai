@@ -156,8 +156,9 @@
           </div>
           <div v-else-if="thumbError === 'exhentai_blocked'" class="thumb-exblocked">
             此画廊为 ExHentai 独占，云服务器 IP 被 Cloudflare 拦截，无法加载缩略图
+            <button class="thumb-retry" @click="fetchThumbnails">重新加载缩略图</button>
           </div>
-          <div v-else-if="thumbError" class="thumb-error">{{ thumbError }}</div>
+          <div v-else-if="thumbError" class="thumb-error"><p>{{ thumbError }}</p><button class="thumb-retry" @click="fetchThumbnails">重新加载缩略图</button></div>
           <template v-else-if="thumbImages.length">
             <div class="thumb-grid">
               <div
@@ -184,7 +185,7 @@
     </div>
 
     <div v-else-if="loading" class="loading">加载中…</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
+    <div v-else-if="error" class="error"><p>{{ error }}</p><button class="thumb-retry" @click="fetchGalleryData">重新加载画廊</button></div>
   </div>
 </template>
 
@@ -317,12 +318,13 @@ export default {
       this.thumbError = null;
       try {
         const res = await fetch(`${API_BASE}/api/gallery-images?gid=${this.itemId}&token=${this.galleryData.token}`);
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         if (data.error === 'exhentai_blocked') {
           this.thumbError = 'exhentai_blocked';
-        } else if (data.error) {
-          throw new Error(data.error);
+        } else if (data.error || !res.ok) {
+          throw new Error(data.error || '获取缩略图失败，请重试');
         } else {
+          if (!Array.isArray(data.images)) throw new Error('缩略图列表无效，请重试');
           this.thumbImages = data.images.slice(0, data.total);
           this.thumbTotal = data.total;
           this.thumbSource = data.source || null;

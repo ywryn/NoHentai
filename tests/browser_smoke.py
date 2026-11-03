@@ -114,15 +114,68 @@ def main():
                         elif ocr_mode['value']=='malformed':route.fulfill(json={})
                         else:route.fulfill(json={'results':[],'source':'vision'})
                     media_routes=[re.compile(r'/api/gallery-images\?'),re.compile(r'/api/image-url\?'),re.compile(r'/api/image-proxy\?'),re.compile(r'/api/trans-ocr$')]
-                    page.route(media_routes[0],lambda route:route.fulfill(json={'gid':first_gid,'total':2,'source':'e-hentai','images':[{'pageNum':i,'pageUrl':f'https://e-hentai.org/s/testing/{first_gid}-{i}','thumbSprite':'','thumbX':0,'thumbW':100,'thumbH':142} for i in (1,2)]}))
-                    page.route(media_routes[1],lambda route:route.fulfill(json={'imageUrl':'https://ehgt.org/test.png','nlParam':None}))
-                    page.route(media_routes[2],lambda route:route.fulfill(content_type='image/png',body=ocr_image.getvalue()))
+                    media_state={'list_fail':True,'image_fail':True,'image_requests':0,'urls':[]}
+                    def fake_pages(route):
+                        if media_state['list_fail']:route.fulfill(status=502,content_type='text/html',body='upstream failed')
+                        else:route.fulfill(json={'gid':first_gid,'total':2,'source':'e-hentai','images':[{'pageNum':i,'pageUrl':f'https://e-hentai.org/s/testing/{first_gid}-{i}','thumbSprite':'','thumbX':0,'thumbW':100,'thumbH':142} for i in (1,2)]})
+                    def fake_url(route):
+                        media_state['urls'].append(route.request.url)
+                        route.fulfill(json={'imageUrl':'https://ehgt.org/test.png','nlParam':'reload-key'})
+                    def fake_image(route):
+                        media_state['image_requests']+=1
+                        if media_state['image_fail']:route.fulfill(status=502,content_type='text/html',body='image failed')
+                        else:route.fulfill(content_type='image/png',body=ocr_image.getvalue())
+                    page.route(media_routes[0],fake_pages)
+                    page.route(media_routes[1],fake_url)
+                    page.route(media_routes[2],fake_image)
+                    page.route('https://ehgt.org/test.png',fake_image)
+                    page.goto(BASE+'/#/translate')
+                    expect(page).to_have_title(re.compile('翻译入口'))
+                    expect(page.locator('.tl-container')).to_be_visible()
+                    page.goto(BASE+f'/#/gallery/{first_gid}')
+                    page.get_by_role('button',name='加载页面缩略图',exact=False).click()
+                    expect(page.get_by_role('button',name='重新加载缩略图',exact=True)).to_be_visible()
+                    media_state['list_fail']=False
+                    page.get_by_role('button',name='重新加载缩略图',exact=True).click()
+                    expect(page.locator('.thumb-cell')).to_have_count(2)
+                    media_state['list_fail']=True
+                    page.evaluate("localStorage.setItem('reader-settings',JSON.stringify({pagesPerScreen:1}));localStorage.setItem('reader-hint-seen','1')")
+                    page.goto(BASE+f'/#/gallery/{first_gid}/read?token=abcdef1234&page=2')
+                    expect(page.get_by_role('button',name='重新加载页面列表',exact=True)).to_be_visible()
+                    media_state['list_fail']=False
+                    page.get_by_role('button',name='重新加载页面列表',exact=True).click()
+                    expect(page.locator('.pi-error:visible').first).to_be_visible()
+                    before_retry=media_state['image_requests']
+                    page.wait_for_timeout(500)
+                    assert media_state['image_requests']==before_retry, 'Reader must stop automatic retries'
+                    media_state['image_fail']=False
+                    page.locator('.pi-error:visible').first.get_by_role('button',name='重试',exact=True).click()
+                    expect(page.locator('.pi-img:visible').first).to_be_visible()
+                    expect(page).to_have_url(re.compile('[?&]page=2'))
+                    media_state['list_fail']=True
+                    media_state['image_fail']=True
+                    page.evaluate('''gid=>localStorage.setItem(`trans_cache_${gid}_p2`,JSON.stringify({ocrResults:[{_id:1,text:'已保存原文',translation:'保留的译文',confidence:1,bbox:[10,10,100,60]}],lastOcrSource:'google',ts:Date.now()}))''',first_gid)
+
                     page.route(media_routes[3],fake_ocr)
                     page.goto(BASE+f'/#/gallery/{first_gid}/translate?token=abcdef1234&page=2')
                     page.get_by_placeholder('输入密码',exact=True).fill(env['TRANS_PASSWORD'])
                     page.get_by_role('button',name='进入',exact=True).click()
+                    expect(page.get_by_role('button',name='重新加载页面列表',exact=True)).to_be_visible()
+                    media_state['list_fail']=False
+                    page.get_by_role('button',name='重新加载页面列表',exact=True).click()
+                    expect(page.get_by_role('button',name='重新加载图片',exact=True)).to_be_visible()
+                    expect(page.locator('.gt-results-list')).to_contain_text('保留的译文')
+                    image_attempts=media_state['image_requests']
+                    page.wait_for_timeout(500)
+                    assert media_state['image_requests']==image_attempts, 'Translation must stop automatic retries'
+                    assert any('nl%3Dreload-key' in url for url in media_state['urls'])
+                    media_state['image_fail']=False
+                    page.get_by_role('button',name='重新加载图片',exact=True).click()
                     expect(page.locator('.gt-page-img')).to_be_visible()
                     page.wait_for_function('document.querySelector(".gt-page-img")?.naturalHeight===2600')
+                    expect(page.locator('.gt-results-list')).to_contain_text('保留的译文')
+                    page.locator('.gt-result-del').click()
+
                     page.get_by_role('button',name='翻译',exact=True).click()
                     expect(page.get_by_text('OCR 失败: 服务器处理请求失败，请稍后重试',exact=True)).to_be_visible()
                     ocr_mode['value']='malformed'
@@ -134,6 +187,7 @@ def main():
                     assert 'undefined' not in page.locator('body').inner_text()
                     page.goto(BASE+'/#/printed')
                     for pattern in media_routes:page.unroute(pattern)
+                    page.unroute('https://ehgt.org/test.png')
                     print('OCR regression: large request reaches backend; scaled image handles HTML 500, missing results and empty OCR without JavaScript errors')
                     page.goto(BASE + '/#/printed')
                     expect(page.get_by_role('heading',name='实体书单',exact=True)).to_be_visible()
