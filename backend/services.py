@@ -69,9 +69,9 @@ def status():
                         except ValueError: value = default
                     else:
                         value = raw or default
-                fields.append({'key': name, 'label': title, 'type': field_type, 'value': None if field_type == 'secret' else value,
+                fields.append({'key': name, 'label': title, 'type': field_type, 'value': value,
                                'configured': bool(value), 'source': source, 'limits': limits,
-                               'effective': (security.credential('LLM_MODEL',con) or 'gpt-4o-mini') if name=='model' and value is None else security.credential('LLM_JSON_MODE',con)=='1' if name=='jsonMode' and value is None else value if field_type!='secret' else None})
+                               'effective': (security.credential('LLM_MODEL',con) or 'gpt-4o-mini') if name=='model' and value is None else security.credential('LLM_JSON_MODE',con)=='1' if name=='jsonMode' and value is None else value})
             check = con.execute('SELECT * FROM service_checks WHERE name=?', (group,)).fetchone()
             groups.append({'id': group, 'label': label, 'version': version(con, group), 'fields': fields,
                            'check': dict(check) if check else None})
@@ -87,8 +87,8 @@ def validate_value(name, value):
         if not any(type(value) is type(option) and value == option for option in limits):
             fail(400, f'{name} 选项不正确')
     elif field_type == 'secret':
-        if not isinstance(value, str) or not 1 <= len(value) <= 16000 or '\0' in value:
-            fail(400, '密钥为空或格式不正确')
+        if not isinstance(value, str) or len(value) > 16000 or '\0' in value:
+            fail(400, '密钥格式不正确')
         if name == 'TRANS_PASSWORD' and security.verify_password(value):
             fail(400, '翻译密码不能与管理密码相同')
     else:
