@@ -52,3 +52,37 @@
 .admin-shell .ops-run-title:active{background:var(--a-subtle)}
 
 .ops-match-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px}
+
+/* Candidate results have their own visible scroll area inside the editor. */
+.admin-shell .ops-gallery-matches {
+  padding: 8px;
+  border: 1px solid var(--a-border);
+  border-radius: 12px;
+  background: var(--a-panel);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--a-muted) var(--a-subtle);
+}
+.admin-shell .ops-gallery-matches:focus-visible {
+  outline: 2px solid var(--a-accent);
+  outline-offset: 2px;
+}
+.admin-shell .ops-gallery-matches::-webkit-scrollbar {
+  display: block;
+  width: 8px;
+  height: 8px;
+}
+.admin-shell .ops-gallery-matches::-webkit-scrollbar-track {
+  background: var(--a-subtle);
+  border-radius: 8px;
+}
+.admin-shell .ops-gallery-matches::-webkit-scrollbar-thumb {
+  background: var(--a-muted);
+  border: 2px solid var(--a-subtle);
+  border-radius: 8px;
+}
+.admin-shell .ops-gallery-matches::-webkit-scrollbar-thumb:hover {
+  background: var(--a-accent);
+}
