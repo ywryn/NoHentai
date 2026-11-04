@@ -87,3 +87,7 @@ web-static/public/printed-cover/compress_image.py
 var/
 *.sqlite3-wal
 *.sqlite3-shm
+
+# Editor swap files
+*.swp
+*.swo
