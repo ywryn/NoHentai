@@ -63,6 +63,8 @@ def handle(body, ip):
         return {'ok': True, 'relogin': True}
     if action == 'change-password':
         return security.change_password(body.get('currentPassword'), body.get('newPassword'))
+    if action == 'replace-secret' or (action == 'save' and name in ('printed', 'daily')):
+        fail(410, '此旧写入接口已停用，请使用逐条编辑或服务配置接口')
     if action in ('load', 'save', 'history'):
         if not isinstance(name, str) or name not in RESOURCES:
             fail(400, '不允许访问此资源')
@@ -79,20 +81,20 @@ def handle(body, ip):
                 fail(409, '内容已被其他操作修改，请导出草稿后重新加载')
             data = validate(name, body.get('data'))
             warnings = []
-            if name in ('printed', 'overrides'):
+            if name == 'overrides':
                 ids = {r[0] for r in con.execute('SELECT gid FROM galleries')}
-                if name == 'printed':
-                    legacy = {b['sid'] for b in current}
-                    missing = [b for b in data if b['sid'] and b['sid'] not in ids]
-                    if any(b['sid'] not in legacy for b in missing):
-                        fail(400, '新增关联的画廊 ID 不在收藏数据中')
-                    if missing:
-                        warnings.append(f'保留 {len(missing)} 条已有的站外画廊关联')
-                elif any(gid not in ids and gid not in current for gid in data):
+                if any(gid not in ids and gid not in current for gid in data):
                     fail(400, '新增覆盖的画廊 ID 不存在')
             if current==data:
                 return {'sha':version,'commit':version,'warnings':warnings,'unchanged':True}
-            version = db.put_resource(con, name, data)
+            if name == 'overrides':
+                for gid in current.keys() | data.keys():
+                    patch = records.row(con, 'gallery', gid)
+                    records.write(con, 'gallery', gid, patch['version'] if patch else '0', data.get(gid, {}))
+                version = db.resource(con, name)[1]
+                con.execute('INSERT INTO history(resource,version,data,created_at,message) VALUES (?,?,?,?,?)', (name, version, db.dumps(data), db.now(), '兼容接口保存覆盖'))
+            else:
+                version = db.put_resource(con, name, data)
             db.put_snapshot(con, 'release', {'commit': version, 'builtAt': db.now()})
             return {'sha': version, 'commit': version, 'warnings': warnings}
     if action == 'gallery-search':
@@ -113,11 +115,6 @@ def handle(body, ip):
     if action == 'platforms':
         return {'server': {'available': True, 'secrets': [
             {'name': name, 'configured': bool(security.credential(name))} for name in settings.SECRET_NAMES]}}
-    if action == 'replace-secret':
-        if body.get('platform') != 'server':
-            fail(400, '仅支持服务器凭证')
-        security.replace_credential(body.get('name'), body.get('value'))
-        return {'ok': True, 'message': '服务器配置已保存，后续请求或任务立即使用新值'}
     if action == 'health':
         start = time.monotonic()
         with db.connect() as con:

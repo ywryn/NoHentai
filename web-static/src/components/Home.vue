@@ -220,6 +220,7 @@ import {
   SEARCH_SYNTAX_HELP,
   parseQuery,
   parsedTerms,
+  removeQueryTerm,
   activeToken,
   applySuggestion,
 } from '@/utils/gallerySearch'
@@ -384,14 +385,7 @@ function toggleType(type) {
 }
 
 function removeTerm(term) {
-  /* 按原始 token 从查询串里删掉这一段 */
-  const next = searchQuery.value
-    .split(/([ ,])/)
-    .filter(part => part.trim() !== term.raw.trim())
-    .join('')
-    .replace(/\s{2,}/g, ' ')
-    .trim()
-  searchQuery.value = next
+  searchQuery.value = removeQueryTerm(searchQuery.value, term)
   flushQuery()
 }
 

@@ -2,6 +2,7 @@ import json
 import re
 import sqlite3
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from . import db, settings, security
 from .security import fail
@@ -39,7 +40,7 @@ def overview():
                   'rules': con.execute('SELECT COUNT(*) FROM daily_rules').fetchone()[0]}
         from .services import version, status
         checks = [dict(r) | {'current': r['version']==version(con,r['name'])} for r in con.execute('SELECT * FROM service_checks')]
-        counters = [{'name': r['key'], 'count': r['count']} for r in con.execute("SELECT * FROM counters WHERE key LIKE 'vision:%' AND expires>?", (time.time(),))]
+        counters = [{'name': r['key'], 'count': r['count']} for r in con.execute("SELECT * FROM counters WHERE key=? AND expires>?", ('vision:'+datetime.now(timezone.utc).strftime('%Y-%m'), time.time()))]
         schedule = [dict(r) for r in con.execute('SELECT * FROM schedules')]
     return {'counts': counts, 'successes': successes, 'recent': recent, 'workerAlive': time.time()-heartbeat < 60,
             'checks': checks, 'usage': counters, 'schedules': schedule, 'backup': next(iter(backups()['items']), None),

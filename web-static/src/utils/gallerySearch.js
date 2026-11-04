@@ -45,27 +45,25 @@ export const SEARCH_SYNTAX_HELP = [
 
 export function tokenizeQuery(query) {
   const tokens = []
-  let buffer = ''
-  let inQuote = false
-  let wasQuoted = false
-  for (const ch of query) {
-    if (ch === '"') {
-      inQuote = !inQuote
-      wasQuoted = true
-      continue
-    }
-    if (!inQuote && (ch === ' ' || ch === ',')) {
-      if (buffer) {
-        tokens.push({ text: buffer, quoted: wasQuoted })
-        buffer = ''
-        wasQuoted = false
-      }
-      continue
-    }
-    buffer += ch
+  let buffer = '', inQuote = false, wasQuoted = false, start = -1
+  function push(end) {
+    if (buffer) tokens.push({ text: buffer, quoted: wasQuoted, start, end, raw: query.slice(start, end) })
+    buffer = ''; wasQuoted = false; start = -1
   }
-  if (buffer) tokens.push({ text: buffer, quoted: wasQuoted })
+  for (let i = 0; i < query.length; i++) {
+    const ch = query[i]
+    if (!inQuote && (ch === ' ' || ch === ',')) { push(i); continue }
+    if (start < 0) start = i
+    if (ch === '"') { inQuote = !inQuote; wasQuoted = true }
+    else buffer += ch
+  }
+  push(query.length)
   return tokens
+}
+
+export function removeQueryTerm(query, term) {
+  if (query.slice(term.start, term.end) !== term.raw) return query
+  return (query.slice(0, term.start) + query.slice(term.end)).replace(/^[ ,]+|[ ,]+$/g, '').trim()
 }
 
 /**
@@ -134,7 +132,9 @@ export function parseQuery(query, extraFields = []) {
       quoted: token.quoted,
       mode,
       /** 原始 token，供「当前筛选条件」chip 回显与移除 */
-      raw: token.text,
+      raw: token.raw,
+      start: token.start,
+      end: token.end,
     }
     if (mode === 'exclude') exclude.push(term)
     else if (mode === 'or') orTerms.push(term)

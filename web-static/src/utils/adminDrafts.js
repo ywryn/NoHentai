@@ -35,15 +35,6 @@ export function serviceChanges(values, original) {
     .filter(([key, value]) => !sameContent(value, normalized(key, original[key]))))
 }
 
-export function serviceOperations(group) {
-  return Object.fromEntries(Object.entries(group.operations).filter(([key, operation]) => {
-    const field = group.fields.find(item => item.key === key)
-    if (operation === 'inherit' && field.source !== 'database') return false
-    if (operation === 'clear' && field.source === 'database' && !field.configured) return false
-    return true
-  }))
-}
-
 export function scheduleDraft(schedule) {
   const numeric = value => typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value)) ? Number(value) : value
   return { enabled: schedule.enabled, hour: numeric(schedule.hour), minute: numeric(schedule.minute), timezone: schedule.timezone }

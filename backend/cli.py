@@ -20,6 +20,8 @@ def initialize_data(source=None):
     resources['printed'] = read_books((directory / 'future_digi.csv').read_text(encoding='utf-8-sig'))
     galleries = read(directory / 'galleries.json')
     daily, translations = read(directory / 'daily_search.json'), read(directory / 'translations.json')
+    from app.sync_translations import validate_dictionary
+    validate_dictionary(translations)
     with db.connect() as con:
         con.execute('BEGIN IMMEDIATE')
         if con.execute('SELECT 1 FROM resources LIMIT 1').fetchone() or con.execute('SELECT 1 FROM resource_versions LIMIT 1').fetchone():

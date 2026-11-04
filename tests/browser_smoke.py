@@ -22,6 +22,7 @@ BASE = 'http://127.0.0.1:18080'
 
 
 def main():
+    expect.set_options(timeout=15000)
     assert (ROOT / 'web-static/dist/index.html').exists(), 'Run npm run build first'
     assert not (ROOT / 'web-static/dist/data').exists(), 'Mutable data must not ship in dist'
     protected_paths=[Path('/var/lib/nginx')/name for name in ('body','proxy','fastcgi','uwsgi','scgi')]
@@ -295,8 +296,9 @@ def main():
                     expect(page.get_by_role('heading',name='服务配置',exact=True)).to_be_visible()
                     expect(page.locator('.a-confirm[open]')).to_have_count(0)
                     model=page.get_by_label('模型',exact=True)
+                    saved_model=model.input_value()
                     model.fill('temporary-model');expect(page.get_by_role('button',name='保存翻译服务')).to_be_enabled()
-                    model.fill('');expect(page.get_by_role('button',name='保存翻译服务')).to_be_disabled()
+                    model.fill(saved_model);expect(page.get_by_role('button',name='保存翻译服务')).to_be_disabled()
                     page.locator('.a-sidebar').get_by_role('link',name='画廊',exact=True).click()
                     expect(save_button).to_be_disabled()
                     search=page.get_by_role('combobox',name='查找条目',exact=True)

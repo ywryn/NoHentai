@@ -204,6 +204,7 @@ export default {
   data() {
     return {
       itemId: null,
+      requestGeneration: 0,
       galleryData: null,
       isChinese: true,
       loading: true,
@@ -243,6 +244,9 @@ export default {
   },
   beforeUnmount() {
     clearTimeout(this.tagCopyTimer);
+    this.requestGeneration++;
+    this._galleryAbort?.abort();
+    this._thumbAbort?.abort();
   },
   methods: {
     initializeFromRoute() {
@@ -251,18 +255,26 @@ export default {
     },
 
     async fetchGalleryData() {
+      const generation = ++this.requestGeneration;
+      const gid = this.itemId;
+      this._galleryAbort?.abort();
+      this._thumbAbort?.abort();
+      this._galleryAbort = new AbortController();
+      this.galleryData = null;
       this.loading = true;
       this.error = null;
 
       try {
         const source = this.$route.query.source === 'daily' ? 'daily' : 'favorites';
-        const result = await loadGallery(this.itemId, source);
+        const result = await loadGallery(gid, source, this._galleryAbort.signal);
+        if (generation !== this.requestGeneration) return;
         this.galleryData = { ...result.gallery, tags: result.tagDetails };
       } catch (error) {
+        if (generation !== this.requestGeneration || error.name === 'AbortError') return;
         console.error("Error fetching gallery data:", error);
         this.error = `画廊数据加载失败：${error.message}`;
       } finally {
-        this.loading = false;
+        if (generation === this.requestGeneration) this.loading = false;
       }
     },
 
@@ -314,11 +326,15 @@ export default {
 
     async fetchThumbnails() {
       if (!this.galleryData?.token) return;
+      const generation = this.requestGeneration;
+      this._thumbAbort?.abort();
+      this._thumbAbort = new AbortController();
       this.thumbLoading = true;
       this.thumbError = null;
       try {
-        const res = await fetch(`${API_BASE}/api/gallery-images?gid=${this.itemId}&token=${this.galleryData.token}`);
+        const res = await fetch(`${API_BASE}/api/gallery-images?gid=${this.itemId}&token=${this.galleryData.token}`, { signal: this._thumbAbort.signal });
         const data = await res.json().catch(() => ({}));
+        if (generation !== this.requestGeneration) return;
         if (data.error === 'exhentai_blocked') {
           this.thumbError = 'exhentai_blocked';
         } else if (data.error || !res.ok) {
@@ -344,9 +360,10 @@ export default {
           }
         }
       } catch (e) {
+        if (generation !== this.requestGeneration || e.name === 'AbortError') return;
         this.thumbError = e.message;
       } finally {
-        this.thumbLoading = false;
+        if (generation === this.requestGeneration) this.thumbLoading = false;
       }
     },
 

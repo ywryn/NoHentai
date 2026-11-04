@@ -89,6 +89,8 @@ def validate_value(name, value):
     elif field_type == 'secret':
         if not isinstance(value, str) or len(value) > 16000 or '\0' in value:
             fail(400, '密钥格式不正确')
+        if name == 'TRANS_PASSWORD' and len(value) > security.TRANS_PASSWORD_MAX_LENGTH:
+            fail(400, '工作台密码最多 1024 字符')
         if name == 'TRANS_PASSWORD' and security.verify_password(value):
             fail(400, '翻译密码不能与管理密码相同')
     else:

@@ -3,7 +3,6 @@ import AdminMenuButton from './AdminMenuButton.vue'
 import { ref, computed, watch, inject, onMounted, onBeforeUnmount } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { adminRequest, downloadDraft, coverUrl } from '@/utils/adminApi'
-import { invalidateGalleryData } from '@/composables/useGalleryData'
 import { CATEGORIES } from '../../../../shared/adminData.js'
 import AdminIcon from './AdminIcon.vue'
 import RecordHistory from './RecordHistory.vue'
@@ -77,7 +76,7 @@ async function save() {
     const snapshot = clone(draft.value)
     const result = await adminRequest('record-save', { kind: props.kind, id: selected.value.id, version: selected.value.version, data: snapshot })
     selected.value = { ...selected.value, id: result.id, version: result.version, data: snapshot }
-    original.value = JSON.stringify(snapshot); invalidateGalleryData()
+    original.value = JSON.stringify(snapshot)
     await load()
     notice.value = result.unchanged ? '内容未发生变化，无需保存。' : (props.kind === 'daily' ? '规则已保存。执行同步后会更新公开结果。' : '当前条目已保存，后续访问立即生效。') + (result.warnings?.length ? ' '+result.warnings.join('；') : '')
   })
@@ -87,7 +86,7 @@ async function remove() {
   if (!await confirm({ title: props.kind === 'gallery' ? '恢复全部来源值？' : '删除当前条目？', description: '此操作会立即生效，并记录到修改历史。', confirmLabel: props.kind === 'gallery' ? '恢复来源' : '删除', danger: true })) return
   await perform(async () => {
     await adminRequest('record-delete', { kind: props.kind, id: selected.value.id, version: selected.value.version })
-    selected.value = null; data.value = null; original.value = ''; invalidateGalleryData(); await load()
+    selected.value = null; data.value = null; original.value = ''; await load()
     notice.value = '操作已完成，可从修改历史恢复。'
   })
 }

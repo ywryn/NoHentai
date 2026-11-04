@@ -38,7 +38,7 @@ def gallery_page(url):
 def gallery_images(gid, token):
     if not re.fullmatch(r'[1-9][0-9]{0,14}', gid) or not re.fullmatch(r'[a-zA-Z0-9]{5,64}', token):
         fail(400, '画廊 ID 或 token 不正确')
-    key = f'gallery:{gid}:{token}'
+    key = f'gallery:v2:{gid}:{token}'
     cached = db.get_cache(key)
     if cached:
         return cached
@@ -61,19 +61,25 @@ def gallery_images(gid, token):
             result = gallery_page(base + f'?p={page}')
             if not result:
                 fail(502, '画廊分页不完整，请稍后重试')
+            if result[0] and total and result[0] != total:
+                fail(502, '画廊分页总页数发生变化，请稍后重试')
             images.extend(result[1])
-        result = {'gid': gid, 'total': total or len(images), 'images': images[:total] if total else images, 'source': source}
+        total = total or len(images)
+        numbers = [item['pageNum'] for item in images]
+        if not total or len(numbers) != total or sorted(numbers) != list(range(1, total + 1)):
+            fail(502, '画廊页面列表不完整，请重新加载')
+        result = {'gid': gid, 'total': total, 'images': sorted(images, key=lambda item: item['pageNum']), 'source': source}
         db.set_cache(key, result, 3600)
         return result
     fail(403, 'exhentai_blocked')
 
 
-def image_url(page_url):
+def image_url(page_url, refresh=False):
     validate_url(page_url, gallery=True)
     if not re.fullmatch(r'/s/[a-zA-Z0-9]+/[0-9]+-[0-9]+/?', urlsplit(page_url).path):
         fail(400, '图片页面路径不正确')
     key = 'image-url:' + page_url
-    cached = db.get_cache(key)
+    cached = None if refresh else db.get_cache(key)
     if cached:
         return cached
     content, _ = fetch(page_url, gallery=True)
