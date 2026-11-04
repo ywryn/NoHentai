@@ -37,8 +37,14 @@ def main():
     def admin(route):
         body=route.request.post_data_json
         if body['action']=='records':
-            rows=[{'id':'a'*32,'version':'v1','data':books[0],'gallery':galleries[0]}] if body['kind']=='book' else [{'id':'1','version':'0','data':{},'source':galleries[0],'effective':galleries[0]}]
-            route.fulfill(json={'items':rows,'total':len(rows),'page':1,'pages':1})
+            if body['kind']=='book':
+                rows=[{'id':'a'*32,'version':'v1','data':books[0],'gallery':galleries[0]}]
+                route.fulfill(json={'items':rows,'total':1,'page':1,'pages':1})
+            else:
+                target=body.get('page',1)
+                found=galleries[:1] if body.get('query')=='gid:1' else galleries
+                rows=[{'id':str(g['gid']),'version':'0','data':{},'source':g,'effective':g} for g in found[(target-1)*30:target*30]]
+                route.fulfill(json={'items':rows,'total':len(found),'page':target,'pages':(len(found)+29)//30})
         elif body['action']=='record': route.fulfill(json={'id':'1','version':'0','data':{},'source':galleries[0],'effective':galleries[0]})
         else: raise AssertionError('Unexpected admin operation: '+body['action'])
     try:
@@ -124,6 +130,25 @@ def main():
             first.fill('f:chi');expect(page.locator('.a-search-row .search-control [role=option]').first).to_be_visible()
             second.focus();expect(page.locator('.a-search-row .search-control [role=option]')).to_have_count(0)
             print('PASS: admin list and association use independent instances of the same component')
+            title=page.get_by_role('textbox',name='中文书名',exact=True)
+            title.fill('Unsaved draft')
+            second.fill('Fixture');second.press('Enter')
+            panel=page.locator('.ops-link-panel')
+            expect(panel).to_contain_text('共 65 个候选画廊')
+            expect(panel.locator('.ops-gallery-matches>button')).to_have_count(30)
+            panel.get_by_role('button',name='下一页候选',exact=True).click()
+            expect(panel.get_by_role('button',name='关联画廊 31',exact=True)).to_be_visible()
+            expect(panel).to_contain_text('第 2 / 3 页')
+            expect(title).to_have_value('Unsaved draft')
+            second.fill('gid:1');second.press('Enter')
+            expect(panel).to_contain_text('共 1 个候选画廊')
+            expect(panel).to_contain_text('第 1 / 1 页')
+            expect(panel.locator('.ops-match-pagination')).to_have_count(0)
+            panel.get_by_role('button',name='关联画廊 1',exact=True).click()
+            expect(second).to_have_value('')
+            expect(title).to_have_value('Unsaved draft')
+            print('PASS: association totals, pagination and query reset preserve unsaved book edits')
+            page.get_by_role('button',name='放弃修改',exact=True).click()
             page.goto(base+'/#/printed')
             printed_search=page.get_by_role('combobox',name='搜索书单',exact=True)
             expect(printed_search).to_be_visible()
