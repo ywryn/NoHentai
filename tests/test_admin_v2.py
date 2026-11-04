@@ -109,7 +109,9 @@ class AdminV2Tests(fixtures.BackendTests):
         self.assertEqual(security.credential('MAX_RETRIES'),'3')
         self.assertEqual(security.credential('EXHENTAI_COOKIE_MEMBER_ID'),'private-cookie')
         response=self.admin('services')
-        self.assertNotIn('private-cookie',response.text)
+        self.assertEqual(next(f for g in response.json()['groups'] for f in g['fields'] if f['key']=='EXHENTAI_COOKIE_MEMBER_ID')['value'],'private-cookie')
+        self.assertEqual(response.headers['cache-control'],'no-store')
+        self.assertEqual(self.client.post('/api/admin',json={'action':'services'}).status_code,401)
         with db.connect() as con:
             self.assertEqual(json.loads(con.execute("SELECT value_json FROM service_settings WHERE name='MAX_RETRIES'").fetchone()[0]),3)
             self.assertNotIn('private-cookie',con.execute("SELECT ciphertext FROM credentials WHERE name='EXHENTAI_COOKIE_MEMBER_ID'").fetchone()[0])
@@ -131,6 +133,21 @@ class AdminV2Tests(fixtures.BackendTests):
             group=next(g for g in self.admin('services').json()['groups'] if g['id']=='ocr')
             self.assertEqual(self.admin('service-save',service='ocr',version=group['version'],values={},operations={'OCR_SPACE_KEY':'inherit'}).status_code,200)
             self.assertEqual(security.credential('OCR_SPACE_KEY'),'env-secret')
+
+    def test_service_current_values_and_empty_secret_override(self):
+        with patch.dict(os.environ, {'OCR_SPACE_KEY': 'env-secret', 'LLM_MODEL': 'inherited-model'}):
+            groups = {g['id']: g for g in self.admin('services').json()['groups']}
+            field = next(f for f in groups['ocr']['fields'] if f['key'] == 'OCR_SPACE_KEY')
+            self.assertEqual(field['effective'], 'env-secret')
+            model = next(f for f in groups['translate']['fields'] if f['key'] == 'model')
+            self.assertEqual(model['effective'], 'inherited-model')
+            result = self.admin('service-save', service='ocr', version=groups['ocr']['version'], values={'OCR_SPACE_KEY': ''})
+            self.assertEqual(result.status_code, 200, result.text)
+            self.assertEqual(security.credential('OCR_SPACE_KEY'), '')
+            group = next(g for g in self.admin('services').json()['groups'] if g['id'] == 'ocr')
+            self.assertEqual(next(f for f in group['fields'] if f['key'] == 'OCR_SPACE_KEY')['effective'], '')
+            result = self.admin('service-save', service='ocr', version=group['version'], values={'OCR_SPACE_KEY': ''})
+            self.assertTrue(result.json()['unchanged'])
 
     def test_connection_test_records_revision_and_never_leaks_provider_error(self):
         with patch('backend.translation.translate',return_value={'translations':[{'t':'测试'}]}):
