@@ -122,7 +122,7 @@ const settingsOpen = ref(false)
 const pageCounter = computed(() => {
   const p = currentPage.value
   const t = total.value
-  if (effectivePagesPerScreen.value === 2 && p < t) return `${p}–${p + 1} / ${t}`
+  if (settings.readingMode === 'book' && effectivePagesPerScreen.value === 2 && p < t) return `${p}–${p + 1} / ${t}`
   return `${p} / ${t}`
 })
 

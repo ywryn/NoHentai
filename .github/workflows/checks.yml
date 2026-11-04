@@ -1,0 +1,27 @@
+name: Code checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web-static/package-lock.json
+      - run: pip install -r backend/requirements.lock.txt
+      - run: npm ci --prefix web-static
+      - run: python -m unittest discover -s tests -p 'test_*.py' -q
+      - run: npm test
+      - run: npm run build --prefix web-static
+      - run: pip install -r tests/requirements-browser.txt
+      - run: python -m playwright install --with-deps chromium
+      - run: python tests/browser_review.py

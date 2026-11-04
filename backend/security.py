@@ -9,6 +9,7 @@ from cryptography.fernet import Fernet
 from fastapi import HTTPException
 from . import db, settings
 
+TRANS_PASSWORD_MAX_LENGTH = 1024
 COOKIE = 'nohentai_admin'
 _job_credentials = ContextVar('job_credentials', default=None)
 
@@ -46,23 +47,6 @@ def credential(name, con=None):
         value = json.loads(normal[0])
         return ('1' if value else '0') if type(value) is bool else str(value)
     return Fernet(settings.encryption_key()).decrypt(row[0].encode()).decode() if row else os.getenv(name, settings.DEFAULTS.get(name, ''))
-
-
-def replace_credential(name, value):
-    if not isinstance(name, str) or name not in settings.SECRET_NAMES or not isinstance(value, str) or not 1 <= len(value) <= 16000 or '\0' in value:
-        fail(400, '凭证名称或内容不正确')
-    if name == 'TRANS_PASSWORD' and verify_password(value):
-        fail(400, '翻译密码不能与管理密码相同')
-    if name in ('EXHENTAI_BASE_URL', 'LLM_API_BASE'):
-        from .upstream import validate_url
-        validate_url(value, gallery=name == 'EXHENTAI_BASE_URL')
-    ciphertext = Fernet(settings.encryption_key()).encrypt(value.encode()).decode()
-    with db.connect() as con:
-        con.execute('INSERT OR REPLACE INTO credentials VALUES (?,?,?)', (name, ciphertext, db.now()))
-        con.execute('INSERT INTO history(resource,version,data,created_at,message) VALUES (?,?,?,?,?)',
-                    ('credentials', secrets.token_hex(16), '{}', db.now(), f'替换 {name}'))
-        group = 'favorites' if name.startswith('EXHENTAI_') else 'ocr' if name in ('GOOGLE_VISION_API_KEY','PADDLEOCR_API_TOKEN','OCR_SPACE_KEY') else 'translate'
-        con.execute('UPDATE service_versions SET version=? WHERE name=?', (secrets.token_hex(16), group))
 
 
 def hash_password(password):
@@ -168,5 +152,5 @@ def trans_auth(password, ip):
     if not db.reserve('trans-auth:' + ip, 120, 60):
         fail(429, '请求过多，请稍后重试')
     expected = credential('TRANS_PASSWORD')
-    if not expected or not isinstance(password, str) or len(password) > 1024 or not hmac.compare_digest(digest(password), digest(expected)):
+    if not expected or not isinstance(password, str) or len(password) > TRANS_PASSWORD_MAX_LENGTH or not hmac.compare_digest(digest(password), digest(expected)):
         fail(401, 'invalid_password')

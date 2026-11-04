@@ -5,6 +5,7 @@ import sys
 from datetime import date
 from unittest.mock import patch
 import test_backend as fixtures
+from statistics_reference import generate
 from backend import db, stats
 from backend.validation import merge
 
@@ -23,7 +24,7 @@ class StatisticsTests(fixtures.BackendTests):
             db.replace_galleries(con,source)
             db.put_resource(con,'overrides',patches)
             db.put_snapshot(con,'translations',dictionary)
-        expected=stats.generate(merge(source,patches),dictionary)
+        expected=generate(merge(source,patches),dictionary)
         with patch.object(db,'galleries',side_effect=AssertionError('must aggregate in SQL')):
             response=self.client.get('/api/stats')
         self.assertEqual(response.status_code,200,response.text)

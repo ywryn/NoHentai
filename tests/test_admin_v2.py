@@ -17,7 +17,7 @@ import test_backend as fixtures
 from backend import db, settings, records, services, security, jobs, schedules
 from backend.main import app
 
-BOOK, GALLERY = fixtures.BOOK, fixtures.GALLERY
+BOOK, GALLERY, DICTIONARY = fixtures.BOOK, fixtures.GALLERY, fixtures.DICTIONARY
 
 
 class AdminV2Tests(fixtures.BackendTests):
@@ -174,9 +174,9 @@ class AdminV2Tests(fixtures.BackendTests):
         self.assertEqual(self.admin('schedule-save',kind='favorites',version=schedule['version'],enabled=False,hour=4,minute=0,timezone='Asia/Shanghai').status_code,409)
 
     def test_job_freezes_credentials_and_retry_reuses_successful_checkpoints(self):
-        security.replace_credential('EXHENTAI_COOKIE_MEMBER_ID','original')
+        services.save('favorites', next(g for g in services.status()['groups'] if g['id']=='favorites')['version'], {'EXHENTAI_COOKIE_MEMBER_ID':'original'})
         job=self.claim('all')
-        security.replace_credential('EXHENTAI_COOKIE_MEMBER_ID','new')
+        services.save('favorites', next(g for g in services.status()['groups'] if g['id']=='favorites')['version'], {'EXHENTAI_COOKIE_MEMBER_ID':'new'})
         def collect():
             self.assertEqual(security.credential('EXHENTAI_COOKIE_MEMBER_ID'),'original')
             return [dict(GALLERY,title='checkpoint')]
@@ -186,7 +186,7 @@ class AdminV2Tests(fixtures.BackendTests):
         self.assertEqual(self.client.get('/api/galleries/123').json()['gallery']['title'],'source')
         retried=jobs.rerun(job,original=True)
         with db.connect() as con:con.execute("UPDATE jobs SET status='in_progress' WHERE id=?",(retried,))
-        with patch.object(jobs,'collect_favorites',side_effect=AssertionError('must reuse checkpoint')),patch.object(jobs,'collect_translations',return_value={'data':[]}),patch.object(jobs,'collect_daily',return_value=[]):
+        with patch.object(jobs,'collect_favorites',side_effect=AssertionError('must reuse checkpoint')),patch.object(jobs,'collect_translations',return_value=DICTIONARY),patch.object(jobs,'collect_daily',return_value=[]):
             jobs.execute(retried)
         self.assertEqual(self.client.get('/api/galleries/123').json()['gallery']['title'],'checkpoint')
         runs=self.admin('runs')
@@ -201,7 +201,7 @@ class AdminV2Tests(fixtures.BackendTests):
         with db.connect() as con:db.replace_galleries(con,[dict(GALLERY,title='new source')])
         retried=jobs.rerun(job,original=True)
         with db.connect() as con:con.execute("UPDATE jobs SET status='in_progress' WHERE id=?",(retried,))
-        with patch.object(jobs,'collect_translations',return_value={'data':[]}),patch.object(jobs,'collect_daily',return_value=[]):
+        with patch.object(jobs,'collect_translations',return_value=DICTIONARY),patch.object(jobs,'collect_daily',return_value=[]):
             with self.assertRaisesRegex(jobs.JobFailure,'收藏来源已被其他任务更新'):jobs.execute(retried)
         self.assertEqual(self.client.get('/api/galleries/123').json()['gallery']['title'],'new source')
 
@@ -279,8 +279,8 @@ class AdminV2Tests(fixtures.BackendTests):
         result=self.admin('record-save',kind='gallery',id='123',version=saved['version'],data={'tags':['female:b','artist:a']}).json()
         self.assertTrue(result['unchanged']);self.assertEqual(result['version'],saved['version'])
         current=self.admin('load',resource='printed').json()
-        result=self.admin('save',resource='printed',sha=current['sha'],data=current['data']).json()
-        self.assertTrue(result['unchanged']);self.assertEqual(result['sha'],current['sha'])
+        self.assertEqual(self.admin('save',resource='printed',sha=current['sha'],data=current['data']).status_code,410)
+        self.assertEqual(self.admin('load',resource='printed').json()['sha'],current['sha'])
 
     def test_noop_service_saves_preserve_test_version_and_secret_ciphertext(self):
         group=next(g for g in services.status()['groups'] if g['id']=='translate')
@@ -341,7 +341,7 @@ class AdminV2Tests(fixtures.BackendTests):
 
     def test_overview_all_success_marks_each_published_dataset_fresh(self):
         job=self.claim('all')
-        with patch.object(jobs,'collect_favorites',return_value=[GALLERY]),patch.object(jobs,'collect_translations',return_value={'data':[]}),patch.object(jobs,'collect_daily',return_value=[]):jobs.execute(job)
+        with patch.object(jobs,'collect_favorites',return_value=[GALLERY]),patch.object(jobs,'collect_translations',return_value=DICTIONARY),patch.object(jobs,'collect_daily',return_value=[]):jobs.execute(job)
         result=self.admin('overview').json()
         for kind in ('favorites','translations','daily'):self.assertEqual(result['successes'][kind]['id'],job)
         detail=self.admin('job-detail',runId=job).json()

@@ -181,9 +181,11 @@ def gallery_api(request: Request, gid: str, token: str):
 
 
 @app.get('/api/image-url')
-def image_url_api(request: Request, pageUrl: str):
+def image_url_api(request: Request, pageUrl: str, refresh: bool = False):
     limit(request, 'image-url', 180)
-    return safely(media.image_url, pageUrl)
+    if refresh:
+        limit(request, 'image-refresh', 30)
+    return safely(media.image_url, pageUrl, refresh)
 
 
 @app.get('/api/image-proxy')

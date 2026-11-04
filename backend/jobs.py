@@ -317,6 +317,14 @@ def execute(job_id, allow_shrink=False):
                     names = {g['name'] for g in data}
                     previous = db.snapshot(con, 'daily', [])
                     data = [g for g in previous if g.get('groupId') != config['ruleId'] and g.get('name') not in names] + data
+                if stage == 'translations':
+                    from app.sync_translations import validate_dictionary
+                    from .catalog import translation_index
+                    try:
+                        validate_dictionary(data, db.snapshot(con, 'translations', {}))
+                        translation_index(db.dumps(data))
+                    except (ValueError, TypeError, KeyError, AttributeError):
+                        raise JobFailure('标签词典校验失败，保留上一份完整数据') from None
                 db.put_snapshot(con, stage, data)
         db.put_snapshot(con, 'release', {'commit': f'job-{job_id}', 'builtAt': db.now()})
         event(job_id,'publish','完整性与版本检查通过，数据已事务发布',con=con)

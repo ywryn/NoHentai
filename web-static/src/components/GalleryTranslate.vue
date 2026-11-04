@@ -774,6 +774,7 @@ export default {
       imageError: null,
       imageAutoRetried: false,
       imageRequestId: 0,
+      processingGeneration: 0,
       nlParam: null,
 
       // OCR / translate state
@@ -908,6 +909,8 @@ export default {
 
   beforeUnmount() {
     this.imageRequestId++
+    this._disposed = true
+    this.processingGeneration++
     this._ro?.disconnect()
     this._thumbObserver?.disconnect()
     window.removeEventListener('pointermove', this.onStagePointerMove)
@@ -1271,6 +1274,9 @@ export default {
 
     async goToPage(pageNum) {
       const requestId = ++this.imageRequestId
+      this.processingGeneration++
+      this.ocrProcessing = false
+      this.translating = false
       this.imageAutoRetried = false
       this.currentPage = pageNum
       this.resetZoom()
@@ -1373,7 +1379,7 @@ export default {
       try {
         const source = new URL(page.pageUrl)
         if (this.nlParam) source.searchParams.set('nl', this.nlParam)
-        const response = await fetch(`${API_BASE}/api/image-url?pageUrl=${encodeURIComponent(source.href)}`)
+        const response = await fetch(`${API_BASE}/api/image-url?pageUrl=${encodeURIComponent(source.href)}&refresh=true`)
         if (!response.ok) throw new Error('获取图片地址失败，请重试')
         const data = await response.json()
         if (requestId !== this.imageRequestId) return
@@ -1466,9 +1472,11 @@ export default {
     // ── OCR ───────────────────────────────────────────────────────────────────
 
     async performOcrAndTranslate() {
-      await this.performOcr()
+      const pageRequest = this.imageRequestId
+      const applied = await this.performOcr()
+      if (!applied) return
       if (this.ocrResults.length) await this.performTranslate()
-      this.maybePrefetchNext()
+      if (pageRequest === this.imageRequestId) this.maybePrefetchNext()
     },
 
     /** 等 <img> 解码完成（autoTranslate 时 OCR 往往先于图片加载完被触发） */
@@ -1639,42 +1647,52 @@ export default {
       const idxs = this.ocrResults.map((r, i) => (r.translation ? -1 : i)).filter(i => i >= 0)
       if (!idxs.length || this.translating) return
       this.translating = true
+      const generation = ++this.processingGeneration
       const pageNum = this.currentPage
       try {
         const items = await this.translateTexts(idxs.map(i => this.ocrResults[i].text), pageNum)
-        if (this.currentPage !== pageNum) return
+        if (this.currentPage !== pageNum || generation !== this.processingGeneration) return
         const byIdx = new Map(idxs.map((i, k) => [i, items[k]]))
         this.ocrResults = this.ocrResults.map((r, i) => byIdx.has(i) && byIdx.get(i) ? this.applyTranslation(r, byIdx.get(i)) : r)
         this.savePageCache()
         this.$nextTick(() => this.applyTextFit())
       } catch (e) {
+        if (generation !== this.processingGeneration) return
         if (e.auth) { this.handleAuthError(); return }
         this.showToast('补译失败: ' + e.message, 'error')
       } finally {
-        this.translating = false
+        if (generation === this.processingGeneration) this.translating = false
       }
     },
 
     async performOcr() {
-      if (!this.imageUrl) return
+      if (!this.imageUrl) return false
+      const generation = ++this.processingGeneration
+      const pageNum = this.currentPage
+      const ocrSource = this.ocrSource
       this.ocrProcessing = true
       this.ocrResults = []
       this.selectedBoxIdx = null
       this.bubbleCard = null
       try {
         const img = await this.ensureImageDecoded(this.$refs.imgRef)
-        const { results, source } = await this.ocrImage(img, this.ocrSource)
+        if (generation !== this.processingGeneration) return false
+        const { results, source } = await this.ocrImage(img, ocrSource)
+        if (generation !== this.processingGeneration || pageNum !== this.currentPage) return false
         this.lastOcrSource = source
         this.expandedBboxes = {}
         this.unfitBoxes = {}
         this.ocrResults = results
-        this.savePageCache()
+        this.writePageCache(pageNum, results, source)
         if (!results.length) this.showToast('未识别到文字', 'info')
+        return true
       } catch (e) {
-        if (e.auth) { this.handleAuthError(); return }
+        if (generation !== this.processingGeneration) return false
+        if (e.auth) { this.handleAuthError(); return false }
         this.showToast('OCR 失败: ' + e.message, 'error')
+        return false
       } finally {
-        this.ocrProcessing = false
+        if (generation === this.processingGeneration) this.ocrProcessing = false
       }
     },
 
@@ -1683,21 +1701,23 @@ export default {
     async performTranslate() {
       if (!this.ocrResults.length) return
       this.translating = true
+      const generation = ++this.processingGeneration
       const pageNum = this.currentPage
       try {
         const translations = await this.translateTexts(this.ocrResults.map(r => r.text), pageNum)
         // 翻译期间用户可能已翻页
-        if (this.currentPage !== pageNum) return
+        if (this.currentPage !== pageNum || generation !== this.processingGeneration) return
         this.ocrResults = this.ocrResults.map((r, i) => this.applyTranslation(r, translations[i]))
         this.savePageCache()
         const missing = translations.filter(t => !t).length
         if (missing) this.showToast(`翻译完成，${missing} 条未返回译文`, 'info')
         this.$nextTick(() => this.applyTextFit())
       } catch (e) {
+        if (generation !== this.processingGeneration) return
         if (e.auth) { this.handleAuthError(); return }
         this.showToast('翻译失败: ' + e.message, 'error')
       } finally {
-        this.translating = false
+        if (generation === this.processingGeneration) this.translating = false
       }
     },
 
@@ -1731,7 +1751,7 @@ export default {
         const translations = await this.translateTexts(results.map(r => r.text), pageNum)
         translated = results.map((r, i) => this.applyTranslation(r, translations[i]))
       }
-      this.writePageCache(pageNum, translated, source)
+      if (!this._disposed && !this.loadPageCache(pageNum)) this.writePageCache(pageNum, translated, source)
     },
 
     deleteResult(i) {
@@ -1745,6 +1765,9 @@ export default {
     },
 
     clearResults() {
+      this.processingGeneration++
+      this.ocrProcessing = false
+      this.translating = false
       try { localStorage.removeItem(this.cacheKey(this.currentPage)) } catch {}
       this.ocrResults = []
       this.selectedBoxIdx = null

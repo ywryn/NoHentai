@@ -12,13 +12,14 @@ from pathlib import Path
 from unittest.mock import patch, Mock
 from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
-from backend import db, settings, jobs, security, translation
+from backend import db, settings, jobs, security, translation, services
 from backend.main import app
 from backend.cli import initialize_data, backup
 from backend.validation import read_books, books_csv
 
 GALLERY = {'gid': 123, 'token': 'abcdef1234', 'title': 'source', 'title_jpn': '', 'tags': ['artist:test'],
            'category': 'Manga', 'posted': '1770000000', 'favTime': '2026-11-01 12:00'}
+DICTIONARY = {'data': [{'namespace': 'artist', 'data': {'test': {'name': '测试'}}}]}
 BOOK = {'ID': 'test', '书名': '测试', '日文名': '', '收价': '', '原价': '', 'sid': '123', '备注': '', 'cover': ''}
 
 
@@ -127,33 +128,38 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(len(read_books(self.client.get('/data/future_digi.csv').text)), 1)
 
     def test_printed_duplicate_ids_csv_and_broken_references(self):
-        books = [dict(BOOK, **{'书名': '测试,"第一本"', '备注': '多行\r\n第二行'}), dict(BOOK)]
-        self.assertEqual(self.save('printed', books).status_code, 200)
-        self.assertEqual(read_books(self.client.get('/data/future_digi.csv').text), books)
-        self.assertEqual(self.save('printed', [dict(BOOK, sid='999')]).status_code, 400)
+        existing = self.admin('records', kind='book').json()['items'][0]
+        book = dict(BOOK, **{'书名': '测试,"第一本"', '备注': '多行\r\n第二行'})
+        self.assertEqual(self.admin('record-save', kind='book', id=existing['id'], version=existing['version'], data=book).status_code, 200)
+        self.assertEqual(self.admin('record-save', kind='book', version='0', data=BOOK).status_code, 200)
+        self.assertEqual(read_books(self.client.get('/data/future_digi.csv').text), [book, BOOK])
+        self.assertEqual(self.admin('record-save', kind='book', version='0', data=dict(BOOK, sid='999')).status_code, 400)
         with db.connect() as con:
             db.put_resource(con, 'printed', [dict(BOOK, sid='999')])
-        response = self.save('printed', [dict(BOOK, sid='999')])
+        existing = self.admin('records', kind='book').json()['items'][0]
+        response = self.admin('record-save', kind='book', id=existing['id'], version=existing['version'], data=dict(BOOK, sid='999'))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()['warnings'])
 
     def test_validation_rejects_secret_fields_and_unknown_galleries(self):
         for name, data in [('translate', {'apiKey': 'secret'}), ('overrides', {'123': {'token': 'replace'}}),
-                           ('overrides', {'999': {'title': 'new'}}), ('daily', [dict(self.daily[0], categories=True)]),
-                           ('printed', [dict(BOOK, cover='../.env')])]:
+                           ('overrides', {'999': {'title': 'new'}}), ('translate', {'model':'test','jsonMode':False,'defaultOcr':'bad'})]:
             self.assertEqual(self.save(name, data).status_code, 400, (name, data))
 
-    def test_secrets_encrypted_persistent_and_never_returned(self):
+    def test_service_secrets_encrypted_and_legacy_writer_retired(self):
         value = 'test-private-ocr-token'
-        response = self.admin('replace-secret', platform='server', name='OCR_SPACE_KEY', value=value)
+        group = next(g for g in services.status()['groups'] if g['id'] == 'ocr')
+        response = self.admin('service-save', service='ocr', version=group['version'], values={'OCR_SPACE_KEY':value})
         self.assertEqual(response.status_code, 200, response.text)
         self.assertEqual(security.credential('OCR_SPACE_KEY'), value)
         with db.connect() as con:
             self.assertNotIn(value, con.execute('SELECT ciphertext FROM credentials').fetchone()[0])
             self.assertNotIn(value, str([tuple(r) for r in con.execute('SELECT * FROM history')]))
         self.assertNotIn(value, self.admin('platforms').text)
-        self.assertEqual(self.admin('replace-secret', platform='server', name='ADMIN_PASSWORD', value='bad').status_code, 400)
-        self.assertEqual(self.admin('replace-secret', platform='server', name='TRANS_PASSWORD', value=os.environ['ADMIN_PASSWORD']).status_code, 400)
+        self.assertEqual(self.admin('replace-secret', platform='server', name='OCR_SPACE_KEY', value='bad').status_code, 410)
+        group = next(g for g in services.status()['groups'] if g['id'] == 'translate')
+        for values in ({'ADMIN_PASSWORD':'bad'}, {'TRANS_PASSWORD':os.environ['ADMIN_PASSWORD']}):
+            self.assertEqual(self.admin('service-save', service='translate', version=group['version'], values=values).status_code, 400)
 
     def test_counters_atomic_cache_and_backup(self):
         with ThreadPoolExecutor(max_workers=10) as pool:
@@ -213,7 +219,7 @@ class BackendTests(unittest.TestCase):
         self.save('overrides', {'123': {'title': '人工'}})
         job = self.claim('all')
         with patch.object(jobs, 'collect_favorites', return_value=[dict(GALLERY, title='changed')]), \
-             patch.object(jobs, 'collect_translations', return_value={'data': []}), \
+             patch.object(jobs, 'collect_translations', return_value=DICTIONARY), \
              patch.object(jobs, 'collect_daily', return_value=[{'name': 'test', 'galleries': [GALLERY]}]):
             jobs.execute(job)
         self.assertEqual(self.client.get('/data/galleries.json').json()[0]['title'], '人工')
@@ -231,7 +237,8 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(len(self.client.get('/data/galleries.json').json()), 10)
         job = self.claim('daily')
         def scrape(groups):
-            self.save('daily', [dict(self.daily[0], name='changed')])
+            rule = self.admin('records', kind='daily').json()['items'][0]
+            self.admin('record-save', kind='daily', id=rule['id'], version=rule['version'], data=dict(self.daily[0], name='changed'))
             return []
         with patch.object(jobs, 'collect_daily', side_effect=scrape):
             with self.assertRaises(jobs.JobFailure):
@@ -253,7 +260,7 @@ class BackendTests(unittest.TestCase):
     def test_translation_contract_cache_and_no_upstream_error_leak(self):
         for name, value in [('LLM_API_BASE', 'https://llm.example/v1'), ('LLM_API_KEY', 'fake-key')]:
             with patch('backend.upstream.validate_url'):
-                security.replace_credential(name, value)
+                services.save(services.FIELDS[name][0], next(g for g in services.status()['groups'] if g['id']==services.FIELDS[name][0])['version'], {name:value})
         body = {'password': 'trans-test', 'texts': ['おはよう'], 'previous': [['名前', '名字']], 'glossary': {'名前': '名字'}}
         with patch.object(translation, 'json_request', return_value={'choices': [{'message': {'content': '{"1":{"t":"早上好","k":"dialogue","a":null}}'}}]}) as upstream:
             response = self.client.post('/api/trans-translate', json=body)
@@ -268,7 +275,7 @@ class BackendTests(unittest.TestCase):
             self.assertNotIn('private-key', response.text)
 
     def test_ocr_sources_and_persistent_quota_fallback(self):
-        security.replace_credential('GOOGLE_VISION_API_KEY', 'fake-vision-key')
+        services.save('ocr', next(g for g in services.status()['groups'] if g['id']=='ocr')['version'], {'GOOGLE_VISION_API_KEY':'fake-vision-key'})
         body = {'password': 'trans-test', 'imageBase64': base64.b64encode(b'fake-jpg').decode(), 'ocrSource': 'google'}
         with patch.object(translation, 'json_request', return_value={'responses': [{}]}):
             result = self.client.post('/api/trans-ocr', json=body)

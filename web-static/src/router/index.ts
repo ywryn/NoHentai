@@ -38,7 +38,9 @@ const routes: RouteRecordRaw[] = [
       { path: '', redirect: '/admin/overview' },
       { path: 'system', redirect: '/admin/health' },
       { path: 'printed', component: () => import('@/components/PrintedEditor.vue'), meta: { title: '管理书单' } },
-      ...['overview', 'galleries', 'daily', 'translate', 'tasks', 'health', 'credentials', 'services', 'account', 'backups', 'history'].map(section => ({
+      { path: 'translate', redirect: '/admin/services' },
+      { path: 'credentials', redirect: '/admin/services' },
+      ...['overview', 'galleries', 'daily', 'tasks', 'health', 'services', 'account', 'backups', 'history'].map(section => ({
         path: section,
         component: () => import('@/components/admin/AdminPanel.vue'),
         props: { section },

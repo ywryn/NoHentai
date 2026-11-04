@@ -49,7 +49,7 @@ npm run dev
 npm test
 cd web-static
 npm ci
-npm run build
+npm run build  # 包含 Vue / TypeScript 检查
 ```
 
 `npm test` 依赖先安装 `web-static` 的依赖。Python 测试使用临时 SQLite 和模拟上游，不调用付费服务。前端完整构建会移除 `dist/data`，运行时数据统一由 Python 提供。首页使用 `/api/galleries` 的服务器分页和高级搜索，详情按 ID 查询；兼容的全量 JSON 接口不再参与首页加载。
@@ -59,7 +59,10 @@ npm run build
 ```sh
 .venv/bin/pip install -r tests/requirements-browser.txt
 .venv/bin/python -m playwright install --with-deps chromium
+.venv/bin/python tests/browser_review.py
 .venv/bin/python tests/browser_smoke.py
 ```
 
 统计页使用 `/api/stats`，SQL 聚合结果按数据版本和 UTC 日期缓存在 SQLite，所有 API 进程共享，旧统计地址保持兼容。
+
+代码检查工作流只运行测试、类型检查与构建，不执行数据同步或自动部署。
