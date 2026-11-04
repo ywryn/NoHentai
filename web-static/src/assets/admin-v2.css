@@ -50,3 +50,5 @@
 .admin-shell .ops-run-title{background:transparent;color:var(--a-text);border-radius:5px;text-align:left}
 .admin-shell .ops-run-title:hover,.admin-shell .ops-run-title:focus-visible{background:var(--a-soft);color:var(--a-accent)}
 .admin-shell .ops-run-title:active{background:var(--a-subtle)}
+
+.ops-match-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px}
