@@ -6,21 +6,17 @@ import { watchPublicRevision } from '@/composables/useGalleryData'
 import { useViewMode } from '@/composables/useViewMode'
 import GalleryList from '@/components/GalleryList.vue'
 import Paginator from '@/components/Paginator.vue'
+import GallerySearchInput from '@/components/GallerySearchInput.vue'
 import { exTypeClassMap } from '@/utils/galleryUtils'
 import {
   parseQuery,
+  BOOK_FIELDS,
+  matchBookTerm,
   passesQuery,
-  matchText,
-  matchTagList,
-  matchGalleryTerm,
-  activeToken,
-  applySuggestion,
-  suggestTags,
 } from '@/utils/gallerySearch'
 
 const PER_PAGE = 30
 /** Printed 专有字段，叠加在通用画廊字段之上 */
-const PRINTED_FIELDS = ['id', 'name', 'jpname', 'sid']
 const SKIP_NAMESPACES = new Set(['language', 'other'])
 
 const router = useRouter()
@@ -35,16 +31,19 @@ const galleryMap = ref({})
 const translationData = ref(null)
 const loading = ref(true)
 const error = ref('')
-const searchQuery = ref('')
+const searchQuery = computed({
+  get: () => String(route.query.q || ''),
+  set: value => {
+    const query = { ...route.query, q: value || undefined, page: undefined }
+    for (const key of Object.keys(query)) if (query[key] === undefined) delete query[key]
+    router.replace({ query })
+  },
+})
 const currentPage = ref(1)
 const perPage = ref(PER_PAGE)
 const toast = ref('')
-const highlightIndex = ref(-1)
-const suggestDismissed = ref(false)
-const searchInputRef = ref()
 
 let toastTimer = null
-let blurTimer = null
 
 function getGallery(sid) {
   if (sid == null || sid === '') return null
@@ -76,37 +75,13 @@ function getThumb(item) {
 /* ── 搜索（与首页共用同一套解析/匹配实现） ─────────────────────── */
 
 function matchTerm(item, term) {
-  const gallery = galleryMap.value[String(item.sid)]
-  const expand = toTraditional
-  switch (term.field) {
-    case 'id': return String(item.ID || '').toLowerCase().includes(term.value)
-    case 'name': return matchText(item['书名'], term, expand)
-    case 'jpname': return matchText(item['日文名'], term, expand)
-    case 'sid': return String(item.sid || '') === term.value
-    case 'gid':
-    case 'title':
-    case 'uploader':
-    case 'category':
-    case 'tag':
-      return matchGalleryTerm(gallery, term, expand)
-    default:
-      return (
-        matchText(item.ID, term, expand) ||
-        matchText(item['书名'], term, expand) ||
-        matchText(item['日文名'], term, expand) ||
-        matchText(gallery?.title, term, expand) ||
-        matchText(gallery?.title_jpn, term, expand) ||
-        matchText(gallery?.uploader, term, expand) ||
-        matchText(gallery?.category, term, expand) ||
-        matchTagList(gallery?.tags, term)
-      )
-  }
+  return matchBookTerm(item, getGallery(item.sid), term, toTraditional)
 }
 
 const filteredItems = computed(() => {
   const raw = searchQuery.value.trim()
   if (!raw) return items.value
-  const parsed = parseQuery(raw, PRINTED_FIELDS)
+  const parsed = parseQuery(raw, BOOK_FIELDS)
   return items.value.filter(item => passesQuery(item, parsed, matchTerm))
 })
 
@@ -144,56 +119,6 @@ const normalizedItems = computed(() =>
     }
   })
 )
-
-/* ── 标签联想 ─────────────────────────────────────────────────── */
-
-const tagSuggestions = computed(() =>
-  suggestTags(activeToken(searchQuery.value).text, translationData.value?.data)
-)
-
-const suggestOpen = computed(() => !suggestDismissed.value && tagSuggestions.value.length > 0)
-
-watch(tagSuggestions, () => { highlightIndex.value = -1 })
-watch(searchQuery, () => { suggestDismissed.value = false })
-
-function onSearchKeydown(e) {
-  if (e.key === 'Escape') {
-    suggestDismissed.value = true
-    highlightIndex.value = -1
-    return
-  }
-  if (!suggestOpen.value) return
-  if (e.key === 'ArrowDown') {
-    e.preventDefault()
-    highlightIndex.value = (highlightIndex.value + 1) % tagSuggestions.value.length
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault()
-    highlightIndex.value =
-      (highlightIndex.value - 1 + tagSuggestions.value.length) % tagSuggestions.value.length
-  } else if ((e.key === 'Enter' || e.key === 'Tab') && highlightIndex.value >= 0) {
-    e.preventDefault()
-    applyTagSuggestion(tagSuggestions.value[highlightIndex.value])
-  }
-}
-
-function applyTagSuggestion(item) {
-  searchQuery.value = applySuggestion(searchQuery.value, item)
-  highlightIndex.value = -1
-  suggestDismissed.value = true
-  searchInputRef.value?.focus()
-}
-
-function closeSuggestSoon() {
-  clearTimeout(blurTimer)
-  blurTimer = setTimeout(() => { suggestDismissed.value = true }, 120)
-}
-
-/* ── 交互 ─────────────────────────────────────────────────────── */
-
-function clearSearch() {
-  searchQuery.value = ''
-  searchInputRef.value?.focus()
-}
 
 function showToast(msg) {
   toast.value = msg
@@ -244,7 +169,6 @@ onMounted(() => { loadBooks(); stopRevision=watchPublicRevision(loadBooks) })
 onBeforeUnmount(() => {
   stopRevision?.()
   clearTimeout(toastTimer)
-  clearTimeout(blurTimer)
 })
 </script>
 
@@ -263,68 +187,12 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div class="digi-search-row" v-if="!loading && !error">
-      <div class="digi-search-wrap">
-        <svg class="digi-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-          <circle cx="11" cy="11" r="7.5" /><line x1="20" y1="20" x2="15.5" y2="15.5" />
-        </svg>
-        <input
-          ref="searchInputRef"
-          v-model="searchQuery"
-          class="digi-search-input"
-          type="search"
-          aria-label="搜索书单"
-          role="combobox"
-          aria-autocomplete="list"
-          :aria-expanded="suggestOpen"
-          aria-controls="digi-tag-suggest"
-          :aria-activedescendant="suggestOpen && highlightIndex >= 0 ? `digi-opt-${highlightIndex}` : undefined"
-          autocomplete="off"
-          spellcheck="false"
-          placeholder="搜索 ID / 书名 / 日文名，也支持 id: name: jpname: sid: a: f: 等字段"
-          @keydown="onSearchKeydown"
-          @blur="closeSuggestSoon"
-          @focus="suggestDismissed = false"
-        />
-        <button
-          v-if="searchQuery"
-          class="digi-search-clear"
-          type="button"
-          aria-label="清空搜索词"
-          @click="clearSearch"
-        >×</button>
-
-        <ul
-          v-if="suggestOpen"
-          id="digi-tag-suggest"
-          class="digi-tag-suggest"
-          role="listbox"
-          aria-label="标签建议"
-        >
-          <li
-            v-for="(item, i) in tagSuggestions"
-            :id="`digi-opt-${i}`"
-            :key="item.tag"
-            class="digi-tag-suggest-item"
-            :class="{ 'is-active': i === highlightIndex }"
-            role="option"
-            :aria-selected="i === highlightIndex"
-            @mousedown.prevent="applyTagSuggestion(item)"
-            @mouseenter="highlightIndex = i"
-          >
-            <span class="digi-tag-suggest-main">{{ item.namespace }}:"{{ item.value }}$"</span>
-            <span class="digi-tag-suggest-sub">{{ item.tag_cn || item.value }}</span>
-          </li>
-        </ul>
-      </div>
-    </div>
+    <GallerySearchInput v-if="!loading && !error" v-model="searchQuery" profile="book" label="搜索书单" placeholder="搜索编号、书名、日文名或标签…" />
 
     <div v-if="error" class="digi-empty digi-error">{{ error }}</div>
 
     <template v-else>
-      <div v-if="totalPages > 1" class="digi-pagination">
-        <Paginator :page="currentPage" :total="totalPages" @go="goToPage" />
-      </div>
+      <Paginator v-if="totalPages > 1" :page="currentPage" :total="totalPages" @go="goToPage" />
 
       <GalleryList
         :items="normalizedItems"
@@ -335,9 +203,7 @@ onBeforeUnmount(() => {
         @click="handleGalleryClick"
       />
 
-      <div v-if="totalPages > 1" class="digi-pagination">
-        <Paginator :page="currentPage" :total="totalPages" @go="goToPage" />
-      </div>
+      <Paginator v-if="totalPages > 1" :page="currentPage" :total="totalPages" @go="goToPage" />
     </template>
 
     <Transition name="digi-toast">

@@ -64,6 +64,35 @@ def load(kind, record_id):
         return result
 
 
+BOOK_FIELDS = ('id', 'name', 'jpname', 'sid')
+
+
+def book_term_sql(term):
+    value = term['value']
+    def book_text(key, exact=False, wildcard=True):
+        expr = f"unicode_lower(COALESCE(json_extract(books.data,'$.{key}'),''))"
+        if exact:
+            return f'{expr}=?', [value]
+        if wildcard and term['wildcard']:
+            return f'substr({expr},1,length(?))=?', [value, value]
+        return f'instr({expr},?)>0', [value]
+    def gallery():
+        condition, params = catalog.term_sql(term)
+        return """EXISTS(SELECT 1 FROM (
+            SELECT g.gid,CASE WHEN p.data IS NULL THEN g.data ELSE json_patch(g.data,p.data) END AS data
+            FROM galleries g LEFT JOIN gallery_overrides p ON p.gid=g.gid
+            WHERE g.gid=json_extract(books.data,'$.sid')
+        ) linked WHERE """ + condition + ')', params
+    field = term['field']
+    if field == 'id': return book_text('ID', wildcard=False)
+    if field == 'name': return book_text('书名')
+    if field == 'jpname': return book_text('日文名')
+    if field == 'sid': return book_text('sid', exact=True)
+    if field != 'any': return gallery()
+    parts = [book_text(key) for key in ('ID','书名','日文名','备注','收价','原价')] + [gallery()]
+    return '(' + ' OR '.join(part[0] for part in parts) + ')', [value for part in parts for value in part[1]]
+
+
 def list_records(kind, query='', page=1):
     check_kind(kind)
     page = max(1, min(10000, int(page)))
@@ -74,11 +103,6 @@ def list_records(kind, query='', page=1):
         con.execute('PRAGMA temp_store=MEMORY')
         con.execute('BEGIN')
         if kind == 'gallery':
-            link = re.search(r'(?:e-hentai|exhentai)\.org/g/([0-9]+)', query)
-            if link:
-                query = 'gid:' + link[1]
-            elif query.isdecimal():
-                query = 'gid:' + query
             condition, params = catalog.filter_sql(query)
             cte = catalog.VISIBLE.replace("COALESCE(json_extract(data,'$.hidden'),0)=0", '1')
             total = con.execute(cte + f' SELECT COUNT(*) FROM visible WHERE {condition}', params).fetchone()[0]
@@ -87,8 +111,11 @@ def list_records(kind, query='', page=1):
             index=catalog.translations(con)
             items = [gallery_dto(con, gid, index) for gid in ids]
         else:
-            condition = "EXISTS(SELECT 1 FROM json_each(data) v WHERE instr(unicode_lower(CAST(v.value AS TEXT)),?)>0)" if query else '1'
-            params = [query.lower()] if query else []
+            if kind == 'book':
+                condition, params = catalog.filter_sql(query, BOOK_FIELDS, book_term_sql)
+            else:
+                condition = "EXISTS(SELECT 1 FROM json_each(data) v WHERE instr(unicode_lower(CAST(v.value AS TEXT)),?)>0)" if query else '1'
+                params = [query.lower()] if query else []
             total = con.execute(f'SELECT COUNT(*) FROM {TABLES[kind]} WHERE {condition}', params).fetchone()[0]
             page = min(page, max(1, math.ceil(total / 30)))
             items = [dto(r,kind) for r in con.execute(f'SELECT * FROM {TABLES[kind]} WHERE {condition} ORDER BY position LIMIT 30 OFFSET ?', params + [(page-1)*30])]

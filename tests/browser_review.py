@@ -113,7 +113,7 @@ def main():
             expect(page.locator('.home-filter-chip')).to_have_count(1)
             page.locator('.home-filter-chip').click()
             expect(page.locator('.home-filter-chip')).to_have_count(0)
-            expect(page.locator('.home-search-input')).to_have_value('')
+            expect(page.get_by_role('combobox',name='搜索画廊',exact=True)).to_have_value('')
             print('PASS: quoted multiword search chip can be removed')
             assert not errors, errors
             browser.close()

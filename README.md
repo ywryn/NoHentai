@@ -60,6 +60,7 @@ npm run build  # 包含 Vue / TypeScript 检查
 .venv/bin/pip install -r tests/requirements-browser.txt
 .venv/bin/python -m playwright install --with-deps chromium
 .venv/bin/python tests/browser_review.py
+.venv/bin/python tests/browser_search.py
 .venv/bin/python tests/browser_smoke.py
 ```
 
