@@ -62,178 +62,6 @@
   gap: 14px;
 }
 
-.home-search-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.home-search-wrap {
-  flex: 1;
-  height: 40px;
-  background: var(--surface-color);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
-  gap: 8px;
-  min-width: 0;
-  position: relative;
-}
-
-.home-search-wrap:focus-within {
-  border-color: var(--primary-color);
-}
-
-.home-search-icon {
-  width: 14px;
-  height: 14px;
-  color: var(--muted-color);
-  flex-shrink: 0;
-}
-
-.home-search-input {
-  flex: 1;
-  background: none;
-  border: none;
-  outline: none;
-  color: var(--text-color);
-  font-size: 14px;
-  min-width: 0;
-}
-
-.home-search-input::placeholder {
-  color: var(--muted-color);
-}
-
-/* type=search 只为拿到移动端键盘的「搜索」键，清除按钮用自绘的那颗，
-   否则 Chrome 会额外渲染一个原生 × 造成两颗清除按钮 */
-.home-search-input::-webkit-search-cancel-button {
-  appearance: none;
-  display: none;
-}
-
-.home-search-help {
-  font-size: 12px;
-  color: var(--muted-color);
-  cursor: pointer;
-  font-weight: 700;
-  user-select: none;
-}
-
-.home-search-help:hover {
-  color: var(--primary-color);
-}
-
-.home-tag-suggest {
-  list-style: none;
-  margin: 0;
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  right: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 6px;
-  border-radius: 10px;
-  border: 1px solid var(--border-color);
-  background: var(--surface-color);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
-  z-index: 30;
-}
-
-.home-tag-suggest-item {
-  border: none;
-  background: transparent;
-  color: var(--text-color);
-  text-align: left;
-  border-radius: 8px;
-  padding: 8px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  cursor: pointer;
-}
-
-.home-tag-suggest-item:hover,
-.home-tag-suggest-item.is-active {
-  background: var(--hover-bg);
-}
-
-.home-tag-suggest-item.is-active {
-  box-shadow: inset 2px 0 0 var(--primary-color);
-}
-
-.home-tag-suggest-main {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-color);
-  overflow-wrap: anywhere;
-}
-
-.home-tag-suggest-sub {
-  font-size: 11px;
-  color: var(--muted-color);
-  overflow-wrap: anywhere;
-}
-
-/* 语法帮助入口：此前是搜索框里一个 12px 的「?」字符，
-   无按钮外观、颜色又是 muted，功能几乎不可能被发现。 */
-.home-syntax-btn {
-  height: 40px;
-  padding: 0 12px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  background: var(--surface-color);
-  color: var(--muted-color);
-  font-size: 13px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  cursor: pointer;
-  transition:
-    background-color var(--dur-fast) var(--ease-out),
-    border-color var(--dur-fast) var(--ease-out),
-    color var(--dur-fast) var(--ease-out);
-}
-
-.home-syntax-btn svg {
-  width: 15px;
-  height: 15px;
-}
-
-.home-syntax-btn:hover {
-  background: var(--hover-bg);
-  border-color: var(--primary-color);
-  color: var(--text-color);
-}
-
-.home-search-clear {
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: var(--tag-bg);
-  color: var(--muted-color);
-  font-size: 15px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  cursor: pointer;
-}
-
-.home-search-clear:hover {
-  background: var(--hover-bg);
-  color: var(--text-color);
-}
-
 /* ── 当前生效条件 ────────────────────────────────────────── */
 
 .home-active-filters {
@@ -329,7 +157,7 @@
    跳变、尾部永远参差；且给了 2028 条的 Doujinshi 和 0 条的 Asian Porn
    同等视觉权重（前两类占全部藏品的 90%）。改为收进下拉多选面板。 */
 .home-filter-btn {
-  height: 40px;
+  height: 44px;
   padding: 0 10px 0 12px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
@@ -494,11 +322,7 @@
 }
 
 
-.home-pagination-footer {
-  padding: 0 14px 14px;
-  display: flex;
-  justify-content: center;
-}
+
 
 .p-popover {
   background-color: var(--surface-color) !important;
@@ -508,72 +332,6 @@
 
 .p-popover::after { border-color: transparent transparent var(--surface-color) transparent !important; }
 .p-popover::before { border-color: transparent transparent var(--border-color) transparent !important; }
-
-.search-help-popover {
-  max-width: 380px;
-}
-
-.search-help-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
-}
-
-.search-help-title {
-  font-weight: 700;
-  font-size: 13px;
-}
-
-.search-help-note {
-  margin: 0 0 6px;
-  font-size: 11px;
-  color: var(--muted-color);
-}
-
-.search-help-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.search-help-row {
-  display: grid;
-  grid-template-columns: 76px 1fr;
-  gap: 4px 10px;
-  align-items: baseline;
-  width: 100%;
-  padding: 6px 8px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-color);
-  text-align: left;
-  cursor: pointer;
-}
-
-.search-help-row:hover {
-  background: var(--hover-bg);
-  color: var(--text-color);
-}
-
-.search-help-syntax {
-  font-size: 11.5px;
-  font-weight: 700;
-  color: var(--primary-on-soft);
-  white-space: nowrap;
-}
-
-.search-help-desc {
-  font-size: 12px;
-  color: var(--text-color);
-}
-
-.search-help-example {
-  grid-column: 2;
-  font-size: 11px;
-  color: var(--muted-color);
-}
 
 .p-paginator {
   background-color: transparent !important;
@@ -642,16 +400,8 @@
 
 @media (max-width: 767px) {
   /* 窄屏搜索行换行：输入框独占一行，两个按钮平分下一行 */
-  .home-search-row {
-    flex-wrap: wrap;
-  }
 
-  .home-search-wrap {
-    flex: 1 1 100%;
-  }
-
-  .home-filter-btn,
-  .home-syntax-btn {
+  .home-filter-btn {
     flex: 1 1 0;
     max-width: none;
     justify-content: center;

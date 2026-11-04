@@ -25,3 +25,4 @@ jobs:
       - run: pip install -r tests/requirements-browser.txt
       - run: python -m playwright install --with-deps chromium
       - run: python tests/browser_review.py
+      - run: python tests/browser_search.py

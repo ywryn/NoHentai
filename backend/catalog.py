@@ -20,7 +20,15 @@ VISIBLE = """WITH effective AS MATERIALIZED (
 )"""
 
 
-def parse_query(query):
+def gallery_lookup(query):
+    value = query.strip()
+    if re.fullmatch(r'[0-9]+', value):
+        return value
+    link = re.fullmatch(r'https?://(?:e-hentai|exhentai)\.org/g/([0-9]+)/[a-zA-Z0-9]+/?(?:[?#].*)?', value, re.I)
+    return link[1] if link else None
+
+
+def parse_query(query, extra_fields=()):
     tokens, buffer, quoted = [], '', False
     for ch in query:
         if ch == '"':
@@ -34,6 +42,7 @@ def parse_query(query):
     if buffer:
         tokens.append(buffer)
     terms = []
+    lookup = gallery_lookup(query) if not extra_fields else None
     for raw in tokens:
         raw = raw.strip()
         mode = 'exclude' if raw.startswith('-') else 'or' if raw.startswith('~') else 'include'
@@ -51,10 +60,12 @@ def parse_query(query):
             # Match the existing frontend tokenizer's split(':', 2) semantics.
             prefix, value = raw.split(':')[:2]
             prefix = prefix.lower()
-            if prefix in FIELDS:
+            if prefix in FIELDS or prefix in extra_fields:
                 field = prefix
             else:
                 field, namespace = 'tag', ALIASES.get(prefix, prefix)
+        if lookup is not None:
+            field, namespace, value = 'gid', None, lookup
         value = value.strip().lower()
         if value:
             terms.append({'field': field, 'namespace': namespace, 'value': value,
@@ -99,10 +110,10 @@ def term_sql(term):
     return '(' + ' OR '.join(p[0] for p in parts) + ')', [v for p in parts for v in p[1]]
 
 
-def filter_sql(query):
+def filter_sql(query, extra_fields=(), matcher=None):
     groups = {'include': [], 'exclude': [], 'or': []}
-    for term in parse_query(query):
-        groups[term['mode']].append(term_sql(term))
+    for term in parse_query(query, extra_fields):
+        groups[term['mode']].append((matcher or term_sql)(term))
     clauses, params = [], []
     for expr, args in groups['include']:
         clauses.append(expr)

@@ -38,10 +38,34 @@ export const SEARCH_SYNTAX_HELP = [
   { syntax: '~A ~B', desc: '包含 A 或 B 任一', example: '~vanilla ~romance' },
   { syntax: '"A B"', desc: '按短语精确匹配', example: '"full color"' },
   { syntax: 'A*', desc: '前缀通配', example: 'school*' },
-  { syntax: 'tag$', desc: '标签精确匹配（不做包含）', example: 'sole female$' },
+  { syntax: 'tag$', desc: '标签精确匹配（不做包含）', example: 'tag:"sole female$"' },
   { syntax: 'title:', desc: '限定标题，另有 uploader: / category: / gid:', example: 'category:manga' },
   { syntax: 'f: m: a:', desc: '按命名空间搜标签（female/male/artist…）', example: 'a:"asanagi$"' },
 ]
+
+export const BOOK_FIELDS = ['id', 'name', 'jpname', 'sid']
+export const BOOK_SEARCH_FIELDS = [
+  { syntax: 'id:', desc: '书目编号', example: 'id:001' },
+  { syntax: 'name:', desc: '中文书名', example: 'name:"中文书名"' },
+  { syntax: 'jpname:', desc: '日文书名', example: 'jpname:"日本語"' },
+  { syntax: 'sid:', desc: '关联画廊 ID', example: 'sid:123456' },
+]
+
+export function matchBookTerm(book, gallery, term, expand) {
+  if (term.field === 'id') return String(book.ID || '').toLowerCase().includes(term.value)
+  if (term.field === 'name') return matchText(book['书名'], term, expand)
+  if (term.field === 'jpname') return matchText(book['日文名'], term, expand)
+  if (term.field === 'sid') return String(book.sid || '') === term.value
+  if (term.field !== 'any') return matchGalleryTerm(gallery, term, expand)
+  return [book.ID, book['书名'], book['日文名'], book['备注'], book['收价'], book['原价']].some(value => matchText(value, term, expand)) || matchGalleryTerm(gallery, term, expand)
+}
+
+export function galleryLookup(query) {
+  const value = query.trim()
+  if (/^[0-9]+$/.test(value)) return value
+  const match = value.match(/^https?:\/\/(?:e-hentai|exhentai)\.org\/g\/([0-9]+)\/[a-zA-Z0-9]+\/?(?:[?#].*)?$/i)
+  return match ? match[1] : null
+}
 
 export function tokenizeQuery(query) {
   const tokens = []
@@ -74,6 +98,7 @@ export function parseQuery(query, extraFields = []) {
   const include = []
   const exclude = []
   const orTerms = []
+  const lookup = extraFields.length ? null : galleryLookup(query)
 
   for (const token of tokenizeQuery(query)) {
     let raw = token.text.trim()
@@ -120,6 +145,7 @@ export function parseQuery(query, extraFields = []) {
       }
     }
 
+    if (lookup !== null) { field = 'gid'; namespace = null; value = lookup }
     value = value.trim().toLowerCase()
     if (!value) continue
 
@@ -220,23 +246,18 @@ export function passesQuery(item, parsed, matcher) {
 }
 
 /** 输入过程中光标所在的那个 token（用于标签联想） */
-export function activeToken(query) {
-  let inQuote = false
-  let lastBreak = -1
-  for (let i = 0; i < query.length; i++) {
-    const ch = query[i]
-    if (ch === '"') inQuote = !inQuote
-    if (!inQuote && (ch === ' ' || ch === ',')) lastBreak = i
-  }
-  return { text: query.slice(lastBreak + 1).trim(), start: lastBreak + 1 }
+export function activeToken(query, caret = query.length) {
+  const position = Math.max(0, Math.min(query.length, caret))
+  const token = tokenizeQuery(query).find(item => item.start <= position && position <= item.end)
+  return token ? { text: token.raw, start: token.start, end: token.end } : { text: '', start: position, end: position }
 }
 
-/** 把当前 token 替换为选中的标签建议 */
-export function applySuggestion(query, suggestion) {
-  const { start } = activeToken(query)
-  const prefix = query.slice(0, start).trimEnd()
+/** Replace only the token at the caret; keep all following conditions intact. */
+export function applySuggestion(query, suggestion, caret = query.length) {
+  const { start, end } = activeToken(query, caret)
   const replacement = `${suggestion.namespace}:"${suggestion.value}$"`
-  return prefix ? `${prefix} ${replacement} ` : `${replacement} `
+  const suffix = query.slice(end)
+  return `${query.slice(0, start)}${replacement}${suffix || ' '}`
 }
 
 /** 从 translations.json 里按输入前缀打分排序，取前 N 条 */
