@@ -16,10 +16,10 @@ sudo install -d -o nohentai -g nohentai -m 0700 /var/lib/nohentai
 sudo install -d -o root -g nohentai -m 0750 /etc/nohentai
 ```
 
-将改造分支推送到远程后，在服务器克隆（已有 checkout 可以切换该分支）：
+服务器部署和后续开发统一使用 `master` 主分支（已有 checkout 可以切换到该分支）：
 
 ```sh
-sudo git clone --branch feat/vultr-python-sqlite https://github.com/ywryn/NoHentai.git /opt/nohentai
+sudo git clone --branch master https://github.com/ywryn/NoHentai.git /opt/nohentai
 cd /opt/nohentai
 sudo python3 -m venv .venv
 sudo .venv/bin/pip install -r backend/requirements.lock.txt
