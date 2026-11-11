@@ -3,10 +3,11 @@
   <div
     ref="scrollEl"
     class="scroll-view"
-    @click="onScrollClick"
+    @pointerup="onTapEnd"
+    @pointercancel="tapStart = null"
     @wheel.passive="releaseAnchor"
     @touchstart.passive="releaseAnchor"
-    @pointerdown="releaseAnchor"
+    @pointerdown="onTapStart"
   >
     <PageImage
       v-for="pg in pages"
@@ -28,8 +29,17 @@ import { READER_KEY } from '@/composables/useReader'
 import PageImage from './PageImage.vue'
 
 
+const emit = defineEmits(['surface-click'])
+let tapStart: { x: number; y: number } | null = null
+function onTapStart(event: PointerEvent) { releaseAnchor(); tapStart = { x: event.clientX, y: event.clientY } }
+function onTapEnd(event: PointerEvent) {
+  if (!tapStart) return
+  const distance = Math.hypot(event.clientX - tapStart.x, event.clientY - tapStart.y)
+  tapStart = null
+  if (distance < 8 && !(event.target as HTMLElement).closest('button, a, input')) emit('surface-click', event)
+}
 const reader = inject(READER_KEY)!
-const { pages, currentPage, settings, total, goTo, preload, navigation } = reader
+const { pages, currentPage, settings, preload, navigation } = reader
 
 const scrollEl = ref<HTMLElement | null>(null)
 let scrollObserver: IntersectionObserver | null = null
@@ -98,17 +108,6 @@ onMounted(async () => {
 })
 onBeforeUnmount(() => { scrollObserver?.disconnect(); resizeObserver?.disconnect() })
 
-async function onScrollClick(e: MouseEvent) {
-  const ratio = e.clientX / window.innerWidth
-  const target = ratio < 0.3
-    ? Math.max(1, currentPage.value - 1)
-    : ratio > 0.7
-      ? Math.min(total.value, currentPage.value + 1)
-      : 0
-  if (!target) return
-  goTo(target)
-
-}
 </script>
 
 <style scoped>

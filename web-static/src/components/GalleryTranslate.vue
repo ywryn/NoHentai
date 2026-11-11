@@ -2,9 +2,9 @@
   <!-- Password Dialog -->
   <div v-if="!passwordVerified" class="gt-overlay">
     <div class="gt-pwd-dialog">
-      <div class="gt-pwd-eyebrow">Translation Workbench</div>
+
       <h2 class="gt-pwd-title">访问验证</h2>
-      <p class="gt-pwd-desc">此功能需要密码才能使用 OCR 和翻译服务</p>
+
       <div class="gt-pwd-form">
         <input
           ref="pwdInputRef"
@@ -33,20 +33,18 @@
   <div v-else class="gt-workbench" :style="{ '--gt-sheet-h': sheetHeight }">
     <!-- Header -->
     <header class="gt-header">
-      <button class="gt-back-btn" @click="$router.back()">←</button>
+      <button class="gt-back-btn" aria-label="返回详情" @click="$router.back()">←</button>
 
       <div class="gt-header-info">
-        <span v-if="totalPages" class="gt-header-pages">{{ currentPage }} / {{ totalPages }}p</span>
+        <span v-if="totalPages" class="gt-header-pages">{{ currentPage }} / {{ totalPages }}</span>
       </div>
 
       <div class="gt-header-actions">
-        <button
-          class="gt-btn gt-btn-primary"
+        <button v-if="ocrResults.length" class="gt-btn gt-view-toggle" type="button" :aria-pressed="showTranslation" @click="showTranslation = !showTranslation">{{ showTranslation ? '显示原图' : '显示译文' }}</button>
+        <button class="gt-btn gt-btn-primary" type="button"
           :disabled="!imageUrl || imageError || imageLoading || ocrProcessing || translating || imagesLoading"
-          @click="performOcrAndTranslate"
-        >
-          {{ ocrProcessing ? '识别中 1/2' : translating ? '翻译中 2/2' : '翻译' }}
-        </button>
+          @click="missingCount ? retranslateMissing() : performOcrAndTranslate()"
+        >{{ ocrProcessing ? '识别中' : translating ? '翻译中' : missingCount ? `补译 ${missingCount} 条` : ocrResults.length ? '重新识别' : '识别并翻译' }}</button>
       </div>
       <!-- 两步流水线的进度条：替代原来一条接一条的 toast -->
       <div v-if="ocrProcessing || translating" class="gt-progress" :class="{ 'is-step2': translating }" aria-hidden="true"></div>
@@ -93,6 +91,11 @@
               }"
               :style="getBoxStyle(result, i)"
               :title="result.translation || result.text"
+              role="button"
+              tabindex="0"
+              :aria-label="`第 ${i + 1} 条识别结果`"
+              @keydown.enter.prevent="onBoxClick(i)"
+              @keydown.space.prevent="onBoxClick(i)"
               @click="onBoxClick(i)"
             >
               <!-- 放得下就直接叠译文（高瘦框走竖排），放不下退化成序号徽标，避免 3px 的字糊成黑块 -->
@@ -300,12 +303,14 @@
             class="gt-result-item"
             :data-idx="i"
             :class="{ 'gt-result-selected': selectedBoxIdx === i }"
+            role="button" tabindex="0" :aria-label="`查看第 ${i + 1} 条识别结果`"
+            @keydown.enter.prevent="onResultClick(i)" @keydown.space.prevent="onResultClick(i)"
             @click="onResultClick(i)"
           >
             <div class="gt-result-meta">
               <span class="gt-result-idx">{{ i + 1 }}</span>
-              <span class="gt-result-conf">{{ (result.confidence * 100).toFixed(0) }}%</span>
-              <span v-if="result.is_merged" class="gt-merged-badge">合并×{{ result.original_count }}</span>
+              <span v-if="result.confidence < 0.8" class="gt-result-conf" :title="`识别置信度 ${(result.confidence * 100).toFixed(0)}%`">待核对</span>
+
               <span v-if="result.translation" class="gt-done-mark">✓</span>
               <button class="gt-result-del" @click.stop="deleteResult(i)" title="删除">×</button>
             </div>
@@ -367,6 +372,7 @@
         <p class="gt-bc-orig">{{ ocrResults[bubbleCard].text }}</p>
         <p v-if="ocrResults[bubbleCard].translation" class="gt-bc-trans">{{ ocrResults[bubbleCard].translation }}</p>
         <p v-else class="gt-bc-trans gt-bc-pending">尚未翻译</p>
+        <button class="gt-bc-edit" type="button" @click="editBubble">{{ ocrResults[bubbleCard].translation ? '编辑译文' : '手动填写' }}</button>
         <p v-if="ocrResults[bubbleCard].alt" class="gt-bc-alt">备选：{{ ocrResults[bubbleCard].alt }}</p>
       </div>
     </Transition>
@@ -984,7 +990,7 @@ export default {
       if (this._suppressClickUntil && Date.now() < this._suppressClickUntil) return
       const next = this.selectedBoxIdx === i ? null : i
       this.selectedBoxIdx = next
-      if (!isMobile()) return
+      if (!isMobile()) { this.$nextTick(() => this.$el.querySelector('.gt-result-selected')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })); return }
       if (next == null) { this.bubbleCard = null; return }
       this.bubbleCard = next
       if (this.sheetState !== 'peek') this.setSheet('peek')
@@ -1003,6 +1009,15 @@ export default {
       if (next < 0 || next >= this.ocrResults.length) return
       this.bubbleCard = next
       this.selectedBoxIdx = next
+    },
+
+    editBubble() {
+      const index = this.bubbleCard
+      if (index == null) return
+      this.bubbleCard = null
+      this.setSheet('full')
+      this.startEdit(index)
+      this.$nextTick(() => this.$el.querySelector(`.gt-result-item[data-idx="${index}"]`)?.scrollIntoView({ block: 'nearest' }))
     },
 
     closeBubble() {
@@ -3608,4 +3623,9 @@ export default {
   .gt-bubble-card { display: none; }
 }
 
+.gt-view-toggle{border:1px solid var(--border-color)!important;background:transparent!important;color:var(--text-color)!important}
+.gt-bc-edit{margin-top:10px;min-height:44px;padding:0 14px;border:1px solid var(--border-color);border-radius:8px;background:var(--surface-color);color:var(--text-color);cursor:pointer}
+.gt-ocr-box:focus-visible,.gt-result-item:focus-visible{outline:2px solid var(--primary-color);outline-offset:2px}
+@media(min-width:768px){.gt-sidebar{width:clamp(320px,32vw,470px)}.gt-config-panel{order:3}.gt-results-list{order:2}.gt-sidebar-hdr{order:1}}
+@media(max-width:767px){.gt-header-actions{gap:6px}.gt-header-actions .gt-btn{font-size:12px;padding-inline:10px}.gt-bubble-card{left:8px;right:8px}}
 </style>

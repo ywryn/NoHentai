@@ -4,6 +4,7 @@ All HTTP responses other than the local static build are fixtures; no production
 """
 import io
 from functools import partial
+import re
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import threading
@@ -60,6 +61,7 @@ def main():
             page.goto(base+'/#/gallery/1/read?token=abcde&page=4')
             page.wait_for_function("document.querySelector('.scroll-view')?.scrollTop > 1000")
             expect(page.locator('.tb-counter')).to_have_text('4 / 5')
+            page.screenshot(path='/tmp/nohentai-ui/reader-desktop.png')
             page.get_by_role('button',name='页目录',exact=True).click()
             page.locator('.tg-item').nth(1).click()
             page.wait_for_function("Math.abs(document.querySelector('.scroll-page:nth-child(2)').getBoundingClientRect().top-document.querySelector('.scroll-view').getBoundingClientRect().top)<2")
@@ -73,7 +75,7 @@ def main():
             page.get_by_placeholder('输入密码',exact=True).fill('fixture-password')
             page.get_by_role('button',name='进入',exact=True).click()
             expect(page.locator('.gt-page-img')).to_be_visible()
-            page.get_by_role('button',name='翻译',exact=True).click()
+            page.get_by_role('button',name='识别并翻译',exact=True).click()
             page.wait_for_function("document.querySelector('.gt-header').textContent.includes('识别中')")
             page.locator('.gt-thumb').nth(1).click()
             expect(page).to_have_url(base+'/#/gallery/1/translate?token=abcde&page=2')
@@ -85,13 +87,23 @@ def main():
             page.wait_for_timeout(250)
             assert not page.evaluate("localStorage.getItem('trans_cache_1_p1') || localStorage.getItem('trans_cache_1_p2')")
             assert not translated
-            page.get_by_role('button',name='翻译',exact=True).click()
+            page.get_by_role('button',name='识别并翻译',exact=True).click()
             page.wait_for_function("document.querySelector('.gt-header').textContent.includes('识别中')")
             pending.pop(0).fulfill(json={'results':[{'text':'CURRENT_PAGE_OCR','confidence':1,'bbox':[10,10,100,100]}],'source':'vision'})
             page.wait_for_function("localStorage.getItem('trans_cache_1_p1')?.includes('CURRENT_TRANSLATION')")
             assert 'CURRENT_PAGE_OCR' in page.evaluate("localStorage.getItem('trans_cache_1_p1')")
             assert translated[0]['texts']==['CURRENT_PAGE_OCR']
             print('PASS: late OCR discarded after page 1 -> 2 -> 1; new request still translates and caches correctly')
+            page.set_viewport_size({'width':390,'height':844})
+            page.locator('.gt-ocr-box').first.click()
+            expect(page.locator('.gt-bubble-card')).to_be_visible()
+            page.screenshot(path='/tmp/nohentai-ui/translator-mobile.png')
+            page.locator('.gt-bubble-card').get_by_role('button',name='编辑译文',exact=True).click()
+            expect(page.locator('.gt-result-edit textarea')).to_be_visible()
+            expect(page.locator('.gt-sidebar')).to_have_class(re.compile(r'is-full'))
+            print('PASS: mobile translated bubble opens its own editor')
+            page.set_viewport_size({'width':1440,'height':1000})
+
 
             fail_image['value']=True
             page.goto(base+'/#/gallery/1/read?token=abcde&page=1')
@@ -102,6 +114,12 @@ def main():
             expect(page.locator('.pi-img:visible').first).to_be_visible()
             assert 'refresh=true' in requests[-1]
             print('PASS: automatic and manual image retry bypass server URL cache without nl')
+            page.locator('.scroll-view').click(position={'x':400,'y':300})
+            expect(page.get_by_role('button',name='显示阅读工具栏')).to_be_visible()
+            page.get_by_role('button',name='显示阅读工具栏').click()
+            expect(page.get_by_role('button',name='阅读设置')).to_be_visible()
+            print('PASS: scroll reader toolbar can be hidden and restored')
+
 
             page.goto(base+'/#/gallery/1')
             expect(page.get_by_role('heading',name='FIRST_GALLERY',exact=True)).to_be_visible()

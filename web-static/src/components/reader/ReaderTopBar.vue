@@ -3,7 +3,7 @@
     <div class="top-bar">
       <button class="tb-icon-btn tb-back" type="button" title="返回" aria-label="返回" @click="$emit('back')">←</button>
 
-      <span class="tb-counter">{{ pageCounter }}</span>
+      <button class="tb-counter" type="button" aria-label="打开页目录" @click="$emit('toggleThumbGrid')">{{ pageCounter }}</button>
 
       <div class="tb-spacer" />
 
@@ -88,7 +88,7 @@
         </svg>
       </button>
 
-      <button class="tb-icon-btn" type="button" title="关闭" aria-label="关闭阅读器" @click="$emit('back')">✕</button>
+
     </div>
 
     <!-- 阅读进度：3998 页的画廊只有文字计数时缺少空间感 -->
@@ -133,7 +133,7 @@ const progress = computed(() => (total.value ? (currentPage.value / total.value)
 .top-bar-shell {
   flex-shrink: 0;
   z-index: 10;
-  background: rgba(15, 23, 42, 0.92);
+  background: rgba(16, 19, 18, 0.94);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--reader-border);
@@ -251,7 +251,12 @@ const progress = computed(() => (total.value ? (currentPage.value / total.value)
 .tb-back { font-size: 18px; }
 
 /* 宽屏设置项常驻，齿轮按钮无用 */
-.tb-settings { display: none; }
+.tb-settings { display: flex; }
+.tb-controls { display:none;position:absolute;right:12px;top:calc(100% + 8px);z-index:30;flex-direction:column;align-items:stretch;gap:8px;padding:16px;min-width:220px;border:1px solid var(--reader-border);border-radius:12px;background:#151b19;box-shadow:0 16px 36px #0007 }
+.tb-controls.is-open{display:flex}
+.top-bar{position:relative}
+.tb-control,.tb-toggle-item{justify-content:space-between;min-height:40px}
+.tb-counter{border:0;background:none;cursor:pointer;font:inherit}
 
 .tb-progress {
   height: 2px;
@@ -283,7 +288,7 @@ const progress = computed(() => (total.value ? (currentPage.value / total.value)
     align-items: stretch;
     gap: 0;
     padding: 6px 10px;
-    background: rgba(15, 23, 42, 0.97);
+    background: rgba(16, 19, 18, 0.98);
     border-bottom: 1px solid var(--reader-border);
   }
 
