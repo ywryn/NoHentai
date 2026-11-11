@@ -11,7 +11,7 @@
     "filecount": "408",
     "filesize": 524348071,
     "expunged": false,
-    "rating": "4.58",
+    "rating": "4.59",
     "torrentcount": "1",
     "torrents": [
       {
@@ -164,7 +164,7 @@
     "filecount": "126",
     "filesize": 148422901,
     "expunged": false,
-    "rating": "4.58",
+    "rating": "4.59",
     "torrentcount": "1",
     "torrents": [
       {
@@ -330,7 +330,7 @@
     "filecount": "296",
     "filesize": 347271031,
     "expunged": false,
-    "rating": "4.68",
+    "rating": "4.69",
     "torrentcount": "1",
     "torrents": [
       {
@@ -379,7 +379,7 @@
     "filecount": "236",
     "filesize": 142379192,
     "expunged": false,
-    "rating": "4.65",
+    "rating": "4.66",
     "torrentcount": "1",
     "torrents": [
       {
@@ -871,7 +871,7 @@
     "filecount": "47",
     "filesize": 208431586,
     "expunged": false,
-    "rating": "4.52",
+    "rating": "4.53",
     "torrentcount": "1",
     "torrents": [
       {
@@ -1859,7 +1859,7 @@
     "filecount": "201",
     "filesize": 217297841,
     "expunged": false,
-    "rating": "4.73",
+    "rating": "4.74",
     "torrentcount": "1",
     "torrents": [
       {
@@ -2927,7 +2927,7 @@
     "filecount": "218",
     "filesize": 273559285,
     "expunged": false,
-    "rating": "4.51",
+    "rating": "4.52",
     "torrentcount": "3",
     "torrents": [
       {
@@ -3760,7 +3760,7 @@
     "filecount": "221",
     "filesize": 179216988,
     "expunged": false,
-    "rating": "4.55",
+    "rating": "4.56",
     "torrentcount": "1",
     "torrents": [
       {
@@ -6426,7 +6426,7 @@
     "filecount": "179",
     "filesize": 147558732,
     "expunged": false,
-    "rating": "4.56",
+    "rating": "4.57",
     "torrentcount": "1",
     "torrents": [
       {
@@ -8207,7 +8207,7 @@
     "filecount": "85",
     "filesize": 177953269,
     "expunged": false,
-    "rating": "4.71",
+    "rating": "4.72",
     "torrentcount": "2",
     "torrents": [
       {
@@ -8922,7 +8922,7 @@
     "filecount": "212",
     "filesize": 313950180,
     "expunged": false,
-    "rating": "4.57",
+    "rating": "4.58",
     "torrentcount": "1",
     "torrents": [
       {
@@ -13567,7 +13567,7 @@
     "filecount": "27",
     "filesize": 28007232,
     "expunged": false,
-    "rating": "4.21",
+    "rating": "4.22",
     "torrentcount": "1",
     "torrents": [
       {
@@ -13664,13 +13664,20 @@
     "filesize": 75296008,
     "expunged": false,
     "rating": "4.60",
-    "torrentcount": "1",
+    "torrentcount": "2",
     "torrents": [
       {
         "hash": "fc5a5793f8d0afae9b480b1c0f71f9bbb5ef63d1",
         "added": "1785996143",
         "name": "(同人誌) [エジプトそば屋 (タイコウ)] ルナール3凸 (グランブルーファンタジー) [DL版].zip",
         "tsize": "23381",
+        "fsize": "75206849"
+      },
+      {
+        "hash": "70f2b3b84586dc21023315cda490cc0c7f43fd81",
+        "added": "1794308957",
+        "name": "[エジプトそば屋 (タイコウ)] ルナール3凸 (グランブルーファンタジー) [DL版].zip",
+        "tsize": "6132",
         "fsize": "75206849"
       }
     ],
@@ -13703,13 +13710,20 @@
     "filesize": 2965228,
     "expunged": false,
     "rating": "4.41",
-    "torrentcount": "1",
+    "torrentcount": "2",
     "torrents": [
       {
         "hash": "8f61efb837e0073e5b291939f8f0c0ebed17f170",
         "added": "1785996136",
         "name": "(同人誌) [エジプトそば屋 (タイコウ)] グラブルゲストまとめ (グランブルーファンタジー) [DL版].zip",
         "tsize": "2233",
+        "fsize": "2922072"
+      },
+      {
+        "hash": "bfc681dad017d4fa1be0d34480d5639321bf90c6",
+        "added": "1794309190",
+        "name": "[エジプトそば屋 (タイコウ)] グラブルゲストまとめ (グランブルーファンタジー) [DL版].zip",
+        "tsize": "644",
         "fsize": "2922072"
       }
     ],
@@ -14543,7 +14557,7 @@
     "filecount": "222",
     "filesize": 391096700,
     "expunged": false,
-    "rating": "4.52",
+    "rating": "4.53",
     "torrentcount": "1",
     "torrents": [
       {
@@ -14596,7 +14610,7 @@
     "filecount": "221",
     "filesize": 641508541,
     "expunged": false,
-    "rating": "4.49",
+    "rating": "4.50",
     "torrentcount": "1",
     "torrents": [
       {
@@ -18563,7 +18577,7 @@
     "filecount": "67",
     "filesize": 95102529,
     "expunged": false,
-    "rating": "4.59",
+    "rating": "4.60",
     "torrentcount": "1",
     "torrents": [
       {
@@ -19783,7 +19797,7 @@
     "filecount": "49",
     "filesize": 115409599,
     "expunged": false,
-    "rating": "4.48",
+    "rating": "4.49",
     "torrentcount": "1",
     "torrents": [
       {
@@ -22623,7 +22637,7 @@
     "filecount": "44",
     "filesize": 60143074,
     "expunged": false,
-    "rating": "4.69",
+    "rating": "4.68",
     "torrentcount": "1",
     "torrents": [
       {
@@ -23109,7 +23123,7 @@
     "filecount": "219",
     "filesize": 109431169,
     "expunged": false,
-    "rating": "4.65",
+    "rating": "4.66",
     "torrentcount": "1",
     "torrents": [
       {
@@ -30537,7 +30551,7 @@
     "filecount": "230",
     "filesize": 300146246,
     "expunged": false,
-    "rating": "4.63",
+    "rating": "4.64",
     "torrentcount": "1",
     "torrents": [
       {
@@ -50257,7 +50271,7 @@
     "filecount": "215",
     "filesize": 159285718,
     "expunged": false,
-    "rating": "4.76",
+    "rating": "4.77",
     "torrentcount": "1",
     "torrents": [
       {
@@ -69236,15 +69250,22 @@
       "language:chinese",
       "language:translated",
       "artist:nanamiya tsugumi",
+      "male:glasses",
+      "male:schoolboy uniform",
+      "female:anal",
+      "female:beauty mark",
       "female:blindfold",
       "female:bondage",
+      "female:bride",
       "female:cheating",
       "female:dark skin",
       "female:double penetration",
+      "female:nakadashi",
       "female:netorare",
       "female:pantyhose",
       "female:schoolgirl uniform",
       "female:stockings",
+      "female:twintails",
       "mixed:group",
       "mixed:mmf threesome",
       "other:tankoubon"
@@ -87165,7 +87186,7 @@
     "filecount": "1129",
     "filesize": 3183027027,
     "expunged": false,
-    "rating": "4.71",
+    "rating": "4.72",
     "torrentcount": "2",
     "torrents": [
       {
@@ -105175,7 +105196,7 @@
     "filecount": "37",
     "filesize": 158310399,
     "expunged": false,
-    "rating": "4.63",
+    "rating": "4.64",
     "torrentcount": "1",
     "torrents": [
       {
@@ -121809,7 +121830,7 @@
     "filecount": "54",
     "filesize": 706493574,
     "expunged": false,
-    "rating": "4.73",
+    "rating": "4.72",
     "torrentcount": "1",
     "torrents": [
       {
@@ -121861,7 +121882,7 @@
     "filecount": "54",
     "filesize": 247652681,
     "expunged": false,
-    "rating": "4.73",
+    "rating": "4.72",
     "torrentcount": "1",
     "torrents": [
       {
@@ -132609,7 +132630,7 @@
     "filecount": "16",
     "filesize": 8781654,
     "expunged": false,
-    "rating": "4.59",
+    "rating": "4.60",
     "torrentcount": "1",
     "torrents": [
       {
@@ -143894,7 +143915,7 @@
     "filecount": "16",
     "filesize": 48965570,
     "expunged": false,
-    "rating": "4.78",
+    "rating": "4.79",
     "torrentcount": "1",
     "torrents": [
       {
