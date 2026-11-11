@@ -7,7 +7,7 @@ from unittest.mock import patch, Mock
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'app'))
-from daily_config import load_groups
+from daily_config import load_groups, validate_groups
 import sync_daily_search
 
 
@@ -18,6 +18,14 @@ class DailyConfigTests(unittest.TestCase):
         self.assertEqual([g['cutoffDays'] for g in groups], [10, 5, 10])
         self.assertEqual(groups[1]['minPages'], 8)
         self.assertIsNone(groups[1]['maxPages'])
+
+    def test_legacy_labels_are_discarded_without_changing_search_fields(self):
+        groups=load_groups()
+        self.assertNotIn('filters',groups[0])
+        legacy=copy.deepcopy(groups)
+        legacy[0]['filters']=['not a real search condition']
+        self.assertEqual(validate_groups(legacy),groups)
+        self.assertIn('filters',legacy[0])  # Validation must not mutate historical input.
 
     def test_invalid_rules_fail_before_scraping(self):
         for patch in [{'categories': True}, {'cutoffDays': 0}, {'minPages': 900, 'maxPages': 800}, {'apiKey': 'secret'}]:

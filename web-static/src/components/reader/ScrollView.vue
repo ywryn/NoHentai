@@ -4,6 +4,9 @@
     ref="scrollEl"
     class="scroll-view"
     @click="onScrollClick"
+    @wheel.passive="releaseAnchor"
+    @touchstart.passive="releaseAnchor"
+    @pointerdown="releaseAnchor"
   >
     <PageImage
       v-for="pg in pages"
@@ -12,7 +15,7 @@
       :lazy="true"
       class="scroll-page"
       :style="{
-        marginBottom: '0px',
+        marginBottom: `${settings.scrollPageMargin}px`,
         maxWidth: `${settings.widthScale}%`,
       }"
     />
@@ -20,16 +23,32 @@
 </template>
 
 <script setup lang="ts">
-import { ref, inject, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, inject, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { READER_KEY } from '@/composables/useReader'
 import PageImage from './PageImage.vue'
 
 
 const reader = inject(READER_KEY)!
-const { pages, currentPage, settings, total, goTo, preload } = reader
+const { pages, currentPage, settings, total, goTo, preload, navigation } = reader
 
 const scrollEl = ref<HTMLElement | null>(null)
 let scrollObserver: IntersectionObserver | null = null
+let resizeObserver: ResizeObserver | null = null
+let anchorPage: number | null = currentPage.value
+function releaseAnchor() { anchorPage = null }
+function alignAnchor() {
+  const root = scrollEl.value
+  if (!root || anchorPage === null) return
+  const target = root.querySelector<HTMLElement>(`[data-page="${anchorPage}"]`)
+  if (!target) return
+  const top = target.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop
+  if (Math.abs(root.scrollTop - top) > 1) root.scrollTop = top
+}
+watch(navigation, async request => {
+  anchorPage = request.page
+  await nextTick()
+  alignAnchor()
+})
 
 function setupScrollObserver() {
   scrollObserver?.disconnect()
@@ -56,25 +75,28 @@ function setupScrollObserver() {
       for (const [pageNum, ratio] of visibleRatios) {
         if (ratio > bestRatio) { bestRatio = ratio; bestPage = pageNum }
       }
-      if (bestPage > 0 && currentPage.value !== bestPage) {
+      if (anchorPage === null && bestPage > 0 && currentPage.value !== bestPage) {
         currentPage.value = bestPage
         preload(bestPage)
       }
     },
-    { threshold: [0, 0.25, 0.5, 0.75, 1] }
+    { root: scrollEl.value, threshold: [0, 0.25, 0.5, 0.75, 1] }
   )
 
+  resizeObserver = new ResizeObserver(alignAnchor)
   pageEls.forEach((el, i) => {
     el.dataset.page = String(pages.value[i]?.pageNum ?? i + 1)
     scrollObserver!.observe(el)
+    resizeObserver!.observe(el)
   })
 }
 
 onMounted(async () => {
   await nextTick()
   setupScrollObserver()
+  alignAnchor()
 })
-onBeforeUnmount(() => { scrollObserver?.disconnect() })
+onBeforeUnmount(() => { scrollObserver?.disconnect(); resizeObserver?.disconnect() })
 
 async function onScrollClick(e: MouseEvent) {
   const ratio = e.clientX / window.innerWidth
@@ -85,12 +107,7 @@ async function onScrollClick(e: MouseEvent) {
       : 0
   if (!target) return
   goTo(target)
-  await nextTick()
-  const pageEls = scrollEl.value?.querySelectorAll<HTMLElement>('.scroll-page')
-  if (!pageEls) return
-  const idx = pages.value.findIndex(p => p.pageNum === target)
-  const el = idx >= 0 ? pageEls[idx] : null
-  el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
 }
 </script>
 

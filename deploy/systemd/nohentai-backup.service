@@ -1,0 +1,16 @@
+[Unit]
+Description=Consistent online SQLite backup for NoHentai
+
+[Service]
+Type=oneshot
+User=nohentai
+Group=nohentai
+WorkingDirectory=/opt/nohentai
+EnvironmentFile=/etc/nohentai/nohentai.env
+Environment=NOHENTAI_DATA_DIR=/var/lib/nohentai
+ExecStart=/opt/nohentai/.venv/bin/python -m backend.cli backup
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/nohentai

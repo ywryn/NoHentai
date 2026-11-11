@@ -6,67 +6,14 @@
           <div class="home-copy">
             <div class="home-eyebrow">
               NoHentai · 共 {{ totalRecords }} 部
-              <span v-if="isFiltered" class="home-eyebrow-sub">（已筛选自 {{ allGalleries.length }} 部）</span>
+              <span v-if="isFiltered" class="home-eyebrow-sub">（已筛选自 {{ totalAll }} 部）</span>
             </div>
           </div>
         </div>
 
         <div class="home-filter-panel">
-          <div class="home-search-row">
-            <div class="home-search-wrap">
-              <svg class="home-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                <circle cx="11" cy="11" r="7.5" /><line x1="20" y1="20" x2="15.5" y2="15.5" />
-              </svg>
-              <input
-                ref="searchInputRef"
-                v-model="searchQuery"
-                class="home-search-input"
-                type="search"
-                placeholder="搜索标题、作者、标签…"
-                aria-label="搜索画廊"
-                role="combobox"
-                aria-autocomplete="list"
-                :aria-expanded="suggestOpen"
-                aria-controls="home-tag-suggest"
-                :aria-activedescendant="suggestOpen && highlightIndex >= 0 ? `tag-opt-${highlightIndex}` : undefined"
-                autocomplete="off"
-                spellcheck="false"
-                @keydown="onSearchKeydown"
-                @blur="closeSuggestSoon"
-                @focus="suggestDismissed = false"
-              />
-              <button
-                v-if="searchQuery"
-                class="home-search-clear"
-                type="button"
-                aria-label="清空搜索词"
-                @click="clearQuery"
-              >×</button>
-
-              <ul
-                v-if="suggestOpen"
-                id="home-tag-suggest"
-                class="home-tag-suggest"
-                role="listbox"
-                aria-label="标签建议"
-              >
-                <li
-                  v-for="(item, i) in tagSuggestions"
-                  :id="`tag-opt-${i}`"
-                  :key="item.tag"
-                  class="home-tag-suggest-item"
-                  :class="{ 'is-active': i === highlightIndex }"
-                  role="option"
-                  :aria-selected="i === highlightIndex"
-                  @mousedown.prevent="applyTagSuggestion(item)"
-                  @mouseenter="highlightIndex = i"
-                >
-                  <span class="home-tag-suggest-main">{{ item.namespace }}:"{{ item.value }}$"</span>
-                  <span class="home-tag-suggest-sub">{{ item.tag_cn || item.value }}</span>
-                </li>
-              </ul>
-            </div>
-
+          <GallerySearchInput ref="searchInputRef" v-model="searchQuery" label="搜索画廊">
+            <template #actions>
             <button
               class="home-filter-btn"
               :class="{ 'is-on': activeTypes.length }"
@@ -87,20 +34,8 @@
               {{ categoryLabel }}
               <span class="home-filter-caret" aria-hidden="true">▾</span>
             </button>
-
-            <button
-              class="home-syntax-btn"
-              type="button"
-              aria-haspopup="dialog"
-              title="查看高级搜索语法"
-              @click="toggleSearchHelp"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 10.9 12 11.5 12 13h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26A1.96 1.96 0 0 0 10 7a2 2 0 0 0-2 2H6a4 4 0 1 1 8 0c0 .88-.36 1.68-.93 2.25z" />
-              </svg>
-              语法
-            </button>
-          </div>
+            </template>
+          </GallerySearchInput>
 
           <!-- 当前生效的筛选条件：逐项可移除 -->
           <div v-if="isFiltered" class="home-active-filters">
@@ -137,9 +72,8 @@
       </div>
 
       <section class="home-content-panel">
-        <div class="toolbar" v-if="totalPages > 1">
-          <Paginator :page="currentPage" :total="totalPages" @go="goToPage" />
-        </div>
+        <div v-if="error" role="alert"><p>{{ error }}</p><button type="button" @click="fetchPage">重新加载</button></div>
+        <Paginator v-if="totalPages > 1" :page="currentPage" :total="totalPages" @go="goToPage" />
 
         <GalleryList
           :items="normalizedItems"
@@ -149,9 +83,7 @@
           empty-hint="试试放宽条件，或点搜索框右侧的「语法」查看高级用法"
         />
 
-        <div class="home-pagination-footer" v-if="totalPages > 1">
-          <Paginator :page="currentPage" :total="totalPages" @go="goToPage" />
-        </div>
+        <Paginator v-if="totalPages > 1" :page="currentPage" :total="totalPages" @go="goToPage" />
       </section>
 
       <Popover ref="categoryPopover" class="category-popover">
@@ -184,102 +116,61 @@
         </div>
       </Popover>
 
-      <Popover ref="searchHelpPopover" class="search-help-popover">
-        <div class="search-help-content">
-          <div class="search-help-title">高级搜索语法</div>
-          <p class="search-help-note">点击示例可直接填入搜索框</p>
-          <div class="search-help-list">
-            <button
-              v-for="row in SEARCH_SYNTAX_HELP"
-              :key="row.syntax"
-              class="search-help-row"
-              type="button"
-              @click="applyExample(row.example)"
-            >
-              <code class="search-help-syntax">{{ row.syntax }}</code>
-              <span class="search-help-desc">{{ row.desc }}</span>
-              <code class="search-help-example">{{ row.example }}</code>
-            </button>
-          </div>
-        </div>
-      </Popover>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Popover from 'primevue/popover'
 import GalleryList from '@/components/GalleryList.vue'
 import Paginator from '@/components/Paginator.vue'
-import { exTypeList, exTypeDotColors, exTypeClassMap, formatTimestamp, enrichTags } from '@/utils/galleryUtils'
-import { loadGalleries, loadTranslations } from '@/composables/useGalleryData'
+import GallerySearchInput from '@/components/GallerySearchInput.vue'
+import { exTypeList, exTypeDotColors, exTypeClassMap, formatTimestamp } from '@/utils/galleryUtils'
+import { loadGalleryPage, watchPublicRevision } from '@/composables/useGalleryData'
 import {
-  SEARCH_SYNTAX_HELP,
   parseQuery,
   parsedTerms,
-  passesQuery,
-  matchGalleryTerm,
-  activeToken,
-  applySuggestion,
-  suggestTags,
+  removeQueryTerm,
 } from '@/utils/gallerySearch'
 
 const PER_PAGE = 30
-const DEBOUNCE_MS = 220
 
 const router = useRouter()
 const route = useRoute()
 
-const searchQuery = ref('')
-/** 防抖后的查询词，真正参与过滤 */
-const appliedQuery = ref('')
-const allGalleries = ref([])
-const translationData = ref(null)
-const activeTypes = ref([])
-const currentPage = ref(1)
-const perPage = ref(PER_PAGE)
-const loading = ref(true)
+function setQuery(patch) {
+  const query = { ...route.query, ...patch }
+  for (const key of Object.keys(query)) if (query[key] === undefined || query[key] === '') delete query[key]
+  if (JSON.stringify(query) !== JSON.stringify(route.query)) router.replace({ query })
+}
+const appliedQuery = computed({
+  get: () => String(route.query.q || ''),
+  set: q => { if (q.trim() !== String(route.query.q || '')) setQuery({ q: q.trim(), page: undefined }) },
+})
+const searchQuery = appliedQuery
+const activeTypes = computed({
+  get: () => String(route.query.type || '').split(',').filter(Boolean),
+  set: types => setQuery({ type: types.join(','), page: undefined }),
+})
+const currentPage = computed({
+  get: () => Math.max(1, Number.parseInt(route.query.page) || 1),
+  set: page => setQuery({ page: page > 1 ? String(page) : undefined }),
+})
+const pageItems = ref([]), totalRecords = ref(0), totalAll = ref(0)
+const typeCounts = ref({}), totalTypeCounts = ref({})
+const perPage = ref(PER_PAGE), loading = ref(true), error = ref('')
 
 const searchInputRef = ref()
-const searchHelpPopover = ref()
 const categoryPopover = ref()
 const categoryOpen = ref(false)
-const highlightIndex = ref(-1)
-const suggestDismissed = ref(false)
 
-let debounceTimer = null
-let blurTimer = null
 
 /* ── 过滤（即时，与 Printed 页行为一致） ───────────────────────── */
 
 const parsedQuery = computed(() => parseQuery(appliedQuery.value.trim()))
 const activeTerms = computed(() => parsedTerms(parsedQuery.value))
-
-/** 先只应用文本条件，分类计数基于这一层，方便用户预判点下去有多少结果 */
-const queryFiltered = computed(() => {
-  if (!appliedQuery.value.trim()) return allGalleries.value
-  const parsed = parsedQuery.value
-  return allGalleries.value.filter(item => passesQuery(item, parsed, matchGalleryTerm))
-})
-
-const typeCounts = computed(() => {
-  const counts = {}
-  for (const item of queryFiltered.value) {
-    counts[item.category] = (counts[item.category] || 0) + 1
-  }
-  return counts
-})
-
-/* 全量计数只用于排序，保证列表顺序不随输入抖动 */
-const totalTypeCounts = computed(() => {
-  const counts = {}
-  for (const item of allGalleries.value) {
-    counts[item.category] = (counts[item.category] || 0) + 1
-  }
-  return counts
-})
 
 /**
  * 分类选项。
@@ -308,24 +199,11 @@ const categoryLabel = computed(() => {
   return `${activeTypes.value[0]} +${n - 1}`
 })
 
-const filtered = computed(() => {
-  if (!activeTypes.value.length) return queryFiltered.value
-  const set = new Set(activeTypes.value)
-  return queryFiltered.value.filter(item => set.has(item.category))
-})
-
-const totalRecords = computed(() => filtered.value.length)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalRecords.value / perPage.value)))
 const isFiltered = computed(() => activeTerms.value.length > 0 || activeTypes.value.length > 0)
 
-const pageItems = computed(() => {
-  const start = (currentPage.value - 1) * perPage.value
-  return filtered.value.slice(start, start + perPage.value)
-})
-
 const normalizedItems = computed(() =>
   pageItems.value.map(item => {
-    const tags = Array.isArray(item.tags) ? enrichTags(item.tags, translationData.value) : []
     return {
       key: item.gid,
       gid: item.gid,
@@ -334,7 +212,7 @@ const normalizedItems = computed(() =>
       title: item.title_jpn || item.title,
       badge: item.category,
       badgeClass: exTypeClassMap[item.category] || 'default',
-      tags: tags.slice(0, 8).map(t => t.tag_cn || t.value),
+      tags: item.tagLabels || [],
       pages: item.filecount ? `${item.filecount}p` : null,
       date: item.posted ? formatTimestamp(item.posted) : null,
       rating: item.rating,
@@ -346,117 +224,22 @@ const normalizedItems = computed(() =>
   })
 )
 
-/* ── 标签联想 ─────────────────────────────────────────────────── */
-
-const tagSuggestions = computed(() =>
-  suggestTags(activeToken(searchQuery.value).text, translationData.value?.data)
-)
-
-const suggestOpen = computed(() => !suggestDismissed.value && tagSuggestions.value.length > 0)
-
-watch(tagSuggestions, () => { highlightIndex.value = -1 })
-
-function onSearchKeydown(e) {
-  if (e.key === 'Escape') {
-    suggestDismissed.value = true
-    highlightIndex.value = -1
-    return
-  }
-  if (!suggestOpen.value) {
-    if (e.key === 'Enter') flushQuery()
-    return
-  }
-  if (e.key === 'ArrowDown') {
-    e.preventDefault()
-    highlightIndex.value = (highlightIndex.value + 1) % tagSuggestions.value.length
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault()
-    highlightIndex.value =
-      (highlightIndex.value - 1 + tagSuggestions.value.length) % tagSuggestions.value.length
-  } else if (e.key === 'Enter') {
-    e.preventDefault()
-    if (highlightIndex.value >= 0) applyTagSuggestion(tagSuggestions.value[highlightIndex.value])
-    else flushQuery()
-  } else if (e.key === 'Tab' && highlightIndex.value >= 0) {
-    e.preventDefault()
-    applyTagSuggestion(tagSuggestions.value[highlightIndex.value])
-  }
-}
-
-function closeSuggestSoon() {
-  clearTimeout(blurTimer)
-  blurTimer = setTimeout(() => { suggestDismissed.value = true }, 120)
-}
-
-function applyTagSuggestion(item) {
-  searchQuery.value = applySuggestion(searchQuery.value, item)
-  highlightIndex.value = -1
-  suggestDismissed.value = true
-  searchInputRef.value?.focus()
-}
-
-/* ── 查询同步：输入防抖 → appliedQuery → URL ───────────────────── */
-
-watch(searchQuery, () => {
-  suggestDismissed.value = false
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => { appliedQuery.value = searchQuery.value }, DEBOUNCE_MS)
-})
-
-function flushQuery() {
-  clearTimeout(debounceTimer)
-  appliedQuery.value = searchQuery.value
-  suggestDismissed.value = true
-}
-
-/* 条件变化后回到第 1 页，并把状态同步到 URL 以便后退恢复与分享 */
-watch([appliedQuery, activeTypes], () => { currentPage.value = 1 })
-
-watch([appliedQuery, activeTypes, currentPage], () => {
-  const query = {}
-  const q = appliedQuery.value.trim()
-  if (q) query.q = q
-  if (activeTypes.value.length) query.type = activeTypes.value.join(',')
-  if (currentPage.value > 1) query.page = String(currentPage.value)
-  router.replace({ query })
-}, { deep: true })
-
 function toggleType(type) {
-  const i = activeTypes.value.indexOf(type)
-  if (i >= 0) activeTypes.value.splice(i, 1)
-  else activeTypes.value.push(type)
+  activeTypes.value = activeTypes.value.includes(type)
+    ? activeTypes.value.filter(t => t !== type) : [...activeTypes.value, type]
 }
 
 function removeTerm(term) {
-  /* 按原始 token 从查询串里删掉这一段 */
-  const next = searchQuery.value
-    .split(/([ ,])/)
-    .filter(part => part.trim() !== term.raw.trim())
-    .join('')
-    .replace(/\s{2,}/g, ' ')
-    .trim()
-  searchQuery.value = next
-  flushQuery()
-}
-
-function clearQuery() {
-  searchQuery.value = ''
-  flushQuery()
-  searchInputRef.value?.focus()
+  searchQuery.value = removeQueryTerm(searchQuery.value, term)
 }
 
 function clearAll() {
-  searchQuery.value = ''
-  activeTypes.value = []
-  flushQuery()
+  searchInputRef.value?.reset()
+  setQuery({ q: undefined, type: undefined, page: undefined })
 }
 
 function goToPage(page) {
   currentPage.value = Math.max(1, Math.min(totalPages.value, Number(page) || 1))
-}
-
-function toggleSearchHelp(event) {
-  searchHelpPopover.value?.toggle(event)
 }
 
 function toggleCategoryPanel(event) {
@@ -464,34 +247,28 @@ function toggleCategoryPanel(event) {
   categoryPopover.value?.toggle(event)
 }
 
-function applyExample(example) {
-  const current = searchQuery.value.trim()
-  searchQuery.value = current ? `${current} ${example} ` : `${example} `
-  flushQuery()
-  searchHelpPopover.value?.hide()
-  searchInputRef.value?.focus()
+/* Query state lives in the URL. Abort obsolete requests and ignore stale replies. */
+let pageController, requestVersion = 0
+async function fetchPage() {
+  pageController?.abort()
+  pageController = new AbortController()
+  const version = ++requestVersion
+  loading.value = true; error.value = ''
+  try {
+    const result = await loadGalleryPage({ q: appliedQuery.value, types: activeTypes.value.join(','),
+      page: currentPage.value, per_page: perPage.value }, pageController.signal)
+    if (version !== requestVersion) return
+    pageItems.value = result.items; totalRecords.value = result.total; totalAll.value = result.totalAll
+    typeCounts.value = result.categoryCounts; totalTypeCounts.value = result.totalCategoryCounts
+    if (result.page !== currentPage.value) currentPage.value = result.page
+  } catch (e) {
+    if (version === requestVersion && e.name !== 'AbortError') error.value = e.message || '画廊加载失败，请重试'
+  } finally { if (version === requestVersion) loading.value = false }
 }
-
-/* ── 初始化 ───────────────────────────────────────────────────── */
-
-onMounted(async () => {
-  const q = String(route.query.q || '')
-  const type = String(route.query.type || '')
-  searchQuery.value = q
-  appliedQuery.value = q
-  activeTypes.value = type ? type.split(',').filter(Boolean) : []
-
-  allGalleries.value = await loadGalleries()
-  currentPage.value = parseInt(route.query.page) || 1
-  loading.value = false
-
-  /* 翻译数据后到：只影响标签文案，不再重跑整个过滤与分页 */
-  translationData.value = await loadTranslations()
-})
-
+watch(() => [route.query.q, route.query.type, route.query.page], fetchPage, { immediate: true })
+const stopRevision = watchPublicRevision(fetchPage)
 onBeforeUnmount(() => {
-  clearTimeout(debounceTimer)
-  clearTimeout(blurTimer)
+  pageController?.abort(); stopRevision()
 })
 </script>
 

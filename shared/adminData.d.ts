@@ -8,7 +8,6 @@ export interface GalleryOverride {
 }
 export interface DailyGroup {
   name: string
-  filters: string[]
   keyword: string
   categories: number
   minPages: number | null
@@ -21,8 +20,6 @@ export interface TranslateConfig {
   defaultOcr: 'google' | 'paddle' | 'ocrspace'
   jsonMode: boolean | null
 }
-export const RESOURCES: Readonly<Record<'printed' | 'overrides' | 'daily' | 'translate', string>>
-export const GALLERIES_PATH: string
 export const CATEGORIES: string[]
 export const OVERRIDE_FIELDS: string[]
 export function validateOverrides(value: unknown): Record<string, GalleryOverride>

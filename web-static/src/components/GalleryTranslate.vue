@@ -42,7 +42,7 @@
       <div class="gt-header-actions">
         <button
           class="gt-btn gt-btn-primary"
-          :disabled="!imageUrl || ocrProcessing || translating || imagesLoading"
+          :disabled="!imageUrl || imageError || imageLoading || ocrProcessing || translating || imagesLoading"
           @click="performOcrAndTranslate"
         >
           {{ ocrProcessing ? '识别中 1/2' : translating ? '翻译中 2/2' : '翻译' }}
@@ -66,7 +66,7 @@
           <div class="gt-spinner"></div>
           <span>加载图片...</span>
         </div>
-        <div v-else-if="imageError" class="gt-image-placeholder gt-image-error">{{ imageError }}</div>
+        <div v-else-if="imageError" class="gt-image-placeholder gt-image-error" role="alert"><span>{{ imageError }}</span><button class="gt-btn" @pointerdown.stop @click.stop="retryCurrentImage(true)">重新加载图片</button></div>
         <!-- 缩放层：图片与 OCR 框同在一个 transform 下，捏合 / 双击放大时框随图一起走 -->
         <div v-else-if="imageUrl" class="gt-stage" :class="{ 'is-sliding': pageSliding }" :style="stageStyle">
           <img
@@ -77,6 +77,7 @@
             crossorigin="anonymous"
             draggable="false"
             @load="onImageLoad"
+            @error="onImageError"
           />
           <!-- OCR boxes overlay -->
           <div v-if="ocrResults.length && renderTick >= 0" class="gt-boxes-layer">
@@ -181,7 +182,7 @@
           <div class="gt-spinner-sm"></div>
           <span>加载缩略图...</span>
         </div>
-        <div v-else-if="imagesError" class="gt-strip gt-strip-error">{{ imagesError }}</div>
+        <div v-else-if="imagesError" class="gt-strip gt-strip-error" role="alert"><span>{{ imagesError }}</span><button class="gt-btn" @click="loadGalleryImages">重新加载页面列表</button></div>
 
         <!-- Config panel -->
         <div class="gt-config-panel" :class="{ 'gt-config-panel-collapsed': !configPanelExpanded }">
@@ -436,9 +437,10 @@
 </template>
 
 <script>
-import { loadGalleries } from '@/composables/useGalleryData'
+import {readTranslationResponse,scaleOcrResults} from '@/utils/translationApi'
+import { loadGallery } from '@/composables/useGalleryData'
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'https://no-hentai.vercel.app'
+const API_BASE = import.meta.env.VITE_API_BASE || ''
 const SESSION_KEY = 'trans_password'
 const TRANS_CACHE_TTL = 3 * 24 * 60 * 60 * 1000
 /* 每画廊术语表：{ 原文: 译文 }，随翻译请求一起送给模型 */
@@ -770,6 +772,9 @@ export default {
       imageUrlRaw: null,
       imageLoading: false,
       imageError: null,
+      imageAutoRetried: false,
+      imageRequestId: 0,
+      processingGeneration: 0,
       nlParam: null,
 
       // OCR / translate state
@@ -886,9 +891,9 @@ export default {
       .catch(() => {})
 
     this.loadGlossary()
-    loadGalleries().then(list => {
-      this.galleryMeta = list.find(g => String(g.gid) === String(this.gid)) || null
-    })
+    loadGallery(this.gid).then(result => {
+      this.galleryMeta = result.gallery
+    }).catch(() => { this.galleryMeta = null })
 
     const savedPwd = sessionStorage.getItem(SESSION_KEY)
     if (savedPwd) {
@@ -903,6 +908,9 @@ export default {
   },
 
   beforeUnmount() {
+    this.imageRequestId++
+    this._disposed = true
+    this.processingGeneration++
     this._ro?.disconnect()
     this._thumbObserver?.disconnect()
     window.removeEventListener('pointermove', this.onStagePointerMove)
@@ -1217,6 +1225,7 @@ export default {
     // ── Gallery images ────────────────────────────────────────────────────────
 
     async loadGalleryImages() {
+      if (this.imagesLoading) return
       if (!this.token) {
         this.imagesError = '缺少 token 参数'
         return
@@ -1225,12 +1234,13 @@ export default {
       this.imagesError = null
       try {
         const res = await fetch(`${API_BASE}/api/gallery-images?gid=${this.gid}&token=${this.token}`)
-        const data = await res.json()
+        const data = await res.json().catch(() => ({}))
         if (data.error === 'exhentai_blocked') {
           this.imagesError = 'ExHentai 独占画廊，服务器无法访问缩略图'
-        } else if (data.error) {
-          throw new Error(data.error)
+        } else if (data.error || !res.ok) {
+          throw new Error(data.error || '获取页面列表失败，请重试')
         } else {
+          if (!Array.isArray(data.images) || !data.images.length) throw new Error('未获取到页面列表，请重试')
           this.galleryImages = data.images.slice(0, data.total)
           this.thumbSource = data.source || null
           // Compute sprite count and max offset for thumbnail rendering
@@ -1263,6 +1273,11 @@ export default {
     // ── Page navigation ───────────────────────────────────────────────────────
 
     async goToPage(pageNum) {
+      const requestId = ++this.imageRequestId
+      this.processingGeneration++
+      this.ocrProcessing = false
+      this.translating = false
+      this.imageAutoRetried = false
       this.currentPage = pageNum
       this.resetZoom()
       this.bubbleCard = null
@@ -1277,6 +1292,7 @@ export default {
       this.selectedBoxIdx = null
       this.imageUrl = null
       this.imageUrlRaw = null
+      this.nlParam = null
       this.imageError = null
       this.imageLoading = true
 
@@ -1304,8 +1320,11 @@ export default {
         const res = await fetch(
           `${API_BASE}/api/image-url?pageUrl=${encodeURIComponent(img.pageUrl)}`
         )
+        if (!res.ok) throw new Error('获取图片地址失败，请重试')
         const data = await res.json()
+        if (requestId !== this.imageRequestId) return
         if (data.error) throw new Error(data.error)
+        if (!data.imageUrl) throw new Error('未返回有效图片地址')
         this.imageUrlRaw = data.imageUrl
         this.imageUrl = `${API_BASE}/api/image-proxy?imageUrl=${encodeURIComponent(data.imageUrl)}`
         this.nlParam = data.nlParam
@@ -1314,7 +1333,7 @@ export default {
           this.imageLoading = false
           this.ocrProcessing = true
           try { await this._prefetch[pageNum] } finally { this.ocrProcessing = false }
-          if (this.currentPage !== pageNum) return
+          if (requestId !== this.imageRequestId) return
         }
         const cached = this.loadPageCache(pageNum)
         if (cached) {
@@ -1329,10 +1348,49 @@ export default {
           await this.performOcrAndTranslate()
         }
       } catch (e) {
+        if (requestId !== this.imageRequestId) return
         this.imageError = `图片加载失败: ${e.message}`
         this.finishSlide()
       } finally {
-        this.imageLoading = false
+        if (requestId === this.imageRequestId) this.imageLoading = false
+      }
+    },
+
+    onImageError() {
+      if (!this.imageAutoRetried) {
+        this.imageAutoRetried = true
+        this.retryCurrentImage()
+      } else {
+        this.imageError = '图片加载失败，请重试或稍后再试'
+        this.finishSlide()
+      }
+    },
+
+    async retryCurrentImage(manual = false) {
+      if (this.imageLoading) return
+      const pageNum = this.currentPage
+      const page = this.galleryImages[pageNum - 1]
+      if (!page?.pageUrl) { this.loadGalleryImages(); return }
+      if (manual) this.imageAutoRetried = true
+      const requestId = ++this.imageRequestId
+      this.imageLoading = true
+      this.imageError = null
+      this.imageUrl = null
+      try {
+        const source = new URL(page.pageUrl)
+        if (this.nlParam) source.searchParams.set('nl', this.nlParam)
+        const response = await fetch(`${API_BASE}/api/image-url?pageUrl=${encodeURIComponent(source.href)}&refresh=true`)
+        if (!response.ok) throw new Error('获取图片地址失败，请重试')
+        const data = await response.json()
+        if (requestId !== this.imageRequestId) return
+        if (data.error || !data.imageUrl) throw new Error(data.error || '未返回有效图片地址')
+        this.imageUrlRaw = data.imageUrl
+        this.nlParam = data.nlParam
+        this.imageUrl = `${API_BASE}/api/image-proxy?imageUrl=${encodeURIComponent(data.imageUrl)}`
+      } catch (e) {
+        if (requestId === this.imageRequestId) this.imageError = `图片加载失败: ${e.message}`
+      } finally {
+        if (requestId === this.imageRequestId) this.imageLoading = false
       }
     },
 
@@ -1414,9 +1472,11 @@ export default {
     // ── OCR ───────────────────────────────────────────────────────────────────
 
     async performOcrAndTranslate() {
-      await this.performOcr()
+      const pageRequest = this.imageRequestId
+      const applied = await this.performOcr()
+      if (!applied) return
       if (this.ocrResults.length) await this.performTranslate()
-      this.maybePrefetchNext()
+      if (pageRequest === this.imageRequestId) this.maybePrefetchNext()
     },
 
     /** 等 <img> 解码完成（autoTranslate 时 OCR 往往先于图片加载完被触发） */
@@ -1430,7 +1490,7 @@ export default {
     /**
      * 把图片缩到长边 ≤ OCR_MAX_EDGE 再转 JPEG base64。
      * 原来是把原图整个 fetch 回来逐字节拼 base64：3MB 扫图在手机上要几百毫秒，
-     * base64 后再涨 1/3 就撞上 Vercel 4.5MB 请求体上限。缩图后通常只有 300–500KB，
+     * base64 后再涨 1/3；缩图能降低上传耗时与 OCR 服务负担，通常只有 300–500KB，
      * 且 OCR 的 bbox 乘回 scale 即可还原到原图坐标。代理返回了 ACAO: * ，canvas 不会被污染；
      * 万一被污染（toDataURL 抛 SecurityError）就退回旧的 fetch 路径。
      */
@@ -1468,25 +1528,14 @@ export default {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: sessionStorage.getItem(SESSION_KEY), ...body }),
       })
-      const data = await res.json().catch(() => ({}))
-      if (res.status === 401) {
-        const err = new Error('密码已失效')
-        err.auth = true
-        throw err
-      }
-      if (data.error) throw new Error(data.error)
-      return data
+      return readTranslationResponse(res)
     },
 
     /** 对一张已解码的图片跑 OCR → 合并，返回带 _id 的结果数组与来源。纯函数式，不碰 UI 状态 */
     async ocrImage(img, ocrSource) {
       const { b64, scale } = await this.getOcrPayload(img)
       const data = await this.postTrans('trans-ocr', { imageBase64: b64, ocrSource })
-      const raw = scale === 1 ? data.results : data.results.map(r => ({
-        ...r,
-        bbox: r.bbox.map(v => v * scale),
-        polygon: r.polygon ? r.polygon.map(([x, y]) => [x * scale, y * scale]) : null,
-      }))
+      const raw = scaleOcrResults(data,scale)
       const blockLevel = data.source === 'vision' || data.source === 'ocrspace'
       const stamp = Date.now()
       const results = mergeOcrResults(raw, { blockLevel }).map((r, i) => ({ ...r, _id: `${stamp}_${i}` }))
@@ -1598,42 +1647,52 @@ export default {
       const idxs = this.ocrResults.map((r, i) => (r.translation ? -1 : i)).filter(i => i >= 0)
       if (!idxs.length || this.translating) return
       this.translating = true
+      const generation = ++this.processingGeneration
       const pageNum = this.currentPage
       try {
         const items = await this.translateTexts(idxs.map(i => this.ocrResults[i].text), pageNum)
-        if (this.currentPage !== pageNum) return
+        if (this.currentPage !== pageNum || generation !== this.processingGeneration) return
         const byIdx = new Map(idxs.map((i, k) => [i, items[k]]))
         this.ocrResults = this.ocrResults.map((r, i) => byIdx.has(i) && byIdx.get(i) ? this.applyTranslation(r, byIdx.get(i)) : r)
         this.savePageCache()
         this.$nextTick(() => this.applyTextFit())
       } catch (e) {
+        if (generation !== this.processingGeneration) return
         if (e.auth) { this.handleAuthError(); return }
         this.showToast('补译失败: ' + e.message, 'error')
       } finally {
-        this.translating = false
+        if (generation === this.processingGeneration) this.translating = false
       }
     },
 
     async performOcr() {
-      if (!this.imageUrl) return
+      if (!this.imageUrl) return false
+      const generation = ++this.processingGeneration
+      const pageNum = this.currentPage
+      const ocrSource = this.ocrSource
       this.ocrProcessing = true
       this.ocrResults = []
       this.selectedBoxIdx = null
       this.bubbleCard = null
       try {
         const img = await this.ensureImageDecoded(this.$refs.imgRef)
-        const { results, source } = await this.ocrImage(img, this.ocrSource)
+        if (generation !== this.processingGeneration) return false
+        const { results, source } = await this.ocrImage(img, ocrSource)
+        if (generation !== this.processingGeneration || pageNum !== this.currentPage) return false
         this.lastOcrSource = source
         this.expandedBboxes = {}
         this.unfitBoxes = {}
         this.ocrResults = results
-        this.savePageCache()
+        this.writePageCache(pageNum, results, source)
         if (!results.length) this.showToast('未识别到文字', 'info')
+        return true
       } catch (e) {
-        if (e.auth) { this.handleAuthError(); return }
+        if (generation !== this.processingGeneration) return false
+        if (e.auth) { this.handleAuthError(); return false }
         this.showToast('OCR 失败: ' + e.message, 'error')
+        return false
       } finally {
-        this.ocrProcessing = false
+        if (generation === this.processingGeneration) this.ocrProcessing = false
       }
     },
 
@@ -1642,21 +1701,23 @@ export default {
     async performTranslate() {
       if (!this.ocrResults.length) return
       this.translating = true
+      const generation = ++this.processingGeneration
       const pageNum = this.currentPage
       try {
         const translations = await this.translateTexts(this.ocrResults.map(r => r.text), pageNum)
         // 翻译期间用户可能已翻页
-        if (this.currentPage !== pageNum) return
+        if (this.currentPage !== pageNum || generation !== this.processingGeneration) return
         this.ocrResults = this.ocrResults.map((r, i) => this.applyTranslation(r, translations[i]))
         this.savePageCache()
         const missing = translations.filter(t => !t).length
         if (missing) this.showToast(`翻译完成，${missing} 条未返回译文`, 'info')
         this.$nextTick(() => this.applyTextFit())
       } catch (e) {
+        if (generation !== this.processingGeneration) return
         if (e.auth) { this.handleAuthError(); return }
         this.showToast('翻译失败: ' + e.message, 'error')
       } finally {
-        this.translating = false
+        if (generation === this.processingGeneration) this.translating = false
       }
     },
 
@@ -1690,7 +1751,7 @@ export default {
         const translations = await this.translateTexts(results.map(r => r.text), pageNum)
         translated = results.map((r, i) => this.applyTranslation(r, translations[i]))
       }
-      this.writePageCache(pageNum, translated, source)
+      if (!this._disposed && !this.loadPageCache(pageNum)) this.writePageCache(pageNum, translated, source)
     },
 
     deleteResult(i) {
@@ -1704,6 +1765,9 @@ export default {
     },
 
     clearResults() {
+      this.processingGeneration++
+      this.ocrProcessing = false
+      this.translating = false
       try { localStorage.removeItem(this.cacheKey(this.currentPage)) } catch {}
       this.ocrResults = []
       this.selectedBoxIdx = null
@@ -2305,7 +2369,8 @@ export default {
   padding: 64px 24px;
 }
 
-.gt-image-error { color: var(--danger-color); }
+.gt-image-error { color: var(--danger-color); gap:14px; text-align:center; padding:20px; }
+.gt-strip-error{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 
 .gt-image-empty { text-align: center; }
 

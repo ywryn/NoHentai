@@ -2,7 +2,7 @@
 import { ref, reactive, computed } from 'vue'
 import type { InjectionKey } from 'vue'
 
-const API_BASE = (import.meta as any).env?.VITE_API_BASE ?? 'https://no-hentai.vercel.app'
+const API_BASE = (import.meta as any).env?.VITE_API_BASE ?? ''
 const SETTINGS_KEY = 'reader-settings'
 
 export interface PageInfo {
@@ -54,6 +54,7 @@ export function useReader() {
   const initLoading = ref(true)
   const initError = ref<string | null>(null)
   const currentPage = ref(1)
+  const navigation = ref({ page: 1, sequence: 0 })
   const windowWidth = ref(window.innerWidth)
   const windowHeight = ref(window.innerHeight)
   const settings = reactive<ReaderSettings>(loadSettings())
@@ -136,7 +137,7 @@ export function useReader() {
       pageUrl = pageUrl.replace(/([?&])nl=[^&]*/g, '$1').replace(/[?&]$/, '')
       pageUrl += (pageUrl.includes('?') ? '&' : '?') + `nl=${encodeURIComponent(nlParam)}`
     }
-    const res = await fetch(`${API_BASE}/api/image-url?pageUrl=${encodeURIComponent(pageUrl)}`)
+    const res = await fetch(`${API_BASE}/api/image-url?pageUrl=${encodeURIComponent(pageUrl)}&refresh=true`)
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const data = await res.json()
     if (data.error) throw new Error(data.error)
@@ -164,15 +165,16 @@ export function useReader() {
   function goTo(pageNum: number) {
     const n = Math.max(1, Math.min(total.value, pageNum))
     currentPage.value = n
+    navigation.value = { page: n, sequence: navigation.value.sequence + 1 }
     preload(n)
   }
 
-  function prev() { goTo(currentPage.value - effectivePagesPerScreen.value) }
-  function next() { goTo(currentPage.value + effectivePagesPerScreen.value) }
+  function prev() { goTo(currentPage.value - (settings.readingMode === 'scroll' ? 1 : effectivePagesPerScreen.value)) }
+  function next() { goTo(currentPage.value + (settings.readingMode === 'scroll' ? 1 : effectivePagesPerScreen.value)) }
 
   return {
     pages, total, galleryTitle, initLoading, initError,
-    currentPage, settings, effectivePagesPerScreen, windowWidth, windowHeight,
+    currentPage, navigation, settings, effectivePagesPerScreen, windowWidth, windowHeight,
     imageCache, getImageUrl, retryImage,
     updateSetting, init, goTo, prev, next, preload, onResize,
   }

@@ -1,12 +1,5 @@
-export const RESOURCES = Object.freeze({
-  printed: 'web-static/public/data/future_digi.csv',
-  overrides: 'web-static/public/data/gallery-overrides.json',
-  daily: 'config/daily.json',
-  translate: 'config/translate.json',
-})
-export const GALLERIES_PATH = 'web-static/public/data/galleries.json'
 export const CATEGORIES = ['Doujinshi', 'Manga', 'Artist CG', 'Game CG', 'Western', 'Non-H', 'Image Set', 'Cosplay', 'Asian Porn', 'Misc']
-export const OVERRIDE_FIELDS = ['title', 'title_jpn', 'tags', 'category', 'uploader', 'hidden']
+export const OVERRIDE_FIELDS = ['title', 'title_jpn', 'tags', 'category', 'uploader', 'hidden', 'thumb']
 
 function check(condition, message) { if (!condition) throw new Error(message) }
 function object(value) { return value !== null && typeof value === 'object' && !Array.isArray(value) }
@@ -22,6 +15,7 @@ export function validateOverrides(value) {
     for (const [key, v] of Object.entries(patch)) {
       check(OVERRIDE_FIELDS.includes(key), `不允许覆盖字段：${key}`)
       if (key === 'hidden') check(typeof v === 'boolean', '隐藏状态必须是布尔值')
+      else if (key === 'thumb') check(typeof v === 'string' && /^\/media\/[a-f0-9]{32}\.webp$/.test(v), '覆盖封面需使用已上传的图片')
       else if (key === 'tags') check(strings(v, 500, 200), '标签必须是字符串数组')
       else if (key === 'category') check(CATEGORIES.includes(v), '画廊分类不正确')
       else check(text(v, 5000), `字段 ${key} 不正确`)
@@ -43,13 +37,14 @@ export function mergeGalleries(galleries, overrides, { includeHidden = false } =
 
 export function validateDaily(value) {
   check(Array.isArray(value) && value.length > 0 && value.length <= 20, '每日筛选需要 1–20 个分组')
-  const keys = ['name', 'filters', 'keyword', 'categories', 'minPages', 'maxPages', 'minRating', 'cutoffDays']
+  value = value.map(g => object(g) ? Object.fromEntries(Object.entries(g).filter(([key]) => key !== 'filters')) : g)
+  const keys = ['name', 'keyword', 'categories', 'minPages', 'maxPages', 'minRating', 'cutoffDays']
   const names = new Set()
   for (const g of value) {
     check(object(g) && Object.keys(g).every(k => keys.includes(k)) && keys.every(k => Object.hasOwn(g, k)), '每日筛选字段不完整或包含未知字段')
     check(text(g.name, 120) && g.name.trim() && !names.has(g.name), '分组名称为空或重复')
     names.add(g.name)
-    check(strings(g.filters, 30, 120) && text(g.keyword, 2000), '筛选标签或搜索关键词不正确')
+    check(text(g.keyword, 2000), '搜索关键词不正确')
     check(Number.isInteger(g.categories) && g.categories >= 1 && g.categories <= 1023, '分类掩码应为 1–1023')
     for (const k of ['minPages', 'maxPages']) check(g[k] === null || (Number.isInteger(g[k]) && g[k] >= 1 && g[k] <= 100000), '页数应为正整数或 null')
     check(g.minPages === null || g.maxPages === null || g.minPages <= g.maxPages, '最小页数不能大于最大页数')

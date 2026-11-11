@@ -26,7 +26,7 @@ def make_cutoff(days: int = 10) -> str:
     return (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
 
 
-from daily_config import load_groups
+from daily_config import load_groups, conditions
 
 
 def build_group(group):
@@ -64,7 +64,7 @@ def main():
 
         output.append({
             "name": group["name"],
-            "filters": group["filters"],
+            "conditions": conditions(group),
             "generatedAt": datetime.now().isoformat(),
             "cutoffDate": cutoff,
             "galleries": galleries,
