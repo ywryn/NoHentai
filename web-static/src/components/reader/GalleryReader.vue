@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, provide, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, provide, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useReader, READER_KEY } from '@/composables/useReader'
 import ReaderTopBar  from './ReaderTopBar.vue'
@@ -84,6 +84,10 @@ function exit() {
 }
 
 function onKey(e: KeyboardEvent) {
+  if (showThumbGrid.value) {
+    if (e.key === 'Escape') showThumbGrid.value = false
+    return
+  }
   if (['INPUT','TEXTAREA','SELECT'].includes((e.target as HTMLElement).tagName)) return
   const rtl = settings.bookDirection === 'rtl'
   switch (e.key) {
@@ -92,7 +96,6 @@ function onKey(e: KeyboardEvent) {
     case 'ArrowRight':
     case 'd': rtl ? prev() : next(); break
     case 'Escape':
-      if (showThumbGrid.value) { showThumbGrid.value = false; return }
       exit(); break
     case 'f': case 'F': showThumbGrid.value = !showThumbGrid.value; break
     case 'm': case 'M':
@@ -109,6 +112,13 @@ watch(currentPage, page => {
       page: pageParam,
     },
   })
+})
+
+watch(showThumbGrid, async (open, wasOpen) => {
+  if (!open && wasOpen) {
+    await nextTick()
+    document.querySelector<HTMLElement>('.gr-root .tb-counter')?.focus()
+  }
 })
 
 onMounted(async () => {

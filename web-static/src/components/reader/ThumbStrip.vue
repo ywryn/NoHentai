@@ -2,10 +2,12 @@
 <template>
   <div class="thumb-sidebar" ref="sidebarEl">
     <button
-      v-for="pg in pages"
+      v-for="pg in visiblePages"
       :key="pg.pageNum"
       class="ts-item"
       :class="{ 'ts-active': isActive(pg.pageNum) }"
+      :aria-label="`第 ${pg.pageNum} 页`"
+      :aria-current="isActive(pg.pageNum) ? 'page' : undefined"
       @click="goTo(pg.pageNum)"
     >
       <div class="ts-sprite" :style="spriteStyle(pg)" />
@@ -22,6 +24,10 @@ import type { PageInfo } from '@/composables/useReader'
 const reader = inject(READER_KEY)!
 const { pages, currentPage, effectivePagesPerScreen, goTo } = reader
 const sidebarEl = ref<HTMLElement | null>(null)
+const visiblePages = computed(() => {
+  const start = Math.max(0, Math.min(currentPage.value - 31, pages.value.length - 80))
+  return pages.value.slice(start, start + 80)
+})
 
 function isActive(pageNum: number) {
   const cur = currentPage.value
@@ -64,7 +70,7 @@ watch(currentPage, async () => {
     behavior: 'smooth',
     block: 'nearest',
   })
-})
+}, { immediate: true })
 </script>
 
 <style scoped>

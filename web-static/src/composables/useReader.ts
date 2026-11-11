@@ -147,10 +147,10 @@ export function useReader() {
   }
 
   function preload(center: number) {
-    const step = effectivePagesPerScreen.value
+    const step = settings.readingMode === 'scroll' ? 1 : effectivePagesPerScreen.value
     const targets = new Set<number>()
 
-    for (const off of [1, -1, 2, -2, 3, -3]) {
+    for (const off of [1, -1]) {
       const start = center + off * step
       if (start < 1 || start > total.value) continue
       targets.add(start)
