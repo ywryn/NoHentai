@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 /**
  * 命名空间标签排行表。
@@ -13,7 +13,9 @@ const props = defineProps({
   namespace: { type: String, required: true },
   title: { type: String, required: true },
   rows: { type: Array, default: () => [] },
+  initialCount: { type: Number, default: 0 },
 })
+const expanded = ref(false)
 
 const items = computed(() =>
   props.rows.map(row => {
@@ -32,19 +34,19 @@ const items = computed(() =>
 )
 
 const maxCount = computed(() => Math.max(1, ...items.value.map(i => i.count)))
+const visibleItems = computed(() => props.initialCount && !expanded.value ? items.value.slice(0, props.initialCount) : items.value)
 </script>
 
 <template>
   <section class="data-panel bottom-section">
     <div class="panel-header">
       <div>
-        <div class="panel-eyebrow">命名空间</div>
         <h2 class="section-title">{{ title }}</h2>
       </div>
     </div>
 
     <ul class="tag-rank-list">
-      <li v-for="item in items" :key="item.key">
+      <li v-for="item in visibleItems" :key="item.key">
         <RouterLink class="tag-rank-row" :to="item.to" :title="item.intro || undefined">
           <span class="tag-rank-body">
             <span class="tag-rank-label">{{ item.label }}</span>
@@ -56,6 +58,8 @@ const maxCount = computed(() => Math.max(1, ...items.value.map(i => i.count)))
         </RouterLink>
       </li>
     </ul>
+    <p v-if="!items.length" class="tag-rank-empty">暂无标签数据</p>
+    <button v-if="initialCount && items.length > initialCount" class="tag-rank-more" type="button" :aria-expanded="expanded" @click="expanded = !expanded">{{ expanded ? '收起' : `查看全部 ${items.length} 项` }}</button>
   </section>
 </template>
 
@@ -132,4 +136,8 @@ const maxCount = computed(() => Math.max(1, ...items.value.map(i => i.count)))
   opacity: 0.45;
   border-radius: 0 2px 2px 0;
 }
+.tag-rank-empty { margin: 0; color: var(--muted-color); font-size: 13px; }
+.tag-rank-more { width: 100%; min-height: 44px; margin-top: 8px; border: 1px solid var(--row-border); border-radius: 6px; background: transparent; color: var(--text-color); font: inherit; font-size: 13px; cursor: pointer; }
+.tag-rank-more:hover { background: var(--row-hover-bg); }
+.tag-rank-more:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
 </style>

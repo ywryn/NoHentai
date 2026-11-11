@@ -9,8 +9,9 @@
     @touchstart.passive="releaseAnchor"
     @pointerdown="onTapStart"
   >
+    <button v-if="hasPrevious" class="scroll-segment-button" type="button" @click="moveSegment(-1)">← 第 {{ pages[segmentStart - SEGMENT_SIZE].pageNum }}–{{ pages[segmentStart - 1].pageNum }} 页</button>
     <PageImage
-      v-for="pg in pages"
+      v-for="pg in renderedPages"
       :key="pg.pageNum"
       :page-num="pg.pageNum"
       :lazy="true"
@@ -20,11 +21,12 @@
         maxWidth: `${settings.widthScale}%`,
       }"
     />
+    <button v-if="hasNext" class="scroll-segment-button" type="button" @click="moveSegment(1)">第 {{ pages[segmentStart + SEGMENT_SIZE].pageNum }}–{{ pages[Math.min(segmentStart + SEGMENT_SIZE * 2, pages.length) - 1].pageNum }} 页 →</button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, inject, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
+import { ref, inject, onMounted, onBeforeUnmount, nextTick, watch, computed } from 'vue'
 import { READER_KEY } from '@/composables/useReader'
 import PageImage from './PageImage.vue'
 
@@ -39,7 +41,18 @@ function onTapEnd(event: PointerEvent) {
   if (distance < 8 && !(event.target as HTMLElement).closest('button, a, input')) emit('surface-click', event)
 }
 const reader = inject(READER_KEY)!
-const { pages, currentPage, settings, preload, navigation } = reader
+const { pages, currentPage, settings, preload, navigation, goTo } = reader
+const SEGMENT_SIZE = 120
+const segmented = computed(() => pages.value.length > 200)
+const segmentStart = ref(Math.floor((currentPage.value - 1) / SEGMENT_SIZE) * SEGMENT_SIZE)
+const renderedPages = computed(() => segmented.value ? pages.value.slice(segmentStart.value, segmentStart.value + SEGMENT_SIZE) : pages.value)
+const hasPrevious = computed(() => segmented.value && segmentStart.value > 0)
+const hasNext = computed(() => segmented.value && segmentStart.value + SEGMENT_SIZE < pages.value.length)
+
+function moveSegment(direction: -1 | 1) {
+  const index = Math.max(0, Math.min(segmentStart.value + direction * SEGMENT_SIZE, pages.value.length - 1))
+  goTo(pages.value[index].pageNum)
+}
 
 const scrollEl = ref<HTMLElement | null>(null)
 let scrollObserver: IntersectionObserver | null = null
@@ -56,12 +69,17 @@ function alignAnchor() {
 }
 watch(navigation, async request => {
   anchorPage = request.page
+  const targetStart = Math.floor((request.page - 1) / SEGMENT_SIZE) * SEGMENT_SIZE
+  const changed = segmented.value && segmentStart.value !== targetStart
+  if (changed) segmentStart.value = targetStart
   await nextTick()
+  if (changed) setupScrollObserver()
   alignAnchor()
 })
 
 function setupScrollObserver() {
   scrollObserver?.disconnect()
+  resizeObserver?.disconnect()
   if (!scrollEl.value) return
   const pageEls = Array.from(scrollEl.value.querySelectorAll<HTMLElement>('.scroll-page'))
 
@@ -95,7 +113,7 @@ function setupScrollObserver() {
 
   resizeObserver = new ResizeObserver(alignAnchor)
   pageEls.forEach((el, i) => {
-    el.dataset.page = String(pages.value[i]?.pageNum ?? i + 1)
+    el.dataset.page = String(renderedPages.value[i]?.pageNum ?? i + 1)
     scrollObserver!.observe(el)
     resizeObserver!.observe(el)
   })
@@ -141,4 +159,7 @@ onBeforeUnmount(() => { scrollObserver?.disconnect(); resizeObserver?.disconnect
   flex-shrink: 0;
   min-height: 0;
 }
+.scroll-segment-button{flex:0 0 auto;width:min(100%,680px);min-height:52px;margin:16px 0;border:1px solid var(--reader-border);border-radius:8px;background:var(--reader-surface);color:var(--reader-text);font:inherit;cursor:pointer}
+.scroll-segment-button:hover{background:rgba(255,255,255,.12)}
+.scroll-segment-button:focus-visible{outline:2px solid var(--reader-accent);outline-offset:2px}
 </style>

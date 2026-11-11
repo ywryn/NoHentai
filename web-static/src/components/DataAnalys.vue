@@ -6,13 +6,18 @@
 
             </div>
             <div class="insight-strip" aria-label="收藏概览">
-                <div><strong>{{ loadingStats && !statsLoaded ? '—' : stats.total_count.toLocaleString() }}</strong><span>总收录</span></div>
+                <div><strong>{{ statsLoaded ? stats.total_count.toLocaleString() : '—' }}</strong><span>总收录</span></div>
                 <div><strong>{{ statsLoaded ? recentActivity.count : '—' }}</strong><span>近 30 天新增</span></div>
                 <div><strong>{{ statsLoaded ? recentActivity.activeDays : '—' }}</strong><span>近 30 天活跃天数</span></div>
             </div>
         </div>
 
         <div v-if="statsError" class="stats-load-error" role="alert"><span>{{statsError}}</span><button type="button" @click="fetchStats">重新加载</button></div>
+        <div v-if="loadingStats && !statsLoaded" class="stats-loading" role="status" aria-live="polite">
+            <div class="stats-loading-line"></div><div class="stats-loading-line short"></div>
+            <span>正在加载统计数据…</span>
+        </div>
+        <template v-if="statsLoaded">
         <section class="data-panel heatmap-section">
             <div class="panel-header">
                 <div>
@@ -46,41 +51,28 @@
                         <h2 class="section-title">分类分布</h2>
                     </div>
                 </div>
-                <div class="chart-container">
-                    <Chart type="pie" :data="chartData" :options="chartOptions" class="chart-responsive" />
+                <div class="category-list" role="list" aria-label="按数量排序的分类">
+                    <div v-for="category in sortedCategories" :key="category.name" class="category-item" role="listitem">
+                        <div class="category-meta"><span>{{ category.name }}</span><strong>{{ category.count.toLocaleString() }}</strong></div>
+                        <div class="category-track"><div :style="{ width: `${category.share}%` }"></div></div>
+                    </div>
+                    <p v-if="!sortedCategories.length" class="stats-empty">暂无分类数据</p>
                 </div>
             </section>
         </div>
 
         <div class="tags-row">
-            <section class="data-panel tags-section-half">
-                <div class="panel-header">
-                    <div>
-                        <h2 class="section-title">Female 标签排行</h2>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <Chart type="bar" :data="femaleChartData" :options="barChartOptions" class="chart-responsive" />
-                </div>
-            </section>
-            <section class="data-panel tags-section-half">
-                <div class="panel-header">
-                    <div>
-                        <h2 class="section-title">Male 标签排行</h2>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <Chart type="bar" :data="maleChartData" :options="barChartOptions" class="chart-responsive" />
-                </div>
-            </section>
+            <TagCountTable namespace="female" title="Female 标签排行" :rows="tags.female" :initial-count="10" />
+            <TagCountTable namespace="male" title="Male 标签排行" :rows="tags.male" :initial-count="10" />
         </div>
 
-        <div class="bottom-row">
-            <TagCountTable namespace="other" title="Other" :rows="tags.other" />
-            <TagCountTable namespace="artist" title="Artist" :rows="tags.artist" />
-            <TagCountTable namespace="parody" title="Parody" :rows="tags.parody" />
-            <TagCountTable namespace="character" title="Character" :rows="tags.character" />
+        <div class="tag-namespace-tabs" aria-label="标签排行类别">
+            <button v-for="tab in tagNamespaceTabs" :key="tab.key" type="button" :aria-pressed="selectedNamespace === tab.key" @click="selectedNamespace = tab.key">{{ tab.label }}</button>
         </div>
+        <div class="bottom-row">
+            <TagCountTable v-for="tab in tagNamespaceTabs" :key="tab.key" :class="{'tag-table-mobile-hidden':selectedNamespace !== tab.key}" :namespace="tab.key" :title="tab.label" :rows="tags[tab.key]" />
+        </div>
+        </template>
     </div>
 </template>
 
@@ -120,23 +112,8 @@ export default {
                 parody: []
             },
             types: ["artist", "other", "female", "male", "character", "parody"],
-            chartData: null,
-            chartOptions: null,
-            femaleChartData: null,
-            maleChartData: null,
-            barChartOptions: null,
-            categoryColors: {
-                Doujinshi: "#a11",
-                Manga: "#d67e22",
-                "Artist CG": "#d6a922",
-                "Game CG": "#4caf50",
-                Western: "#d4af37",
-                "Non-H": "#4ca3dd",
-                "Image Set": "#2a78d6",
-                Cosplay: "#7e57c2",
-                "Asian Porn": "#a11548",
-                Misc: "#757575",
-            },
+            tagNamespaceTabs: [{key:'other',label:'Other'},{key:'artist',label:'Artist'},{key:'parody',label:'Parody'},{key:'character',label:'Character'}],
+            selectedNamespace: 'other',
             // 新增用于季度折线图的数据和选项
             quarterlyLineData: null,
             quarterlyLineOptions: null,
@@ -159,6 +136,14 @@ export default {
         document.removeEventListener("visibilitychange",this.refreshVisibleStats);
     },
     computed: {
+        sortedCategories() {
+            const total = Number(this.stats.total_count) || 0;
+            return Object.entries(this.stats.categories || {})
+                .map(([name, value]) => ({name, count: Number(value) || 0}))
+                .filter(item => item.count > 0)
+                .sort((a, b) => b.count - a.count)
+                .map(item => ({...item, share: total ? Math.min(100, item.count / total * 100) : 0}));
+        },
         recentActivity() {
             const rows = this.heatmapChartData?.datasets?.[0]?.data || [];
             const cutoff = new Date();
@@ -172,8 +157,6 @@ export default {
         isDark: {
             handler() {
                 // 主题切换时重新生成图表配置
-                this.updateChart();
-                this.updateBarCharts();
                 if (this.fullQuarterlyData && this.fullQuarterlyData.length > 0) {
                     // 重新创建季度图表
                     this.updateQuarterlyChart();
@@ -203,11 +186,9 @@ export default {
 
                 // 加载基础统计
                 this.stats = precomputed.stats;
-                this.updateChart();
 
                 // 加载标签统计
                 this.tags = precomputed.tags;
-                this.updateBarCharts();
 
                 // 加载季度数据
                 this.fullQuarterlyData = precomputed.quarterly;
@@ -242,55 +223,6 @@ export default {
         },
         toggleFullData() {
             this.updateQuarterlyChart();
-        },
-        updateChart() {
-            const labels = Object.keys(this.stats.categories);
-            const data = Object.values(this.stats.categories);
-            const backgroundColors = labels.map(
-                (label) => this.categoryColors[label] || "#757575"
-            );
-
-            this.chartData = {
-                labels,
-                datasets: [
-                    {
-                        data,
-                        backgroundColor: backgroundColors,
-                    },
-                ],
-            };
-            this.chartOptions = this.getChartOptions();
-        },
-        updateBarCharts() {
-            // Female Chart Data
-            const femaleLabels = this.tags.female.map((tag) => tag.tag_cn || tag.tag.replace(/^female:/, '')); // 默认显示中文
-            const femaleCounts = this.tags.female.map((tag) => tag.count);
-            this.femaleChartData = {
-                labels: femaleLabels,
-                datasets: [
-                    {
-                        label: "Female Tags",
-                        data: femaleCounts,
-                        backgroundColor: "#f06292",
-                    },
-                ],
-            };
-
-            // Male Chart Data
-            const maleLabels = this.tags.male.map((tag) => tag.tag_cn || tag.tag.replace(/^male:/, '')); // 默认显示中文
-            const maleCounts = this.tags.male.map((tag) => tag.count);
-            this.maleChartData = {
-                labels: maleLabels,
-                datasets: [
-                    {
-                        label: "Male Tags",
-                        data: maleCounts,
-                        backgroundColor: "#42a5f5",
-                    },
-                ],
-            };
-
-            this.barChartOptions = this.getBarChartOptions();
         },
         initQuarterlyLineChart(quarterlyData) {
             // quarterlyData 格式： [{ "quarter": "2022-Q1", "postedCount": 123, "favTimeCount": 45 }, ...]
@@ -361,81 +293,6 @@ export default {
                         }
                     }
                 }
-            };
-        },
-        getChartOptions() {
-            // 动态主题颜色
-            const textColor = this.isDark ? '#f1f5f9' : '#2d3748';
-            const gridColor = this.isDark ? '#475569' : '#d6d3d1';
-
-            return {
-                plugins: {
-                    legend: {
-                        labels: {
-                            usePointStyle: true,
-                            color: textColor,
-                        },
-                    },
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            color: textColor,
-                        },
-                        grid: {
-                            color: gridColor,
-                        },
-                    },
-                    y: {
-                        ticks: {
-                            color: textColor,
-                            beginAtZero: true,
-                        },
-                        grid: {
-                            color: gridColor,
-                        },
-                    },
-                },
-            };
-        },
-        getBarChartOptions() {
-            // 动态主题颜色
-            const textColor = this.isDark ? '#f1f5f9' : '#2d3748';
-            const gridColor = this.isDark ? '#475569' : '#d6d3d1';
-
-            return {
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: textColor,
-                        },
-                    },
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            color: textColor,
-                            font: {
-                                size: 12,
-                            },
-                        },
-                        grid: {
-                            color: gridColor,
-                        },
-                    },
-                    y: {
-                        ticks: {
-                            color: textColor,
-                            font: {
-                                size: 12,
-                            },
-                            beginAtZero: true,
-                        },
-                        grid: {
-                            color: gridColor,
-                        },
-                    },
-                },
             };
         },
         initHeatmapFromPrecomputed(heatmapData) {
