@@ -1,0 +1,17 @@
+[Unit]
+Description=Queue daily NoHentai synchronization
+After=nohentai-worker.service
+
+[Service]
+Type=oneshot
+User=nohentai
+Group=nohentai
+WorkingDirectory=/opt/nohentai
+EnvironmentFile=/etc/nohentai/nohentai.env
+Environment=NOHENTAI_DATA_DIR=/var/lib/nohentai
+ExecStart=/opt/nohentai/.venv/bin/python -m backend.cli enqueue all
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/nohentai

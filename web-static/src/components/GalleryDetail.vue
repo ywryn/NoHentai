@@ -19,6 +19,17 @@
             <p v-if="galleryData.title_jpn" class="subtitle">{{ galleryData.title_jpn }}</p>
           </div>
 
+          <nav v-if="galleryData.token" class="gd-actions" aria-label="画廊操作">
+            <RouterLink class="gd-action gd-action-primary" :to="{name:'GalleryReader',params:{gid:itemId},query:{token:galleryData.token,page:'1'}}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v15M3 4h5a4 4 0 0 1 4 2 4 4 0 0 1 4-2h5v15h-5a4 4 0 0 0-4 2 4 4 0 0 0-4-2H3Z"/></svg>
+              <span>开始阅读</span><span class="gd-action-arrow" aria-hidden="true">→</span>
+            </RouterLink>
+            <RouterLink class="gd-action gd-action-secondary" :to="{name:'GalleryTranslate',params:{gid:itemId},query:{token:galleryData.token,page:'1'}}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h12M9 3v2M5 5c1 6 5 9 9 10M13 5c-1 6-5 9-9 10m9 6 4-11 4 11M14.5 17h5"/></svg>
+              <span>翻译</span>
+            </RouterLink>
+          </nav>
+
           <!-- 以下两块由 margin-top:auto 推到底部，与封面栏底边对齐 -->
           <div class="gd-meta-row">
             <div class="gd-meta-item gd-meta-rating">
@@ -127,12 +138,6 @@
               <span class="thumb-source-dot"></span>{{ thumbSource === 'exhentai' ? 'Ex' : 'E' }}
             </span>
             <span v-if="thumbTotal" class="thumb-total-badge">{{ thumbTotal }} 页</span>
-            <button
-              v-if="thumbExpanded && galleryData?.token"
-              class="translate-btn"
-              @click="openTranslate"
-              title="打开翻译工作台"
-            >翻译</button>
           </div>
         </div>
 
@@ -151,8 +156,9 @@
           </div>
           <div v-else-if="thumbError === 'exhentai_blocked'" class="thumb-exblocked">
             此画廊为 ExHentai 独占，云服务器 IP 被 Cloudflare 拦截，无法加载缩略图
+            <button class="thumb-retry" @click="fetchThumbnails">重新加载缩略图</button>
           </div>
-          <div v-else-if="thumbError" class="thumb-error">{{ thumbError }}</div>
+          <div v-else-if="thumbError" class="thumb-error"><p>{{ thumbError }}</p><button class="thumb-retry" @click="fetchThumbnails">重新加载缩略图</button></div>
           <template v-else-if="thumbImages.length">
             <div class="thumb-grid">
               <div
@@ -179,18 +185,17 @@
     </div>
 
     <div v-else-if="loading" class="loading">加载中…</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
+    <div v-else-if="error" class="error"><p>{{ error }}</p><button class="thumb-retry" @click="fetchGalleryData">重新加载画廊</button></div>
   </div>
 </template>
 
 <script>
 import Rating from "primevue/rating";
 import ToggleSwitch from "primevue/toggleswitch";
-import { enrichTags, exTypeClassMap } from '@/utils/galleryUtils';
-import { loadGalleries, loadTranslations } from '@/composables/useGalleryData';
+import { exTypeClassMap } from '@/utils/galleryUtils';
+import { loadGallery } from '@/composables/useGalleryData';
 
-const baseUrl = import.meta.env.BASE_URL;
-const API_BASE = import.meta.env.VITE_API_BASE || 'https://no-hentai.vercel.app';
+const API_BASE = import.meta.env.VITE_API_BASE || '';
 const THUMBS_PER_PAGE = 20;
 
 export default {
@@ -199,6 +204,7 @@ export default {
   data() {
     return {
       itemId: null,
+      requestGeneration: 0,
       galleryData: null,
       isChinese: true,
       loading: true,
@@ -238,6 +244,9 @@ export default {
   },
   beforeUnmount() {
     clearTimeout(this.tagCopyTimer);
+    this.requestGeneration++;
+    this._galleryAbort?.abort();
+    this._thumbAbort?.abort();
   },
   methods: {
     initializeFromRoute() {
@@ -246,73 +255,26 @@ export default {
     },
 
     async fetchGalleryData() {
+      const generation = ++this.requestGeneration;
+      const gid = this.itemId;
+      this._galleryAbort?.abort();
+      this._thumbAbort?.abort();
+      this._galleryAbort = new AbortController();
+      this.galleryData = null;
       this.loading = true;
       this.error = null;
 
       try {
-        const source = this.$route.query.source;
-
-        if (source === 'daily') {
-          const [dailyGroups, translations] = await Promise.all([
-            fetch(`${baseUrl}data/daily_search.json`).then(r => r.json()),
-            loadTranslations(),
-          ]);
-          let gallery = null;
-          if (Array.isArray(dailyGroups)) {
-            for (const group of dailyGroups) {
-              const found = (group.galleries || []).find(item =>
-                item.gid && item.gid.toString() === this.itemId.toString()
-              );
-              if (found) { gallery = found; break; }
-            }
-          }
-          if (gallery) {
-            this.galleryData = {
-              ...gallery,
-              tags: Array.isArray(gallery.tags) ? enrichTags(gallery.tags, translations) : gallery.tags,
-            };
-          } else {
-            this.error = `未找到 ID 为 ${this.itemId} 的画廊`;
-          }
-          return;
-        }
-
-        const [galleries, translations] = await Promise.all([
-          loadGalleries(),
-          loadTranslations(),
-        ]);
-
-        let gallery = galleries.find(item =>
-          item.gid && item.gid.toString() === this.itemId.toString()
-        );
-
-        if (!gallery) {
-          try {
-            const dailyGroups = await fetch(`${baseUrl}data/daily_search.json`).then(r => r.json());
-            if (Array.isArray(dailyGroups)) {
-              for (const group of dailyGroups) {
-                const found = (group.galleries || []).find(item =>
-                  item.gid && item.gid.toString() === this.itemId.toString()
-                );
-                if (found) { gallery = found; break; }
-              }
-            }
-          } catch {}
-        }
-
-        if (gallery) {
-          this.galleryData = {
-            ...gallery,
-            tags: Array.isArray(gallery.tags) ? enrichTags(gallery.tags, translations) : gallery.tags,
-          };
-        } else {
-          this.error = `未找到 ID 为 ${this.itemId} 的画廊`;
-        }
+        const source = this.$route.query.source === 'daily' ? 'daily' : 'favorites';
+        const result = await loadGallery(gid, source, this._galleryAbort.signal);
+        if (generation !== this.requestGeneration) return;
+        this.galleryData = { ...result.gallery, tags: result.tagDetails };
       } catch (error) {
+        if (generation !== this.requestGeneration || error.name === 'AbortError') return;
         console.error("Error fetching gallery data:", error);
         this.error = `画廊数据加载失败：${error.message}`;
       } finally {
-        this.loading = false;
+        if (generation === this.requestGeneration) this.loading = false;
       }
     },
 
@@ -364,16 +326,21 @@ export default {
 
     async fetchThumbnails() {
       if (!this.galleryData?.token) return;
+      const generation = this.requestGeneration;
+      this._thumbAbort?.abort();
+      this._thumbAbort = new AbortController();
       this.thumbLoading = true;
       this.thumbError = null;
       try {
-        const res = await fetch(`${API_BASE}/api/gallery-images?gid=${this.itemId}&token=${this.galleryData.token}`);
-        const data = await res.json();
+        const res = await fetch(`${API_BASE}/api/gallery-images?gid=${this.itemId}&token=${this.galleryData.token}`, { signal: this._thumbAbort.signal });
+        const data = await res.json().catch(() => ({}));
+        if (generation !== this.requestGeneration) return;
         if (data.error === 'exhentai_blocked') {
           this.thumbError = 'exhentai_blocked';
-        } else if (data.error) {
-          throw new Error(data.error);
+        } else if (data.error || !res.ok) {
+          throw new Error(data.error || '获取缩略图失败，请重试');
         } else {
+          if (!Array.isArray(data.images)) throw new Error('缩略图列表无效，请重试');
           this.thumbImages = data.images.slice(0, data.total);
           this.thumbTotal = data.total;
           this.thumbSource = data.source || null;
@@ -393,9 +360,10 @@ export default {
           }
         }
       } catch (e) {
+        if (generation !== this.requestGeneration || e.name === 'AbortError') return;
         this.thumbError = e.message;
       } finally {
-        this.thumbLoading = false;
+        if (generation === this.requestGeneration) this.thumbLoading = false;
       }
     },
 
@@ -415,14 +383,6 @@ export default {
         name: 'GalleryReader',
         params: { gid: this.itemId },
         query: { page: pageNum, token: this.galleryData.token },
-      });
-    },
-
-    openTranslate() {
-      this.$router.push({
-        name: 'GalleryTranslate',
-        params: { gid: this.itemId },
-        query: { token: this.galleryData.token, page: 1 },
       });
     },
 

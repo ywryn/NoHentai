@@ -1,3 +1,2 @@
-// Keep the shared implementation outside the frontend's ESM package so Vercel
-// can compile it alongside the backend's CommonJS functions.
+// CSV validation shared by the frontend editors.
 export { BOOK_FIELDS, parseBooksCSV, validateBooks, serializeBooksCSV } from '../../../shared/printedBooks.js'

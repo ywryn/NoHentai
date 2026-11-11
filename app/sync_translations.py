@@ -62,12 +62,36 @@ def download_with_retry() -> bytes:
     raise RuntimeError(f"重试 {MAX_RETRIES} 次后仍失败") from last_error
 
 
-def validate_and_parse(content: bytes) -> dict:
-    """校验内容为合法 JSON 且包含 data 字段，返回解析结果。"""
-    data = json.loads(content)
-    if "data" not in data:
-        raise ValueError("下载内容缺少 'data' 字段，格式不符合预期")
+def validate_dictionary(data: dict, previous=None) -> dict:
+    """Validate the complete consumer contract before replacing a working dictionary."""
+    if not isinstance(data, dict) or not isinstance(data.get('data'), list) or not data['data']:
+        raise ValueError('标签词典为空或结构不正确')
+    namespaces = set()
+    count = 0
+    for group in data['data']:
+        if not isinstance(group, dict) or not isinstance(group.get('namespace'), str) or not group['namespace'] or group['namespace'] in namespaces or not isinstance(group.get('data'), dict):
+            raise ValueError('标签词典命名空间结构不正确')
+        namespaces.add(group['namespace'])
+        for tag, detail in group['data'].items():
+            if not isinstance(tag, str) or not tag or not isinstance(detail, dict) or any(not isinstance(detail.get(key, ''), str) for key in ('name', 'intro', 'links')):
+                raise ValueError('标签词典条目结构不正确')
+            count += 1
+    if not count:
+        raise ValueError('标签词典没有有效条目')
+    if previous:
+        try:
+            validate_dictionary(previous)
+        except ValueError:
+            pass  # A valid incoming snapshot must be able to repair an old corrupt one.
+        else:
+            old_count = sum(len(g['data']) for g in previous['data'])
+            if count < old_count * .8:
+                raise ValueError('标签词典数量下降超过 20%，保留原数据')
     return data
+
+
+def validate_and_parse(content: bytes) -> dict:
+    return validate_dictionary(json.loads(content))
 
 
 # ── 主流程 ────────────────────────────────────────────────────────────────────

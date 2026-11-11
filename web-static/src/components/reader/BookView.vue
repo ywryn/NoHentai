@@ -133,6 +133,8 @@ function onTouchEnd(e: TouchEvent) {
 }
 .spread:not(.spread-double) .page-slot {
   flex: 0 0 auto;
+  /* Loading and error overlays are absolute; reserve width before the image exists. */
+  min-width: min(240px, 100%);
   max-height: 100%;
 }
 .spread-double:not(.spread-rtl) .page-slot:first-child { justify-content: flex-end; }
@@ -140,9 +142,11 @@ function onTouchEnd(e: TouchEvent) {
 .spread-double.spread-rtl .page-slot:first-child { justify-content: flex-start; }
 .spread-double.spread-rtl .page-slot:last-child  { justify-content: flex-end; }
 .spread-double .page-slot :deep(.page-image) {
-  width: auto;
+  /* Reserve each half before either image loads; overlays center in that half. */
+  width: 100%;
   height: 100%;
-  min-width: 120px;
+  min-width: 0;
+  justify-content: inherit;
 }
 .spread-double .page-slot :deep(.pi-img) {
   height: 100%;

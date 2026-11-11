@@ -1,7 +1,8 @@
 <template>
   <div ref="elRef" class="page-image">
-    <div v-if="state === 'loading'" class="pi-center">
-      <div class="reader-spinner" />
+    <div v-if="state === 'loading'" class="pi-center pi-loading" role="status">
+      <div class="reader-spinner" aria-hidden="true" />
+      <span>正在加载第 {{ pageNum }} 页</span>
     </div>
     <img
       v-show="state === 'loaded'"
@@ -153,6 +154,12 @@ watch(() => props.pageNum, () => {
   z-index: 6;
 }
 .pi-error { color: var(--reader-error); font-size: 13px; text-align: center; }
+.pi-loading {
+  color: var(--reader-muted);
+  font-size: 12px;
+  pointer-events: none;
+}
+.pi-loading .reader-spinner { width: 24px; height: 24px; }
 .pi-img {
   max-width: 100%;
   max-height: 100%;

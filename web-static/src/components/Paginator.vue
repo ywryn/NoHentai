@@ -100,6 +100,10 @@ function submitJump() {
    组件自己的样式必须跟组件走。 */
 .pagination-control {
   display: flex;
+  padding: 10px 14px;
+  border: 0;
+  flex-shrink: 0;
+  box-sizing: border-box;
   align-items: center;
   justify-content: center;
   gap: 10px;

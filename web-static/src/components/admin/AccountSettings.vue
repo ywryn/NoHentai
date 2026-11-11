@@ -1,0 +1,14 @@
+<script setup>
+import AdminMenuButton from './AdminMenuButton.vue'
+import {ref,inject,onMounted} from 'vue'
+import {adminRequest,formatDate} from '@/utils/adminApi'
+const navigation=inject('adminOpenNavigation'),confirm=inject('adminConfirm')
+const sessions=ref([]),error=ref(''),busy=ref(false),current=ref(''),password=ref(''),repeat=ref('')
+const end=()=>window.dispatchEvent(new Event('admin-session-ended'))
+async function load(){try{sessions.value=(await adminRequest('sessions')).items}catch(e){error.value=e.message}}
+async function revoke(session){if(!await confirm({title:session.current?'退出当前会话？':'撤销此会话？',description:'该设备后续需要重新登录。',confirmLabel:'撤销会话'}))return;busy.value=true;error.value='';try{await adminRequest('session-revoke',{id:session.id});if(session.current)end();else await load()}catch(e){error.value=e.message}finally{busy.value=false}}
+async function all(){if(!await confirm({title:'退出全部设备？',description:'包含当前设备，操作后需要重新登录。',confirmLabel:'全部退出',danger:true}))return;try{await adminRequest('logout-all');end()}catch(e){error.value=e.message}}
+async function change(){error.value='';if(password.value!==repeat.value){error.value='两次新密码不一致';return}busy.value=true;try{await adminRequest('change-password',{currentPassword:current.value,newPassword:password.value});current.value='';password.value='';repeat.value='';end()}catch(e){error.value=e.message}finally{busy.value=false}}
+onMounted(load)
+</script>
+<template><div class="a-page"><header class="a-page-heading"><div class="a-page-title"><AdminMenuButton /><div><h1>账户与会话</h1><p>修改管理密码，查看和撤销设备登录。</p></div></div></header><p v-if="error" class="a-alert a-alert-error" role="alert">{{error}}</p><form class="a-card a-form-stack" @submit.prevent="change"><h2>修改管理密码</h2><label class="a-field">当前密码<input v-model="current" type="password" autocomplete="current-password" required /></label><label class="a-field">新密码<input v-model="password" type="password" autocomplete="new-password" minlength="16" maxlength="1024" required /></label><label class="a-field">再次输入新密码<input v-model="repeat" type="password" autocomplete="new-password" required /></label><p class="a-field-help">至少 16 字符，不能与翻译工作台密码相同。修改后全部设备需要重新登录。</p><button class="a-button a-primary" :disabled="busy">修改密码并退出全部设备</button></form><section class="a-card"><div class="a-section-heading"><h2>登录设备</h2><button class="a-button" :disabled="busy" @click="all">退出全部设备</button></div><article v-for="session in sessions" :key="session.id" class="v2-run"><strong>{{session.current?'当前会话':'其他设备'}}</strong><p class="v2-agent">{{session.agent||'未提供设备信息'}}</p><small>登录：{{formatDate(session.createdAt)}} · 最近使用：{{formatDate(session.lastSeen)}} · 到期：{{formatDate(session.expiresAt)}}</small><button class="a-button" :disabled="busy" @click="revoke(session)">撤销会话</button></article></section></div></template>

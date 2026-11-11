@@ -1,14 +1,7 @@
 {
-  "name": "nohentai-api",
-  "version": "1.0.0",
+  "name": "nohentai",
+  "version": "2.0.0",
   "private": true,
-  "dependencies": {
-    "@upstash/redis": "^1.38.0",
-    "libsodium-wrappers": "^0.8.4",
-    "node-html-parser": "^6.1.13"
-  },
   "type": "module",
-  "scripts": {
-    "test": "node --test tests/*.test.mjs"
-  }
+  "scripts": { "test": "node --test tests/*.test.mjs" }
 }

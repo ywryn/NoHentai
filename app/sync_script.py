@@ -6,7 +6,7 @@ import re
 import shutil
 import time
 from pathlib import Path
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 
 import requests
 from bs4 import BeautifulSoup
@@ -37,7 +37,8 @@ class ExHentaiUtils:
         self.cookies = cookies
         self.logger = logger
         self.session = requests.Session()
-        self.session.cookies.update(cookies)
+        for key, value in cookies.items():
+            self.session.cookies.set(key, value, domain='exhentai.org', path='/')
 
     def extract_favorites(self) -> list:
         result = []
@@ -48,11 +49,16 @@ class ExHentaiUtils:
         while next_page:
             if next_page in visited:
                 raise RuntimeError('收藏分页出现循环，同步已终止，保留原数据。')
+            parsed = urlsplit(next_page)
+            if parsed.scheme != 'https' or parsed.hostname != 'exhentai.org' or parsed.port not in (None, 443):
+                raise RuntimeError('收藏分页来源不正确，保留原数据')
             visited.add(next_page)
             self.logger.info(f"正在爬取: {next_page}")
             try:
-                response = self.session.get(next_page, timeout=30)
+                response = self.session.get(next_page, timeout=30, allow_redirects=False)
                 response.raise_for_status()
+                if response.status_code in (301, 302, 303, 307, 308):
+                    raise RuntimeError('收藏来源发生重定向，请检查登录状态')
             except requests.RequestException as exc:
                 raise RuntimeError(f'收藏第 {len(visited)} 页请求失败，不保存部分结果。') from exc
 
@@ -122,8 +128,11 @@ class ExHentaiUtils:
                 self.logger.warning(f'第 {batch_num} 批返回的书目 ID 不完整，稍后重试')
                 return False, []
 
+            if any(meta.get('error') for meta in data):
+                return False, []
+            ordered = {str(meta['gid']): meta for meta in data}
             self.logger.info(f"第 {batch_num} 批成功，获取 {len(data)} 条数据")
-            return True, data
+            return True, [ordered[str(f['gid'])] for f in batch]
         except Exception as exc:
             self.logger.error(f"第 {batch_num} 批请求失败: {exc}")
             return False, []

@@ -1,332 +1,47 @@
-<template>
-  <div class="container daily-page">
-    <section class="daily-shell">
-      <div class="daily-header-card">
-        <div class="daily-group-strip" v-if="groups.length">
-          <button
-            v-for="(group, index) in groups"
-            :key="group.generatedAt || index"
-            class="daily-group-pill"
-            :class="{ active: index === currentGroupIndex }"
-            type="button"
-            :aria-pressed="index === currentGroupIndex"
-            @click="switchGroup(index)"
-          >
-            <span class="daily-group-pill-label">{{ group.name || `筛选组 ${index + 1}` }}</span>
-            <span class="daily-group-pill-count">{{ (group.galleries || []).length }}</span>
-          </button>
-        </div>
-
-        <div class="daily-meta" v-if="currentGroup?.generatedAt">
-          <span>更新于 {{ formatDate(currentGroup.generatedAt) }}</span>
-          <span class="daily-meta-sep">·</span>
-          <span>收录自 {{ currentGroup.cutoffDate }}</span>
-          <span class="daily-meta-sep">·</span>
-          <span>{{ totalRecords }} 部</span>
-        </div>
-
-        <!-- 这些是生成这批数据时用的条件，只作说明、不可交互，
-             因此刻意做成低对比的标签而非按钮外观 -->
-        <div class="daily-filter-chips" v-if="currentGroup?.filters?.length">
-          <span class="daily-filter-label">抓取条件</span>
-          <span v-for="chip in includeFilters" :key="`i-${chip}`" class="filter-chip">{{ chip }}</span>
-          <span v-for="chip in excludeFilters" :key="`e-${chip}`" class="filter-chip filter-chip-exclude">
-            <span class="filter-chip-sign" aria-hidden="true">−</span>{{ chip.replace(/^-/, '') }}
-          </span>
-        </div>
-      </div>
-
-      <div class="toolbar" v-if="totalPages > 1">
-        <Paginator :page="currentPage" :total="totalPages" @go="goToPage" />
-      </div>
-
-      <GalleryList
-        :items="normalizedItems"
-        :loading="loading"
-        :skeleton-count="perPage"
-        empty-text="该筛选组暂无结果"
-      />
-
-      <div v-if="totalPages > 1" class="toolbar">
-        <Paginator :page="currentPage" :total="totalPages" @go="goToPage" />
-      </div>
-    </section>
-  </div>
-</template>
-
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useViewMode } from '@/composables/useViewMode'
-import GalleryList from '@/components/GalleryList.vue'
-import Paginator from '@/components/Paginator.vue'
-import { exTypeClassMap, formatTimestamp, enrichTags } from '@/utils/galleryUtils'
-import { loadTranslations } from '@/composables/useGalleryData'
+import {ref,computed,onMounted,onBeforeUnmount,watch} from 'vue'
+import {useRouter,useRoute} from 'vue-router'
+import {watchPublicRevision} from '@/composables/useGalleryData'
+import {useViewMode} from '@/composables/useViewMode'
+import {parseQuery,passesQuery,matchGalleryTerm} from '@/utils/gallerySearch'
+import {exTypeDotColors,exTypeClassMap,formatTimestamp,enrichTags} from '@/utils/galleryUtils'
+import GalleryList from './GalleryList.vue'
+import GallerySearchInput from './GallerySearchInput.vue'
+import Paginator from './Paginator.vue'
+const router=useRouter(),route=useRoute(),{viewMode}=useViewMode()
+const groups=ref([]),translations=ref(null),loading=ref(true),error=ref('')
+const perPage=30
+const groupIndex=computed(()=>Math.max(0,Math.min(groups.value.length-1,(parseInt(route.query.group)||1)-1)))
+const currentGroup=computed(()=>groups.value[groupIndex.value]||null)
+const rule=computed(()=>currentGroup.value?.conditions||null)
+const categoryMasks=[['Misc',1],['Doujinshi',2],['Manga',4],['Artist CG',8],['Game CG',16],['Image Set',32],['Cosplay',64],['Asian Porn',128],['Non-H',256],['Western',512]]
+const ruleCategories=computed(()=>categoryMasks.filter(([,mask])=>Boolean(rule.value?.categories&mask)))
+function pageRange(value){if(value.minPages==null&&value.maxPages==null)return '不限';if(value.minPages==null)return `最多 ${value.maxPages} 页`;if(value.maxPages==null)return `至少 ${value.minPages} 页`;return `${value.minPages}–${value.maxPages} 页`}
 
-const { viewMode } = useViewMode()
-
-const router = useRouter()
-const route = useRoute()
-const baseUrl = import.meta.env.BASE_URL
-
-const groups = ref([])
-const currentGroupIndex = ref(0)
-const translationData = ref(null)
-const loading = ref(false)
-const currentPage = ref(1)
-const perPage = ref(30)
-const totalRecords = ref(0)
-const results = ref([])
-
-const currentGroup = computed(() => groups.value[currentGroupIndex.value] ?? null)
-const currentGalleries = computed(() => currentGroup.value?.galleries ?? [])
-const includeFilters = computed(() => (currentGroup.value?.filters ?? []).filter(chip => !chip.startsWith('-')))
-const excludeFilters = computed(() => (currentGroup.value?.filters ?? []).filter(chip => chip.startsWith('-')))
-
-
-const totalPages = computed(() => Math.max(1, Math.ceil(totalRecords.value / perPage.value)))
-
-function formatDate(isoStr) {
-  if (!isoStr) return ''
-  const d = new Date(isoStr)
-  if (isNaN(d.getTime())) return isoStr
-  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-')
-}
-
-function paginate(page = 1) {
-  const galleries = currentGalleries.value
-  totalRecords.value = galleries.length
-  const start = (page - 1) * perPage.value
-  results.value = galleries.slice(start, start + perPage.value).map(item => ({
-    gid: item.gid,
-    type: item.category,
-    typeClass: exTypeClassMap[item.category] || 'default',
-    title: item.title,
-    title_jpn: item.title_jpn,
-    thumb: item.thumb,
-    published: formatTimestamp(item.posted),
-    filecount: item.filecount,
-    rating: parseFloat(item.rating) || null,
-    tags: enrichTags(item.tags || [], translationData.value),
-  }))
-  currentPage.value = page
-}
-
-function goToPage(page) {
-  const p = Math.max(1, Math.min(totalPages.value, Number(page)))
-  if (p !== currentPage.value) paginate(p)
-}
-
-function switchGroup(index) {
-  if (index < 0 || index >= groups.value.length) return
-  currentGroupIndex.value = index
-  paginate(1)
-}
-
-/* 组与页码都写进 URL：刷新后不再跳回第一组，也便于分享 */
-watch([currentPage, currentGroupIndex], () => {
-  const query = {}
-  if (currentGroupIndex.value > 0) query.group = String(currentGroupIndex.value + 1)
-  if (currentPage.value > 1) query.page = String(currentPage.value)
-  router.replace({ query })
-})
-
-watch(viewMode, () => { paginate(1) })
-
-async function loadData() {
-  try {
-    const [dailyRes, translations] = await Promise.all([
-      fetch(`${baseUrl}data/daily_search.json`),
-      loadTranslations(),
-    ])
-    if (dailyRes.ok) {
-      const data = await dailyRes.json()
-      groups.value = Array.isArray(data) ? data : []
-    }
-    translationData.value = translations
-  } catch (e) {
-    console.error('Error loading daily_search data:', e)
-  }
-}
-
-const normalizedItems = computed(() => results.value.map(item => ({
-  key: item.gid,
-  gid: item.gid,
-  to: item.gid ? `/gallery/${item.gid}/?source=daily` : null,
-  thumb: item.thumb,
-  title: item.title_jpn || item.title,
-  badge: item.type,
-  badgeClass: item.typeClass,
-  tags: item.tags.slice(0, 8).map(t => t.tag_cn || t.value),
-  pages: item.filecount ? `${item.filecount}p` : null,
-  date: item.published || null,
-  rating: item.rating,
-  fav: null,
-  refId: null,
-  noMeta: false,
-  noMetaText: null,
-})))
-
-
-onMounted(async () => {
-  loading.value = true
-  await loadData()
-  const groupFromUrl = parseInt(route.query.group) || 1
-  if (groupFromUrl > 1 && groupFromUrl <= groups.value.length) {
-    currentGroupIndex.value = groupFromUrl - 1
-  }
-  paginate(parseInt(route.query.page) || 1)
-  loading.value = false
-})
+const searchQuery=computed({get:()=>String(route.query.q||''),set:value=>update({q:value||undefined,page:undefined})})
+const category=computed(()=>String(route.query.type||''))
+const parsed=computed(()=>parseQuery(searchQuery.value))
+const queryResults=computed(()=>(currentGroup.value?.galleries||[]).filter(g=>passesQuery(g,parsed.value,matchGalleryTerm)))
+const counts=computed(()=>queryResults.value.reduce((out,g)=>{out[g.category]=(out[g.category]||0)+1;return out},{}))
+const filtered=computed(()=>queryResults.value.filter(g=>!category.value||g.category===category.value))
+const totalPages=computed(()=>Math.max(1,Math.ceil(filtered.value.length/perPage)))
+const page=computed(()=>Math.max(1,Math.min(totalPages.value,parseInt(route.query.page)||1)))
+const isFiltered=computed(()=>Boolean(searchQuery.value||category.value))
+const items=computed(()=>filtered.value.slice((page.value-1)*perPage,page.value*perPage).map(g=>({key:g.gid,gid:g.gid,to:g.gid?`/gallery/${g.gid}/?source=daily`:null,thumb:g.thumb,title:g.title_jpn||g.title,badge:g.category,badgeClass:exTypeClassMap[g.category]||'default',tags:enrichTags(g.tags||[],translations.value).slice(0,8).map(t=>t.tag_cn||t.value),pages:g.filecount?g.filecount+'p':null,date:formatTimestamp(g.posted)||null,rating:parseFloat(g.rating)||null,fav:null,refId:null,noMeta:false})))
+function update(values){const next={...route.query,...values};for(const key of Object.keys(next))if(next[key]===undefined||next[key]==='')delete next[key];router.replace({query:next})}
+function switchGroup(index){update({group:index?String(index+1):undefined,page:undefined})}
+function goToPage(value){const target=Math.max(1,Math.min(totalPages.value,Number(value)||1));update({page:target>1?String(target):undefined});window.scrollTo({top:0,behavior:'smooth'})}
+function date(value){if(!value)return'尚未同步';const d=new Date(value);return isNaN(d.getTime())?value:d.toLocaleString('zh-CN',{hour12:false,month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}
+async function load(){error.value='';try{const response=await fetch('/api/daily');if(!response.ok)throw new Error('每日结果暂时不可用');const result=await response.json();groups.value=result.groups;translations.value=result.translations}catch(e){error.value=e.message}finally{loading.value=false}}
+watch(viewMode,()=>update({page:undefined}))
+let stopRevision
+onMounted(()=>{load();stopRevision=watchPublicRevision(async()=>{const previous=currentGroup.value;await load();const index=groups.value.findIndex(g=>previous?.groupId?g.groupId===previous.groupId:g.name===previous?.name);if(index>=0&&index!==groupIndex.value)update({group:index?String(index+1):undefined,page:undefined})})})
+onBeforeUnmount(()=>stopRevision?.())
 </script>
-
-<style src="../assets/Home.css"></style>
-
+<template><div class="container daily-page"><div class="daily-shell"><section class="daily-header-card"><header class="daily-heading"><div><span class="daily-eyebrow">DAILY COLLECTION</span><h1>每日搜索</h1><p>按已保存的规则更新，在结果中继续筛选。</p></div><span class="daily-total">{{currentGroup?.galleries?.length||0}}<small>当前分组收录</small></span></header><nav v-if="groups.length" class="daily-group-strip" aria-label="每日分组"><button v-for="(group,index) in groups" :key="group.groupId||group.name" type="button" class="daily-group-pill" :class="{active:index===groupIndex}" :aria-pressed="index===groupIndex" @click="switchGroup(index)"><span>{{group.name||'筛选组 '+(index+1)}}</span><small>{{group.galleries?.length||0}}</small></button></nav><GallerySearchInput v-model="searchQuery" label="搜索每日画廊"/><div v-if="Object.keys(counts).length" class="daily-categories" aria-label="按分类筛选"><button type="button" :aria-pressed="!category" @click="update({type:undefined,page:undefined})">全部 <small>{{queryResults.length}}</small></button><button v-for="(count,name) in counts" :key="name" type="button" :aria-pressed="category===name" :style="{'--category':exTypeDotColors[name]}" @click="update({type:category===name?undefined:name,page:undefined})"><i/>{{name}} <small>{{count}}</small></button></div><footer class="daily-context"><p><span class="daily-fresh-dot"/>更新于 {{date(currentGroup?.generatedAt)}}<span v-if="currentGroup?.cutoffDate"> · 收录自 {{currentGroup.cutoffDate}}</span></p></footer><section v-if="rule" class="daily-rule" aria-label="分组筛选条件"><div class="daily-rule-heading"><h2>{{currentGroup.conditionsSource==='current'?'当前保存的筛选条件':'本次结果的筛选条件'}}</h2><p v-if="currentGroup.conditionsSource==='current'">历史结果未记录当时条件；此处为当前规则，下次同步后应用。</p></div><dl class="daily-rule-fields"><div class="daily-rule-expression"><dt>搜索表达式</dt><dd><code>{{rule.keyword||'不限关键词'}}</code></dd></div><div class="daily-rule-category"><dt>画廊分类</dt><dd><span v-for="[name] in ruleCategories" :key="name" :style="{'--category':exTypeDotColors[name]}"><i/>{{name}}</span></dd></div><div><dt>页数范围</dt><dd>{{pageRange(rule)}}</dd></div><div><dt>最低评分</dt><dd>{{rule.minRating==null?'不限':`★ ${rule.minRating} 及以上`}}</dd></div><div><dt>回溯范围</dt><dd>最近 {{rule.cutoffDays}} 天</dd></div></dl></section><p v-else-if="currentGroup" class="daily-rule-unavailable">此历史结果未记录筛选条件，下次同步后显示。</p></section><div v-if="error" class="daily-error" role="alert"><span>{{error}}</span><button type="button" @click="load">重新加载</button></div><div class="daily-results-header"><p aria-live="polite">{{isFiltered?'筛选结果':'当前分组'}} <strong>{{filtered.length}}</strong> 部<span v-if="isFiltered"> / {{currentGroup?.galleries?.length||0}} 部</span></p><button v-if="isFiltered" type="button" @click="update({q:undefined,type:undefined,page:undefined})">重置筛选</button></div><Paginator v-if="totalPages>1" :page="page" :total="totalPages" @go="goToPage"/><GalleryList :items="items" :loading="loading" :skeleton-count="perPage" :empty-text="isFiltered?'没有匹配的画廊':'该筛选组暂无结果'" :empty-hint="isFiltered?'试试其他关键词、分类，或重置筛选条件':'执行每日同步后，结果会显示在这里。'"/><Paginator v-if="totalPages>1" :page="page" :total="totalPages" @go="goToPage"/></div></div></template>
+<style src="../assets/Home.css">.daily-rule{border-top:1px solid var(--row-border);padding-top:18px;min-width:0}.daily-rule-heading h2{font-size:12px;font-weight:600;margin:0;color:var(--text-color)}.daily-rule-heading p,.daily-rule-unavailable{font-size:11px;color:var(--muted-color);line-height:1.7}.daily-rule-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 24px;margin:16px 0 0}.daily-rule-fields>div{min-width:0}.daily-rule-fields dt{font-size:10px;color:var(--muted-color);margin-bottom:7px}.daily-rule-fields dd{margin:0;font-size:12px;line-height:1.7;color:var(--text-color)}.daily-rule-expression,.daily-rule-category{grid-column:1/-1}.daily-rule-expression code{display:block;white-space:pre-wrap;overflow-wrap:anywhere;padding:12px 14px;background:var(--bg-color);border:1px solid var(--row-border);border-radius:8px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11px}.daily-rule-category dd{display:flex;flex-wrap:wrap;gap:8px 18px}.daily-rule-category span{display:inline-flex;align-items:center;gap:6px}.daily-rule-category i{width:6px;height:6px;background:var(--category);border-radius:50%}@media(max-width:600px){.daily-rule{padding-top:14px}.daily-rule-fields{gap:14px 10px}.daily-rule-fields dd{font-size:11px}.daily-rule-expression code{padding:10px;font-size:10px}}
+</style>
 <style scoped>
-.daily-page {
-  padding: 16px;
-}
-
-.daily-shell {
-  max-width: 1300px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.daily-header-card {
-  background: var(--row-bg);
-  border: 1px solid var(--row-border);
-  border-radius: 8px;
-  padding: 14px 16px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.daily-group-strip {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.daily-group-pill {
-  appearance: none;
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  background: var(--surface-color);
-  color: var(--text-color);
-  font-size: 13px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition:
-    background-color var(--dur-fast) var(--ease-out),
-    border-color var(--dur-fast) var(--ease-out),
-    color var(--dur-fast) var(--ease-out);
-}
-
-.daily-group-pill:hover {
-  background: var(--hover-bg);
-  border-color: var(--primary-color);
-}
-
-.daily-group-pill.active {
-  background: var(--primary-soft-bg);
-  border-color: var(--primary-soft-border);
-  color: var(--primary-on-soft);
-}
-
-.daily-group-pill-label {
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.daily-group-pill-count {
-  min-width: 22px;
-  height: 18px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: var(--row-bg);
-  border: 1px solid var(--row-border);
-  color: var(--muted-color);
-  font-size: 11px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.daily-group-pill.active .daily-group-pill-count {
-  background: var(--primary-soft-bg);
-  border-color: var(--primary-soft-border);
-  color: var(--primary-on-soft);
-}
-
-.daily-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  font-size: 12px;
-  color: var(--muted-color);
-}
-
-.daily-meta-sep {
-  opacity: 0.4;
-}
-
-.daily-filter-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.daily-filter-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--muted-color);
-  margin-right: 2px;
-}
-
-/* 纯说明性标签：无边框、低对比，避免被误认为可点击的筛选控件 */
-.filter-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  height: 22px;
-  padding: 0 8px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  font-weight: 500;
-  background: var(--tag-bg);
-  border: 1px solid var(--tag-border);
-  color: var(--tag-color);
-  cursor: default;
-}
-
-.filter-chip-exclude {
-  color: var(--muted-color);
-  text-decoration: line-through;
-  text-decoration-thickness: 1px;
-  opacity: 0.85;
-}
-
-.filter-chip-sign {
-  font-weight: 700;
-  text-decoration: none;
-}
-
-@media (max-width: 560px) {
-  .daily-page {
-    padding: 10px;
-  }
-}
+.daily-page{padding:16px}.daily-shell{max-width:1300px;margin:0 auto;display:flex;flex-direction:column;gap:16px;min-width:0}.daily-header-card{background:var(--row-bg);border:1px solid var(--row-border);border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:20px;min-width:0}.daily-heading{display:flex;justify-content:space-between;align-items:center;gap:20px}.daily-eyebrow{font-size:9px;letter-spacing:.15em;color:var(--muted-color);font-weight:600}.daily-heading h1{font-size:24px;letter-spacing:-.04em;margin:8px 0}.daily-heading p{font-size:12px;color:var(--muted-color);line-height:1.7}.daily-total{font-size:30px;letter-spacing:-.04em;text-align:right;font-variant-numeric:tabular-nums}.daily-total small{display:block;color:var(--muted-color);font-size:10px;font-weight:400;letter-spacing:0;margin-top:5px}.daily-group-strip{display:flex;gap:6px;overflow-x:auto;padding:4px;max-width:100%;background:var(--bg-color);border:1px solid var(--row-border);border-radius:11px;scrollbar-width:thin}.daily-group-pill{display:flex;align-items:center;justify-content:center;gap:10px;white-space:nowrap;flex:1;min-height:40px;padding:8px 14px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--muted-color);font-size:12px;cursor:pointer;box-shadow:none}.daily-group-pill.active{background:var(--row-bg);color:var(--text-color);border-color:var(--row-border);box-shadow:0 1px 4px #18284d08;font-weight:600}.daily-group-pill small{font-size:10px;font-weight:500;padding:2px 6px;border-radius:5px;background:var(--tag-bg);color:var(--muted-color)}.daily-group-pill.active small{color:var(--primary-color);background:var(--primary-soft-bg)}.daily-categories{display:flex;gap:8px;flex-wrap:wrap}.daily-categories button{display:flex;align-items:center;gap:6px;min-height:32px;padding:5px 10px;border:1px solid var(--row-border);border-radius:7px;background:transparent;color:var(--muted-color);font-size:11px;cursor:pointer;box-shadow:none}.daily-categories button[aria-pressed=true]{color:var(--text-color);background:var(--primary-soft-bg);border-color:var(--primary-soft-border)}.daily-categories i{width:6px;height:6px;border-radius:50%;background:var(--category)}.daily-categories small{font-size:10px;opacity:.7}.daily-context{border-top:1px solid var(--row-border);padding-top:14px;display:flex;gap:12px;align-items:start;justify-content:space-between;color:var(--muted-color);font-size:10px}.daily-context p{line-height:1.8}.daily-fresh-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:#4ba582;margin-right:6px}.daily-results-header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:2px 4px;font-size:12px;color:var(--muted-color)}.daily-results-header strong{color:var(--text-color);font-weight:600;padding:0 4px}.daily-results-header button,.daily-error button{border:0;background:none;padding:6px;color:var(--primary-color);font-size:11px;cursor:pointer}.daily-error{display:flex;align-items:center;justify-content:space-between;padding:12px;border:1px solid var(--row-border);border-radius:8px;color:var(--text-color);font-size:12px}.daily-group-pill:focus-visible,.daily-categories button:focus-visible{outline:2px solid var(--primary-color);outline-offset:1px}@media(max-width:600px){.daily-page{padding:12px}.daily-header-card{padding:18px 16px;gap:12px;border-radius:12px}.daily-heading h1{font-size:22px;margin:3px 0}.daily-eyebrow{display:none}.daily-total{font-size:26px}.daily-heading p{display:none}.daily-group-pill{flex:0 0 auto;min-width:110px}.daily-context{flex-wrap:wrap;align-items:center;gap:8px}.daily-context p{flex:1;min-width:195px;font-size:9px}.daily-categories{gap:6px}.daily-categories button{min-height:36px}}
+.daily-rule{border-top:1px solid var(--row-border);padding-top:18px;min-width:0}.daily-rule-heading h2{font-size:12px;font-weight:600;margin:0;color:var(--text-color)}.daily-rule-heading p,.daily-rule-unavailable{font-size:11px;color:var(--muted-color);line-height:1.7}.daily-rule-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 24px;margin:16px 0 0}.daily-rule-fields>div{min-width:0}.daily-rule-fields dt{font-size:10px;color:var(--muted-color);margin-bottom:7px}.daily-rule-fields dd{margin:0;font-size:12px;line-height:1.7;color:var(--text-color)}.daily-rule-expression,.daily-rule-category{grid-column:1/-1}.daily-rule-expression code{display:block;white-space:pre-wrap;overflow-wrap:anywhere;padding:12px 14px;background:var(--bg-color);border:1px solid var(--row-border);border-radius:8px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11px}.daily-rule-category dd{display:flex;flex-wrap:wrap;gap:8px 18px}.daily-rule-category span{display:inline-flex;align-items:center;gap:6px}.daily-rule-category i{width:6px;height:6px;background:var(--category);border-radius:50%}@media(max-width:600px){.daily-rule{padding-top:14px}.daily-rule-fields{gap:14px 10px}.daily-rule-fields dd{font-size:11px}.daily-rule-expression code{padding:10px;font-size:10px}}
 </style>
