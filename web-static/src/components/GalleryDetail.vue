@@ -63,15 +63,14 @@
       <section class="detail-panel tags-panel">
         <div class="panel-header">
           <div>
-            <div class="panel-eyebrow">分类标签</div>
-            <h2 class="panel-title">Tags</h2>
+            <h2 class="panel-title">标签</h2>
           </div>
           <div class="language-toggle-wrap">
             <span class="toggle-copy">{{ isChinese ? "中文" : "English" }}</span>
             <ToggleSwitch v-model="isChinese" class="language-toggle" />
           </div>
         </div>
-        <p class="tags-hint">点击标签按它检索，右侧 ⧉ 复制搜索语法</p>
+
         <div class="tags">
           <div v-for="(tags, group) in groupedTags" :key="group" class="tag-group">
             <strong>{{ group }}</strong>
@@ -98,8 +97,7 @@
       <section v-if="galleryData.torrents?.length" class="detail-panel torrents-panel">
         <div class="panel-header">
           <div>
-            <div class="panel-eyebrow">下载</div>
-            <h2 class="panel-title">Torrents</h2>
+            <h2 class="panel-title">下载</h2>
           </div>
         </div>
         <div class="torrent-table-wrapper">

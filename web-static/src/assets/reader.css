@@ -1,11 +1,11 @@
 /* web-static/src/assets/reader.css */
 :root {
-  --reader-bg: #0a0f1a;
+  --reader-bg: #101312;
   --reader-surface: rgba(255,255,255,0.06);
   --reader-border: rgba(255,255,255,0.1);
   --reader-text: #f1f5f9;
   --reader-muted: #94a3b8;
-  --reader-accent: #60a5fa;
+  --reader-accent: #94cbb5;
   --reader-error: var(--danger-color);
   --reader-overlay: rgba(0,0,0,0.8);
   --reader-bar-h: 48px;

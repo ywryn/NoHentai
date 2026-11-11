@@ -363,3 +363,5 @@
 }
 
 .stats-load-error{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border:1px solid var(--row-border);border-radius:8px;background:var(--row-bg);color:var(--text-color);font-size:12px}.stats-load-error button{border:0;background:none;color:var(--primary-color);cursor:pointer}
+
+.insight-strip{display:flex;align-items:baseline;gap:clamp(16px,3vw,48px);flex-wrap:wrap}.insight-strip>div{display:flex;flex-direction:column;gap:3px}.insight-strip strong{font-size:clamp(18px,2vw,27px);font-variant-numeric:tabular-nums;color:var(--text-color);font-weight:650}.insight-strip span{font-size:12px;color:var(--muted-color)}@media(max-width:600px){.insight-strip{width:100%;justify-content:space-between;gap:12px}.insight-strip strong{font-size:19px}}

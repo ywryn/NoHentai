@@ -177,13 +177,13 @@ def main():
                     expect(page.locator('.gt-results-list')).to_contain_text('保留的译文')
                     page.locator('.gt-result-del').click()
 
-                    page.get_by_role('button',name='翻译',exact=True).click()
+                    page.get_by_role('button',name='识别并翻译',exact=True).click()
                     expect(page.get_by_text('OCR 失败: 服务器处理请求失败，请稍后重试',exact=True)).to_be_visible()
                     ocr_mode['value']='malformed'
-                    page.get_by_role('button',name='翻译',exact=True).click()
+                    page.get_by_role('button',name='识别并翻译',exact=True).click()
                     expect(page.get_by_text('OCR 失败: 识别服务未返回有效结果，请重试或切换 OCR 服务',exact=True)).to_be_visible()
                     ocr_mode['value']='empty'
-                    page.get_by_role('button',name='翻译',exact=True).click()
+                    page.get_by_role('button',name='识别并翻译',exact=True).click()
                     expect(page.get_by_text('未识别到文字',exact=True)).to_be_visible()
                     assert 'undefined' not in page.locator('body').inner_text()
                     page.goto(BASE+'/#/printed')
@@ -245,16 +245,16 @@ def main():
                     page.goto(BASE+'/#/data')
                     expect(page.get_by_role('heading',name='收藏统计',exact=True)).to_be_visible()
                     expected_stats=page.request.get(BASE+'/api/stats').json()
-                    expect(page.locator('.summary-value')).to_have_text(str(expected_stats['stats']['total_count']))
+                    expect(page.locator('.insight-strip > div:first-child strong')).to_have_text(f"{expected_stats['stats']['total_count']:,}")
                     expect(page.locator('.heatmap-chart canvas')).to_be_visible()
                     assert '/api/stats' in catalog_requests
                     assert '/data/stats.json' not in catalog_requests
-                    page.reload();expect(page.locator('.summary-value')).to_have_text(str(expected_stats['stats']['total_count']))
+                    page.reload();expect(page.locator('.insight-strip > div:first-child strong')).to_have_text(f"{expected_stats['stats']['total_count']:,}")
                     page.route('**/api/stats',lambda route:route.fulfill(status=503,json={'error':'temporary failure'}))
                     page.reload();expect(page.locator('.stats-load-error')).to_contain_text('统计加载失败')
                     page.unroute('**/api/stats')
                     page.get_by_role('button',name='重新加载',exact=True).click()
-                    expect(page.locator('.summary-value')).to_have_text(str(expected_stats['stats']['total_count']))
+                    expect(page.locator('.insight-strip > div:first-child strong')).to_have_text(f"{expected_stats['stats']['total_count']:,}")
                     print('Statistics: /api/stats only, charts rendered, reload and error retry passed')
                     page.goto(BASE + '/#/admin')
                     page.get_by_label('管理密码', exact=True).fill(password)

@@ -5,9 +5,10 @@
                 <h1 class="page-title">收藏统计</h1>
 
             </div>
-            <div class="summary-card">
-                <span class="summary-label">收录总数</span>
-                <strong class="summary-value">{{ loadingStats && !statsLoaded ? '—' : stats.total_count }}</strong>
+            <div class="insight-strip" aria-label="收藏概览">
+                <div><strong>{{ loadingStats && !statsLoaded ? '—' : stats.total_count.toLocaleString() }}</strong><span>总收录</span></div>
+                <div><strong>{{ statsLoaded ? recentActivity.count : '—' }}</strong><span>近 30 天新增</span></div>
+                <div><strong>{{ statsLoaded ? recentActivity.activeDays : '—' }}</strong><span>近 30 天活跃天数</span></div>
             </div>
         </div>
 
@@ -34,7 +35,7 @@
                         <ToggleSwitch v-model="showFullData" @change="toggleFullData" />
                     </div>
                 </div>
-                <p class="stats-text">累计 {{ stats.total_count }} 部</p>
+
                 <div class="line-chart-container">
                     <Chart type="line" :data="quarterlyLineData" :options="quarterlyLineOptions" class="chart-full" />
                 </div>
@@ -156,6 +157,16 @@ export default {
         this._statsController?.abort();
         window.removeEventListener("focus",this.refreshVisibleStats);
         document.removeEventListener("visibilitychange",this.refreshVisibleStats);
+    },
+    computed: {
+        recentActivity() {
+            const rows = this.heatmapChartData?.datasets?.[0]?.data || [];
+            const cutoff = new Date();
+            cutoff.setUTCDate(cutoff.getUTCDate() - 29);
+            const day = cutoff.toISOString().slice(0, 10);
+            const recent = rows.filter(row => row.d >= day);
+            return {count: recent.reduce((sum, row) => sum + (Number(row.v) || 0), 0), activeDays: recent.filter(row => row.v > 0).length};
+        },
     },
     watch: {
         isDark: {

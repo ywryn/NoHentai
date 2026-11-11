@@ -26,23 +26,13 @@
         />
       </Transition>
 
-      <div class="gr-content" @click="onSurfaceClick">
+      <div class="gr-content" @click="settings.readingMode === 'book' && onSurfaceClick($event)">
         <ThumbStrip v-if="showSidebar" />
         <BookView   v-if="settings.readingMode === 'book'" />
-        <ScrollView v-else />
+        <ScrollView v-else @surface-click="onSurfaceClick" />
       </div>
 
-      <!-- 首次进入的操作提示：点击区不可见，新用户无从得知怎么翻页 -->
-      <Transition name="gr-chrome">
-        <div v-if="showHint" class="gr-hint" @click="dismissHint">
-          <div class="gr-hint-card">
-            <p class="gr-hint-title">操作提示</p>
-            <p>左右两侧点击或滑动翻页，中间区域点击可隐藏工具栏</p>
-            <p class="gr-hint-keys">键盘：← → 翻页 · F 页目录 · M 切换模式 · Esc 退出</p>
-            <button class="reader-btn gr-hint-btn" type="button">知道了</button>
-          </div>
-        </div>
-      </Transition>
+      <button v-if="!chromeVisible" class="reader-reveal" type="button" aria-label="显示阅读工具栏" @click="chromeVisible = true">{{ currentPage }} / {{ reader.total.value }}</button>
 
       <Teleport to="body">
         <ThumbGrid v-if="showThumbGrid" @close="showThumbGrid = false" />
@@ -79,19 +69,12 @@ const showThumbGrid = ref(false)
 /** 工具栏显隐，由中间点击区切换，用于沉浸阅读 */
 const chromeVisible = ref(true)
 
-const HINT_KEY = 'reader-hint-seen'
-const showHint = ref(false)
-
-function dismissHint() {
-  showHint.value = false
-  try { localStorage.setItem(HINT_KEY, '1') } catch {}
-}
 
 /** 中间 40% 区域此前什么都不做，这里让它切换工具栏显隐 */
 function onSurfaceClick(e: MouseEvent) {
   const target = e.target as HTMLElement
-  if (!target.classList.contains('click-zone-center')) return
-  chromeVisible.value = !chromeVisible.value
+  if (settings.readingMode === 'scroll') { chromeVisible.value = !chromeVisible.value; return }
+  if (target.classList.contains('click-zone-center')) chromeVisible.value = !chromeVisible.value
 }
 
 /** 直接粘贴 URL 进入时 router.back() 会把用户带离本站 */
@@ -101,7 +84,7 @@ function exit() {
 }
 
 function onKey(e: KeyboardEvent) {
-  if ((e.target as HTMLElement).tagName === 'INPUT') return
+  if (['INPUT','TEXTAREA','SELECT'].includes((e.target as HTMLElement).tagName)) return
   const rtl = settings.bookDirection === 'rtl'
   switch (e.key) {
     case 'ArrowLeft':
@@ -110,7 +93,6 @@ function onKey(e: KeyboardEvent) {
     case 'd': rtl ? prev() : next(); break
     case 'Escape':
       if (showThumbGrid.value) { showThumbGrid.value = false; return }
-      if (showHint.value) { dismissHint(); return }
       exit(); break
     case 'f': case 'F': showThumbGrid.value = !showThumbGrid.value; break
     case 'm': case 'M':
@@ -130,7 +112,6 @@ watch(currentPage, page => {
 })
 
 onMounted(async () => {
-  try { showHint.value = !localStorage.getItem(HINT_KEY) } catch { showHint.value = true }
   window.addEventListener('keydown', onKey)
   window.addEventListener('resize', onResize)
   await init(gid, token, startPage)
@@ -222,4 +203,5 @@ onBeforeUnmount(() => {
   min-height: var(--tap-target);
   padding: 0 20px;
 }
+.reader-reveal{position:absolute;top:calc(12px + env(safe-area-inset-top));right:16px;z-index:15;min-height:44px;padding:0 16px;border:1px solid var(--reader-border);border-radius:999px;background:#101512dd;color:var(--reader-text);font:inherit;cursor:pointer}
 </style>
