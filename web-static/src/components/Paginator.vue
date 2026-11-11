@@ -49,14 +49,15 @@ function submitJump() {
     jumpValue.value = String(props.page)
     return
   }
-  go(digits)
+  const target = Math.max(1, Math.min(props.total, Number(digits) || 1))
+  jumpValue.value = String(target)
+  go(target)
 }
 </script>
 
 <template>
   <nav class="pagination-control" :aria-label="`分页，共 ${total} 页`">
     <div class="paginator-mini">
-      <button class="pag-btn pag-nav" type="button" :disabled="page <= 1" aria-label="第一页" @click="go(1)">«</button>
       <button class="pag-btn pag-nav" type="button" :disabled="page <= 1" aria-label="上一页" @click="go(page - 1)">‹</button>
 
       <template v-for="item in items" :key="item.key">
@@ -73,7 +74,6 @@ function submitJump() {
       </template>
 
       <button class="pag-btn pag-nav" type="button" :disabled="page >= total" aria-label="下一页" @click="go(page + 1)">›</button>
-      <button class="pag-btn pag-nav" type="button" :disabled="page >= total" aria-label="最后一页" @click="go(total)">»</button>
 
       <label class="pag-jump-inline">
         <span class="sr-only">跳转到页码</span>
@@ -84,7 +84,8 @@ function submitJump() {
           autocomplete="off"
           spellcheck="false"
           @keydown.enter.prevent="submitJump"
-          @blur="submitJump"
+          @keydown.esc="jumpValue = String(page)"
+          @blur="jumpValue = String(page)"
         />
         <span class="pag-jump-total">/ {{ total }}</span>
       </label>
@@ -121,8 +122,8 @@ function submitJump() {
 
 .pag-btn {
   appearance: none;
-  min-width: 30px;
-  height: 30px;
+  min-width: 44px;
+  height: 44px;
   border-radius: 6px;
   background: transparent;
   border: 1px solid var(--border-color);
@@ -149,7 +150,7 @@ function submitJump() {
 .pag-btn.active {
   background: var(--primary-color);
   border-color: var(--primary-color);
-  color: #fff;
+  color: var(--primary-contrast);
   font-weight: 700;
 }
 
@@ -167,7 +168,7 @@ function submitJump() {
 
 .pag-jump-input {
   width: 44px;
-  height: 30px;
+  height: 44px;
   border-radius: 6px;
   border: 1px solid var(--border-color);
   background: var(--bg-color);

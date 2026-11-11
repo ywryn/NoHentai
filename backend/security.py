@@ -10,7 +10,7 @@ from fastapi import HTTPException
 from . import db, settings
 
 TRANS_PASSWORD_MAX_LENGTH = 1024
-COOKIE = 'nohentai_admin'
+COOKIE = os.getenv('ADMIN_COOKIE_NAME', 'nohentai_admin')
 _job_credentials = ContextVar('job_credentials', default=None)
 
 

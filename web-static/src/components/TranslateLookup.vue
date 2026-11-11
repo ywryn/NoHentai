@@ -39,7 +39,7 @@ function handleKeydown(e) {
 <template>
   <div class="tl-container">
     <div class="tl-card">
-      <div class="tl-eyebrow">Translation Workbench</div>
+
       <h2 class="tl-title">通过 URL 进入翻译</h2>
       <p class="tl-desc">输入 E-Hentai / ExHentai 画廊 URL，解析后直接进入翻译工作台</p>
 
@@ -59,7 +59,7 @@ function handleKeydown(e) {
 
       <p v-if="parseError" class="tl-error">{{ parseError }}</p>
 
-      <p class="tl-hint">支持 e-hentai.org 和 exhentai.org 链接</p>
+
     </div>
   </div>
 </template>

@@ -2,9 +2,8 @@
     <div class="data-container">
         <div class="data-page-header">
             <div class="page-copy">
-                <div class="page-eyebrow">数据分析</div>
                 <h1 class="page-title">收藏统计</h1>
-                <p class="page-subtitle">收藏趋势、分类构成、标签排行与收藏活跃度。点击标签可跳回首页按该标签检索。</p>
+
             </div>
             <div class="summary-card">
                 <span class="summary-label">收录总数</span>
@@ -16,7 +15,6 @@
         <section class="data-panel heatmap-section">
             <div class="panel-header">
                 <div>
-                    <div class="panel-eyebrow">活跃度</div>
                     <h2 class="section-title">收藏热力图</h2>
                 </div>
             </div>
@@ -29,7 +27,6 @@
             <section class="data-panel stats-left">
                 <div class="panel-header panel-header-spread">
                     <div>
-                        <div class="panel-eyebrow">趋势</div>
                         <h2 class="section-title-large">季度增长</h2>
                     </div>
                     <div class="toggle-wrapper">
@@ -45,7 +42,6 @@
             <section class="data-panel stats-right">
                 <div class="panel-header">
                     <div>
-                        <div class="panel-eyebrow">构成</div>
                         <h2 class="section-title">分类分布</h2>
                     </div>
                 </div>
@@ -59,7 +55,6 @@
             <section class="data-panel tags-section-half">
                 <div class="panel-header">
                     <div>
-                        <div class="panel-eyebrow">标签</div>
                         <h2 class="section-title">Female 标签排行</h2>
                     </div>
                 </div>
@@ -70,7 +65,6 @@
             <section class="data-panel tags-section-half">
                 <div class="panel-header">
                     <div>
-                        <div class="panel-eyebrow">标签</div>
                         <h2 class="section-title">Male 标签排行</h2>
                     </div>
                 </div>
@@ -362,7 +356,7 @@ export default {
             // 动态主题颜色
             const textColor = this.isDark ? '#f1f5f9' : '#2d3748';
             const gridColor = this.isDark ? '#475569' : '#d6d3d1';
-            
+
             return {
                 plugins: {
                     legend: {
@@ -397,7 +391,7 @@ export default {
             // 动态主题颜色
             const textColor = this.isDark ? '#f1f5f9' : '#2d3748';
             const gridColor = this.isDark ? '#475569' : '#d6d3d1';
-            
+
             return {
                 plugins: {
                     legend: {

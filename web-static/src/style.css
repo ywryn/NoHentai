@@ -797,3 +797,101 @@ img {
   /* 骨架屏改为静态占位，不再扫光 */
   .sk-shimmer::after { display: none; }
 }
+
+/* Shared palette and reading rhythm. */
+:root,.my-app-dark{
+  --bg-color:#151819;--row-bg:#1c2021;--surface-color:#252a2b;
+  --row-border:#303637;--border-color:#3e4748;--toolbar-border:#303637;
+  --text-color:#e8edeb;--title-color:#edf1ef;--muted-color:#a6b2ae;
+  --hover-bg:#303837;--row-hover-bg:#242c29;--sidebar-bg:#191d1c;
+  --primary-color:#94cbb5;--primary-color-hover:#b4dfcc;--primary-contrast:#142c23;
+  --primary-soft-bg:#94cbb514;--primary-soft-border:#94cbb54d;--primary-on-soft:#b4dfcc;
+  --tag-bg:#ffffff06;--tag-border:#39423e;--tag-color:#b9c4bf;--placeholder-bg:#272f2b;
+}
+.my-app-light{
+  --bg-color:#f6f7f4;--row-bg:#fff;--surface-color:#f0f2ed;
+  --row-border:#e1e5de;--border-color:#cdd4ca;--toolbar-border:#e1e5de;
+  --text-color:#29352f;--title-color:#202d26;--muted-color:#657269;
+  --hover-bg:#e9eee7;--row-hover-bg:#f7f9f5;--sidebar-bg:#edf1ea;
+  --primary-color:#37644e;--primary-color-hover:#254b38;--primary-contrast:#fff;
+  --primary-soft-bg:#37644e0c;--primary-soft-border:#37644e40;--primary-on-soft:#315a45;
+  --tag-bg:#f5f7f2;--tag-border:#e0e6dc;--tag-color:#5a685c;--placeholder-bg:#e8ede3;
+}
+button,input,select,textarea{font:inherit}
+button,a,input,summary,select,textarea{touch-action:manipulation}
+:focus-visible{outline:2px solid var(--primary-color);outline-offset:3px}
+.skip-link{position:fixed;top:-80px;left:16px;z-index:1000;background:var(--row-bg);padding:12px 18px;border:1px solid var(--primary-color);border-radius:8px}
+.skip-link:focus{top:12px}
+.route-shell:focus{outline:none}
+.app-shell .home-page{padding:32px 24px 40px}
+.app-shell .home-shell{max-width:1240px;gap:20px}
+.app-shell .home-header-card{padding:0;background:none;box-shadow:none;gap:24px}
+.app-shell .home-copy{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+.catalog-title{margin:0;font-size:28px;font-weight:650;letter-spacing:-.04em}
+.catalog-count{font-size:13px;color:var(--muted-color);font-variant-numeric:tabular-nums}
+.app-shell .home-filter-panel{padding:0;gap:12px}
+.app-shell .home-content-panel{gap:8px}
+.app-shell .gallery-list{padding:0;gap:0;border:1px solid var(--row-border);border-radius:12px;overflow:hidden;background:var(--row-bg)}
+.app-shell .gallery-row{border:0;border-bottom:1px solid var(--row-border);border-radius:0;padding:18px 20px;gap:18px}
+.app-shell .gallery-row:last-child{border-bottom:0}
+.app-shell .gallery-row:focus-visible{outline-offset:-3px}
+.app-shell .gr-thumb{width:62px;height:88px;border-radius:5px}
+.app-shell .gr-body{gap:10px;align-self:center}
+.app-shell .gr-title{font-size:14px;font-weight:500;line-height:1.6}
+.app-shell .gr-tags{gap:6px}
+.app-shell .gr-tag{font-size:11px;height:20px;border-color:transparent;padding:0 6px}
+.app-shell .gr-badge{height:19px;font-size:10px;font-weight:600}
+.app-shell .gr-meta{flex-wrap:wrap;gap:6px 12px}
+.app-shell .vm-cover-grid{padding:0;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:24px 18px}
+.app-shell .vm-cover-card{border:0;background:transparent;border-radius:6px;box-shadow:none}
+.app-shell .vm-cover-img{border-radius:6px;overflow:hidden}
+.app-shell .vm-cover-info{padding:12px 0;gap:8px}
+.app-shell .vm-cover-title{font-size:13px;line-height:1.6}
+.app-shell .vm-cover-meta{gap:6px;flex-wrap:wrap}
+.app-shell .vm-cover-sub{flex-wrap:wrap;gap:6px}
+.app-shell .empty-state{padding:72px 24px;min-height:240px;box-sizing:border-box}
+.catalog-error{padding:32px;border:1px solid var(--row-border);border-radius:12px;background:var(--row-bg);text-align:center;color:var(--muted-color)}
+.catalog-error button{min-height:44px;padding:8px 20px;border:1px solid var(--border-color);border-radius:8px;background:var(--surface-color);color:var(--text-color);cursor:pointer}
+.app-shell .home-filter-chip,.app-shell .home-clear-all{min-height:36px;height:auto}
+.app-shell .search-control-box{background:var(--row-bg)}
+.app-shell .digi-container,.app-shell .data-container{max-width:1288px;padding:32px 24px 40px}
+.app-shell .digi-title,.app-shell .page-title,.app-shell .daily-heading h1{font-size:28px;font-weight:650;letter-spacing:-.04em}
+.app-shell .digi-header{flex-wrap:wrap;gap:8px 18px;margin-bottom:24px}
+.app-shell .digi-stats{color:var(--muted-color)}
+.app-shell .daily-page{padding:32px 24px}
+.app-shell .daily-shell{max-width:1240px}
+.app-shell .daily-header-card{padding:24px;box-shadow:none}
+.app-shell .daily-rule summary{cursor:pointer;color:var(--muted-color);font-size:13px;min-height:32px}
+.app-shell .daily-rule[open] summary{margin-bottom:16px}
+.app-shell .daily-group-pill,.app-shell .daily-categories button{min-height:44px}
+.app-shell .data-page-header{box-shadow:none;background:none;border:0;padding:0 0 24px}
+.app-shell .data-panel{box-shadow:none;border:1px solid var(--row-border)}
+.app-shell .tl-card{box-shadow:none;border:1px solid var(--row-border)}
+@media(max-width:767px){
+ .app-shell .home-page,.app-shell .daily-page{padding:24px 16px}
+ .app-shell .digi-container,.app-shell .data-container{padding:24px 16px}
+ .app-shell .catalog-title,.app-shell .digi-title,.app-shell .page-title,.app-shell .daily-heading h1{font-size:24px}
+ .app-shell .home-header-card{gap:20px}
+ .app-shell .gallery-row{padding:14px 12px;gap:12px}
+ .app-shell .gr-thumb{width:56px;height:80px}
+ .app-shell .gr-top{flex-wrap:wrap;gap:5px}
+ .app-shell .gr-title{flex-basis:100%;font-size:13px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.55}
+ .app-shell .gr-body{gap:7px}
+ .app-shell .gr-fav{display:none}
+ .app-shell .gr-date,.app-shell .gr-pages{font-size:11px}
+ .app-shell .vm-cover-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:18px 14px}
+ .app-shell .daily-header-card{padding:16px;gap:16px}
+ .app-shell .daily-heading{align-items:center}
+ .app-shell .home-filter-chip,.app-shell .home-clear-all{min-height:44px}
+ .app-shell .nav-actions button{width:44px;height:44px}
+}
+.app-shell .digi-container>.gallery-list,.app-shell .digi-container>.vm-cover-grid{margin-top:20px}
+.app-shell .gallery-detail-page{max-width:1240px}
+.app-shell .gd-hero,.app-shell .gd-panel,.app-shell .stat-card{box-shadow:none}
+.app-shell .gd-action{min-height:44px}
+.app-shell .tag-item{min-height:32px}
+@media(max-width:767px){.app-shell .tag-item{min-height:44px}}
+/* Keep the loading footprint close to the loaded cards in both view modes. */
+.app-shell .gallery-row.sk-card{min-height:124px}
+.app-shell .vm-cover-card.sk-card .vm-cover-info{min-height:104px;box-sizing:border-box}
+@media(max-width:767px){.app-shell .gallery-row.sk-card{min-height:144px}}

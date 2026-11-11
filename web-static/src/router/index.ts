@@ -89,9 +89,10 @@ const router = createRouter({
    * 此前未配置：翻页后停留在原滚动位置，用户点击底部「下一页」
    * 看到的是新一页的尾部。
    */
-  scrollBehavior(to, _from, savedPosition) {
+  scrollBehavior(to, from, savedPosition) {
     if (savedPosition) return savedPosition
     if (to.meta.immersive) return false
+    if (to.path === from.path && to.query.page === from.query.page) return false
     return { top: 0 }
   },
 })

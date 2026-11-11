@@ -71,7 +71,7 @@ defineExpose({ focus, clear, reset })
         <button v-if="text" type="button" class="search-control-clear" :aria-label="`清空${label}`" @mousedown.prevent @click="clear">×</button>
         <ul v-if="visible" :id="`${id}-options`" class="search-control-suggestions" role="listbox" aria-label="标签建议">
           <li v-for="(item,index) in items" :id="`${id}-option-${index}`" :key="item.tag" role="option" :aria-selected="highlight === index"
-            @mousedown.prevent="choose(item)" @mouseenter="highlight = index">
+            @pointerdown.prevent="choose(item)" @mouseenter="highlight = index">
             <strong>{{item.tag_cn || item.value}}</strong><small>{{item.namespace}}:"{{item.value}}$"</small>
           </li>
         </ul>
@@ -97,4 +97,11 @@ defineExpose({ focus, clear, reset })
 .search-control-suggestions li{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;padding:9px 10px;border-radius:6px;cursor:pointer}.search-control-suggestions li:hover,.search-control-suggestions li[aria-selected=true]{background:var(--search-hover)}.search-control-suggestions strong{font-size:12px;font-weight:550}.search-control-suggestions small{font-size:10px;color:var(--search-muted);overflow-wrap:anywhere}
 .search-control-syntax{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 16px;padding-top:12px}.search-control-syntax button{display:flex;gap:10px;align-items:start;padding:7px 0;text-align:left;border:0;background:none;color:var(--search-muted);font-size:11px;cursor:pointer;box-shadow:none}.search-control-syntax code{color:var(--search-accent);min-width:65px}.search-control-note{display:block;color:var(--search-muted);font-size:11px;margin-top:6px}.search-control button:focus-visible,.search-control [role=option]:focus-visible{outline:2px solid var(--search-accent);outline-offset:2px}
 @media(max-width:600px){.search-control-syntax{grid-template-columns:1fr}.search-control-row{gap:6px}.search-control-help{padding:0 9px}}
+@media(max-width:600px){
+.search-control-row:has(.home-filter-btn){flex-wrap:wrap}
+.search-control-row:has(.home-filter-btn) .search-control-box{flex-basis:100%}
+.search-control .search-control-box input{font-size:16px}
+.search-control-clear{min-width:44px;min-height:44px}
+.search-control-suggestions li{min-height:44px}
+}
 </style>

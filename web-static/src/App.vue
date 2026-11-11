@@ -8,6 +8,7 @@ import ViewModeToggle from '@/components/ViewModeToggle.vue'
 
 const { initMomMode } = useMomMode()
 const route = useRoute()
+function focusContent() { document.getElementById("main-content")?.focus() }
 
 /** 阅读器与翻译工作台是沉浸式全屏页，不显示全局导航（由路由 meta 声明） */
 const isImmersivePage = computed(() => Boolean(route.meta.immersive))
@@ -57,12 +58,13 @@ onMounted(() => {
 
 <template>
   <div class="app-shell" :class="{ 'has-tabbar': !isImmersivePage }">
+    <a v-if="!isImmersivePage" class="skip-link" href="#main-content" @click.prevent="focusContent">跳至内容</a>
     <header class="navigation-bar" v-if="!isImmersivePage">
-      <RouterLink class="brand-logo" to="/" aria-label="NoHentai 首页">の</RouterLink>
+      <RouterLink class="brand-logo" to="/" aria-label="NoHentai 首页"><span class="brand-mark">の</span><span class="brand-name">NoHentai</span></RouterLink>
 
       <nav class="nav-menu" aria-label="主导航">
         <RouterLink v-for="item in navItems" :key="item.to" :to="item.to" :title="item.title">
-          {{ item.title }}
+          {{ item.label }}
         </RouterLink>
       </nav>
 
@@ -73,7 +75,7 @@ onMounted(() => {
       </div>
     </header>
 
-    <main class="route-shell">
+    <main id="main-content" class="route-shell" tabindex="-1">
       <router-view v-slot="{ Component }">
         <Transition name="route-fade" mode="out-in">
           <component :is="Component" />
@@ -92,6 +94,8 @@ onMounted(() => {
 </template>
 
 <style scoped>
+ .brand-name { font-size: 16px; letter-spacing: -.04em; color: var(--text-color); }
+.navigation-bar { padding-inline: max(20px, calc((100vw - 1280px) / 2)) !important; }
 /* ═══ 顶栏 ═══════════════════════════════════════════════ */
 
 .navigation-bar {
@@ -117,10 +121,12 @@ onMounted(() => {
 }
 
 .brand-logo {
-  width: 36px;
-  height: 36px;
+  width: auto;
+  height: 44px;
+  gap: 10px;
+  padding: 0 10px;
   border-radius: 10px;
-  background: var(--logo-bg);
+  background: transparent;
   color: var(--logo-text);
   display: flex;
   align-items: center;
@@ -129,8 +135,7 @@ onMounted(() => {
   font-size: 20px;
   text-decoration: none;
   flex-shrink: 0;
-  border: 1px solid var(--logo-border);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  border: 0;
   transition: color var(--dur-fast) var(--ease-out);
 }
 

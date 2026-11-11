@@ -40,23 +40,20 @@ onBeforeUnmount(()=>{document.documentElement.classList.remove('admin-active','a
     <AdminConfirm ref="confirmation" />
     <div v-if="restoring" class="a-restore-login" role="status"><span class="a-spinner" />正在恢复登录…</div>
     <template v-else-if="!session">
-      <header class="a-login-header"><RouterLink to="/" class="a-brand"><span class="a-brand-symbol">の</span><span>NoHentai <small>Workspace</small></span></RouterLink><button class="a-button a-ghost" @click="toggleTheme"><AdminIcon :name="isDark ? 'sun' : 'moon'" :size="18" />{{ isDark ? '浅色外观' : '深色外观' }}</button></header>
+      <header class="a-login-header"><RouterLink to="/" class="a-brand"><span class="a-brand-symbol">の</span><span>NoHentai <small>站点管理</small></span></RouterLink><button class="a-button a-ghost" @click="toggleTheme"><AdminIcon :name="isDark ? 'sun' : 'moon'" :size="18" />{{ isDark ? '浅色外观' : '深色外观' }}</button></header>
       <main class="a-login-layout">
-        <div class="a-login-story"><span class="a-eyebrow">YOUR COLLECTION, WELL MANAGED</span><h1>内容有序，<br />管理从容。</h1><p>从画廊与实体书单，到每日规则和站点运行，<br class="a-desktop-only" />在一个清晰的工作空间里完成。</p><div class="a-login-feature"><AdminIcon name="shield" /><span>独立身份验证 · 按条保存 · 历史恢复</span></div></div>
         <form class="a-login-form a-card" @submit.prevent="unlock">
-          <span class="a-icon-tile"><AdminIcon name="key" :size="24" /></span><h2>登录管理后台</h2><p>欢迎回来，继续管理你的站点。</p>
+          <span class="a-icon-tile"><AdminIcon name="key" :size="24" /></span><h2>登录管理后台</h2>
           <div class="a-field"><label for="admin-password">管理密码</label><div class="a-password-input"><input id="admin-password" v-model="input" :type="showPassword ? 'text' : 'password'" autocomplete="current-password" required :disabled="busy" placeholder="输入独立管理密码" /><button type="button" :aria-label="showPassword ? '隐藏密码' : '显示密码'" @click="showPassword = !showPassword">{{ showPassword ? '隐藏' : '显示' }}</button></div></div>
           <div v-if="error" class="a-alert a-alert-error" role="alert"><AdminIcon name="info" />{{ error }}</div>
           <label class="a-remember-login"><input v-model="remember" type="checkbox" :disabled="busy" />记住登录 30 天</label>
-          <button class="a-button a-primary a-login-submit" :disabled="busy"><span v-if="busy" class="a-spinner" />{{ busy ? '正在验证…' : '进入工作空间' }}<AdminIcon v-if="!busy" name="arrow" :size="17" /></button>
-          <p class="a-login-footnote"><AdminIcon name="shield" :size="14" />会话保存在安全 Cookie 中。修改密码会撤销全部设备登录。</p>
+          <button class="a-button a-primary a-login-submit" :disabled="busy"><span v-if="busy" class="a-spinner" />{{ busy ? '正在验证…' : '登录' }}<AdminIcon v-if="!busy" name="arrow" :size="17" /></button>
         </form>
-      </main><footer class="a-login-footer">NoHentai / Private workspace</footer>
+      </main><footer class="a-login-footer">NoHentai</footer>
     </template>
     <template v-else>
       <aside class="a-sidebar">
         <RouterLink to="/admin/overview" class="a-brand"><span class="a-brand-symbol">の</span><span>NoHentai<small>管理工作空间</small></span></RouterLink>
-        <div class="a-workspace-switch"><span class="a-workspace-avatar">N</span><div><strong>个人站点</strong><span>管理空间</span></div><AdminIcon name="shield" :size="17" /></div>
         <nav aria-label="管理功能"><div v-for="group in navigation" :key="group.label" class="a-nav-group"><p>{{ group.label }}</p><RouterLink v-for="[path, label, icon] in group.items" :key="path" :to="`/admin/${path}`"><AdminIcon :name="icon" :size="19" /><span>{{ label }}</span><span v-if="route.path === `/admin/${path}`" class="a-nav-active-dot" /></RouterLink></div></nav>
         <div class="a-sidebar-footer"><RouterLink to="/"><AdminIcon name="arrow" :size="18" />查看网站</RouterLink><AdminPrivacyToggle /><button @click="toggleTheme"><AdminIcon :name="isDark ? 'sun' : 'moon'" :size="18" />{{ isDark ? '切换浅色外观' : '切换深色外观' }}</button><button @click="lock"><AdminIcon name="logout" :size="18" />退出管理</button></div>
       </aside>

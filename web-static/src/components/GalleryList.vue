@@ -1,5 +1,7 @@
 <script setup>
+import { reactive } from 'vue'
 import Rating from 'primevue/rating'
+const failedImages = reactive(new Set())
 import { RouterLink } from 'vue-router'
 import { useViewMode } from '@/composables/useViewMode'
 
@@ -68,7 +70,7 @@ function linkProps(item) {
       @click="$emit('click', item)"
     >
       <div class="vm-cover-img">
-        <img v-if="item.thumb" :src="item.thumb" :alt="item.title" loading="lazy" decoding="async" />
+        <img v-if="item.thumb && !failedImages.has(item.thumb)" @error="failedImages.add(item.thumb)" :src="item.thumb" :alt="item.title" loading="lazy" decoding="async" />
         <div v-else class="vm-cover-placeholder" aria-hidden="true">{{ titleChar(item.title) }}</div>
       </div>
       <div class="vm-cover-info">
@@ -115,7 +117,7 @@ function linkProps(item) {
       @click="$emit('click', item)"
     >
       <div class="gr-thumb">
-        <img v-if="item.thumb" :src="item.thumb" :alt="item.title" loading="lazy" decoding="async" />
+        <img v-if="item.thumb && !failedImages.has(item.thumb)" @error="failedImages.add(item.thumb)" :src="item.thumb" :alt="item.title" loading="lazy" decoding="async" />
         <div v-else class="gr-thumb-placeholder" aria-hidden="true">{{ titleChar(item.title) }}</div>
       </div>
       <div class="gr-body">
