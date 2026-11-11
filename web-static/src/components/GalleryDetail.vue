@@ -14,7 +14,7 @@
 
         <div class="gd-main">
           <div class="hero-copy">
-            <div class="eyebrow">画廊详情</div>
+
             <h1 class="title">{{ getDisplayTitle() }}</h1>
             <p v-if="galleryData.title_jpn" class="subtitle">{{ galleryData.title_jpn }}</p>
           </div>

@@ -153,7 +153,7 @@ onBeforeUnmount(()=>{ sequence++;matchSequence++;window.removeEventListener('bef
 </script>
 <template>
   <div class="a-page" :aria-busy="loading || busy">
-    <header class="a-page-heading"><div class="a-page-title"><AdminMenuButton /><div><h1>{{ titles[kind] }}</h1><p role="status">{{ busy ? '正在处理…' : dirty ? '当前条目有未保存修改' : '按条保存 · 独立版本 · 修改可追溯' }}</p></div></div><div class="a-heading-actions"><button class="a-button" :disabled="busy" @click="reload">刷新列表</button><button v-if="kind!=='gallery'" class="a-button" :disabled="busy" @click="add">{{ kind==='book' ? '新增书目' : '新增分组' }}</button><button class="a-button a-primary" :disabled="busy || !dirty" @click="save">保存当前条目</button></div></header>
+    <header class="a-page-heading"><div class="a-page-title"><AdminMenuButton /><div><h1>{{ titles[kind] }}</h1><p role="status">{{ busy ? '正在处理…' : dirty ? '当前条目有未保存修改' : '' }}</p></div></div><div class="a-heading-actions"><button class="a-button" :disabled="busy" @click="reload">刷新列表</button><button v-if="kind!=='gallery'" class="a-button" :disabled="busy" @click="add">{{ kind==='book' ? '新增书目' : '新增分组' }}</button><button class="a-button a-primary" :disabled="busy || !dirty" @click="save">保存当前条目</button></div></header>
     <div v-if="error" class="a-alert a-alert-error" role="alert">{{ error }} <a v-if="errorStatus===401" href="#/admin" target="_blank">新标签页登录</a><button v-if="data" class="a-text-button" @click="exportDraft">导出草稿</button></div>
     <div v-if="notice" class="a-alert a-alert-success" role="status">{{ notice }} <RouterLink v-if="kind==='daily'" to="/admin/tasks">查看任务</RouterLink></div>
     <div class="a-master-detail a-gallery-layout" :class="{'a-detail-open':detailOpen}">

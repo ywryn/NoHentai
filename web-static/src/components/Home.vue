@@ -4,10 +4,8 @@
       <div class="home-header-card">
         <div class="home-header-main">
           <div class="home-copy">
-            <div class="home-eyebrow">
-              NoHentai · 共 {{ totalRecords }} 部
-              <span v-if="isFiltered" class="home-eyebrow-sub">（已筛选自 {{ totalAll }} 部）</span>
-            </div>
+            <h1 class="catalog-title">收藏画廊</h1>
+            <span class="catalog-count" aria-live="polite">{{ loading ? '正在加载…' : `${totalRecords.toLocaleString()} 部` }}<span v-if="isFiltered && !loading"> / {{ totalAll.toLocaleString() }} 部</span></span>
           </div>
         </div>
 
@@ -39,7 +37,7 @@
 
           <!-- 当前生效的筛选条件：逐项可移除 -->
           <div v-if="isFiltered" class="home-active-filters">
-            <span class="home-active-label">当前条件</span>
+
             <button
               v-for="term in activeTerms"
               :key="`t-${term.raw}`"
@@ -71,22 +69,22 @@
         </div>
       </div>
 
-      <section class="home-content-panel">
-        <div v-if="error" role="alert"><p>{{ error }}</p><button type="button" @click="fetchPage">重新加载</button></div>
-        <Paginator v-if="totalPages > 1" :page="currentPage" :total="totalPages" @go="goToPage" />
+      <section class="home-content-panel" :aria-busy="loading" aria-label="画廊列表">
+        <div v-if="error" class="catalog-error" role="alert"><p>{{ error }}</p><button type="button" @click="fetchPage">重新加载</button></div>
+        <Paginator v-if="totalPages > 1 && !error" :page="currentPage" :total="totalPages" @go="goToPage" />
 
-        <GalleryList
+        <GalleryList v-if="!error"
           :items="normalizedItems"
           :loading="loading"
           :skeleton-count="perPage"
           empty-text="没有匹配的画廊"
-          empty-hint="试试放宽条件，或点搜索框右侧的「语法」查看高级用法"
+          empty-hint="试试其他关键词，或清除筛选条件。"
         />
 
-        <Paginator v-if="totalPages > 1" :page="currentPage" :total="totalPages" @go="goToPage" />
+        <Paginator v-if="totalPages > 1 && !error" :page="currentPage" :total="totalPages" @go="goToPage" />
       </section>
 
-      <Popover ref="categoryPopover" class="category-popover">
+      <Popover ref="categoryPopover" class="category-popover" @show="categoryOpen = true" @hide="categoryOpen = false">
         <div class="category-panel">
           <div class="category-panel-head">
             <span class="category-panel-title">按分类筛选</span>
@@ -140,10 +138,10 @@ const PER_PAGE = 30
 const router = useRouter()
 const route = useRoute()
 
-function setQuery(patch) {
+function setQuery(patch, history = false) {
   const query = { ...route.query, ...patch }
   for (const key of Object.keys(query)) if (query[key] === undefined || query[key] === '') delete query[key]
-  if (JSON.stringify(query) !== JSON.stringify(route.query)) router.replace({ query })
+  if (JSON.stringify(query) !== JSON.stringify(route.query)) router[history ? 'push' : 'replace']({ query })
 }
 const appliedQuery = computed({
   get: () => String(route.query.q || ''),
@@ -156,7 +154,7 @@ const activeTypes = computed({
 })
 const currentPage = computed({
   get: () => Math.max(1, Number.parseInt(route.query.page) || 1),
-  set: page => setQuery({ page: page > 1 ? String(page) : undefined }),
+  set: page => setQuery({ page: page > 1 ? String(page) : undefined }, true),
 })
 const pageItems = ref([]), totalRecords = ref(0), totalAll = ref(0)
 const typeCounts = ref({}), totalTypeCounts = ref({})
@@ -243,7 +241,6 @@ function goToPage(page) {
 }
 
 function toggleCategoryPanel(event) {
-  categoryOpen.value = !categoryOpen.value
   categoryPopover.value?.toggle(event)
 }
 

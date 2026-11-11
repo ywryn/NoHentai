@@ -86,3 +86,36 @@
 .admin-shell .ops-gallery-matches::-webkit-scrollbar-thumb:hover {
   background: var(--a-accent);
 }
+
+/* Workspace refinements: align with the catalog and keep controls legible. */
+.admin-shell{--a-bg:#f6f7f4;--a-subtle:#f1f4ee;--a-border:#e0e5db;--a-text:#29352f;--a-muted:#657269;--a-faint:#728070;--a-accent:#37644e;--a-accent-hover:#254b38;--a-soft:#edf3eb}
+.my-app-dark .admin-shell{--a-bg:#151819;--a-panel:#1c2021;--a-subtle:#252c28;--a-border:#343e37;--a-text:#e8edeb;--a-muted:#a6b2ae;--a-faint:#95a48f;--a-accent:#94cbb5;--a-accent-hover:#b4dfcc;--a-soft:#273b30}
+.admin-shell .a-login-layout{display:block;max-width:440px;min-height:0;margin:8vh auto 12vh;padding:0 20px}
+.admin-shell .a-login-form{padding:32px;box-shadow:none}
+.admin-shell .a-login-form h2{font-size:24px;margin:20px 0 28px}
+.admin-shell .a-login-submit{margin-top:12px}
+.admin-shell .a-login-footer{padding:16px}
+.admin-shell .a-nav-group>a{font-size:13px;min-height:44px}
+.admin-shell .a-sidebar-footer a,.admin-shell .a-sidebar-footer button{min-height:44px}
+.admin-shell .a-sidebar>.a-brand{margin-bottom:32px}
+.admin-shell .a-button{min-height:42px;font-size:13px!important}
+.admin-shell .ops-kicker,.admin-shell .a-eyebrow{display:none}
+.admin-shell .ops-header-copy h1{letter-spacing:-.035em}
+.admin-shell .a-field>label{font-size:13px}
+.admin-shell .a-card{box-shadow:none}
+.admin-shell .ops-icon{width:44px;height:44px}
+.admin-shell .ops-tabs{overflow-x:auto;gap:24px}
+.admin-shell .ops-tabs button{white-space:nowrap;min-height:44px}
+.admin-shell .v2-record-actions{padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(max-width:700px){
+ .admin-shell input:not([type=checkbox]):not([type=radio]),.admin-shell textarea,.admin-shell select{font-size:16px;min-height:44px}
+ .admin-shell .a-button{min-height:44px}
+ .admin-shell .a-login-layout{margin:5vh auto}
+ .admin-shell .a-login-form{padding:24px}
+ .admin-shell .a-login-header{padding:20px 16px}
+ .admin-shell .v2-record-actions{gap:10px}
+}
+.admin-shell .search-control-box input:not([type=checkbox]):not([type=radio]){border:0;border-radius:0;background:transparent;padding:8px 0;box-shadow:none;outline:none}
+.admin-shell .ops-category-picker button{opacity:1;min-height:36px}
+.my-app-dark .admin-shell .ops-category-picker button{color:color-mix(in srgb,var(--category) 45%,#fff)!important}
+@media(max-width:700px){.admin-shell .ops-category-picker button{min-height:44px}}
