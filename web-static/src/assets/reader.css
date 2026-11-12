@@ -19,7 +19,7 @@
   border: 3px solid rgba(148,163,184,0.2);
   border-top-color: var(--reader-accent);
   border-radius: 50%;
-  animation: reader-spin 0.8s linear infinite;
+
 }
 @keyframes reader-spin { to { transform: rotate(360deg); } }
 
@@ -85,3 +85,20 @@
 /* Instant (no animation) */
 .instant-enter-active,
 .instant-leave-active { transition: none; }
+
+/* Motion is opt-in; static loading/progress states remain visible. */
+@media (prefers-reduced-motion: no-preference) {
+.reader-spinner { animation: reader-spin 0.8s linear infinite; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* A live preference change must also settle an in-flight page turn. */
+  .slide-left-enter-active, .slide-left-leave-active,
+  .slide-right-enter-active, .slide-right-leave-active,
+  .flip-left-enter-active, .flip-left-leave-active,
+  .flip-right-enter-active, .flip-right-leave-active { transition: none; }
+  .slide-left-enter-from, .slide-left-leave-to,
+  .slide-right-enter-from, .slide-right-leave-to,
+  .flip-left-enter-from, .flip-left-leave-to,
+  .flip-right-enter-from, .flip-right-leave-to { transform: none; opacity: 1; }
+}

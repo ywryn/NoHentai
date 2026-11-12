@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeUnmount } from 'vue'
+import { ref, nextTick, onBeforeUnmount } from 'vue'
 import AdminIcon from './AdminIcon.vue'
 const modal = ref(null), options = ref({})
 let resolvePending
@@ -7,9 +7,9 @@ function ask(value) {
   if (resolvePending) return Promise.resolve(false)
   options.value = value
   modal.value.returnValue = ''
-  return new Promise(resolve => { resolvePending = resolve; modal.value.showModal() })
+  return new Promise(resolve => { resolvePending = resolve; nextTick(() => { if (resolvePending) modal.value?.showModal() }) })
 }
-function closed() { resolvePending?.(modal.value.returnValue === 'confirm'); resolvePending = null }
+function closed() { const confirmed = modal.value.returnValue === 'confirm'; modal.value.returnValue = ''; resolvePending?.(confirmed); resolvePending = null }
 onBeforeUnmount(() => resolvePending?.(false))
 defineExpose({ ask })
 </script>

@@ -5,26 +5,31 @@
 
       <h2 class="gt-pwd-title">访问验证</h2>
 
-      <div class="gt-pwd-form">
+      <form class="gt-pwd-form" @submit.prevent="verifyPassword">
         <input
           ref="pwdInputRef"
+          id="translate-access-password"
+          aria-label="翻译访问密码"
+          autocomplete="current-password"
+          :aria-invalid="Boolean(passwordError)"
+          :aria-describedby="passwordError ? 'translate-access-error' : undefined"
+          required
           v-model="passwordInput"
           type="password"
           placeholder="输入密码"
           class="gt-pwd-input"
           :disabled="passwordLoading"
           autofocus
-          @keydown.enter="verifyPassword"
         />
         <button
           class="gt-btn gt-btn-primary"
           :disabled="passwordLoading || !passwordInput"
-          @click="verifyPassword"
+          type="submit"
         >
           {{ passwordLoading ? '验证中...' : '进入' }}
         </button>
-      </div>
-      <p v-if="passwordError" class="gt-pwd-error">{{ passwordError }}</p>
+      </form>
+      <p v-if="passwordError" id="translate-access-error" class="gt-pwd-error" role="alert">{{ passwordError }}</p>
       <button class="gt-pwd-back" @click="$router.back()"><AppIcon name="arrow-left" :size="18" /> 返回</button>
     </div>
   </div>
@@ -128,13 +133,7 @@
         <!-- 移动端抽屉把手：收起时只占一条，图片区因此能拿到整屏 -->
         <div
           class="gt-sheet-handle"
-          role="button"
-          tabindex="0"
-          :aria-expanded="sheetState !== 'peek'"
-          aria-label="识别结果面板"
           @pointerdown="onSheetPointerDown"
-          @keydown.enter.prevent="cycleSheet"
-          @keydown.space.prevent="cycleSheet"
         >
           <span class="gt-sheet-grip"></span>
           <div class="gt-sheet-row">
@@ -146,10 +145,10 @@
               @pointerdown.stop
               @click.stop="prevPage"
             ><AppIcon name="chevron-left" :size="18" /></button>
-            <span class="gt-sheet-label">
+            <button type="button" class="gt-sheet-label" aria-label="识别结果面板" :aria-expanded="sheetState !== 'peek'" @pointerdown.stop @click="cycleSheet">
               识别结果
               <span v-if="ocrResults.length" class="gt-sheet-count">{{ ocrResults.length }}</span>
-            </span>
+            </button>
             <button
               class="gt-sheet-nav"
               type="button"
@@ -297,22 +296,20 @@
         </div>
 
         <div v-else class="gt-results-list">
-          <div
+          <article
             v-for="(result, i) in ocrResults"
             :key="result._id"
             class="gt-result-item"
             :data-idx="i"
             :class="{ 'gt-result-selected': selectedBoxIdx === i }"
-            role="button" tabindex="0" :aria-label="`查看第 ${i + 1} 条识别结果`"
-            @keydown.enter.prevent="onResultClick(i)" @keydown.space.prevent="onResultClick(i)"
             @click="onResultClick(i)"
           >
             <div class="gt-result-meta">
-              <span class="gt-result-idx">{{ i + 1 }}</span>
+              <button type="button" class="gt-result-idx" :aria-label="`查看第 ${i + 1} 条识别结果`" :aria-pressed="selectedBoxIdx === i" @click.stop="onResultClick(i)">{{ i + 1 }}</button>
               <span v-if="result.confidence < 0.8" class="gt-result-conf" :title="`识别置信度 ${(result.confidence * 100).toFixed(0)}%`">待核对</span>
 
               <span v-if="result.translation" class="gt-done-mark"><AppIcon name="check" :size="14" /></span>
-              <button class="gt-result-del" @click.stop="deleteResult(i)" title="删除"><AppIcon name="close" :size="18" /></button>
+              <button class="gt-result-del" @click.stop="deleteResult(i)" :aria-label="`删除第 ${i + 1} 条识别结果`" title="删除"><AppIcon name="close" :size="18" /></button>
             </div>
             <div v-if="studyMode && studyTokens[result._id]" class="gt-result-orig gt-token-line">
               <span
@@ -333,6 +330,7 @@
                 ref="editInput"
                 v-model="editingText"
                 class="gt-edit-input"
+                aria-label="编辑译文"
                 rows="2"
                 @keydown.enter.exact.prevent="commitEdit"
                 @keydown.esc.prevent="cancelEdit"
@@ -355,7 +353,7 @@
                 <button class="gt-link-btn" type="button" @click.stop="startEdit(i)">手动填写</button>
               </p>
             </template>
-          </div>
+          </article>
         </div>
       </div>
     </div>
@@ -992,7 +990,7 @@ export default {
       if (this._suppressClickUntil && Date.now() < this._suppressClickUntil) return
       const next = this.selectedBoxIdx === i ? null : i
       this.selectedBoxIdx = next
-      if (!isMobile()) { this.$nextTick(() => this.$el.querySelector('.gt-result-selected')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })); return }
+      if (!isMobile()) { this.$nextTick(() => this.$el.querySelector('.gt-result-selected')?.scrollIntoView({ block: 'nearest', behavior: prefersReducedMotion() ? 'instant' : 'smooth' })); return }
       if (next == null) { this.bubbleCard = null; return }
       this.bubbleCard = next
       if (this.sheetState !== 'peek') this.setSheet('peek')
@@ -2179,7 +2177,7 @@ export default {
   width: 50%;
   background: var(--primary-color);
   transform: translateX(-100%);
-  animation: gt-progress-slide 1.2s var(--ease-in-out) infinite;
+
 }
 .gt-progress.is-step2 { background: color-mix(in srgb, var(--primary-color) 50%, transparent); }
 @keyframes gt-progress-slide {
@@ -3032,7 +3030,7 @@ export default {
   border: 3px solid var(--border-color);
   border-top-color: var(--primary-color);
   border-radius: 50%;
-  animation: gt-spin 0.7s linear infinite;
+
 }
 
 .gt-spinner-sm {
@@ -3041,7 +3039,7 @@ export default {
   border: 2px solid var(--border-color);
   border-top-color: var(--primary-color);
   border-radius: 50%;
-  animation: gt-spin 0.7s linear infinite;
+
 }
 
 @keyframes gt-spin { to { transform: rotate(360deg); } }
@@ -3074,7 +3072,7 @@ export default {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   pointer-events: all;
   color: var(--text-color);
-  animation: gt-toast-in var(--dur-base) ease;
+
 }
 
 .gt-toast span { flex: 1; }
@@ -3489,7 +3487,7 @@ export default {
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     padding: 5px 8px 0;
     cursor: grab;
-    touch-action: none;
+    touch-action: pan-x;
     user-select: none;
     -webkit-user-select: none;
   }
@@ -3630,4 +3628,25 @@ export default {
 .gt-ocr-box:focus-visible,.gt-result-item:focus-visible{outline:2px solid var(--primary-color);outline-offset:2px}
 @media(min-width:768px){.gt-sidebar{width:clamp(320px,32vw,470px)}.gt-config-panel{order:3}.gt-results-list{order:2}.gt-sidebar-hdr{order:1}}
 @media(max-width:767px){.gt-header-actions{gap:6px}.gt-header-actions .gt-btn{font-size:12px;padding-inline:10px}.gt-bubble-card{left:8px;right:8px}}
+
+/* Motion is opt-in; static loading/progress states remain visible. */
+@media (prefers-reduced-motion: no-preference) {
+.gt-progress::after { animation: gt-progress-slide 1.2s var(--ease-in-out) infinite; }
+.gt-spinner { animation: gt-spin 0.7s linear infinite; }
+.gt-spinner-sm { animation: gt-spin 0.7s linear infinite; }
+.gt-toast { animation: gt-toast-in var(--dur-base) ease; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gt-thumb { transition: border-color var(--dur-fast); }
+  .gt-thumb:hover { transform: none; }
+  .gt-stage.is-sliding, .gt-config-toggle-icon, .gt-switch-thumb, .gt-sidebar { transition: none; }
+  .gt-wc-enter-active, .gt-wc-leave-active,
+  .gt-bc-enter-active, .gt-bc-leave-active { transition: opacity var(--dur-fast); }
+  .gt-wc-enter-from, .gt-wc-leave-to,
+  .gt-bc-enter-from, .gt-bc-leave-to { transform: none; }
+}
+.gt-result-idx { border: 0; padding: 2px 5px; min-width: 24px; min-height: 24px; cursor: pointer; box-shadow: none; }
+.gt-result-idx:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+.gt-sheet-label { border: 0; background: transparent; padding: 0; min-height: 44px; cursor: pointer; box-shadow: none; }
+.gt-sheet-label:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
 </style>
