@@ -1,6 +1,6 @@
 <script setup>
 import { reactive } from 'vue'
-import Rating from 'primevue/rating'
+import StaticRating from '@/components/ui/StaticRating.vue'
 const failedImages = reactive(new Set())
 import { RouterLink } from 'vue-router'
 import { useViewMode } from '@/composables/useViewMode'
@@ -43,6 +43,7 @@ function linkProps(item) {
 </script>
 
 <template>
+  <div class="gallery-results">
   <!-- ── 封面模式 ─────────────────────────────────────────── -->
   <div v-if="viewMode === 'cover'" class="vm-cover-grid">
     <template v-if="loading">
@@ -70,7 +71,7 @@ function linkProps(item) {
       @click="$emit('click', item)"
     >
       <div class="vm-cover-img">
-        <img v-if="item.thumb && !failedImages.has(item.thumb)" @error="failedImages.add(item.thumb)" :src="item.thumb" :alt="item.title" loading="lazy" decoding="async" />
+        <img v-if="item.thumb && !failedImages.has(item.thumb)" @error="failedImages.add(item.thumb)" :src="item.thumb" alt="" loading="lazy" decoding="async" />
         <div v-else class="vm-cover-placeholder" aria-hidden="true">{{ titleChar(item.title) }}</div>
       </div>
       <div class="vm-cover-info">
@@ -82,7 +83,7 @@ function linkProps(item) {
         <div class="vm-cover-title">{{ item.title }}</div>
         <div v-if="item.noMeta" class="gallery-unlinked-hint">{{ item.noMetaText }}</div>
         <div v-if="item.rating != null || item.date" class="vm-cover-sub">
-          <Rating v-if="item.rating != null" :modelValue="item.rating" readonly class="gr-rating" />
+          <StaticRating v-if="item.rating != null" :value="item.rating" class="gr-rating" />
           <span v-if="item.date" class="vm-cover-date">{{ item.date }}</span>
         </div>
       </div>
@@ -117,7 +118,7 @@ function linkProps(item) {
       @click="$emit('click', item)"
     >
       <div class="gr-thumb">
-        <img v-if="item.thumb && !failedImages.has(item.thumb)" @error="failedImages.add(item.thumb)" :src="item.thumb" :alt="item.title" loading="lazy" decoding="async" />
+        <img v-if="item.thumb && !failedImages.has(item.thumb)" @error="failedImages.add(item.thumb)" :src="item.thumb" alt="" loading="lazy" decoding="async" />
         <div v-else class="gr-thumb-placeholder" aria-hidden="true">{{ titleChar(item.title) }}</div>
       </div>
       <div class="gr-body">
@@ -130,7 +131,7 @@ function linkProps(item) {
           </div>
           <div v-if="item.noMeta" class="gallery-unlinked-hint">{{ item.noMetaText }}</div>
           <div class="gr-meta">
-            <Rating v-if="item.rating != null" :modelValue="item.rating" readonly class="gr-rating" />
+            <StaticRating v-if="item.rating != null" :value="item.rating" class="gr-rating" />
             <span v-if="item.pages" class="gr-pages">{{ item.pages }}</span>
             <span v-if="item.date" class="gr-date">{{ item.date }}</span>
             <span v-if="item.fav" class="gr-fav">♥ {{ item.fav }}</span>
@@ -138,6 +139,7 @@ function linkProps(item) {
           </div>
       </div>
     </component>
+  </div>
   </div>
 </template>
 
@@ -184,5 +186,23 @@ function linkProps(item) {
   font-size: 10px;
   color: var(--muted-color);
   margin-left: auto;
+}
+</style>
+
+<style scoped>
+/* The component may be narrow inside a desktop panel; viewport size is not its width. */
+.gallery-results { min-width: 0; container-type: inline-size; container-name: gallery-results; }
+.gallery-results .gallery-row { container-type: inline-size; container-name: gallery-row; }
+.gallery-results .vm-cover-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 10.3125rem), 1fr)); }
+@container gallery-results (max-width: 48rem) {
+  .gallery-results .gallery-row { padding: 14px 12px; gap: 12px; }
+  .gallery-results .gallery-row.sk-card { min-height: 144px; }
+  .gallery-results .vm-cover-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 8.25rem), 1fr)); gap: 18px 14px; }
+}
+@container gallery-row (max-width: 48rem) {
+  .gr-top { flex-wrap: wrap; gap: 5px; }
+  .gr-top .gr-title { flex-basis: 100%; font-size: 13px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.55; }
+  .gr-body { gap: 7px; }
+  .gr-meta .gr-date, .gr-meta .gr-pages { font-size: 11px; }
 }
 </style>

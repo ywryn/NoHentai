@@ -1,14 +1,14 @@
 <!-- web-static/src/components/reader/ThumbGrid.vue -->
 <template>
-  <div class="tg-overlay" @click.self="$emit('close')">
-    <div class="tg-panel" role="dialog" aria-modal="true" aria-label="页目录">
+  <dialog ref="modal" class="tg-overlay" aria-labelledby="reader-directory-title" closedby="any" @close="emit('close')" @pointerdown="backdropDown" @pointerup="backdropUp">
+    <div class="tg-panel">
       <div class="tg-header">
-        <span class="tg-title">{{ total }} 页</span>
+        <h2 id="reader-directory-title" class="tg-title">页目录 <small>{{ total }} 页</small></h2>
         <form class="tg-jump" @submit.prevent="jump">
-          <input ref="jumpInput" v-model="jumpPage" type="number" min="1" :max="total" inputmode="numeric" aria-label="跳转页码" @input="jumpInput?.setCustomValidity('')" />
+          <input ref="jumpInput" autofocus v-model="jumpPage" type="number" min="1" :max="total" inputmode="numeric" aria-label="跳转页码" @input="jumpInput?.setCustomValidity('')" />
           <button class="reader-btn" type="submit">跳转</button>
         </form>
-        <button class="reader-btn" type="button" aria-label="关闭页目录" @click="$emit('close')"><AppIcon name="close" :size="18" /></button>
+        <button class="reader-btn" type="button" aria-label="关闭页目录" @click="modal?.close()"><AppIcon name="close" :size="18" /></button>
       </div>
       <div class="tg-grid" ref="gridEl">
         <button v-if="windowStart > 0" class="tg-more" type="button" @click="showPrevious"><AppIcon name="arrow-up" :size="18" /> 前 {{ Math.min(WINDOW_SIZE, windowStart) }} 页</button>
@@ -27,12 +27,12 @@
         <button v-if="windowStart + WINDOW_SIZE < pages.length" class="tg-more" type="button" @click="showNext"><AppIcon name="arrow-down" :size="18" /> 后 {{ Math.min(WINDOW_SIZE, pages.length - windowStart - WINDOW_SIZE) }} 页</button>
       </div>
     </div>
-  </div>
+  </dialog>
 </template>
 
 <script setup lang="ts">
 import AppIcon from '@/components/ui/AppIcon.vue'
-import { inject, computed, nextTick, onMounted, ref } from 'vue'
+import { inject, computed, nextTick, onMounted, onBeforeUnmount, ref } from 'vue'
 import { READER_KEY } from '@/composables/useReader'
 import type { PageInfo } from '@/composables/useReader'
 
@@ -47,8 +47,22 @@ const jumpPage = ref(String(currentPage.value))
 const jumpInput = ref<HTMLInputElement | null>(null)
 const gridEl = ref<HTMLElement | null>(null)
 
+const modal = ref<HTMLDialogElement | null>(null)
+let pressedOutside = false
+function outside(e: PointerEvent) {
+  const r = modal.value!.getBoundingClientRect()
+  return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom
+}
+function backdropDown(e: PointerEvent) {
+  if (!('closedBy' in HTMLDialogElement.prototype)) pressedOutside = e.button === 0 && outside(e)
+}
+function backdropUp(e: PointerEvent) {
+  if (!('closedBy' in HTMLDialogElement.prototype) && pressedOutside && outside(e)) modal.value?.close()
+  pressedOutside = false
+}
+onBeforeUnmount(() => modal.value?.close())
 onMounted(() => {
-  jumpInput.value?.focus()
+  modal.value?.showModal()
   gridEl.value?.querySelector<HTMLElement>('.tg-active')?.scrollIntoView({ block: 'nearest' })
 })
 
@@ -71,7 +85,7 @@ function showNext() { changeWindow(windowStart.value + WINDOW_SIZE) }
 
 function onSelect(pageNum: number) {
   goTo(pageNum)
-  emit('close')
+  modal.value?.close()
 }
 
 const spriteMetaMap = computed(() => {
@@ -106,17 +120,24 @@ function spriteStyle(pg: PageInfo) {
 <style scoped>
 .tg-overlay {
   position: fixed;
-  inset: 0;
-  z-index: 300;
-  background: var(--reader-overlay);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  inset: auto 0 0;
+  width: 100%;
+  max-width: none;
+  max-height: 75vh;
+  max-height: 75dvh;
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--reader-text);
+  overflow: visible;
 }
+.tg-overlay::backdrop { background: var(--reader-overlay); }
 .tg-panel {
   width: 100%;
   max-height: 75vh;
-  background: #111827;
+  max-height: 75dvh;
+  background: var(--reader-bg);
   border-radius: 16px 16px 0 0;
   display: flex;
   flex-direction: column;
@@ -129,7 +150,8 @@ function spriteStyle(pg: PageInfo) {
   border-bottom: 1px solid var(--reader-border);
   flex-shrink: 0;
 }
-.tg-title { font-size: 14px; color: var(--reader-muted); }
+.tg-title { margin: 0; font-weight: 500; font-size: 14px; color: var(--reader-muted); }
+.tg-title small { font-size: 12px; font-weight: 400; margin-left: 6px; }
 .tg-jump { display: flex; align-items: center; gap: 4px; margin-left: auto; }
 .tg-jump input { width: 72px; height: 36px; padding: 0 8px; border: 1px solid var(--reader-border); border-radius: 6px; background: var(--reader-surface); color: var(--reader-text); font: inherit; }
 .tg-jump input:focus-visible, .tg-item:focus-visible, .tg-more:focus-visible { outline: 2px solid var(--reader-accent); outline-offset: 2px; }
@@ -140,6 +162,8 @@ function spriteStyle(pg: PageInfo) {
   gap: 8px;
   padding: 12px;
   overflow-y: auto;
+  min-height: 0;
+  overscroll-behavior: contain;
   justify-content: center;
 }
 .tg-item {
@@ -160,4 +184,5 @@ function spriteStyle(pg: PageInfo) {
 .tg-num { font-size: 11px; color: var(--reader-muted); }
 .tg-more { flex: 0 0 100%; min-height: 44px; border: 0; background: transparent; color: var(--reader-text); font: inherit; cursor: pointer; }
 .tg-more:hover { background: var(--reader-surface); }
+@media (pointer: coarse) { .tg-jump input, .tg-header .reader-btn { min-height: 44px; } .tg-header .reader-btn { min-width: 44px; } }
 </style>

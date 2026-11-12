@@ -306,4 +306,5 @@ const progress = computed(() => (total.value ? (currentPage.value / total.value)
 
   .top-bar { position: relative; }
 }
+@media (prefers-reduced-motion: reduce) { .tb-toggle::after { transition: none; } }
 </style>

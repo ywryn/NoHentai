@@ -41,6 +41,7 @@
 import { ref, computed, watch, inject } from 'vue'
 import { READER_KEY } from '@/composables/useReader'
 import PageImage from './PageImage.vue'
+import { useReducedMotion } from '@/composables/useReducedMotion'
 
 interface Spread {
   startPage: number
@@ -50,6 +51,7 @@ interface Spread {
 const reader = inject(READER_KEY)!
 const { currentPage, total, settings, effectivePagesPerScreen, prev, next } = reader
 
+const reducedMotion = useReducedMotion()
 const flipDir = ref<'forward' | 'backward'>('forward')
 let lastPage = currentPage.value
 
@@ -59,7 +61,7 @@ watch(currentPage, newVal => {
 })
 
 const transitionName = computed(() => {
-  if (settings.pageTurnAnimation === 'none') return 'instant'
+  if (reducedMotion.value || settings.pageTurnAnimation === 'none') return 'instant'
   const rtl = settings.bookDirection === 'rtl'
   const fwd = flipDir.value === 'forward'
   const dir = (rtl ? fwd : !fwd) ? 'left' : 'right'

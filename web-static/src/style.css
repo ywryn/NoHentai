@@ -776,7 +776,7 @@ img {
     color-mix(in srgb, var(--text-color) 8%, transparent),
     transparent
   );
-  animation: sk-sweep 1.4s var(--ease-in-out) infinite;
+
 }
 
 @keyframes sk-sweep {
@@ -793,18 +793,13 @@ img {
    ═══════════════════════════════════════ */
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-
-  /* 骨架屏改为静态占位，不再扫光 */
+  html { scroll-behavior: auto; }
   .sk-shimmer::after { display: none; }
 }
+
+/* Native modal scroll containment also applies to admin dialogs. */
+dialog:modal { overscroll-behavior: contain; }
+dialog::backdrop { overflow: hidden; overscroll-behavior: contain; }
 
 /* Shared palette and reading rhythm. */
 :root,.my-app-dark{
@@ -819,7 +814,7 @@ img {
 .my-app-light{
   --bg-color:#f6f7f4;--row-bg:#fff;--surface-color:#f0f2ed;
   --row-border:#e1e5de;--border-color:#cdd4ca;--toolbar-border:#e1e5de;
-  --text-color:#29352f;--title-color:#202d26;--muted-color:#657269;
+  --text-color:#29352f;--title-color:#202d26;--muted-color:#5f6c63;
   --hover-bg:#e9eee7;--row-hover-bg:#f7f9f5;--sidebar-bg:#edf1ea;
   --primary-color:#37644e;--primary-color-hover:#254b38;--primary-contrast:#fff;
   --primary-soft-bg:#37644e0c;--primary-soft-border:#37644e40;--primary-on-soft:#315a45;
@@ -908,3 +903,29 @@ button,a,input,summary,select,textarea{touch-action:manipulation}
   padding-inline: var(--page-gutter);
 }
 @media (max-width: 767px) { :root { --page-gutter: 16px; } }
+
+/* Motion is opt-in; static loading/progress states remain visible. */
+@media (prefers-reduced-motion: no-preference) {
+.sk-shimmer::after { animation: sk-sweep 1.4s var(--ease-in-out) infinite; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vm-cover-card { transition: border-color var(--dur-fast), box-shadow var(--dur-fast); }
+  .vm-cover-card:hover { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .p-popover.p-connected-overlay-enter-active, .p-popover.p-connected-overlay-leave-active { transition: opacity .12s; }
+  .p-popover.p-connected-overlay-enter-from, .p-popover.p-connected-overlay-leave-to { transform: none; }
+}
+@media (forced-colors: active) {
+  :root, .my-app-light, .my-app-dark {
+    --text-color: CanvasText; --title-color: CanvasText; --muted-color: CanvasText;
+    --bg-color: Canvas; --row-bg: Canvas; --surface-color: Canvas;
+    --row-border: ButtonText; --border-color: ButtonText;
+    --primary-color: LinkText; --primary-color-hover: LinkText; --primary-contrast: Canvas;
+    --tag-color: CanvasText; --tag-bg: Canvas; --tag-border: ButtonText;
+  }
+  :is(.nav-menu, .a-nav-group) a[aria-current=page] { outline: 1px solid Highlight; outline-offset: 2px; }
+  .tab-item[aria-current=page] { outline: 1px solid Highlight; outline-offset: -3px; }
+}

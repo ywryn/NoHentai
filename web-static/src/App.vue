@@ -78,13 +78,13 @@ onMounted(() => {
       </div>
     </header>
 
-    <main id="main-content" class="route-shell" tabindex="-1">
+    <component :is="route.path.startsWith('/admin') ? 'div' : 'main'" id="main-content" class="route-shell" tabindex="-1">
       <router-view v-slot="{ Component }">
         <Transition name="route-fade" mode="out-in">
           <component :is="Component" />
         </Transition>
       </router-view>
-    </main>
+    </component>
 
     <!-- 移动端底部标签栏：常驻可达，触控目标 ≥ 44px -->
     <nav class="tab-bar" v-if="!isImmersivePage" aria-label="主导航">

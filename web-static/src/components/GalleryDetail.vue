@@ -35,7 +35,7 @@
             <div class="gd-meta-item gd-meta-rating">
               <span class="gd-meta-key">评分</span>
               <span class="gd-meta-val">
-                <Rating :modelValue="galleryData.rating" readonly />
+                <StaticRating v-if="galleryData.rating != null" :value="galleryData.rating" />
                 <strong class="rating-score">{{ galleryData.rating ?? "N/A" }}</strong>
               </span>
             </div>
@@ -189,7 +189,7 @@
 
 <script>
 import AppIcon from '@/components/ui/AppIcon.vue'
-import Rating from "primevue/rating";
+import StaticRating from '@/components/ui/StaticRating.vue';
 import ToggleSwitch from "primevue/toggleswitch";
 import { exTypeClassMap } from '@/utils/galleryUtils';
 import { loadGallery } from '@/composables/useGalleryData';
@@ -199,7 +199,7 @@ const THUMBS_PER_PAGE = 20;
 
 export default {
   name: "GalleryDetail",
-  components: { AppIcon, Rating, ToggleSwitch },
+  components: { AppIcon, StaticRating, ToggleSwitch },
   data() {
     return {
       itemId: null,

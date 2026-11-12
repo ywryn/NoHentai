@@ -43,7 +43,7 @@
 
 <script setup lang="ts">
 import AppIcon from '@/components/ui/AppIcon.vue'
-import { ref, provide, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { ref, provide, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useReader, READER_KEY } from '@/composables/useReader'
 import ReaderTopBar  from './ReaderTopBar.vue'
@@ -85,10 +85,8 @@ function exit() {
 }
 
 function onKey(e: KeyboardEvent) {
-  if (showThumbGrid.value) {
-    if (e.key === 'Escape') showThumbGrid.value = false
-    return
-  }
+  // Native directory dialog owns dismissal and focus while it is open.
+  if (showThumbGrid.value) return
   if (['INPUT','TEXTAREA','SELECT'].includes((e.target as HTMLElement).tagName)) return
   const rtl = settings.bookDirection === 'rtl'
   switch (e.key) {
@@ -113,13 +111,6 @@ watch(currentPage, page => {
       page: pageParam,
     },
   })
-})
-
-watch(showThumbGrid, async (open, wasOpen) => {
-  if (!open && wasOpen) {
-    await nextTick()
-    document.querySelector<HTMLElement>('.gr-root .tb-counter')?.focus()
-  }
 })
 
 onMounted(async () => {

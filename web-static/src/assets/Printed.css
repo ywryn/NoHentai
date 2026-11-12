@@ -176,3 +176,10 @@
   }
 
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .digi-card { transition: border-color .2s, box-shadow .2s; }
+  .digi-card:hover { transform: none; }
+  .digi-toast-enter-active, .digi-toast-leave-active { transition: opacity .2s; }
+  .digi-toast-enter-from, .digi-toast-leave-to { transform: translateX(-50%); }
+}
