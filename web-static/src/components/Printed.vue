@@ -191,7 +191,7 @@ onBeforeUnmount(() => {
 
     <div v-if="error" class="digi-empty digi-error">{{ error }}</div>
 
-    <template v-else>
+    <section v-else class="catalog-results" :aria-busy="loading" aria-label="书目列表">
       <Paginator v-if="totalPages > 1" :page="currentPage" :total="totalPages" @go="goToPage" />
 
       <GalleryList
@@ -204,7 +204,7 @@ onBeforeUnmount(() => {
       />
 
       <Paginator v-if="totalPages > 1" :page="currentPage" :total="totalPages" @go="goToPage" />
-    </template>
+    </section>
 
     <Transition name="digi-toast">
       <div v-if="toast" class="digi-toast" role="status">{{ toast }}</div>

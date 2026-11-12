@@ -62,11 +62,21 @@ def main():
             page.route('**/api/tags/suggestions?*',suggestions)
             page.route('**/api/admin/session',lambda r:r.fulfill(json={'session':{'csrf':'fixture'}}))
             page.route('**/api/admin',admin)
+            def check_spacing():
+                gaps=page.locator('.catalog-results').evaluate('''e=>{
+                    const bars=e.querySelectorAll('.pagination-control'),list=e.querySelector('.gallery-list,.vm-cover-grid');
+                    const top=bars[0].getBoundingClientRect(),bottom=bars[1].getBoundingClientRect(),content=list.getBoundingClientRect();
+                    return [top.top-e.previousElementSibling.getBoundingClientRect().bottom,content.top-top.bottom,bottom.top-content.bottom];
+                }''')
+                assert all(abs(a-b)<1 for a,b in zip(gaps,[20,8,8])),(page.url,gaps)
+                assert page.evaluate('getComputedStyle(document.documentElement).scrollbarWidth')=='none'
             pagination=[]
             for path,label in (('/printed','搜索书单'),('/','搜索画廊'),('/daily','搜索每日画廊')):
                 page.goto(base+'/#'+path)
                 expect(page.get_by_role('combobox',name=label,exact=True)).to_be_visible()
                 expect(page.locator('.pagination-control')).to_have_count(2)
+                check_spacing()
+                expect(page.locator('.daily-results-header')).to_have_count(0)
                 for bar in page.locator('.pagination-control').all():
                     pagination.append(bar.evaluate("e=>{const s=getComputedStyle(e);return [s.borderBottomWidth,s.paddingTop,s.paddingBottom,s.paddingLeft,s.paddingRight]}"))
                 search=page.get_by_role('combobox',name=label,exact=True)
@@ -187,6 +197,8 @@ def main():
             for path,label in (('/','搜索画廊'),('/printed','搜索书单'),('/daily','搜索每日画廊')):
                 page.goto(base+'/#'+path)
                 expect(page.get_by_role('combobox',name=label,exact=True)).to_be_visible()
+                expect(page.locator('.pagination-control')).to_have_count(2)
+                check_spacing()
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth+1'),path
             print('PASS: shared controls fit mobile layouts on all public pages')
             assert not errors,errors

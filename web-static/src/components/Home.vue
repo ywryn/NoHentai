@@ -69,7 +69,7 @@
         </div>
       </div>
 
-      <section class="home-content-panel" :aria-busy="loading" aria-label="画廊列表">
+      <section class="home-content-panel catalog-results" :aria-busy="loading" aria-label="画廊列表">
         <div v-if="error" class="catalog-error" role="alert"><p>{{ error }}</p><button type="button" @click="fetchPage">重新加载</button></div>
         <Paginator v-if="totalPages > 1 && !error" :page="currentPage" :total="totalPages" @go="goToPage" />
 

@@ -123,6 +123,14 @@ html {
   transition: background-color var(--dur-slow) var(--ease-out), color var(--dur-slow) var(--ease-out);
 }
 
+/* Native scrolling stays available without scrollbar chrome in public views. */
+html:not(.admin-active),
+html:not(.admin-active) body,
+html:not(.admin-active) :is(body, .app-shell) * { scrollbar-width: none; }
+html:not(.admin-active)::-webkit-scrollbar,
+html:not(.admin-active) body::-webkit-scrollbar,
+html:not(.admin-active) :is(body, .app-shell) *::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
 html.home-scroll-locked,
 body.home-scroll-locked {
   overflow: hidden;
@@ -824,13 +832,13 @@ button,a,input,summary,select,textarea{touch-action:manipulation}
 .skip-link:focus{top:12px}
 .route-shell:focus{outline:none}
 .app-shell .home-page{padding:32px 24px 40px}
-.app-shell .home-shell{max-width:1240px;gap:20px}
+.app-shell .home-shell{max-width:1240px;gap:0}
 .app-shell .home-header-card{padding:0;background:none;box-shadow:none;gap:24px}
 .app-shell .home-copy{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
 .catalog-title{margin:0;font-size:28px;font-weight:650;letter-spacing:-.04em}
 .catalog-count{font-size:13px;color:var(--muted-color);font-variant-numeric:tabular-nums}
 .app-shell .home-filter-panel{padding:0;gap:12px}
-.app-shell .home-content-panel{gap:8px}
+.app-shell .catalog-results{display:flex;flex-direction:column;gap:8px;margin-block-start:20px;min-width:0}
 .app-shell .gallery-list{padding:0;gap:0;border:1px solid var(--row-border);border-radius:12px;overflow:hidden;background:var(--row-bg)}
 .app-shell .gallery-row{border:0;border-bottom:1px solid var(--row-border);border-radius:0;padding:18px 20px;gap:18px}
 .app-shell .gallery-row:last-child{border-bottom:0}
@@ -858,7 +866,7 @@ button,a,input,summary,select,textarea{touch-action:manipulation}
 .app-shell .digi-title,.app-shell .page-title,.app-shell .daily-heading h1{font-size:28px;font-weight:650;letter-spacing:-.04em}
 .app-shell .digi-header{flex-wrap:wrap;gap:8px 18px;margin-bottom:24px}
 .app-shell .digi-stats{color:var(--muted-color)}
-.app-shell .daily-page{padding:32px 24px}
+.app-shell .daily-page{padding:32px 24px 40px}
 .app-shell .daily-shell{max-width:1240px}
 .app-shell .daily-header-card{padding:24px;box-shadow:none}
 .app-shell .daily-rule summary{cursor:pointer;color:var(--muted-color);font-size:13px;min-height:32px}
@@ -884,7 +892,6 @@ button,a,input,summary,select,textarea{touch-action:manipulation}
  .app-shell .home-filter-chip,.app-shell .home-clear-all{min-height:44px}
  .app-shell .nav-actions button{width:44px;height:44px}
 }
-.app-shell .digi-container>.gallery-list,.app-shell .digi-container>.vm-cover-grid{margin-top:20px}
 .app-shell .gallery-detail-page{max-width:1240px}
 .app-shell .gd-hero,.app-shell .gd-panel,.app-shell .stat-card{box-shadow:none}
 .app-shell .gd-action{min-height:44px}
