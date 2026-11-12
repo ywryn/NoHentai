@@ -98,13 +98,20 @@ def enqueue(kind, rule_id=None):
 
 def runs():
     with db.connect() as con:
+        rows = con.execute('SELECT * FROM jobs ORDER BY id DESC LIMIT 50').fetchall()
+        steps_by_job = {r['id']: [] for r in rows}
+        if rows:
+            placeholders = ','.join('?' for _ in rows)
+            for step in con.execute(f'SELECT * FROM job_steps WHERE job_id IN ({placeholders}) ORDER BY job_id,rowid',
+                                    [r['id'] for r in rows]):
+                steps_by_job[step['job_id']].append(
+                    {k: step[k] for k in ('name','status','started_at','finished_at','summary')} |
+                    {'progress': json.loads(step['progress_json'])})
         items = []
-        for r in con.execute('SELECT * FROM jobs ORDER BY id DESC LIMIT 50').fetchall():
-            steps = [{k: step[k] for k in ('name','status','started_at','finished_at','summary')} | {'progress': json.loads(step['progress_json'])}
-                     for step in con.execute('SELECT * FROM job_steps WHERE job_id=? ORDER BY rowid', (r['id'],))]
+        for r in rows:
             config = json.loads(r['config_json']) if r['config_json'] else {}
             items.append({'id': r['id'], 'kind': r['kind'], 'name': KINDS[r['kind']], 'status': r['status'], 'conclusion': r['conclusion'],
-                          'createdAt': r['created_at'], 'updatedAt': r['updated_at'], 'summary': r['summary'], 'steps': steps,
+                          'createdAt': r['created_at'], 'updatedAt': r['updated_at'], 'summary': r['summary'], 'steps': steps_by_job[r['id']],
                           'cancelRequested': bool(r['cancel_requested']), 'parentId': r['parent_id'], 'ruleId': config.get('ruleId'),
                           'config': config})
         return items
