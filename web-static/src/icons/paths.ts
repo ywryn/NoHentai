@@ -1,0 +1,56 @@
+/** NoHentai UI icons: 24px grid, 1.8px round strokes, currentColor.
+ * Paths are maintained here; do not paste SVG or Unicode pictograms into controls.
+ * Direction names describe the rendered direction, independent of reading order.
+ */
+export const iconPaths = {
+  home: ['M4 10.5 12 4l8 6.5V20h-6v-6h-4v6H4Z'],
+  chart: ['M4 4v16h16M8 15v-4M12 15V7M16 15v-6'],
+  book: ['M5 18.5V6a2 2 0 0 1 2-2h12v16H7a2 2 0 0 1 0-4h12', 'M10 4v7l2-1.5 2 1.5V4'],
+  'book-open': ['M12 6v14M12 6C9 4 6 4 3 5v13c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 1Z'],
+  calendar: ['M4 8h16M8 3v4M16 3v4M6 5h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z', 'm8 14 2.5 2.5L16 11'],
+  translate: ['M3 6h11M8 3v3M5 6c1 4 4 7 8 9M12 6c-1 4-4 7-8 9', 'm13 21 4-11 4 11M14.5 17h5'],
+  search: ['M18 10.5a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z', 'm16 16 5 5'],
+  filter: ['M4 5h16l-6 7v7l-4 2v-9Z'],
+  grid: ['M4 4h6v6H4ZM14 4h6v6h-6ZM4 14h6v6H4ZM14 14h6v6h-6Z'],
+  list: ['M4 5h4v5H4ZM4 14h4v5H4ZM12 6h8M12 9h6M12 15h8M12 18h6'],
+  gallery: ['M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z', 'm4 16 5-5 4 4 3-3 4 4M15 8h.01'],
+  moon: ['M19.5 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 19.5 14.5Z'],
+  sun: ['M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z', 'M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5'],
+  eye: ['M3 12s3-6 9-6 9 6 9 6-3 6-9 6-9-6-9-6Z', 'M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z'],
+  'eye-off': ['m3 3 18 18M9 6.5a10 10 0 0 1 3-.5c6 0 9 6 9 6a17 17 0 0 1-2.5 3.4M6 8c-2 2-3 4-3 4s3 6 9 6c1.6 0 3-.4 4.3-1', 'M9 10a3 3 0 0 0 4 4'],
+  'chevron-left': ['m14.5 6-6 6 6 6'],
+  'chevron-right': ['m9.5 6 6 6-6 6'],
+  'chevron-up': ['m6 14.5 6-6 6 6'],
+  'chevron-down': ['m6 9.5 6 6 6-6'],
+  'first-page': ['M5 5v14m13-13-6 6 6 6'],
+  'last-page': ['M19 5v14M6 6l6 6-6 6'],
+  'arrow-left': ['M20 12H4m6-6-6 6 6 6'],
+  'arrow-right': ['M4 12h16m-6-6 6 6-6 6'],
+  'arrow-up': ['M12 20V4m-6 6 6-6 6 6'],
+  'arrow-down': ['M12 4v16m-6-6 6 6 6-6'],
+  external: ['M13 4h7v7M20 4 10 14M9 5H5v14h14v-4'],
+  menu: ['M4 6h16M4 12h11M4 18h16'],
+  close: ['m6 6 12 12M6 18 18 6'],
+  plus: ['M12 5v14M5 12h14'],
+  minus: ['M5 12h14'],
+  check: ['m5 12 4.5 4.5L19 7'],
+  edit: ['m15 4 5 5-11 11H4v-5ZM12 7l5 5'],
+  copy: ['M9 9h11v11H9ZM15 5V3H3v12h2'],
+  save: ['M4 4h13l3 3v13H4ZM8 4v6h8V4M8 20v-6h8v6'],
+  trash: ['M4 6h16M9 6V3h6v3M6 6l1 14h10l1-14M10 10v6M14 10v6'],
+  download: ['M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4'],
+  refresh: ['M20 5v6h-6M4 19v-6h6', 'M5 8a7.5 7.5 0 0 1 12-3l3 3M4 16l3 3a7.5 7.5 0 0 0 12-3'],
+  clock: ['M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z', 'M12 7v5l3 2'],
+  info: ['M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z', 'M12 11v6M12 7h.01'],
+  shield: ['m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Z', 'm8 12 3 3 5-6'],
+  key: ['M14 8a5 5 0 1 1-10 0 5 5 0 0 1 10 0Z', 'm12.5 11.5 8 8M16 15l2-2M18.5 17.5l2-2'],
+  logout: ['M10 4H4v16h6M10 12h11m-5-5 5 5-5 5'],
+  tasks: ['M10 6h10M10 12h10M10 18h10M3 6l1.5 1.5L7 4M3 12l1.5 1.5L7 10M3 18l1.5 1.5L7 16'],
+  pulse: ['M3 12h4l3-7 4 14 3-7h4'],
+  dots: ['M5 12h.01M12 12h.01M19 12h.01'],
+  settings: ['M4 6h16M4 12h16M4 18h16', 'M9 4v4M15 10v4M8 16v4'],
+} as const
+
+export type IconName = keyof typeof iconPaths
+/** Transitional names used by the existing admin components. */
+export const iconAliases: Record<string, IconName> = { arrow: 'arrow-right', chevron: 'chevron-right', back: 'chevron-left' }

@@ -5,18 +5,13 @@
     :title="viewMode === 'card' ? '切换为封面视图' : '切换为列表视图'"
     @click="toggleViewMode"
   >
-    <!-- Grid icon — shown in card mode, click to switch to cover -->
-    <svg v-if="viewMode === 'card'" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M3 3h8v8H3V3zm0 10h8v8H3v-8zm10-10h8v8h-8V3zm0 10h8v8h-8v-8z"/>
-    </svg>
-    <!-- List icon — shown in cover mode, click to switch to card -->
-    <svg v-else viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M3 5h18v2H3V5zm0 6h18v2H3v-2zm0 6h18v2H3v-2z"/>
-    </svg>
+    <AppIcon :name="viewMode === 'card' ? 'grid' : 'list'" :size="20" />
+
   </button>
 </template>
 
 <script setup lang="ts">
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { useViewMode } from '@/composables/useViewMode'
 const { viewMode, toggleViewMode } = useViewMode()
 </script>
@@ -44,6 +39,6 @@ const { viewMode, toggleViewMode } = useViewMode()
 .view-mode-btn svg {
   width: 16px;
   height: 16px;
-  fill: currentColor;
+  fill: none;
 }
 </style>

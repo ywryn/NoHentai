@@ -10,7 +10,7 @@
     <div v-else-if="initError" class="gr-center gr-error">
       <p>{{ initError }}</p>
       <button class="reader-btn" @click="init(gid, token, startPage)">重新加载页面列表</button>
-      <button class="reader-btn" @click="exit">← 返回详情</button>
+      <button class="reader-btn" @click="exit"><AppIcon name="arrow-left" :size="18" /> 返回详情</button>
     </div>
 
     <!-- Reader -->
@@ -42,6 +42,7 @@
 </template>
 
 <script setup lang="ts">
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { ref, provide, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useReader, READER_KEY } from '@/composables/useReader'

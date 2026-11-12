@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'
 import { currentAdmin, loginAdmin, adminRequest } from '@/utils/adminApi'
 import { clearAdminLogin } from '@/utils/adminLogin'
+import BrandMark from '@/components/ui/BrandMark.vue'
 import AdminIcon from './AdminIcon.vue'
 import AdminConfirm from './AdminConfirm.vue'
 import AdminPrivacyToggle from './AdminPrivacyToggle.vue'
@@ -40,7 +41,7 @@ onBeforeUnmount(()=>{document.documentElement.classList.remove('admin-active','a
     <AdminConfirm ref="confirmation" />
     <div v-if="restoring" class="a-restore-login" role="status"><span class="a-spinner" />正在恢复登录…</div>
     <template v-else-if="!session">
-      <header class="a-login-header"><RouterLink to="/" class="a-brand"><span class="a-brand-symbol">の</span><span>NoHentai <small>站点管理</small></span></RouterLink><button class="a-button a-ghost" @click="toggleTheme"><AdminIcon :name="isDark ? 'sun' : 'moon'" :size="18" />{{ isDark ? '浅色外观' : '深色外观' }}</button></header>
+      <header class="a-login-header"><RouterLink to="/" class="a-brand"><BrandMark admin :size="36" /><span>NoHentai <small>站点管理</small></span></RouterLink><button class="a-button a-ghost" @click="toggleTheme"><AdminIcon :name="isDark ? 'sun' : 'moon'" :size="18" />{{ isDark ? '浅色外观' : '深色外观' }}</button></header>
       <main class="a-login-layout">
         <form class="a-login-form a-card" @submit.prevent="unlock">
           <span class="a-icon-tile"><AdminIcon name="key" :size="24" /></span><h2>登录管理后台</h2>
@@ -53,14 +54,14 @@ onBeforeUnmount(()=>{document.documentElement.classList.remove('admin-active','a
     </template>
     <template v-else>
       <aside class="a-sidebar">
-        <RouterLink to="/admin/overview" class="a-brand"><span class="a-brand-symbol">の</span><span>NoHentai<small>管理工作空间</small></span></RouterLink>
+        <RouterLink to="/admin/overview" class="a-brand"><BrandMark admin :size="36" /><span>NoHentai<small>管理工作空间</small></span></RouterLink>
         <nav aria-label="管理功能"><div v-for="group in navigation" :key="group.label" class="a-nav-group"><p>{{ group.label }}</p><RouterLink v-for="[path, label, icon] in group.items" :key="path" :to="`/admin/${path}`"><AdminIcon :name="icon" :size="19" /><span>{{ label }}</span><span v-if="route.path === `/admin/${path}`" class="a-nav-active-dot" /></RouterLink></div></nav>
         <div class="a-sidebar-footer"><RouterLink to="/"><AdminIcon name="arrow" :size="18" />查看网站</RouterLink><AdminPrivacyToggle /><button @click="toggleTheme"><AdminIcon :name="isDark ? 'sun' : 'moon'" :size="18" />{{ isDark ? '切换浅色外观' : '切换深色外观' }}</button><button @click="lock"><AdminIcon name="logout" :size="18" />退出管理</button></div>
       </aside>
       <div class="a-main">
         <main id="admin-content" class="a-content"><div v-if="error" class="a-alert a-alert-error" role="alert">{{ error }}</div><router-view v-slot="{ Component }"><component :is="Component" :key="$route.path"  /></router-view></main>
       </div>
-      <dialog id="admin-navigation" ref="drawer" class="a-nav-drawer" @close="navigationOpen=false" aria-label="管理导航" @click="e => { if (e.target === drawer) drawer.close() }"><div class="a-drawer-header"><span class="a-brand"><span class="a-brand-symbol">の</span>NoHentai</span><button class="a-button a-icon-button" aria-label="关闭管理导航" @click="drawer.close()"><AdminIcon name="close" /></button></div><nav aria-label="手机管理功能"><div v-for="group in navigation" :key="group.label" class="a-nav-group"><p>{{ group.label }}</p><RouterLink v-for="[path,label,icon] in group.items" :key="path" :to="`/admin/${path}`" @click="route.path === `/admin/${path}` && drawer.close()"><AdminIcon :name="icon" /><span>{{ label }}</span></RouterLink></div></nav><div class="a-sidebar-footer"><RouterLink to="/"><AdminIcon name="arrow" />查看网站</RouterLink><AdminPrivacyToggle /><button @click="toggleTheme"><AdminIcon :name="isDark ? 'sun' : 'moon'" />{{ isDark ? '切换浅色外观' : '切换深色外观' }}</button><button @click="lock"><AdminIcon name="logout" />退出管理</button></div></dialog>
+      <dialog id="admin-navigation" ref="drawer" class="a-nav-drawer" @close="navigationOpen=false" aria-label="管理导航" @click="e => { if (e.target === drawer) drawer.close() }"><div class="a-drawer-header"><span class="a-brand"><BrandMark admin :size="36" />NoHentai</span><button class="a-button a-icon-button" aria-label="关闭管理导航" @click="drawer.close()"><AdminIcon name="close" /></button></div><nav aria-label="手机管理功能"><div v-for="group in navigation" :key="group.label" class="a-nav-group"><p>{{ group.label }}</p><RouterLink v-for="[path,label,icon] in group.items" :key="path" :to="`/admin/${path}`" @click="route.path === `/admin/${path}` && drawer.close()"><AdminIcon :name="icon" /><span>{{ label }}</span></RouterLink></div></nav><div class="a-sidebar-footer"><RouterLink to="/"><AdminIcon name="arrow" />查看网站</RouterLink><AdminPrivacyToggle /><button @click="toggleTheme"><AdminIcon :name="isDark ? 'sun' : 'moon'" />{{ isDark ? '切换浅色外观' : '切换深色外观' }}</button><button @click="lock"><AdminIcon name="logout" />退出管理</button></div></dialog>
     </template>
   </div>
 </template>

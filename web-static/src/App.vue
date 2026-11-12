@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BrandMark from '@/components/ui/BrandMark.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMomMode } from '@/composables/useMomMode'
@@ -23,31 +25,31 @@ const navItems = [
     to: '/',
     label: '首页',
     title: 'Home',
-    icon: 'M3 10.5 12 3l9 7.5M5 9v12h5v-7h4v7h5V9',
+    icon: 'home',
   },
   {
     to: '/data',
     label: '统计',
     title: 'Data Analys',
-    icon: 'M4 20h16M7 16v-5M12 16V5M17 16V8',
+    icon: 'chart',
   },
   {
     to: '/printed',
     label: '书单',
     title: 'Printed',
-    icon: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 3H20v19H6.5A2.5 2.5 0 0 1 4 19.5v-14A2.5 2.5 0 0 1 6.5 3ZM9 3v7l2-1 2 1V3',
+    icon: 'book',
   },
   {
     to: '/daily',
     label: '每日',
     title: 'Daily Search',
-    icon: 'M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm4 11 2 2 4-4',
+    icon: 'calendar',
   },
   {
     to: '/translate',
     label: '翻译',
     title: 'Translate',
-    icon: 'M3 5h12M9 3v2M5 5c1 6 5 9 9 10M13 5c-1 6-5 9-9 10m9 6 4-11 4 11M14.5 17h5',
+    icon: 'translate',
   },
 ]
 
@@ -60,7 +62,7 @@ onMounted(() => {
   <div class="app-shell" :class="{ 'has-tabbar': !isImmersivePage }">
     <a v-if="!isImmersivePage" class="skip-link" href="#main-content" @click.prevent="focusContent">跳至内容</a>
     <header class="navigation-bar" v-if="!isImmersivePage">
-      <RouterLink class="brand-logo" to="/" aria-label="NoHentai 首页"><span class="brand-mark">の</span><span class="brand-name">NoHentai</span></RouterLink>
+      <RouterLink class="brand-logo" to="/" aria-label="NoHentai 首页"><BrandMark :size="40" /><span class="brand-name">NoHentai</span></RouterLink>
 
       <nav class="nav-menu" aria-label="主导航">
         <RouterLink v-for="item in navItems" :key="item.to" :to="item.to" :title="item.title">
@@ -86,7 +88,7 @@ onMounted(() => {
     <!-- 移动端底部标签栏：常驻可达，触控目标 ≥ 44px -->
     <nav class="tab-bar" v-if="!isImmersivePage" aria-label="主导航">
       <RouterLink v-for="item in navItems" :key="item.to" :to="item.to" class="tab-item">
-        <span class="tab-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="item.icon" /></svg></span>
+        <span class="tab-icon"><AppIcon :name="item.icon" :size="21" /></span>
         <span>{{ item.label }}</span>
       </RouterLink>
     </nav>

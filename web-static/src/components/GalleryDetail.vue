@@ -21,11 +21,11 @@
 
           <nav v-if="galleryData.token" class="gd-actions" aria-label="画廊操作">
             <RouterLink class="gd-action gd-action-primary" :to="{name:'GalleryReader',params:{gid:itemId},query:{token:galleryData.token,page:'1'}}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v15M3 4h5a4 4 0 0 1 4 2 4 4 0 0 1 4-2h5v15h-5a4 4 0 0 0-4 2 4 4 0 0 0-4-2H3Z"/></svg>
-              <span>开始阅读</span><span class="gd-action-arrow" aria-hidden="true">→</span>
+              <AppIcon name="book-open" :size="20" />
+              <span>开始阅读</span><span class="gd-action-arrow" aria-hidden="true"><AppIcon name="arrow-right" :size="18" /></span>
             </RouterLink>
             <RouterLink class="gd-action gd-action-secondary" :to="{name:'GalleryTranslate',params:{gid:itemId},query:{token:galleryData.token,page:'1'}}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h12M9 3v2M5 5c1 6 5 9 9 10M13 5c-1 6-5 9-9 10m9 6 4-11 4 11M14.5 17h5"/></svg>
+              <AppIcon name="translate" :size="20" />
               <span>翻译</span>
             </RouterLink>
           </nav>
@@ -87,7 +87,7 @@
                   :aria-label="`复制 ${tag.value} 的搜索语法`"
                   :title="tagCopyValue === tag.tag ? '已复制' : '复制搜索语法'"
                   @click="copyTag(tag)"
-                >{{ tagCopyValue === tag.tag ? '✓' : '⧉' }}</button>
+                ><AppIcon :name="tagCopyValue === tag.tag ? 'check' : 'copy'" :size="14" /></button>
               </span>
             </div>
           </div>
@@ -141,9 +141,9 @@
 
         <!-- Collapsed: load trigger -->
         <button v-if="!thumbExpanded" class="thumb-load-trigger" @click="loadPages">
-          <span class="thumb-load-icon">⊞</span>
+          <span class="thumb-load-icon"><AppIcon name="grid" :size="22" /></span>
           <span>加载页面缩略图</span>
-          <span class="thumb-load-arrow">›</span>
+          <span class="thumb-load-arrow"><AppIcon name="chevron-right" :size="18" /></span>
         </button>
 
         <!-- Expanded: thumbnail content -->
@@ -172,9 +172,9 @@
               </div>
             </div>
             <div v-if="thumbTotalPages > 1" class="thumb-paginator">
-              <button :disabled="thumbPage === 0" @click="prevThumbPage" class="thumb-pager-btn">‹</button>
+              <button :disabled="thumbPage === 0" @click="prevThumbPage" class="thumb-pager-btn" aria-label="上一页缩略图"><AppIcon name="chevron-left" :size="18" /></button>
               <span class="thumb-pager-info">{{ thumbPage + 1 }} / {{ thumbTotalPages }}</span>
-              <button :disabled="thumbPage >= thumbTotalPages - 1" @click="nextThumbPage" class="thumb-pager-btn">›</button>
+              <button :disabled="thumbPage >= thumbTotalPages - 1" @click="nextThumbPage" class="thumb-pager-btn" aria-label="下一页缩略图"><AppIcon name="chevron-right" :size="18" /></button>
             </div>
           </template>
         </template>
@@ -188,6 +188,7 @@
 </template>
 
 <script>
+import AppIcon from '@/components/ui/AppIcon.vue'
 import Rating from "primevue/rating";
 import ToggleSwitch from "primevue/toggleswitch";
 import { exTypeClassMap } from '@/utils/galleryUtils';
@@ -198,7 +199,7 @@ const THUMBS_PER_PAGE = 20;
 
 export default {
   name: "GalleryDetail",
-  components: { Rating, ToggleSwitch },
+  components: { AppIcon, Rating, ToggleSwitch },
   data() {
     return {
       itemId: null,

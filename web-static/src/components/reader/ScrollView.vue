@@ -9,7 +9,7 @@
     @touchstart.passive="releaseAnchor"
     @pointerdown="onTapStart"
   >
-    <button v-if="hasPrevious" class="scroll-segment-button" type="button" @click="moveSegment(-1)">← 第 {{ pages[segmentStart - SEGMENT_SIZE].pageNum }}–{{ pages[segmentStart - 1].pageNum }} 页</button>
+    <button v-if="hasPrevious" class="scroll-segment-button" type="button" @click="moveSegment(-1)"><AppIcon name="arrow-left" :size="18" /> 第 {{ pages[segmentStart - SEGMENT_SIZE].pageNum }}–{{ pages[segmentStart - 1].pageNum }} 页</button>
     <PageImage
       v-for="pg in renderedPages"
       :key="pg.pageNum"
@@ -21,11 +21,12 @@
         maxWidth: `${settings.widthScale}%`,
       }"
     />
-    <button v-if="hasNext" class="scroll-segment-button" type="button" @click="moveSegment(1)">第 {{ pages[segmentStart + SEGMENT_SIZE].pageNum }}–{{ pages[Math.min(segmentStart + SEGMENT_SIZE * 2, pages.length) - 1].pageNum }} 页 →</button>
+    <button v-if="hasNext" class="scroll-segment-button" type="button" @click="moveSegment(1)">第 {{ pages[segmentStart + SEGMENT_SIZE].pageNum }}–{{ pages[Math.min(segmentStart + SEGMENT_SIZE * 2, pages.length) - 1].pageNum }} 页 <AppIcon name="arrow-right" :size="18" /></button>
   </div>
 </template>
 
 <script setup lang="ts">
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { ref, inject, onMounted, onBeforeUnmount, nextTick, watch, computed } from 'vue'
 import { READER_KEY } from '@/composables/useReader'
 import PageImage from './PageImage.vue'

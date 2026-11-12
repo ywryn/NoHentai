@@ -8,10 +8,10 @@
           <input ref="jumpInput" v-model="jumpPage" type="number" min="1" :max="total" inputmode="numeric" aria-label="跳转页码" @input="jumpInput?.setCustomValidity('')" />
           <button class="reader-btn" type="submit">跳转</button>
         </form>
-        <button class="reader-btn" type="button" aria-label="关闭页目录" @click="$emit('close')">✕</button>
+        <button class="reader-btn" type="button" aria-label="关闭页目录" @click="$emit('close')"><AppIcon name="close" :size="18" /></button>
       </div>
       <div class="tg-grid" ref="gridEl">
-        <button v-if="windowStart > 0" class="tg-more" type="button" @click="showPrevious">↑ 前 {{ Math.min(WINDOW_SIZE, windowStart) }} 页</button>
+        <button v-if="windowStart > 0" class="tg-more" type="button" @click="showPrevious"><AppIcon name="arrow-up" :size="18" /> 前 {{ Math.min(WINDOW_SIZE, windowStart) }} 页</button>
         <button
           v-for="pg in visiblePages"
           :key="pg.pageNum"
@@ -24,13 +24,14 @@
           <div class="tg-sprite" :style="spriteStyle(pg)" />
           <span class="tg-num">{{ pg.pageNum }}</span>
         </button>
-        <button v-if="windowStart + WINDOW_SIZE < pages.length" class="tg-more" type="button" @click="showNext">↓ 后 {{ Math.min(WINDOW_SIZE, pages.length - windowStart - WINDOW_SIZE) }} 页</button>
+        <button v-if="windowStart + WINDOW_SIZE < pages.length" class="tg-more" type="button" @click="showNext"><AppIcon name="arrow-down" :size="18" /> 后 {{ Math.min(WINDOW_SIZE, pages.length - windowStart - WINDOW_SIZE) }} 页</button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { inject, computed, nextTick, onMounted, ref } from 'vue'
 import { READER_KEY } from '@/composables/useReader'
 import type { PageInfo } from '@/composables/useReader'
