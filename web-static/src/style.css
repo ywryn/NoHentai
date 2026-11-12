@@ -901,3 +901,10 @@ button,a,input,summary,select,textarea{touch-action:manipulation}
 .app-shell .gallery-row.sk-card{min-height:124px}
 .app-shell .vm-cover-card.sk-card .vm-cover-info{min-height:104px;box-sizing:border-box}
 @media(max-width:767px){.app-shell .gallery-row.sk-card{min-height:144px}}
+
+/* Shared outer edge: route-local styles must not shift the mobile page gutter. */
+:root { --page-gutter: 24px; }
+.app-shell .route-shell :is(.home-page, .daily-page, .digi-container, .data-container) {
+  padding-inline: var(--page-gutter);
+}
+@media (max-width: 767px) { :root { --page-gutter: 16px; } }

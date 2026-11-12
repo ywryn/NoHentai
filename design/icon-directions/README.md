@@ -1,5 +1,7 @@
 # Icon style directions
 
+Decision: both proposals declined. Keep the original 46-icon library from 91dc48e; these files are retained only as exploration history.
+
 Preview: https://nohentai.com:8446/icon-directions.html
 
 A / の流: open loops, sweeping terminals and asymmetric soft contours, relating to the selected F identity. Anime influence is concentrated in the eye, reading and gallery symbols.

@@ -54,6 +54,9 @@ def main():
                     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'),(theme,width,'overflow')
                     expect(page.locator('.brand-logo img')).to_have_attribute('src','/brand/mark-f.png')
                     assert page.locator('.brand-logo img').evaluate('(e)=>getComputedStyle(e).filter') == 'none'
+                    mark=page.locator('.brand-logo img').bounding_box()
+                    visible_left=mark['x']+mark['width']*122/1254
+                    assert abs(visible_left-page.locator('.home-shell').bounding_box()['x'])<1.5,('brand alignment',width,visible_left)
                     expect(page.locator('#site-icon')).to_have_attribute('href','/brand/mark-f.png')
                     if width<=600:
                         box=page.get_by_role('combobox',name='搜索画廊').bounding_box()

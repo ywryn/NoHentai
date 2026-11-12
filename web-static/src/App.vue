@@ -97,7 +97,6 @@ onMounted(() => {
 
 <style scoped>
  .brand-name { font-size: 16px; letter-spacing: -.04em; color: var(--text-color); }
-.navigation-bar { padding-inline: max(20px, calc((100vw - 1280px) / 2)) !important; }
 /* ═══ 顶栏 ═══════════════════════════════════════════════ */
 
 .navigation-bar {
@@ -105,7 +104,7 @@ onMounted(() => {
   top: 0;
   z-index: var(--z-nav);
   width: 100%;
-  padding: 8px 16px;
+  padding: 8px max(var(--page-gutter), calc((100vw - 1240px) / 2));
   min-height: 53px;
   display: flex;
   align-items: center;
@@ -126,7 +125,9 @@ onMounted(() => {
   width: auto;
   height: 44px;
   gap: 10px;
-  padding: 0 10px;
+  padding: 0;
+  /* The selected PNG has ~4px transparent inset at 40px. Align its visible edge. */
+  margin-inline-start: -4px;
   border-radius: 10px;
   background: transparent;
   color: var(--logo-text);
@@ -218,7 +219,7 @@ onMounted(() => {
   .nav-menu { display: none; }
 
   .navigation-bar {
-    padding: 8px 12px;
+    padding-block: 8px;
     justify-content: space-between;
   }
 
