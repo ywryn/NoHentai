@@ -291,7 +291,7 @@
         </div>
 
         <div v-if="!ocrResults.length" class="gt-sidebar-empty">
-          <div class="gt-sidebar-empty-icon">🔍</div>
+          <AppIcon name="search" :size="36" />
           <p>{{ imageUrl ? '点击 OCR 开始识别' : '请先选择页面' }}</p>
         </div>
 
@@ -2776,7 +2776,6 @@ export default {
   padding: 32px;
 }
 
-.gt-sidebar-empty-icon { font-size: 36px; }
 
 .gt-results-list {
   padding: 12px;
