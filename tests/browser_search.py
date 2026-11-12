@@ -91,15 +91,21 @@ def main():
             page.goto(base+'/#/')
             tags=page.locator('.gallery-row').first.locator('.gr-tag')
             expect(tags).to_have_count(8)
-            expect(tags.last).to_be_visible()
-            assert page.locator('.gallery-row').first.locator('.gr-tags').evaluate('(e)=>getComputedStyle(e).flexWrap')=='wrap'
-            assert page.locator('.gallery-row').first.locator('.gr-tags').evaluate('(e)=>getComputedStyle(e).maskImage')=='none'
+            tag_row=page.locator('.gallery-row').first.locator('.gr-tags')
+            assert tag_row.get_attribute('title')==' · '.join(galleries[0]['tagLabels'])
+            assert tag_row.evaluate('(e)=>getComputedStyle(e).flexWrap')=='nowrap'
+            assert tag_row.evaluate('(e)=>getComputedStyle(e).maskImage')!='none'
             assert page.locator('.pagination-control .pag-btn').first.evaluate('(e)=>e.getBoundingClientRect().height')==36
-            page.set_viewport_size({'width':390,'height':844})
-            assert page.locator('.pagination-control .pag-btn').first.evaluate('(e)=>e.getBoundingClientRect().height')==44
-            expect(tags.last).to_be_visible()
-            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth+1')
+            for width in (320,390,561,767):
+                page.set_viewport_size({'width':width,'height':844})
+                assert page.locator('.pagination-control .pag-btn').first.evaluate('(e)=>e.getBoundingClientRect().height')==44
+                expect(page.locator('.pagination-control').first.get_by_role('button',name='最后一页')).to_be_visible()
+                assert page.evaluate('document.documentElement.scrollWidth <= innerWidth+1'),width
             page.set_viewport_size({'width':1440,'height':1000})
+            page.locator('.pagination-control').first.get_by_role('button',name='最后一页').click()
+            expect(page).to_have_url(re.compile('page=3'))
+            page.locator('.pagination-control').first.get_by_role('button',name='第一页').click()
+            expect(page).to_have_url(re.compile('/#/($|\\?)'))
             search=page.get_by_role('combobox',name='搜索画廊',exact=True)
             expect(search).to_be_visible()
             expect(page.locator('.pagination-control')).to_have_count(2)
