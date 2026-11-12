@@ -143,7 +143,7 @@ body.home-scroll-locked {
    揭示方式：指针设备 hover 预览；触屏设备长按（:active）预览。
    ═══════════════════════════════════════ */
 
-.mom-mode img:not(.thumbnail-image):not(.full-image),
+.mom-mode img:not(.thumbnail-image):not(.full-image):not(.nh-brand-mark),
 .mom-mode .poster,
 .mom-mode .album-cover {
   filter: blur(var(--mom-mode-blur)) !important;
@@ -151,21 +151,21 @@ body.home-scroll-locked {
 }
 
 /* 触屏：长按预览（快速点击仍然正常跳转） */
-.mom-mode img:not(.thumbnail-image):not(.full-image):active,
+.mom-mode img:not(.thumbnail-image):not(.full-image):not(.nh-brand-mark):active,
 .mom-mode .poster:active,
 .mom-mode .album-cover:active,
-.mom-mode a:active img:not(.thumbnail-image):not(.full-image),
-.mom-mode button:active img:not(.thumbnail-image):not(.full-image) {
+.mom-mode a:active img:not(.thumbnail-image):not(.full-image):not(.nh-brand-mark),
+.mom-mode button:active img:not(.thumbnail-image):not(.full-image):not(.nh-brand-mark) {
   filter: blur(0px) !important;
 }
 
 /* 指针设备：悬停预览 */
 @media (hover: hover) and (pointer: fine) {
-  .mom-mode img:not(.thumbnail-image):not(.full-image):hover,
+  .mom-mode img:not(.thumbnail-image):not(.full-image):not(.nh-brand-mark):hover,
   .mom-mode .poster:hover,
   .mom-mode .album-cover:hover,
-  .mom-mode a:hover img:not(.thumbnail-image):not(.full-image),
-  .mom-mode button:hover img:not(.thumbnail-image):not(.full-image) {
+  .mom-mode a:hover img:not(.thumbnail-image):not(.full-image):not(.nh-brand-mark),
+  .mom-mode button:hover img:not(.thumbnail-image):not(.full-image):not(.nh-brand-mark) {
     filter: blur(0px) !important;
   }
 }

@@ -25,7 +25,7 @@
         </button>
       </div>
       <p v-if="passwordError" class="gt-pwd-error">{{ passwordError }}</p>
-      <button class="gt-pwd-back" @click="$router.back()">← 返回</button>
+      <button class="gt-pwd-back" @click="$router.back()"><AppIcon name="arrow-left" :size="18" /> 返回</button>
     </div>
   </div>
 
@@ -33,7 +33,7 @@
   <div v-else class="gt-workbench" :style="{ '--gt-sheet-h': sheetHeight }">
     <!-- Header -->
     <header class="gt-header">
-      <button class="gt-back-btn" aria-label="返回详情" @click="$router.back()">←</button>
+      <button class="gt-back-btn" aria-label="返回详情" @click="$router.back()"><AppIcon name="arrow-left" :size="18" /></button>
 
       <div class="gt-header-info">
         <span v-if="totalPages" class="gt-header-pages">{{ currentPage }} / {{ totalPages }}</span>
@@ -145,7 +145,7 @@
               aria-label="上一页"
               @pointerdown.stop
               @click.stop="prevPage"
-            >‹</button>
+            ><AppIcon name="chevron-left" :size="18" /></button>
             <span class="gt-sheet-label">
               识别结果
               <span v-if="ocrResults.length" class="gt-sheet-count">{{ ocrResults.length }}</span>
@@ -157,13 +157,13 @@
               aria-label="下一页"
               @pointerdown.stop
               @click.stop="nextPage"
-            >›</button>
+            ><AppIcon name="chevron-right" :size="18" /></button>
           </div>
         </div>
 
         <!-- Thumbnail strip inside sidebar -->
         <div class="gt-strip" v-if="galleryImages.length">
-          <button class="gt-strip-nav" :disabled="currentPage <= 1" @click="prevPage">‹</button>
+          <button class="gt-strip-nav" aria-label="上一页缩略图" :disabled="currentPage <= 1" @click="prevPage"><AppIcon name="chevron-left" :size="18" /></button>
           <div class="gt-strip-scroll" ref="stripRef">
             <div
               v-for="img in galleryImages"
@@ -179,7 +179,7 @@
               <span class="gt-thumb-num">{{ img.pageNum }}</span>
             </div>
           </div>
-          <button class="gt-strip-nav" :disabled="currentPage >= totalPages" @click="nextPage">›</button>
+          <button class="gt-strip-nav" aria-label="下一页缩略图" :disabled="currentPage >= totalPages" @click="nextPage"><AppIcon name="chevron-right" :size="18" /></button>
         </div>
         <div v-else-if="imagesLoading" class="gt-strip gt-strip-loading">
           <div class="gt-spinner-sm"></div>
@@ -191,7 +191,7 @@
         <div class="gt-config-panel" :class="{ 'gt-config-panel-collapsed': !configPanelExpanded }">
           <button class="gt-config-toggle" @click="configPanelExpanded = !configPanelExpanded">
             <span>功能设置</span>
-            <span class="gt-config-toggle-icon" :class="{ 'is-open': configPanelExpanded }">⌃</span>
+            <span class="gt-config-toggle-icon" :class="{ 'is-open': configPanelExpanded }"><AppIcon name="chevron-up" :size="18" /></span>
           </button>
           <template v-if="configPanelExpanded">
           <div class="gt-cfg-row">
@@ -311,8 +311,8 @@
               <span class="gt-result-idx">{{ i + 1 }}</span>
               <span v-if="result.confidence < 0.8" class="gt-result-conf" :title="`识别置信度 ${(result.confidence * 100).toFixed(0)}%`">待核对</span>
 
-              <span v-if="result.translation" class="gt-done-mark">✓</span>
-              <button class="gt-result-del" @click.stop="deleteResult(i)" title="删除">×</button>
+              <span v-if="result.translation" class="gt-done-mark"><AppIcon name="check" :size="14" /></span>
+              <button class="gt-result-del" @click.stop="deleteResult(i)" title="删除"><AppIcon name="close" :size="18" /></button>
             </div>
             <div v-if="studyMode && studyTokens[result._id]" class="gt-result-orig gt-token-line">
               <span
@@ -347,7 +347,7 @@
                 <p class="gt-result-trans">
                   <span v-if="result.kind && result.kind !== 'dialogue'" class="gt-kind-tag">{{ kindLabel(result.kind) }}</span>{{ result.translation }}
                 </p>
-                <button class="gt-result-edit-btn" type="button" title="编辑译文" aria-label="编辑译文" @click.stop="startEdit(i)">✎</button>
+                <button class="gt-result-edit-btn" type="button" title="编辑译文" aria-label="编辑译文" @click.stop="startEdit(i)"><AppIcon name="edit" :size="16" /></button>
               </div>
               <p v-if="result.translation && result.alt" class="gt-result-alt">备选：{{ result.alt }}</p>
               <p v-else-if="!result.translation && ocrResults.some(r => r.translation)" class="gt-result-missing">
@@ -364,10 +364,10 @@
     <Transition name="gt-bc">
       <div v-if="bubbleCard != null && ocrResults[bubbleCard]" class="gt-bubble-card" role="dialog" aria-label="对白详情">
         <div class="gt-bc-head">
-          <button class="gt-bc-nav" type="button" :disabled="bubbleCard <= 0" aria-label="上一条" @click="stepBubble(-1)">‹</button>
+          <button class="gt-bc-nav" type="button" :disabled="bubbleCard <= 0" aria-label="上一条" @click="stepBubble(-1)"><AppIcon name="chevron-left" :size="18" /></button>
           <span class="gt-bc-pos">{{ bubbleCard + 1 }} / {{ ocrResults.length }}</span>
-          <button class="gt-bc-nav" type="button" :disabled="bubbleCard >= ocrResults.length - 1" aria-label="下一条" @click="stepBubble(1)">›</button>
-          <button class="gt-bc-close" type="button" aria-label="关闭" @click="closeBubble">×</button>
+          <button class="gt-bc-nav" type="button" :disabled="bubbleCard >= ocrResults.length - 1" aria-label="下一条" @click="stepBubble(1)"><AppIcon name="chevron-right" :size="18" /></button>
+          <button class="gt-bc-close" type="button" aria-label="关闭" @click="closeBubble"><AppIcon name="close" :size="18" /></button>
         </div>
         <p class="gt-bc-orig">{{ ocrResults[bubbleCard].text }}</p>
         <p v-if="ocrResults[bubbleCard].translation" class="gt-bc-trans">{{ ocrResults[bubbleCard].translation }}</p>
@@ -388,7 +388,7 @@
                 v-if="wordCard.token.reading && wordCard.token.reading !== '*' && wordCard.token.reading !== wordCard.token.surface_form"
                 class="gt-wc-kana"
               >{{ wordCard.token.reading }}</span>
-              <span v-if="wordCard.word !== wordCard.token.surface_form" class="gt-wc-base-form">→ {{ wordCard.word }}</span>
+              <span v-if="wordCard.word !== wordCard.token.surface_form" class="gt-wc-base-form"><AppIcon name="arrow-right" :size="14" /> {{ wordCard.word }}</span>
             </div>
             <div class="gt-wc-meta-row">
               <span class="gt-wc-pos-badge" :style="{ background: getPosColor(wordCard.token.pos) + '22', color: getPosColor(wordCard.token.pos), borderColor: getPosColor(wordCard.token.pos) + '55' }">
@@ -396,7 +396,7 @@
               </span>
               <span v-if="wordCard.token.conjugated_form && wordCard.token.conjugated_form !== '*'" class="gt-wc-conj">{{ wordCard.token.conjugated_form }}</span>
             </div>
-            <button class="gt-wc-close" @click="wordCard = null">×</button>
+            <button class="gt-wc-close" aria-label="关闭词语详情" @click="wordCard = null"><AppIcon name="close" :size="18" /></button>
           </div>
 
           <div class="gt-wc-body">
@@ -436,13 +436,14 @@
         :class="'gt-toast-' + toast.type"
       >
         <span>{{ toast.msg }}</span>
-        <button class="gt-toast-close" @click="removeToast(toast.id)">×</button>
+        <button class="gt-toast-close" aria-label="关闭通知" @click="removeToast(toast.id)"><AppIcon name="close" :size="18" /></button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import AppIcon from '@/components/ui/AppIcon.vue'
 import {readTranslationResponse,scaleOcrResults} from '@/utils/translationApi'
 import { loadGallery } from '@/composables/useGalleryData'
 
@@ -752,6 +753,7 @@ function fitTextToBox(el, minSize = 1) {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default {
+  components: { AppIcon },
   name: 'GalleryTranslate',
 
   data() {

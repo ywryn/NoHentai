@@ -1,4 +1,5 @@
 <script setup>
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { ref, computed, watch } from 'vue'
 
 /**
@@ -58,8 +59,8 @@ function submitJump() {
 <template>
   <nav class="pagination-control" :aria-label="`分页，共 ${total} 页`">
     <div class="paginator-mini">
-      <button class="pag-btn pag-nav" type="button" :disabled="page <= 1" aria-label="第一页" @click="go(1)">«</button>
-      <button class="pag-btn pag-nav" type="button" :disabled="page <= 1" aria-label="上一页" @click="go(page - 1)">‹</button>
+      <button class="pag-btn pag-nav" type="button" :disabled="page <= 1" aria-label="第一页" @click="go(1)"><AppIcon name="first-page" :size="18" /></button>
+      <button class="pag-btn pag-nav" type="button" :disabled="page <= 1" aria-label="上一页" @click="go(page - 1)"><AppIcon name="chevron-left" :size="18" /></button>
 
       <template v-for="item in items" :key="item.key">
         <span v-if="item.type === 'gap'" class="pag-gap" aria-hidden="true">…</span>
@@ -74,8 +75,8 @@ function submitJump() {
         >{{ item.n }}</button>
       </template>
 
-      <button class="pag-btn pag-nav" type="button" :disabled="page >= total" aria-label="下一页" @click="go(page + 1)">›</button>
-      <button class="pag-btn pag-nav" type="button" :disabled="page >= total" aria-label="最后一页" @click="go(total)">»</button>
+      <button class="pag-btn pag-nav" type="button" :disabled="page >= total" aria-label="下一页" @click="go(page + 1)"><AppIcon name="chevron-right" :size="18" /></button>
+      <button class="pag-btn pag-nav" type="button" :disabled="page >= total" aria-label="最后一页" @click="go(total)"><AppIcon name="last-page" :size="18" /></button>
 
       <label class="pag-jump-inline">
         <span class="sr-only">跳转到页码</span>
@@ -96,6 +97,7 @@ function submitJump() {
 </template>
 
 <style scoped>
+.pag-nav { display: inline-flex; align-items: center; justify-content: center; }
 /* 这些样式此前住在 Home.css（无 scoped、只被 Home/Daily 引入），
    而 Printed 用的是 scoped 的 Printed.css。直接落地 /printed 时
    Home.css 根本没加载，分页器就是一堆无样式的裸 button；

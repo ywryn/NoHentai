@@ -26,11 +26,9 @@
                 class="home-type-dot"
                 :style="{ background: exTypeDotColors[activeTypes[0]] }"
               ></span>
-              <svg v-else viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-                <path d="M3 5h18l-7 8v6l-4 2v-8L3 5z" />
-              </svg>
+              <AppIcon name="filter" :size="20" v-else />
               {{ categoryLabel }}
-              <span class="home-filter-caret" aria-hidden="true">▾</span>
+              <span class="home-filter-caret" aria-hidden="true"><AppIcon name="chevron-down" :size="18" /></span>
             </button>
             </template>
           </GallerySearchInput>
@@ -50,7 +48,7 @@
               <span v-if="term.mode === 'exclude'" class="chip-sign">−</span>
               <span v-else-if="term.mode === 'or'" class="chip-sign">或</span>
               {{ term.raw.replace(/^[-~]/, '') }}
-              <span class="chip-x" aria-hidden="true">×</span>
+              <span class="chip-x" aria-hidden="true"><AppIcon name="close" :size="18" /></span>
             </button>
             <button
               v-for="type in activeTypes"
@@ -62,7 +60,7 @@
             >
               <span class="home-type-dot" :style="{ background: exTypeDotColors[type] }"></span>
               {{ type }}
-              <span class="chip-x" aria-hidden="true">×</span>
+              <span class="chip-x" aria-hidden="true"><AppIcon name="close" :size="18" /></span>
             </button>
             <button class="home-clear-all" type="button" @click="clearAll">全部清除</button>
           </div>
@@ -119,6 +117,7 @@
 </template>
 
 <script setup>
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Popover from 'primevue/popover'

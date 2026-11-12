@@ -1,4 +1,5 @@
 <script setup>
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { ref, computed, watch, onBeforeUnmount, getCurrentInstance, nextTick } from 'vue'
 import { applySuggestion, SEARCH_SYNTAX_HELP, BOOK_SEARCH_FIELDS } from '@/utils/gallerySearch'
 import { useSearchSuggestions } from '@/composables/useSearchSuggestions'
@@ -62,13 +63,13 @@ defineExpose({ focus, clear, reset })
   <div class="search-control" :class="`search-control-${variant}`" :data-search-profile="profile">
     <div class="search-control-row">
       <div class="search-control-box">
-        <svg class="search-control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7.5"/><path d="m17 17 4 4"/></svg>
+        <AppIcon name="search" :size="20" class="search-control-icon" />
         <input :id="id" ref="input" :value="text" type="text" inputmode="search" maxlength="2000" :aria-label="label" :placeholder="placeholder"
           role="combobox" aria-autocomplete="list" :aria-controls="`${id}-options`" :aria-expanded="visible"
           :aria-activedescendant="visible && highlight >= 0 ? `${id}-option-${highlight}` : undefined"
           autocomplete="off" spellcheck="false" @input="readInput" @keydown="key" @keyup="selection" @click="selection" @select="selection"
           @compositionstart="composing = true; clearTimeout(timer)" @compositionend="compositionEnd" @focus="onFocus" @blur="blur"/>
-        <button v-if="text" type="button" class="search-control-clear" :aria-label="`清空${label}`" @mousedown.prevent @click="clear">×</button>
+        <button v-if="text" type="button" class="search-control-clear" :aria-label="`清空${label}`" @mousedown.prevent @click="clear"><AppIcon name="close" :size="18" /></button>
         <ul v-if="visible" :id="`${id}-options`" class="search-control-suggestions" role="listbox" aria-label="标签建议">
           <li v-for="(item,index) in items" :id="`${id}-option-${index}`" :key="item.tag" role="option" :aria-selected="highlight === index"
             @pointerdown.prevent="choose(item)" @mouseenter="highlight = index">

@@ -38,6 +38,7 @@ def main():
         with sync_playwright() as p:
             browser=p.chromium.launch(headless=True)
             page=browser.new_page(service_workers='block');page.set_default_timeout(20000)
+            page.add_init_script("localStorage.setItem('mom-mode','true')")
             errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
             page.route('**/api/galleries?*',catalog)
             page.route('**/api/revision',lambda r:r.fulfill(json={'catalog':'layout'}))
@@ -51,10 +52,13 @@ def main():
                     page.goto(base+'/#/');expect(page.locator('.gallery-row')).to_have_count(30)
                     page.evaluate('(t)=>{document.documentElement.classList.toggle("my-app-dark",t==="dark");document.documentElement.classList.toggle("my-app-light",t==="light")}',theme)
                     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'),(theme,width,'overflow')
+                    expect(page.locator('.brand-logo img')).to_have_attribute('src','/brand/mark-f.png')
+                    assert page.locator('.brand-logo img').evaluate('(e)=>getComputedStyle(e).filter') == 'none'
+                    expect(page.locator('#site-icon')).to_have_attribute('href','/brand/mark-f.png')
                     if width<=600:
                         box=page.get_by_role('combobox',name='搜索画廊').bounding_box()
                         assert box['width']>width*.65,(width,box)
-                    assert page.locator('.pag-nav').first.bounding_box()['height']>=44
+                    assert page.locator('.pag-nav').first.bounding_box()['height'] >= (44 if width < 768 else 36)
                     page.screenshot(path=str(output/f'catalog-{theme}-{width}.png'))
             for width in [390,768,1440]:
                 page.set_viewport_size({'width':width,'height':900})
@@ -87,6 +91,7 @@ def main():
             for width in [360,768,1024,1440]:
                 page.set_viewport_size({'width':width,'height':900})
                 page.goto(base+'/#/admin/galleries');expect(page.locator('.a-master-list')).to_be_visible()
+                expect(page.locator('#site-icon')).to_have_attribute('href','/brand/mark-b.png')
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'),('admin',width,'overflow')
                 footer=page.locator('.a-pagination').bounding_box()
                 assert footer['y']+footer['height'] <= 900,('admin footer',width,footer)

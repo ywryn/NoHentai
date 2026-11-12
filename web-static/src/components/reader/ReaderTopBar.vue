@@ -1,7 +1,7 @@
 <template>
   <div class="top-bar-shell">
     <div class="top-bar">
-      <button class="tb-icon-btn tb-back" type="button" title="返回" aria-label="返回" @click="$emit('back')">←</button>
+      <button class="tb-icon-btn tb-back" type="button" title="返回" aria-label="返回" @click="$emit('back')"><AppIcon name="arrow-left" :size="18" /></button>
 
       <button class="tb-counter" type="button" aria-label="打开页目录" @click="$emit('toggleThumbGrid')">{{ pageCounter }}</button>
 
@@ -70,9 +70,7 @@
         title="阅读设置"
         @click="settingsOpen = !settingsOpen"
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-          <path d="M19.4 13a7.8 7.8 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-1.7-1L15 3.3H11l-.3 2.6a7.6 7.6 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.8 7.8 0 0 0 0 2l-2 1.6 2 3.4 2.4-1c.5.4 1.1.8 1.7 1l.3 2.6h4l.3-2.6c.6-.2 1.2-.6 1.7-1l2.4 1 2-3.4-2-1.6zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" />
-        </svg>
+        <AppIcon name="settings" :size="20" />
       </button>
 
       <button
@@ -83,9 +81,7 @@
         title="页目录（F）"
         @click="$emit('toggleThumbGrid')"
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-          <path d="M3 3h8v8H3V3zm0 10h8v8H3v-8zm10-10h8v8h-8V3zm0 10h8v8h-8v-8z" />
-        </svg>
+        <AppIcon name="grid" :size="20" />
       </button>
 
 
@@ -99,6 +95,7 @@
 </template>
 
 <script setup lang="ts">
+import AppIcon from '@/components/ui/AppIcon.vue'
 import { ref, computed, inject } from 'vue'
 import { READER_KEY } from '@/composables/useReader'
 
