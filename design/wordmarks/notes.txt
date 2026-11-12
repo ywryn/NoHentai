@@ -1,0 +1,13 @@
+NoHentai wordmark exploration. G symbol unchanged. Typography-only proposals; production lettering unchanged pending selection.
+A 柔圆 — Nunito, weight 850, tracking -0.04em.
+B 轻行 — Outfit, weight 650, tracking -0.035em, custom -8deg shear of lettering only.
+C 书卷 — Fraunces Italic, weight 600, optical size 30, SOFT 20, WONK 0.
+D 刻线 — Sora, weight 650, tracking -0.06em.
+All proposals display the exact name NoHentai; no raster-generated lettering.
+Fonts are served locally for consistent rendering and no third-party font request. Each font's SIL Open Font License is retained in wordmark-fonts/.
+Source files and license:
+https://github.com/google/fonts/tree/main/ofl/nunito
+https://github.com/google/fonts/tree/main/ofl/outfit
+https://github.com/google/fonts/tree/main/ofl/fraunces
+https://github.com/google/fonts/tree/main/ofl/sora
+These are font-based typographic treatments; selection is followed by production size/spacing refinement and a small self-hosted subset or vector wordmark.
