@@ -43,7 +43,7 @@ export default defineConfig({
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['brand/mark-f.png', 'brand/mark-b.png'],
+      includeAssets: ['brand/mark-g.png', 'brand/mark-b.png'],
       manifest: {
         name: 'NoHentai | の変態',
         short_name: 'NoHentai',
@@ -55,7 +55,7 @@ export default defineConfig({
         orientation: 'any',
         scope: '/',
         start_url: '/',
-        icons: [{ src: 'brand/mark-f.png', sizes: '1254x1254', type: 'image/png', purpose: 'any' }],
+        icons: [{ src: 'brand/mark-g.png', sizes: '1254x1254', type: 'image/png', purpose: 'any' }],
       },
       workbox: {
         // 只缓存静态资源，数据库内容始终访问后端。

@@ -126,8 +126,8 @@ onMounted(() => {
   height: 44px;
   gap: 10px;
   padding: 0;
-  /* The selected PNG has ~4px transparent inset at 40px. Align its visible edge. */
-  margin-inline-start: -4px;
+  /* G has 154px transparent inset on its 1254px canvas. Align its visible edge at 40px. */
+  margin-inline-start: calc(-40px * 154 / 1254);
   border-radius: 10px;
   background: transparent;
   color: var(--logo-text);

@@ -52,12 +52,12 @@ def main():
                     page.goto(base+'/#/');expect(page.locator('.gallery-row')).to_have_count(30)
                     page.evaluate('(t)=>{document.documentElement.classList.toggle("my-app-dark",t==="dark");document.documentElement.classList.toggle("my-app-light",t==="light")}',theme)
                     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'),(theme,width,'overflow')
-                    expect(page.locator('.brand-logo img')).to_have_attribute('src','/brand/mark-f.png')
+                    expect(page.locator('.brand-logo img')).to_have_attribute('src','/brand/mark-g.png')
                     assert page.locator('.brand-logo img').evaluate('(e)=>getComputedStyle(e).filter') == 'none'
                     mark=page.locator('.brand-logo img').bounding_box()
-                    visible_left=mark['x']+mark['width']*122/1254
+                    visible_left=mark['x']+mark['width']*154/1254
                     assert abs(visible_left-page.locator('.home-shell').bounding_box()['x'])<1.5,('brand alignment',width,visible_left)
-                    expect(page.locator('#site-icon')).to_have_attribute('href','/brand/mark-f.png')
+                    expect(page.locator('#site-icon')).to_have_attribute('href','/brand/mark-g.png')
                     if width<=600:
                         box=page.get_by_role('combobox',name='搜索画廊').bounding_box()
                         assert box['width']>width*.65,(width,box)
