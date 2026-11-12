@@ -7,12 +7,13 @@ import sqlite3
 import tempfile
 import time
 import unittest
+import httpx
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from unittest.mock import patch, Mock
 from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
-from backend import db, settings, jobs, security, translation, services
+from backend import db, settings, jobs, security, translation, services, upstream
 from backend.main import app
 from backend.cli import initialize_data, backup
 from backend.validation import read_books, books_csv
@@ -96,6 +97,50 @@ class BackendTests(unittest.TestCase):
         for _ in range(10):
             result = self.client.post('/api/admin', json={'action': 'verify', 'password': 'bad'})
         self.assertEqual(result.status_code, 429)
+
+    def test_atomic_rate_limit_under_concurrent_requests_and_expiry(self):
+        with ThreadPoolExecutor(max_workers=20) as pool:
+            allowed = list(pool.map(lambda _: db.reserve('concurrent-test', 10, 60), range(50)))
+        self.assertEqual(sum(allowed), 10)
+        self.assertFalse(db.reserve('concurrent-test', 10, 60))
+        with db.connect() as con:
+            con.execute('UPDATE counters SET expires=0 WHERE key=?', ('concurrent-test',))
+        self.assertTrue(db.reserve('concurrent-test', 10, 60))
+        with db.connect() as con:
+            row = con.execute('SELECT count FROM counters WHERE key=?', ('concurrent-test',)).fetchone()
+            self.assertEqual(row['count'], 1)
+
+    def test_request_id_and_safe_failure_log(self):
+        with patch('backend.main.catalog.list_galleries', side_effect=RuntimeError('secret-key=TOPSECRET')):
+            with self.assertLogs('nohentai.api', level='ERROR') as logs:
+                response = self.client.get('/api/galleries')
+        self.assertEqual(response.status_code, 502)
+        request_id = response.headers['X-Request-ID']
+        self.assertEqual(len(request_id), 32)
+        self.assertIn(request_id, logs.output[0])
+        self.assertNotIn('TOPSECRET', '\n'.join(logs.output))
+
+    def test_preview_disables_external_calls_before_transport(self):
+        with patch.dict(os.environ, {'NOHENTAI_DISABLE_UPSTREAM': '1'}), patch('backend.upstream.httpx.Client') as transport:
+            for action in (lambda: upstream.fetch('https://e-hentai.org/'),
+                           lambda: upstream.json_request('GET', 'https://jisho.org/')):
+                with self.assertRaises(Exception) as error:
+                    action()
+                self.assertEqual(error.exception.status_code, 503)
+            transport.assert_not_called()
+
+    def test_upstream_json_response_is_bounded(self):
+        client_type = httpx.Client
+        with patch('backend.upstream.validate_url', side_effect=lambda url: url):
+            for payload, expected_status in ((b'{"ok":true}', None), (b' ' * (upstream.MAX_JSON + 1), 502)):
+                transport = httpx.MockTransport(lambda request: httpx.Response(200, content=payload))
+                with patch('backend.upstream.httpx.Client', side_effect=lambda **kwargs: client_type(transport=transport)):
+                    if expected_status is None:
+                        self.assertEqual(upstream.json_request('GET', 'https://jisho.org/api'), {'ok': True})
+                    else:
+                        with self.assertRaises(Exception) as error:
+                            upstream.json_request('GET', 'https://jisho.org/api')
+                        self.assertEqual(error.exception.status_code, expected_status)
 
     def test_foreign_origin_bad_json_and_unknown_routes(self):
         self.assertEqual(self.client.post('/api/admin', json={'action': 'runs', 'password': self.token}, headers={'Origin': 'https://evil.example'}).status_code, 403)

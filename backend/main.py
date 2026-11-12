@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request, HTTPException, Body, Query
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from . import admin, db, settings, public, media, translation, security, catalog, services, media_store, operations, stats
+from . import admin, db, settings, public, media, translation, security, catalog, services, media_store, operations, stats, observability
 from cryptography.fernet import Fernet
 
 
@@ -26,23 +26,32 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.origins(), allow_metho
 
 @app.middleware('http')
 async def protect(request, call_next):
-    origin = request.headers.get('origin')
-    if request.method == 'POST' and origin and origin not in settings.origins():
-        return JSONResponse({'error': '不允许的请求来源'}, status_code=403)
-    if request.method == 'POST':
-        # Bound chunked bodies too, before parsing JSON or allocating OCR buffers.
-        chunks, size = [], 0
-        async for chunk in request.stream():
-            size += len(chunk)
-            if size > 16 * 1024 * 1024:
-                return JSONResponse({'error': '请求体超过 16MB'}, status_code=413)
-            chunks.append(chunk)
-        request._body = b''.join(chunks)
-    response = await call_next(request)
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    if request.url.path.startswith('/api/'):
-        response.headers['Cache-Control'] = 'no-store'
-    return response
+    request_id, marker = observability.bind_request()
+    try:
+        origin = request.headers.get('origin')
+        if request.method == 'POST' and origin and origin not in settings.origins():
+            response = JSONResponse({'error': '不允许的请求来源'}, status_code=403)
+        elif request.method == 'POST':
+            # Bound chunked bodies too, before parsing JSON or allocating OCR buffers.
+            chunks, size = [], 0
+            async for chunk in request.stream():
+                size += len(chunk)
+                if size > 16 * 1024 * 1024:
+                    response = JSONResponse({'error': '请求体超过 16MB'}, status_code=413)
+                    break
+                chunks.append(chunk)
+            else:
+                request._body = b''.join(chunks)
+                response = await call_next(request)
+        else:
+            response = await call_next(request)
+        response.headers['X-Request-ID'] = request_id
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        if request.url.path.startswith('/api/'):
+            response.headers['Cache-Control'] = 'no-store'
+        return response
+    finally:
+        observability.reset_request(marker)
 
 
 @app.exception_handler(HTTPException)
@@ -65,8 +74,10 @@ def safely(fn, *args):
         # must not echo provider responses or URLs containing keys.
         if fn is admin.handle:
             raise HTTPException(400, str(exc)) from None
+        observability.log_failure(getattr(fn, '__name__', type(fn).__name__), exc)
         raise HTTPException(502, '上游数据格式异常，请稍后重试') from None
-    except Exception:
+    except Exception as exc:
+        observability.log_failure(getattr(fn, '__name__', type(fn).__name__), exc)
         raise HTTPException(502, '服务暂时不可用，请检查服务器配置与任务记录') from None
 
 

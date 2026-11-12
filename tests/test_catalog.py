@@ -73,6 +73,21 @@ console.log(JSON.stringify(queries.map(q=>source.filter(g=>passesQuery(g,parseQu
         self.assertEqual(self.save('overrides', {'123': {'hidden': True}}).status_code, 200)
         self.assertEqual(self.client.get('/api/galleries').json()['total'], 0)
 
+    def test_translation_dictionary_is_not_reread_for_warm_detail_requests(self):
+        catalog._translation_cache.clear()
+        with db.connect() as con:
+            db.put_snapshot(con, 'translations', {'data': [{'namespace': 'artist', 'data': {'test': {'name': '原名'}}}]})
+        queries = []
+        with db.connect() as con:
+            con.set_trace_callback(queries.append)
+            self.assertEqual(catalog.translations(con)['artist:test']['name'], '原名')
+            queries.clear()
+            self.assertEqual(catalog.translations(con)['artist:test']['name'], '原名')
+        self.assertFalse(any("SELECT data FROM snapshots WHERE name='translations'" in query for query in queries))
+        with db.connect() as con:
+            db.put_snapshot(con, 'translations', {'data': [{'namespace': 'artist', 'data': {'test': {'name': '新名'}}}]})
+            self.assertEqual(catalog.translations(con)['artist:test']['name'], '新名')
+
     def test_suggestions_respect_namespace_aliases_and_skip_non_tag_fields(self):
         with db.connect() as con:
             db.put_snapshot(con,'translations',{'data':[{'namespace':ns,'data':{'test':{'name':'测试'}}} for ns in ('artist','female')]})

@@ -127,15 +127,27 @@ def filter_sql(query, extra_fields=(), matcher=None):
     return ' AND '.join(clauses) or '1', params
 
 
-@lru_cache(maxsize=2)
 def translation_index(serialized):
     return {f'{group["namespace"]}:{value}': {'namespace': group['namespace'], 'value': value, **detail}
             for group in json.loads(serialized).get('data', []) for value, detail in group.get('data', {}).items()}
 
 
+_translation_cache = {}
+
+
 def translations(con):
+    # A translated dictionary is several MB. Use the transaction's revision
+    # before reading it, so ordinary detail/list requests only fetch a small key.
+    key = (str(settings.DB_PATH), db.snapshot(con, 'catalog-revision'))
+    cached = _translation_cache.get(key)
+    if cached is not None:
+        return cached
     row = con.execute("SELECT data FROM snapshots WHERE name='translations'").fetchone()
-    return translation_index(row[0]) if row else {}
+    index = translation_index(row[0]) if row else {}
+    _translation_cache[key] = index
+    if len(_translation_cache) > 4:
+        _translation_cache.pop(next(iter(_translation_cache)))
+    return index
 
 
 def list_galleries(query='', types='', page=1, per_page=30):
@@ -216,7 +228,7 @@ def gallery_detail(gid, source='favorites'):
         fail(400, '画廊 ID 不正确')
     with db.connect() as con:
         con.execute('BEGIN')
-        patches, _ = db.resource(con, 'overrides')
+        patch = con.execute('SELECT data FROM gallery_overrides WHERE gid=?', (gid,)).fetchone()
         gallery = None
         if source != 'daily':
             row = con.execute('SELECT data FROM galleries WHERE gid=?', (gid,)).fetchone()
@@ -225,7 +237,7 @@ def gallery_detail(gid, source='favorites'):
             gallery = next((g for group in db.snapshot(con, 'daily', []) for g in group.get('galleries', []) if str(g.get('gid')) == gid), None)
         if gallery is None:
             fail(404, '未找到此画廊')
-        gallery = dict(gallery, **patches.get(gid, {}))
+        gallery = dict(gallery, **(json.loads(patch[0]) if patch else {}))
         if gallery.get('hidden'):
             fail(404, '未找到此画廊')
         index = translations(con)
