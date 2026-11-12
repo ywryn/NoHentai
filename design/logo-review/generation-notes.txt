@@ -23,3 +23,17 @@ Final generation prompt:
 Use case: logo-brand. Create ONE elegant standalone logo symbol for NoHentai, a Japanese manga/doujin collection and reading library. Direction D: a stylized Japanese folded-paper bird formed from the pages of an open book. Use a very compact abstract origami silhouette, only 3 or 4 bold planes separated by purposeful transparent negative spaces; wings/book pages should read as the same visual idea. Quiet cultural, editorial sensibility, refined and memorable, not a cute mascot or a travel brand. Single solid muted violet ink #8470a0. Flat crisp vector-like shapes, no thin feather detail, recognizable at favicon scale. Centered on a truly transparent square canvas, symbol occupies 82% with even margins. No words or letters, no captions, no presentation board, no gradients, textures, shadows, sparkles, background or sexual imagery.
 
 
+E — の字 · 大折角
+Saved asset: assets/logo-e.png
+Reference: assets/logo-a.png (visual family reference)
+Tool: built-in image_gen; transparent_background=true
+Final prompt:
+Use case: logo-brand. Create ONE new refined logo symbol for NoHentai manga reading/library site. Reference image is existing concept A for visual family only; redesign rather than reproduce. Subject: clearly recognizable Japanese hiragana の as a confident continuous rounded loop, with an unmistakable LARGE folded book-page corner integrated into the lower-right outer silhouette. The old tiny internal slit disappears at favicon size; solve this with a broad angular dog-ear and a spacious triangular TRANSPARENT negative cut, roughly one quarter of the mark height, visibly changing the outer contour. Keep the の legible, balanced and minimal. Flat solid dusty rose #b75b7d, one ink only. Heavy clean curves, crisp vector-like edges, generous counters, optically balanced at 16–32 pixels. Single centered symbol occupying 80% square canvas, genuinely transparent background. No words, no letters other than the stylized の, no mockup, no border, no gradients, textures, shadows, highlights, fine lines, extra symbols or small decorative details.
+
+
+F — の字 · 简式收笔
+Saved asset: assets/logo-f.png
+Reference: assets/logo-a.png (visual family reference)
+Tool: built-in image_gen; transparent_background=true
+Final prompt:
+Use case: logo-brand. Create ONE distinctive minimalist logo symbol for NoHentai manga reading/library site, a new alternative to the reference image. Reference is previous concept A, retain its dusty rose visual family, but choose a DIFFERENT favicon-first design. Build a bold geometrically simplified Japanese hiragana の, with a broad almost circular outer sweep and a spacious teardrop interior, with a decisive flat diagonal PAGE-END terminal on the lower-right. Convey a turning book page through the large silhouette and broad opening alone, NOT a little cutout dog-ear. A single cohesive continuous stroke; no small fold detail anywhere. Clearly recognizable as の rather than Latin e or @. Compact balanced app-icon silhouette, thick strokes and large transparent negative spaces. Flat solid dusty rose #b75b7d, one ink, precise smooth vector-like contours. ONE centered mark occupies 80% of square transparent canvas. Must remain clear at16px. No words, no additional symbols, no mockup, no container square, no gradient, lighting, shadow, texture, outline or thin lines.
