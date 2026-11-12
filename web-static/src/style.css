@@ -873,7 +873,7 @@ button,a,input,summary,select,textarea{touch-action:manipulation}
  .app-shell .catalog-title,.app-shell .digi-title,.app-shell .page-title,.app-shell .daily-heading h1{font-size:24px}
  .app-shell .home-header-card{gap:20px}
  .app-shell .gallery-row{padding:14px 12px;gap:12px}
- .app-shell .gr-thumb{width:56px;height:80px}
+ .app-shell .gr-thumb{width:56px;height:80px;align-self:center}
  .app-shell .gr-top{flex-wrap:wrap;gap:5px}
  .app-shell .gr-title{flex-basis:100%;font-size:13px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.55}
  .app-shell .gr-body{gap:7px}
