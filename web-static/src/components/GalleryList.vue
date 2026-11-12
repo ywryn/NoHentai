@@ -125,8 +125,7 @@ function linkProps(item) {
             <span v-if="item.badge" class="gr-badge" :class="item.badgeClass">{{ item.badge }}</span>
             <span class="gr-title">{{ item.title }}</span>
           </div>
-          <!-- 标签行单行渐隐截断，用 title 让被截断的部分仍可读 -->
-          <div v-if="item.tags.length" class="gr-tags" :title="item.tags.join(' · ')">
+          <div v-if="item.tags.length" class="gr-tags">
             <span v-for="tag in item.tags" :key="tag" class="gr-tag">{{ tag }}</span>
           </div>
           <div v-if="item.noMeta" class="gallery-unlinked-hint">{{ item.noMetaText }}</div>

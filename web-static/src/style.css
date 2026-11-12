@@ -668,26 +668,24 @@ img {
 
 .gr-tags {
   display: flex;
-  gap: 4px;
-  flex-wrap: nowrap;
-  overflow: hidden;
+  gap: 5px;
+  flex-wrap: wrap;
   min-width: 0;
-  -webkit-mask-image: linear-gradient(to right, black 70%, transparent 100%);
-  mask-image: linear-gradient(to right, black 70%, transparent 100%);
 }
 
 .gr-tag {
-  height: 16px;
+  min-height: 22px;
+  max-width: 100%;
+  box-sizing: border-box;
   border-radius: 3px;
   background: var(--tag-bg);
-  border: 1px solid var(--tag-border);
-  padding: 0 5px;
-  font-size: 11px;
-  color: var(--tag-color);
-  white-space: nowrap;
-  display: flex;
+  padding: 2px 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-color);
+  overflow-wrap: anywhere;
+  display: inline-flex;
   align-items: center;
-  flex-shrink: 0;
 }
 
 .gr-meta {
@@ -838,8 +836,7 @@ button,a,input,summary,select,textarea{touch-action:manipulation}
 .app-shell .gr-thumb{width:62px;height:88px;border-radius:5px}
 .app-shell .gr-body{gap:10px;align-self:center}
 .app-shell .gr-title{font-size:14px;font-weight:500;line-height:1.6}
-.app-shell .gr-tags{gap:6px}
-.app-shell .gr-tag{font-size:11px;height:20px;border-color:transparent;padding:0 6px}
+.app-shell .gr-tags{gap:5px}
 .app-shell .gr-badge{height:19px;font-size:10px;font-weight:600}
 .app-shell .gr-meta{flex-wrap:wrap;gap:6px 12px}
 .app-shell .vm-cover-grid{padding:0;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:24px 18px}
