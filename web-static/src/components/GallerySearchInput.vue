@@ -98,8 +98,8 @@ defineExpose({ focus, clear, reset })
 .search-control-syntax{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 16px;padding-top:12px}.search-control-syntax button{display:flex;gap:10px;align-items:start;padding:7px 0;text-align:left;border:0;background:none;color:var(--search-muted);font-size:11px;cursor:pointer;box-shadow:none}.search-control-syntax code{color:var(--search-accent);min-width:65px}.search-control-note{display:block;color:var(--search-muted);font-size:11px;margin-top:6px}.search-control button:focus-visible,.search-control [role=option]:focus-visible{outline:2px solid var(--search-accent);outline-offset:2px}
 @media(max-width:600px){.search-control-syntax{grid-template-columns:1fr}.search-control-row{gap:6px}.search-control-help{padding:0 9px}}
 @media(max-width:600px){
-.search-control-row:has(.home-filter-btn){flex-wrap:wrap}
-.search-control-row:has(.home-filter-btn) .search-control-box{flex-basis:100%}
+.search-control-row:has(.home-filter-btn,.daily-reset){flex-wrap:wrap}
+.search-control-row:has(.home-filter-btn,.daily-reset) .search-control-box{flex-basis:100%}
 .search-control .search-control-box input{font-size:16px}
 .search-control-clear{min-width:44px;min-height:44px}
 .search-control-suggestions li{min-height:44px}

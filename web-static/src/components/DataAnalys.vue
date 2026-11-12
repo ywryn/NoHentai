@@ -24,7 +24,7 @@
                     <h2 class="section-title">收藏热力图</h2>
                 </div>
             </div>
-            <div class="heatmap-chart-container">
+            <div class="heatmap-chart-container" tabindex="0" role="region" aria-label="收藏热力图">
                 <Chart type="matrix" :data="heatmapChartData" :options="heatmapChartOptions" class="heatmap-chart" />
             </div>
         </section>
