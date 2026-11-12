@@ -33,17 +33,23 @@ def dto(r, kind=None):
     return {'id': r['id'], 'position': r['position'], 'data': data, 'version': r['version'], 'updatedAt': r['updated_at']}
 
 
+def gallery_dto_data(gid, original, patch, version, updated_at, index):
+    if original is None and patch is None:
+        fail(404, '画廊不存在')
+    source = json.loads(original) if original is not None else {'gid': gid}
+    data = json.loads(patch) if patch is not None else {}
+    effective = dict(source, **data)
+    tag_names = {tag: index.get(tag,{}).get('name','') for tag in effective.get('tags',[])}
+    return {'tagNames':tag_names, 'id': gid, 'source': source, 'data': data, 'effective': effective,
+            'version': version or '0', 'updatedAt': updated_at}
+
+
 def gallery_dto(con, gid, index=None):
     original = con.execute('SELECT data FROM galleries WHERE gid=?', (gid,)).fetchone()
     patch = row(con, 'gallery', gid)
-    if not original and not patch:
-        fail(404, '画廊不存在')
-    source = json.loads(original[0]) if original else {'gid': gid}
-    data = json.loads(patch['data']) if patch else {}
     if index is None:index = catalog.translations(con)
-    tag_names = {tag: index.get(tag,{}).get('name','') for tag in dict(source,**data).get('tags',[])}
-    return {'tagNames':tag_names, 'id': gid, 'source': source, 'data': data, 'effective': dict(source, **data),
-            'version': patch['version'] if patch else '0', 'updatedAt': patch['updated_at'] if patch else None}
+    return gallery_dto_data(gid, original[0] if original else None, patch['data'] if patch else None,
+                            patch['version'] if patch else None, patch['updated_at'] if patch else None, index)
 
 
 def load(kind, record_id):
@@ -103,13 +109,32 @@ def list_records(kind, query='', page=1):
         con.execute('PRAGMA temp_store=MEMORY')
         con.execute('BEGIN')
         if kind == 'gallery':
-            condition, params = catalog.filter_sql(query)
-            cte = catalog.VISIBLE.replace("COALESCE(json_extract(data,'$.hidden'),0)=0", '1')
-            total = con.execute(cte + f' SELECT COUNT(*) FROM visible WHERE {condition}', params).fetchone()[0]
-            page = min(page, max(1, math.ceil(total / 30)))
-            ids = [r[0] for r in con.execute(cte + f' SELECT gid FROM visible WHERE {condition} ORDER BY position LIMIT 30 OFFSET ?', params + [(page-1)*30])]
+            if not query.strip():
+                total = con.execute('SELECT COUNT(*) FROM galleries').fetchone()[0]
+                page = min(page, max(1, math.ceil(total / 30)))
+                ids = [r[0] for r in con.execute('SELECT gid FROM galleries ORDER BY position LIMIT 30 OFFSET ?', ((page-1)*30,))]
+            else:
+                condition, params = catalog.filter_sql(query)
+                cte = catalog.VISIBLE.replace("COALESCE(json_extract(data,'$.hidden'),0)=0", '1')
+                result = con.execute(cte + f''', matched AS MATERIALIZED (
+                    SELECT gid,position FROM visible WHERE {condition}
+                ), totals AS (SELECT COUNT(*) AS n FROM matched),
+                paged AS (SELECT gid FROM matched ORDER BY position LIMIT 30
+                    OFFSET min(?, ((SELECT max(n-1,0) FROM totals)/30)*30))
+                SELECT (SELECT n FROM totals) AS total,
+                    (SELECT json_group_array(gid) FROM paged) AS ids''', params + [(page-1)*30]).fetchone()
+                total = result['total']
+                page = min(page, max(1, math.ceil(total / 30)))
+                ids = json.loads(result['ids'])
             index=catalog.translations(con)
-            items = [gallery_dto(con, gid, index) for gid in ids]
+            if ids:
+                placeholders = ','.join('?' for _ in ids)
+                records = {r['gid']: r for r in con.execute(f'''SELECT g.gid,g.data AS source_data,p.data AS patch_data,p.version,p.updated_at
+                    FROM galleries g LEFT JOIN gallery_overrides p ON p.gid=g.gid WHERE g.gid IN ({placeholders})''', ids)}
+                items = [gallery_dto_data(gid, records[gid]['source_data'], records[gid]['patch_data'],
+                                          records[gid]['version'], records[gid]['updated_at'], index) for gid in ids]
+            else:
+                items = []
         else:
             if kind == 'book':
                 condition, params = catalog.filter_sql(query, BOOK_FIELDS, book_term_sql)
@@ -120,11 +145,16 @@ def list_records(kind, query='', page=1):
             page = min(page, max(1, math.ceil(total / 30)))
             items = [dto(r,kind) for r in con.execute(f'SELECT * FROM {TABLES[kind]} WHERE {condition} ORDER BY position LIMIT 30 OFFSET ?', params + [(page-1)*30])]
         if kind=='book':
+            gids = list({item['data'].get('sid') for item in items if item['data'].get('sid')})
+            linked = {}
+            if gids:
+                placeholders = ','.join('?' for _ in gids)
+                linked = {r['gid']: r for r in con.execute(f'''SELECT g.gid,g.data AS source_data,p.data AS patch_data
+                    FROM galleries g LEFT JOIN gallery_overrides p ON p.gid=g.gid WHERE g.gid IN ({placeholders})''', gids)}
             for item in items:
                 gid=item['data'].get('sid')
-                source=con.execute('SELECT data FROM galleries WHERE gid=?',(gid,)).fetchone() if gid else None
-                patch=con.execute('SELECT data FROM gallery_overrides WHERE gid=?',(gid,)).fetchone() if source else None
-                item['gallery']=dict(json.loads(source[0]),**(json.loads(patch[0]) if patch else {})) if source else None
+                source=linked.get(gid)
+                item['gallery']=dict(json.loads(source['source_data']),**(json.loads(source['patch_data']) if source['patch_data'] else {})) if source else None
         return {'items': items, 'total': total, 'page': page, 'pages': max(1, math.ceil(total/30))}
 
 

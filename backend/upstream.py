@@ -1,5 +1,7 @@
 """Outbound URL validation and bounded responses. Never forward credentials to redirects."""
 import ipaddress
+import json
+import os
 import socket
 from urllib.parse import urlsplit, urljoin
 import httpx
@@ -8,6 +10,7 @@ from .security import fail, credential
 GALLERY_HOSTS = {'e-hentai.org', 'exhentai.org'}
 IMAGE_SUFFIXES = ('hath.network', 'ehgt.org', 'e-hentai.org', 'exhentai.org')
 MAX_IMAGE = 24 * 1024 * 1024
+MAX_JSON = 16 * 1024 * 1024
 
 
 def validate_url(url, gallery=False, image=False):
@@ -41,6 +44,8 @@ def cookies():
 
 
 def fetch(url, gallery=False, image=False, **kwargs):
+    if os.getenv('NOHENTAI_DISABLE_UPSTREAM') == '1':
+        fail(503, '验收环境未启用外部服务')
     # Follow each redirect explicitly, applying the host/network checks again.
     for _ in range(5):
         validate_url(url, gallery=gallery, image=image)
@@ -64,8 +69,16 @@ def fetch(url, gallery=False, image=False, **kwargs):
 
 
 def json_request(method, url, **kwargs):
+    if os.getenv('NOHENTAI_DISABLE_UPSTREAM') == '1':
+        fail(503, '验收环境未启用外部服务')
     validate_url(url)
     with httpx.Client(timeout=90, follow_redirects=False) as client:
-        response = client.request(method, url, **kwargs)
-        response.raise_for_status()
-        return response.json()
+        with client.stream(method, url, **kwargs) as response:
+            response.raise_for_status()
+            chunks, size = [], 0
+            for chunk in response.iter_bytes():
+                size += len(chunk)
+                if size > MAX_JSON:
+                    fail(502, '上游 JSON 响应过大')
+                chunks.append(chunk)
+            return json.loads(b''.join(chunks))

@@ -1,6 +1,7 @@
 """Short-lived connections; all replacements use one SQLite transaction."""
 import json
 import os
+import random
 import sqlite3
 import time
 import uuid
@@ -54,6 +55,14 @@ def initialize():
         ''')
         from .migrations import upgrade
         upgrade(con, now())
+        # Expiry maintenance stays bounded even after long-running traffic.
+        for statement in (
+            'CREATE INDEX IF NOT EXISTS cache_expires ON cache(expires)',
+            'CREATE INDEX IF NOT EXISTS counters_expires ON counters(expires)',
+            'CREATE INDEX IF NOT EXISTS sessions_expires ON sessions(expires)',
+            'CREATE INDEX IF NOT EXISTS service_leases_expires ON service_leases(expires)',
+        ):
+            con.execute(statement)
         con.execute("INSERT OR IGNORE INTO snapshots VALUES ('catalog-revision',?,?)", (dumps(uuid.uuid4().hex), now()))
     os.chmod(settings.DB_PATH, 0o600)
 
@@ -157,15 +166,19 @@ def set_cache(key, data, ttl):
 
 
 def reserve(key, limit, ttl):
-    """Atomic counter, shared between API workers and persistent across restart."""
+    """Atomic fixed-window counter shared by all API workers."""
     if limit <= 0:
         return False
+    stamp = time.time()
     with connect() as con:
-        con.execute('BEGIN IMMEDIATE')
-        con.execute('DELETE FROM counters WHERE expires<?', (time.time(),))
-        row = con.execute('SELECT count FROM counters WHERE key=?', (key,)).fetchone()
-        if row and row[0] >= limit:
-            return False
-        con.execute('INSERT INTO counters VALUES (?,1,?) ON CONFLICT(key) DO UPDATE SET count=count+1',
-                    (key, time.time() + ttl))
-        return True
+        result = con.execute('''INSERT INTO counters(key,count,expires) VALUES (?,1,?)
+            ON CONFLICT(key) DO UPDATE SET
+              count=CASE WHEN counters.expires<=? THEN 1 ELSE counters.count+1 END,
+              expires=CASE WHEN counters.expires<=? THEN excluded.expires ELSE counters.expires END
+            WHERE counters.expires<=? OR counters.count<?''',
+            (key, stamp + ttl, stamp, stamp, stamp, limit))
+        # Avoid a table-wide DELETE on every request. The indexed, occasional
+        # sweep keeps obsolete keys bounded without serializing all requests.
+        if random.randrange(128) == 0:
+            con.execute('DELETE FROM counters WHERE expires<=?', (stamp,))
+        return result.rowcount == 1
