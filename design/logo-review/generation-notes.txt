@@ -1,0 +1,25 @@
+NoHentai logo proposals — generated with the built-in image_gen tool, not CLI.
+Review concepts, not a replacement of the production identity.
+Transparent PNG originals are retained without image editing.
+
+A — no-loop
+Saved asset: assets/logo-a.png
+Final generation prompt:
+Use case: logo-brand. Create ONE premium standalone symbol for NoHentai, a Japanese manga/doujin collection and reading library. Direction A: a custom hiragana 'の' drawn as a confident single continuous loop, with a subtle folded-page termination. It must clearly feel like an original Japanese editorial identity, recognizable at favicon scale, rather than a generic letter O or stock swirl. Flat solid dusty rose ink #b75b7d. Refined controlled stroke thickness, compact balanced silhouette, open clean negative space. Centered on a truly transparent square canvas, symbol occupies 82% of canvas with equal margins. Vector-like razor clean contours, no textures, no gradients, no shadows, no frame. Mark only: no wordmark, no captions, no presentation mockup, no tiny details, no characters/mascot, no sexual imagery.
+
+B — nh-library
+Saved asset: assets/logo-b.png
+Final generation prompt:
+Use case: logo-brand. Create ONE premium standalone logo symbol for NoHentai, a Japanese manga/doujin collection and reading library. Direction B: an ingenious compact NH monogram that also reads as two books on a shelf through negative space. Bold geometric construction, excellent optical spacing, a distinctive asymmetric notch suggesting a bookmark. Mature editorial/library character, not a corporate technology startup logo. Flat single forest green ink #527b62, crisp vector-like contours. Strong simple silhouette legible at 16px. Centered on a truly transparent square canvas, symbol occupies 82% of canvas with equal margins. No wordmark or other text except the integrated abstract N/H letter construction. No enclosing app-icon square, no gradients, no shadows, no 3D, no decorative strokes, no mockup, no sexual imagery.
+
+C — manga-panels
+Saved asset: assets/logo-c.png
+Final generation prompt:
+Use case: logo-brand. Create ONE sophisticated standalone logo symbol for NoHentai, a Japanese manga/doujin collection and reading library. Direction C: a compact graphic emblem built from three bold offset manga-panel shapes, with one folded page corner and deliberate negative-space gutters. Evoke collecting printed manga and the rhythm of comic panel layouts. Make the outer silhouette distinctive and balanced, not a generic grid, speech bubble, stacked documents icon, or QR code. Single solid muted vermilion ink #b85f45. Flat vector-style geometry, optically balanced bold forms with very few elements, legible at 16px. Centered on truly transparent square canvas, symbol occupies 82% with equal margins. No lettering, no captions, no enclosing square, no gradients, textures, shadows, stars, mascots or sexual imagery. Just the logo.
+
+D — folded-pages
+Saved asset: assets/logo-d.png
+Final generation prompt:
+Use case: logo-brand. Create ONE elegant standalone logo symbol for NoHentai, a Japanese manga/doujin collection and reading library. Direction D: a stylized Japanese folded-paper bird formed from the pages of an open book. Use a very compact abstract origami silhouette, only 3 or 4 bold planes separated by purposeful transparent negative spaces; wings/book pages should read as the same visual idea. Quiet cultural, editorial sensibility, refined and memorable, not a cute mascot or a travel brand. Single solid muted violet ink #8470a0. Flat crisp vector-like shapes, no thin feather detail, recognizable at favicon scale. Centered on a truly transparent square canvas, symbol occupies 82% with even margins. No words or letters, no captions, no presentation board, no gradients, textures, shadows, sparkles, background or sexual imagery.
+
+
