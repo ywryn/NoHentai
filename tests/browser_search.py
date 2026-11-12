@@ -22,6 +22,7 @@ def main():
     galleries=[{'gid':i,'title':f'Fixture title {i}','category':'Manga','tags':['female:chinese dress'],'tagLabels':['中国服装'],'thumb':'','filecount':20} for i in range(1,66)]
     galleries[0]['title']='Fixture title with enough detail to wrap onto two lines on a narrow phone screen'
     galleries[0]['tagLabels']=['汉语','翻译','原创','长标签显示测试','巨乳','已上传','汇编','完整展示']
+    galleries[0]['favCategory']='待下载'
     books=[{'ID':str(i),'书名':f'Book {i}','日文名':'日本語','sid':str(i),'备注':'','cover':'','收价':'','原价':''} for i in range(1,66)]
     books[0]['书名']='中國服裝'
     options=[{'tag':'female:chinese dress','namespace':'female','value':'chinese dress','tag_cn':'中国服装'},
@@ -105,6 +106,8 @@ def main():
                 row=page.locator('.gallery-row').first
                 center_gap=row.evaluate("e=>{const cover=e.querySelector('.gr-thumb').getBoundingClientRect(),body=e.querySelector('.gr-body').getBoundingClientRect();return cover.y+cover.height/2-body.y-body.height/2}")
                 assert abs(center_gap)<1,(width,center_gap)
+                assert row.locator('.gr-thumb').evaluate('(e)=>[e.getBoundingClientRect().width,e.getBoundingClientRect().height]')==[62,88]
+                expect(row.locator('.gr-fav')).to_be_visible()
             page.set_viewport_size({'width':1440,'height':1000})
             page.locator('.pagination-control').first.get_by_role('button',name='最后一页').click()
             expect(page).to_have_url(re.compile('page=3'))
