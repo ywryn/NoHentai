@@ -4,8 +4,8 @@ import { ref, computed, watch } from 'vue'
 /**
  * 列表分页器。
  * Home / Printed / Daily 此前各自复制了两份相同的分页 markup（共 6 处），
- * 且只有首末与前后按钮 —— 133 页的情况下用户失去了「自己在哪」的空间感。
- * 这里补上页码序列，跳页输入保留给远距离跳转。
+ * 保留首末与前后跳转，同时用页码序列标明当前位置。
+ * 跳页输入用于远距离定位。
  */
 const props = defineProps({
   page: { type: Number, required: true },
@@ -58,6 +58,7 @@ function submitJump() {
 <template>
   <nav class="pagination-control" :aria-label="`分页，共 ${total} 页`">
     <div class="paginator-mini">
+      <button class="pag-btn pag-nav" type="button" :disabled="page <= 1" aria-label="第一页" @click="go(1)">«</button>
       <button class="pag-btn pag-nav" type="button" :disabled="page <= 1" aria-label="上一页" @click="go(page - 1)">‹</button>
 
       <template v-for="item in items" :key="item.key">
@@ -74,6 +75,7 @@ function submitJump() {
       </template>
 
       <button class="pag-btn pag-nav" type="button" :disabled="page >= total" aria-label="下一页" @click="go(page + 1)">›</button>
+      <button class="pag-btn pag-nav" type="button" :disabled="page >= total" aria-label="最后一页" @click="go(total)">»</button>
 
       <label class="pag-jump-inline">
         <span class="sr-only">跳转到页码</span>
@@ -225,15 +227,11 @@ function submitJump() {
   }
 }
 
-/* 窄屏收起页码序列与跳页框，只保留方向键 —— 底部标签栏已占用空间 */
-@media (max-width: 560px) {
+/* 中小屏由跳页框显示当前页，留足首末及前后跳转的触控空间。 */
+@media (max-width: 767px) {
   .pag-page,
   .pag-gap {
     display: none;
-  }
-
-  .pag-page.active {
-    display: flex;
   }
 }
 </style>
