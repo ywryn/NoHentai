@@ -1,5 +1,7 @@
 # 前后端综合验收（2026-11-12）
 
+> 本文为验收阶段记录。用户已授权将不含地图的优化结果发布到主分支，见 [正式发布记录](../releases/20261112-optimization.md)。
+
 ## 版本和地址
 
 - 综合分支：`feat/integrated-review-20261112`。从生产提交 `757a5da95c66406493cddd8cc4648252768d11d0` 派生的 `feat/product-experience-20261111` 合入 `feat/backend-reliability-20261111`，合并无冲突；生产分支和运行目录未修改。
