@@ -22,7 +22,7 @@
           <nav v-if="galleryData.token" class="gd-actions" aria-label="画廊操作">
             <RouterLink class="gd-action gd-action-primary" :to="{name:'GalleryReader',params:{gid:itemId},query:{token:galleryData.token,page:'1'}}">
               <AppIcon name="book-open" :size="20" />
-              <span>开始阅读</span><span class="gd-action-arrow" aria-hidden="true"><AppIcon name="arrow-right" :size="18" /></span>
+              <span>开始阅读</span>
             </RouterLink>
             <RouterLink class="gd-action gd-action-secondary" :to="{name:'GalleryTranslate',params:{gid:itemId},query:{token:galleryData.token,page:'1'}}">
               <AppIcon name="translate" :size="20" />
