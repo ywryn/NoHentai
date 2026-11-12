@@ -101,7 +101,7 @@ function submitJump() {
    组件自己的样式必须跟组件走。 */
 .pagination-control {
   display: flex;
-  padding: 10px 14px;
+  padding: 3px 8px;
   border: 0;
   flex-shrink: 0;
   box-sizing: border-box;
@@ -114,16 +114,15 @@ function submitJump() {
 
 .paginator-mini {
   display: flex;
-  gap: 4px;
+  gap: 3px;
   align-items: center;
   min-height: 36px;
-  padding: 4px 6px;
 }
 
 .pag-btn {
   appearance: none;
-  min-width: 44px;
-  height: 44px;
+  min-width: 36px;
+  height: 36px;
   border-radius: 6px;
   background: transparent;
   border: 1px solid var(--border-color);
@@ -134,7 +133,7 @@ function submitJump() {
   font-weight: 700;
   color: var(--muted-color);
   cursor: pointer;
-  padding: 0 8px;
+  padding: 0 6px;
   line-height: 1;
   transition:
     background-color var(--dur-fast) var(--ease-out),
@@ -163,12 +162,12 @@ function submitJump() {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 0 4px;
+  padding: 0 2px;
 }
 
 .pag-jump-input {
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 36px;
   border-radius: 6px;
   border: 1px solid var(--border-color);
   background: var(--bg-color);
@@ -216,8 +215,13 @@ function submitJump() {
 }
 
 @media (max-width: 767px) {
-  .pagination-control {
-    gap: 6px;
+  .pag-btn {
+    min-width: 44px;
+    height: 44px;
+  }
+
+  .pag-jump-input {
+    height: 44px;
   }
 }
 

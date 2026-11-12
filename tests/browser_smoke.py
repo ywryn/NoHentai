@@ -247,11 +247,8 @@ def main():
                     expected_stats=page.request.get(BASE+'/api/stats').json()
                     expect(page.locator('.insight-strip > div:first-child strong')).to_have_text(f"{expected_stats['stats']['total_count']:,}")
                     expect(page.locator('.heatmap-chart canvas')).to_be_visible()
-                    category_values=[int(value.replace(',','')) for value in page.locator('.category-item strong').all_inner_texts()]
-                    assert category_values==sorted(category_values,reverse=True)
-                    expect(page.locator('.tags-row .tag-rank-row')).to_have_count(20)
-                    page.locator('.tags-row .tag-rank-more').first.click()
-                    assert page.locator('.tags-row .tag-rank-row').count()>20
+                    expect(page.locator('.stats-right canvas')).to_be_visible()
+                    expect(page.locator('.tags-row canvas')).to_have_count(2)
                     page.set_viewport_size({'width':390,'height':844})
                     expect(page.locator('.bottom-row > .bottom-section:visible')).to_have_count(1)
                     page.get_by_role('button',name='Artist',exact=True).click()

@@ -20,6 +20,7 @@ def main():
     threading.Thread(target=server.serve_forever,daemon=True).start()
     base=f'http://127.0.0.1:{server.server_port}'
     galleries=[{'gid':i,'title':f'Fixture title {i}','category':'Manga','tags':['female:chinese dress'],'tagLabels':['中国服装'],'thumb':'','filecount':20} for i in range(1,66)]
+    galleries[0]['tagLabels']=['汉语','翻译','原创','长标签显示测试','巨乳','已上传','汇编','完整展示']
     books=[{'ID':str(i),'书名':f'Book {i}','日文名':'日本語','sid':str(i),'备注':'','cover':'','收价':'','原价':''} for i in range(1,66)]
     books[0]['书名']='中國服裝'
     options=[{'tag':'female:chinese dress','namespace':'female','value':'chinese dress','tag_cn':'中国服装'},
@@ -84,10 +85,21 @@ def main():
                 expect(search).to_have_value('')
                 print('PASS: shared keyboard, clear and accessibility behavior on '+path)
             assert all(item==pagination[0] for item in pagination),pagination
-            assert pagination[0]==['0px','10px','10px','14px','14px'],pagination
+            assert pagination[0]==['0px','3px','3px','8px','8px'],pagination
             print('PASS: all six pagination bars share spacing and have no divider')
 
             page.goto(base+'/#/')
+            tags=page.locator('.gallery-row').first.locator('.gr-tag')
+            expect(tags).to_have_count(8)
+            expect(tags.last).to_be_visible()
+            assert page.locator('.gallery-row').first.locator('.gr-tags').evaluate('(e)=>getComputedStyle(e).flexWrap')=='wrap'
+            assert page.locator('.gallery-row').first.locator('.gr-tags').evaluate('(e)=>getComputedStyle(e).maskImage')=='none'
+            assert page.locator('.pagination-control .pag-btn').first.evaluate('(e)=>e.getBoundingClientRect().height')==36
+            page.set_viewport_size({'width':390,'height':844})
+            assert page.locator('.pagination-control .pag-btn').first.evaluate('(e)=>e.getBoundingClientRect().height')==44
+            expect(tags.last).to_be_visible()
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth+1')
+            page.set_viewport_size({'width':1440,'height':1000})
             search=page.get_by_role('combobox',name='搜索画廊',exact=True)
             expect(search).to_be_visible()
             expect(page.locator('.pagination-control')).to_have_count(2)
