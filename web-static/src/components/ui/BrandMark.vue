@@ -2,7 +2,7 @@
 withDefaults(defineProps<{ admin?: boolean; size?: number }>(), { admin: false, size: 40 })
 </script>
 <template>
-  <img :src="admin ? '/brand/mark-b.png' : '/brand/mark-f.png'" :width="size" :height="size"
+  <img :src="admin ? '/brand/mark-b.png' : '/brand/mark-g.png'" :width="size" :height="size"
     class="nh-brand-mark" :class="{ 'nh-brand-mark-admin': admin }" alt="" aria-hidden="true" decoding="async" />
 </template>
 <style scoped>

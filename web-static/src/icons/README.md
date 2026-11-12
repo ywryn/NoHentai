@@ -16,7 +16,7 @@ These project-maintained paths have no external runtime or icon-font dependency.
 
 Privacy mode excludes only .nh-brand-mark; artwork retains its existing blur behavior.
 
-Branding uses the user-selected image-generation originals, without pixel edits: public/brand/mark-f.png (public site) and mark-b.png (admin). Both are transparent 1254px PNGs; the PWA manifest declares the actual size and purpose:any. They are not declared maskable because their safe area has not been designed for every OS mask. F/B provenance and prompts: design/logo-review/generation-notes.txt.
+Branding uses the user-selected image-generation originals, without pixel edits: public/brand/mark-g.png (public site) and mark-b.png (admin). Both are transparent 1254px PNGs; the PWA manifest declares the actual size and purpose:any. They are not declared maskable because their safe area has not been designed for every OS mask. G/B provenance and prompts: design/logo-review/generation-notes.txt.
 
 Preview deployment only: https://nohentai.com:8445/
 Logo and SVG icon specimen page: https://nohentai.com:8446/icons.html
