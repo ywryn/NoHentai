@@ -102,6 +102,7 @@
 }
 
 .panel-header-spread {
+  flex-wrap: wrap;
   align-items: center;
 }
 
@@ -145,10 +146,12 @@
 }
 
 .stats-left {
+  min-width: 0;
   padding: 1rem;
 }
 
 .stats-right {
+  min-width: 0;
   padding: 1rem;
 }
 
@@ -236,6 +239,7 @@
 }
 
 .tags-section-half {
+  min-width: 0;
   padding: 1rem;
 }
 
@@ -310,7 +314,7 @@
   .stats-row,
   .tags-row,
   .bottom-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .bottom-row {
@@ -352,7 +356,7 @@
   }
 
   .bottom-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .data-table th,
