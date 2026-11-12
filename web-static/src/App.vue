@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import BrandMark from '@/components/ui/BrandMark.vue'
+import BrandWordmark from '@/components/ui/BrandWordmark.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
@@ -62,7 +63,7 @@ onMounted(() => {
   <div class="app-shell" :class="{ 'has-tabbar': !isImmersivePage }">
     <a v-if="!isImmersivePage" class="skip-link" href="#main-content" @click.prevent="focusContent">跳至内容</a>
     <header class="navigation-bar" v-if="!isImmersivePage">
-      <RouterLink class="brand-logo" to="/" aria-label="NoHentai 首页"><BrandMark :size="40" /><span class="brand-name">NoHentai</span></RouterLink>
+      <RouterLink class="brand-logo" to="/" aria-label="NoHentai 首页"><BrandMark :size="32" /><BrandWordmark /></RouterLink>
 
       <nav class="nav-menu" aria-label="主导航">
         <RouterLink v-for="item in navItems" :key="item.to" :to="item.to" :title="item.title">
@@ -96,7 +97,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
- .brand-name { font-size: 16px; letter-spacing: -.04em; color: var(--text-color); }
 /* ═══ 顶栏 ═══════════════════════════════════════════════ */
 
 .navigation-bar {
@@ -124,10 +124,10 @@ onMounted(() => {
 .brand-logo {
   width: auto;
   height: 44px;
-  gap: 10px;
+  gap: 2px;
   padding: 0;
-  /* G has 154px transparent inset on its 1254px canvas. Align its visible edge at 40px. */
-  margin-inline-start: calc(-40px * 154 / 1254);
+  /* G has 154px transparent inset on its 1254px canvas. Align its visible edge at 32px. */
+  margin-inline-start: calc(-32px * 154 / 1254);
   border-radius: 10px;
   background: transparent;
   color: var(--logo-text);

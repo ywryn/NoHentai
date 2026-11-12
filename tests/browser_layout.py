@@ -57,6 +57,12 @@ def main():
                     mark=page.locator('.brand-logo img').bounding_box()
                     visible_left=mark['x']+mark['width']*154/1254
                     assert abs(visible_left-page.locator('.home-shell').bounding_box()['x'])<1.5,('brand alignment',width,visible_left)
+                    word=page.locator('.nh-brand-wordmark').bounding_box()
+                    ink_height=mark['height']*764/1254
+                    ink_center=mark['y']+mark['height']*632/1254
+                    assert abs(ink_height-word['height'])<1,('brand height',width,ink_height,word['height'])
+                    assert abs(ink_center-word['y']-word['height']/2)<1,('brand vertical center',width)
+                    assert page.locator('.brand-logo').bounding_box()['height']>=44
                     expect(page.locator('#site-icon')).to_have_attribute('href','/brand/mark-g.png')
                     if width<=600:
                         box=page.get_by_role('combobox',name='搜索画廊').bounding_box()
