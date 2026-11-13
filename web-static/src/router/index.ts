@@ -102,7 +102,7 @@ const BASE_TITLE = 'NoHentai | の変態'
 /* 路由切换时更新标题，便于区分多标签页与浏览历史 */
 router.afterEach(to => {
   const favicon = document.getElementById('site-icon') as HTMLLinkElement | null
-  if (favicon) favicon.href = to.path === '/admin' || to.path.startsWith('/admin/') ? '/brand/mark-b.png' : '/brand/mark-g.png'
+  if (favicon) favicon.href = to.path === '/admin' || to.path.startsWith('/admin/') ? '/brand/favicon-b-v2.png' : '/brand/favicon-g-v2.png'
   const title = to.meta.title as string | undefined
   document.title = title ? `${title} · ${BASE_TITLE}` : BASE_TITLE
 })
