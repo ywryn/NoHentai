@@ -63,7 +63,7 @@ def main():
                     assert abs(ink_height-word['height'])<1,('brand height',width,ink_height,word['height'])
                     assert abs(ink_center-word['y']-word['height']/2)<1,('brand vertical center',width)
                     assert page.locator('.brand-logo').bounding_box()['height']>=44
-                    expect(page.locator('#site-icon')).to_have_attribute('href','/brand/favicon-g-v3.png')
+                    expect(page.locator('#site-icon')).to_have_attribute('href','/brand/favicon-g-v4.png')
                     if width<=600:
                         box=page.get_by_role('combobox',name='搜索画廊').bounding_box()
                         assert box['width']>width*.65,(width,box)
