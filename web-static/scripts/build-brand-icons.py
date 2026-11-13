@@ -59,11 +59,10 @@ def main():
             (PUBLIC / name).write_bytes(png)
             return png
 
-        # A half-pixel downward optical adjustment at the usual 16px tab size.
-        # Only the public-site tab icon uses it; app and header layouts do not.
-        tab = composition('g', 0.82, down=0.5 / 16, background=BACKGROUND, rounded=True)
+        # Center visible bounds vertically; retain the rounded tab background.
+        tab = composition('g', 0.82, background=BACKGROUND, rounded=True)
         admin = composition('b', 0.82)
-        write('brand/favicon-g-v3.png', tab, 48)
+        write('brand/favicon-g-v4.png', tab, 48)
         write('brand/favicon-b-v2.png', admin, 48)
         (PUBLIC / 'favicon.ico').write_bytes(ico([(s, render(tab, s)) for s in (16, 32, 48)]))
         # Keep legacy discovery URLs consistent with the explicitly linked assets.

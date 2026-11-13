@@ -43,7 +43,7 @@ export default defineConfig({
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['brand/favicon-g-v3.png', 'brand/favicon-b-v2.png', 'brand/apple-touch-g-v2.png'],
+      includeAssets: ['brand/favicon-g-v4.png', 'brand/favicon-b-v2.png', 'brand/apple-touch-g-v2.png'],
       manifest: {
         id: '/',
         name: 'NoHentai | の変態',
