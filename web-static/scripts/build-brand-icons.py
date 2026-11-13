@@ -59,10 +59,10 @@ def main():
             (PUBLIC / name).write_bytes(png)
             return png
 
-        # Center visible bounds vertically; retain the rounded tab background.
-        tab = composition('g', 0.82, background=BACKGROUND, rounded=True)
+        # Selected final variant: rounded background with 0.5px downward offset at 16px.
+        tab = composition('g', 0.82, down=0.5 / 16, background=BACKGROUND, rounded=True)
         admin = composition('b', 0.82)
-        write('brand/favicon-g-v4.png', tab, 48)
+        write('brand/favicon-g-v3.png', tab, 48)
         write('brand/favicon-b-v2.png', admin, 48)
         (PUBLIC / 'favicon.ico').write_bytes(ico([(s, render(tab, s)) for s in (16, 32, 48)]))
         # Keep legacy discovery URLs consistent with the explicitly linked assets.

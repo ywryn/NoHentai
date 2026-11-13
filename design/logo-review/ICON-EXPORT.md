@@ -4,9 +4,9 @@ The selected public artwork remains G and the admin artwork remains B. Header
 PNGs and header layout are unchanged. Icons are now dedicated layouts rather
 than using the 1254px header source directly.
 
-- Public tab: `brand/favicon-g-v4.png`, 48px, warm neutral rounded-square background,
-  centered visible bounds without an optical vertical offset. The earlier
-  downward adjustment was withdrawn after comparing the rounded-background version.
+- Public tab: `brand/favicon-g-v3.png`, 48px, warm neutral rounded-square background,
+  with the user-selected downward optical adjustment of 0.5px at 16px.
+  Final approval explicitly selected the `icon-compare/shifted.html` variant.
 - Admin tab: `brand/favicon-b-v2.png`, 48px, centered visible bounds.
 - Apple home screen: `brand/apple-touch-g-v2.png`, opaque 180px.
 - PWA: opaque G icons at 192px and 512px plus a separate 512px maskable export.
@@ -48,4 +48,4 @@ The prior transparent `brand/favicon-g-v2.png` is retained for comparison.
 The rounded background changes only the public tab icon, not the admin or installed-app layouts.
 
 For height comparison, `favicon-g-v3.png` retains the previous downward shift;
-`favicon-g-v4.png` is the centered rounded-background version.
+`favicon-g-v4.png` is the centered rounded-background comparison only.
