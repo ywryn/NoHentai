@@ -15,14 +15,15 @@ BACKGROUND = '#faf8f5'
 BOUNDS = {'g': (153, 249, 1037, 1015), 'b': (210, 267, 1045, 984)}
 
 
-def composition(mark, fraction, down=0, background=None):
+def composition(mark, fraction, down=0, background=None, rounded=False):
     left, top, right, bottom = BOUNDS[mark]
     extent = max(right - left, bottom - top) / fraction
     cx, cy = (left + right) / 2, (top + bottom) / 2
     # Moving the viewBox up moves the artwork down. Down is a canvas fraction.
     x, y = cx - extent / 2, cy - extent * (0.5 + down)
     data = base64.b64encode((PUBLIC / f'brand/mark-{mark}.png').read_bytes()).decode()
-    surface = f'<rect x="{x}" y="{y}" width="{extent}" height="{extent}" fill="{background}"/>' if background else ''
+    radius = extent * 0.22 if rounded else 0
+    surface = f'<rect x="{x}" y="{y}" width="{extent}" height="{extent}" rx="{radius}" fill="{background}"/>' if background else ''
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x} {y} {extent} {extent}">'
             f'{surface}<image width="1254" height="1254" href="data:image/png;base64,{data}"/></svg>')
 
@@ -60,9 +61,9 @@ def main():
 
         # A half-pixel downward optical adjustment at the usual 16px tab size.
         # Only the public-site tab icon uses it; app and header layouts do not.
-        tab = composition('g', 0.82, down=0.5 / 16)
+        tab = composition('g', 0.82, down=0.5 / 16, background=BACKGROUND, rounded=True)
         admin = composition('b', 0.82)
-        write('brand/favicon-g-v2.png', tab, 48)
+        write('brand/favicon-g-v3.png', tab, 48)
         write('brand/favicon-b-v2.png', admin, 48)
         (PUBLIC / 'favicon.ico').write_bytes(ico([(s, render(tab, s)) for s in (16, 32, 48)]))
         # Keep legacy discovery URLs consistent with the explicitly linked assets.
