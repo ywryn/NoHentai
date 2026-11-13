@@ -43,8 +43,9 @@ export default defineConfig({
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['brand/mark-g.png', 'brand/mark-b.png'],
+      includeAssets: ['brand/favicon-g-v2.png', 'brand/favicon-b-v2.png', 'brand/apple-touch-g-v2.png'],
       manifest: {
+        id: '/',
         name: 'NoHentai | の変態',
         short_name: 'NoHentai',
         description: 'ExHentai 个人收藏夹信息备份站',
@@ -55,7 +56,11 @@ export default defineConfig({
         orientation: 'any',
         scope: '/',
         start_url: '/',
-        icons: [{ src: 'brand/mark-g.png', sizes: '1254x1254', type: 'image/png', purpose: 'any' }],
+        icons: [
+          { src: 'brand/app-g-192-v2.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'brand/app-g-512-v2.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'brand/app-g-maskable-512-v2.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
       },
       workbox: {
         // 只缓存静态资源，数据库内容始终访问后端。

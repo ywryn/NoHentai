@@ -63,7 +63,7 @@ def main():
                     assert abs(ink_height-word['height'])<1,('brand height',width,ink_height,word['height'])
                     assert abs(ink_center-word['y']-word['height']/2)<1,('brand vertical center',width)
                     assert page.locator('.brand-logo').bounding_box()['height']>=44
-                    expect(page.locator('#site-icon')).to_have_attribute('href','/brand/mark-g.png')
+                    expect(page.locator('#site-icon')).to_have_attribute('href','/brand/favicon-g-v2.png')
                     if width<=600:
                         box=page.get_by_role('combobox',name='搜索画廊').bounding_box()
                         assert box['width']>width*.65,(width,box)
@@ -100,7 +100,7 @@ def main():
             for width in [360,768,1024,1440]:
                 page.set_viewport_size({'width':width,'height':900})
                 page.goto(base+'/#/admin/galleries');expect(page.locator('.a-master-list')).to_be_visible()
-                expect(page.locator('#site-icon')).to_have_attribute('href','/brand/mark-b.png')
+                expect(page.locator('#site-icon')).to_have_attribute('href','/brand/favicon-b-v2.png')
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'),('admin',width,'overflow')
                 footer=page.locator('.a-pagination').bounding_box()
                 assert footer['y']+footer['height'] <= 900,('admin footer',width,footer)
