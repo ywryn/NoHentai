@@ -4,7 +4,8 @@ The selected public artwork remains G and the admin artwork remains B. Header
 PNGs and header layout are unchanged. Icons are now dedicated layouts rather
 than using the 1254px header source directly.
 
-- Public tab: `brand/favicon-g-v2.png`, 48px, centered visible bounds and a
+- Public tab: `brand/favicon-g-v3.png`, 48px, warm neutral rounded-square background,
+  centered visible bounds and a
   downward optical adjustment equivalent to 0.5px at the usual 16px tab size.
   This addresses the reported upward appearance; it is an optical correction,
   not a claim that the source image's vertical bounding box was off-center.
@@ -44,3 +45,6 @@ repository contains no native Android/iOS/Capacitor/Cordova/Tauri/Electron app
 project; independently packaged APK/IPA launcher icons cannot be verified here.
 Installed OS shortcuts can retain cached artwork; their update timing is not
 controlled by the page and has not been validated on physical devices.
+
+The prior transparent `brand/favicon-g-v2.png` is retained for comparison.
+The rounded background changes only the public tab icon, not the admin or installed-app layouts.
