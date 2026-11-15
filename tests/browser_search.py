@@ -58,7 +58,7 @@ def main():
             page.route('**/api/galleries?*',catalog)
             page.route('**/api/revision',lambda r:r.fulfill(json={'catalog':'v1'}))
             page.route('**/api/books',lambda r:r.fulfill(json={'items':[{'id':str(i),'book':b,'gallery':g} for i,(b,g) in enumerate(zip(books,galleries))],'translations':{'data':[]}}))
-            page.route('**/api/daily',lambda r:r.fulfill(json={'groups':[{'name':'fixture','galleries':galleries}],'translations':{'data':[]}}))
+            page.route('**/api/daily',lambda r:r.fulfill(json={'groups':[{'name':'fixture','galleries':galleries,'generatedAt':'2026-11-15T04:00:00Z','cutoffDate':'2026-11-01','conditions':{'keyword':'','categories':4,'cutoffDays':14}}],'translations':{'data':[]}}))
             page.route('**/api/tags/suggestions?*',suggestions)
             page.route('**/api/admin/session',lambda r:r.fulfill(json={'session':{'csrf':'fixture'}}))
             page.route('**/api/admin',admin)
@@ -76,6 +76,14 @@ def main():
                 expect(page.get_by_role('combobox',name=label,exact=True)).to_be_visible()
                 expect(page.locator('.pagination-control')).to_have_count(2)
                 check_spacing()
+                if path=='/daily':
+                    expect(page.locator('.daily-categories')).to_have_count(0)
+                    expect(page.locator('.daily-rule summary .daily-context')).to_contain_text('收录自 2026-11-01')
+                    for width in (1440,390,320):
+                        page.set_viewport_size({'width':width,'height':900})
+                        expect(page.locator('.daily-rule summary .daily-context')).to_be_visible()
+                        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth+1')
+                    page.set_viewport_size({'width':1440,'height':1000})
                 expect(page.locator('.daily-results-header')).to_have_count(0)
                 for bar in page.locator('.pagination-control').all():
                     pagination.append(bar.evaluate("e=>{const s=getComputedStyle(e);return [s.borderBottomWidth,s.paddingTop,s.paddingBottom,s.paddingLeft,s.paddingRight]}"))

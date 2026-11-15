@@ -217,10 +217,8 @@ def main():
                     expect(daily_search).to_have_value(re.compile('female:'))
                     page.get_by_role('button',name='重置筛选',exact=True).click()
                     expect(daily_cards).to_have_count(min(30,len(daily_groups[daily_index]['galleries'])))
-                    daily_category=daily_groups[daily_index]['galleries'][0]['category']
-                    page.locator('.daily-categories button').filter(has_text=daily_category).click()
-                    expect(page.locator('.daily-categories button').filter(has_text=daily_category)).to_have_attribute('aria-pressed','true')
-                    page.get_by_role('button',name='重置筛选',exact=True).click()
+                    expect(page.locator('.daily-categories')).to_have_count(0)
+                    expect(page.locator('.daily-rule summary .daily-context')).to_be_visible()
                     if len(daily_groups[daily_index]['galleries'])>30:
                         page.locator('.daily-page').get_by_role('button',name='下一页',exact=True).first.click()
                         expect(page).to_have_url(re.compile('[?&]page=2'))

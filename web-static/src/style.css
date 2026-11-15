@@ -866,7 +866,7 @@ button,a,input,summary,select,textarea{touch-action:manipulation}
 .app-shell .daily-header-card{padding:24px;box-shadow:none}
 .app-shell .daily-rule summary{cursor:pointer;color:var(--muted-color);font-size:13px;min-height:32px}
 .app-shell .daily-rule[open] summary{margin-bottom:16px}
-.app-shell .daily-group-pill,.app-shell .daily-categories button{min-height:44px}
+.app-shell .daily-group-pill{min-height:44px}
 .app-shell .data-page-header{box-shadow:none;background:none;border:0;padding:0 0 24px}
 .app-shell .data-panel{box-shadow:none;border:1px solid var(--row-border)}
 .app-shell .tl-card{box-shadow:none;border:1px solid var(--row-border)}
