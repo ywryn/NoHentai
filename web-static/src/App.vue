@@ -72,7 +72,7 @@ onMounted(() => {
       </nav>
 
       <div class="nav-actions">
-        <ViewModeToggle v-if="showViewModeToggle" />
+        <span class="nav-view-mode"><ViewModeToggle v-if="showViewModeToggle" /></span>
         <MomModeToggle />
         <ThemeToggle />
       </div>
@@ -211,12 +211,20 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
+/* Keep the action width stable when a route has no list view to switch. */
+.nav-view-mode {
+  display: flex;
+  flex: 0 0 32px;
+  block-size: 32px;
+}
+
 /* ═══ 移动端底部标签栏 ═══════════════════════════════════ */
 
 .tab-bar { display: none; }
 
 @media (max-width: 767px) {
   .nav-menu { display: none; }
+  .nav-view-mode { flex-basis: 40px; block-size: 40px; }
 
   .navigation-bar {
     padding-block: 8px;

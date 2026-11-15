@@ -70,6 +70,17 @@ def main():
                 }''')
                 assert all(abs(a-b)<1 for a,b in zip(gaps,[20,8,8])),(page.url,gaps)
                 assert page.evaluate('getComputedStyle(document.documentElement).scrollbarWidth')=='none'
+            page.route('**/api/stats',lambda r:r.fulfill(status=503,json={'error':'fixture unavailable'}))
+            page.goto(base+'/#/daily')
+            expect(page.locator('.daily-group-pill')).to_be_visible()
+            nav_positions=page.locator('.nav-menu a').evaluate_all('items=>items.map(e=>e.getBoundingClientRect().x)')
+            for target in ('/data','/printed','/daily'):
+                link=page.locator(f'.nav-menu a[href="#{target}"]')
+                link.click()
+                expect(link).to_have_attribute('aria-current','page')
+                positions=page.locator('.nav-menu a').evaluate_all('items=>items.map(e=>e.getBoundingClientRect().x)')
+                assert all(abs(a-b)<1 for a,b in zip(nav_positions,positions)),(target,nav_positions,positions)
+            print('PASS: navigation stays fixed when entering and leaving statistics')
             pagination=[]
             for path,label in (('/printed','搜索书单'),('/','搜索画廊'),('/daily','搜索每日画廊')):
                 page.goto(base+'/#'+path)
