@@ -60,7 +60,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="app-shell" :class="{ 'has-tabbar': !isImmersivePage }">
+  <div class="app-shell" :class="{ 'has-tabbar': !isImmersivePage, 'translate-entry-shell': route.path === '/translate' }">
     <a v-if="!isImmersivePage" class="skip-link" href="#main-content" @click.prevent="focusContent">跳至内容</a>
     <header class="navigation-bar" v-if="!isImmersivePage">
       <RouterLink class="brand-logo" to="/" aria-label="NoHentai 首页"><BrandMark :size="32" /><BrandWordmark /></RouterLink>
@@ -97,6 +97,20 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* The entry form fills the space left by the real header and mobile tab padding. */
+.translate-entry-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.translate-entry-shell > .navigation-bar { flex-shrink: 0; }
+.translate-entry-shell > .route-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 /* ═══ 顶栏 ═══════════════════════════════════════════════ */
 
 .navigation-bar {
