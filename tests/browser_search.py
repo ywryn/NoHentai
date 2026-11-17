@@ -220,6 +220,26 @@ def main():
                 check_spacing()
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth+1'),path
             print('PASS: shared controls fit mobile layouts on all public pages')
+            for width,height in ((1440,900),(390,844),(320,568),(844,390),(768,600)):
+                page.set_viewport_size({'width':width,'height':height})
+                page.goto(base+'/#/translate')
+                expect(page.locator('.tl-card')).to_be_visible()
+                assert page.evaluate('document.documentElement.scrollHeight <= innerHeight+1'),(width,height,'entry overflow')
+                page.locator('.tl-input').fill('invalid')
+                page.get_by_role('button',name='进入',exact=True).click()
+                expect(page.locator('.tl-error')).to_be_visible()
+                assert page.evaluate('document.documentElement.scrollHeight <= innerHeight+1'),(width,height,'error overflow')
+            page.set_viewport_size({'width':320,'height':240})
+            assert page.evaluate('document.documentElement.scrollHeight > innerHeight'),'short view must remain scrollable'
+            page.evaluate('scrollTo(0,0)')
+            assert page.locator('.tl-card').evaluate('e=>e.getBoundingClientRect().top >= document.querySelector(".navigation-bar").getBoundingClientRect().bottom')
+            page.get_by_role('button',name='进入',exact=True).scroll_into_view_if_needed()
+            expect(page.get_by_role('button',name='进入',exact=True)).to_be_in_viewport()
+            page.set_viewport_size({'width':390,'height':844})
+            page.goto(base+'/#/daily')
+            expect(page.locator('.daily-group-pill')).to_be_visible()
+            expect(page.locator('.translate-entry-shell')).to_have_count(0)
+            print('PASS: translation entry fits desktop/mobile/error views and scrolls in short viewports')
             assert not errors,errors
             browser.close()
     finally:

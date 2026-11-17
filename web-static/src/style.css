@@ -206,6 +206,7 @@ body {
   padding: 0;
   min-width: 320px;
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color var(--dur-slow) var(--ease-out), color var(--dur-slow) var(--ease-out);
@@ -251,6 +252,7 @@ button:hover {
 #app {
   width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color var(--dur-slow) var(--ease-out), color var(--dur-slow) var(--ease-out);

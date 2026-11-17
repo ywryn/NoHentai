@@ -82,13 +82,15 @@ function handleKeydown(e) {
 
 /* URL 输入页样式 */
 .tl-container {
-  min-height: calc(100vh - var(--app-nav-height, 53px));
+  flex: 1;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem 1rem;
 }
 .tl-card {
+  flex-shrink: 0;
   background: var(--surface-color, #1e293b);
   border-radius: 14px;
   padding: 2.5rem 2.5rem 2rem;
