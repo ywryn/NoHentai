@@ -256,8 +256,33 @@ def main():
             page.set_viewport_size({'width':390,'height':844})
             page.goto(base+'/#/daily')
             expect(page.locator('.daily-group-pill')).to_be_visible()
-            expect(page.locator('.translate-entry-shell')).to_have_count(0)
+            expect(page.locator('.app-shell')).to_have_css('display','block')
             print('PASS: translation entry fits desktop/mobile/error views and scrolls in short viewports')
+            for width,height,nav in ((1440,900,'.nav-menu'),(390,844,'.tab-bar')):
+                page.set_viewport_size({'width':width,'height':height})
+                for origin,target,selector,destination in (
+                    ('/translate','/','.tl-card','.home-page'),
+                    ('/translate','/printed','.tl-card','.digi-container'),
+                    ('/printed','/translate','.digi-container','.tl-card'),
+                    ('/printed','/daily','.digi-container','.daily-page'),
+                ):
+                    page.goto(base+'/#'+origin)
+                    expect(page.locator(selector)).to_be_visible()
+                    if origin=='/printed': expect(page.locator('.pagination-control')).to_have_count(2)
+                    page.evaluate('scrollTo(0,0)')
+                    page.evaluate("""selector=>{
+                        const old=document.querySelector(selector),samples=[];
+                        const sample=()=>{const r=old.getBoundingClientRect();samples.push([r.x,r.y,r.width])};
+                        sample();window.routeTrace={samples,done:false};
+                        function frame(){if(!old.isConnected){window.routeTrace.done=true;return}sample();requestAnimationFrame(frame)}
+                        requestAnimationFrame(frame);
+                    }""",selector)
+                    page.locator(f'{nav} a[href="#{target}"]').click()
+                    page.wait_for_function('window.routeTrace.done')
+                    expect(page.locator(destination)).to_be_visible()
+                    samples=page.evaluate('window.routeTrace.samples')
+                    assert all(abs(a-b)<1 for sample in samples for a,b in zip(samples[0],sample)),(width,origin,target,samples)
+            print('PASS: outgoing translation cards and book lists keep their layout until removed')
             assert not errors,errors
             browser.close()
     finally:
