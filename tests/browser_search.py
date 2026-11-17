@@ -70,6 +70,21 @@ def main():
                 }''')
                 assert all(abs(a-b)<1 for a,b in zip(gaps,[20,8,8])),(page.url,gaps)
                 assert page.evaluate('getComputedStyle(document.documentElement).scrollbarWidth')=='none'
+            def check_help_width():
+                for control in page.locator('.search-control').all():
+                    help_button=control.locator('.search-control-help')
+                    if not help_button.count() or not help_button.is_visible(): continue
+                    before=help_button.bounding_box()
+                    box_before=control.locator('.search-control-box').bounding_box()
+                    help_button.click()
+                    expect(help_button).to_have_attribute('aria-expanded','true')
+                    expanded=help_button.bounding_box()
+                    box_after=control.locator('.search-control-box').bounding_box()
+                    assert abs(before['width']-expanded['width'])<.1,(page.url,before,expanded)
+                    assert abs(box_before['width']-box_after['width'])<.1,(page.url,box_before,box_after)
+                    help_button.click()
+                    expect(help_button).to_have_attribute('aria-expanded','false')
+                    assert abs(before['width']-help_button.bounding_box()['width'])<.1
             page.route('**/api/stats',lambda r:r.fulfill(status=503,json={'error':'fixture unavailable'}))
             page.goto(base+'/#/daily')
             expect(page.locator('.daily-group-pill')).to_be_visible()
@@ -87,6 +102,7 @@ def main():
                 expect(page.get_by_role('combobox',name=label,exact=True)).to_be_visible()
                 expect(page.locator('.pagination-control')).to_have_count(2)
                 check_spacing()
+                check_help_width()
                 if path=='/daily':
                     expect(page.locator('.daily-categories')).to_have_count(0)
                     expect(page.locator('.daily-rule summary .daily-context')).to_contain_text('收录自 2026-11-01')
@@ -180,6 +196,7 @@ def main():
             first=page.get_by_role('combobox',name='查找条目',exact=True)
             second=page.get_by_role('combobox',name='关联画廊',exact=True)
             expect(first).to_be_visible();expect(second).to_be_visible()
+            check_help_width()
             assert first.get_attribute('aria-controls')!=second.get_attribute('aria-controls')
             first.fill('f:chi');expect(page.locator('.a-search-row .search-control [role=option]').first).to_be_visible()
             second.focus();expect(page.locator('.a-search-row .search-control [role=option]')).to_have_count(0)
@@ -218,6 +235,7 @@ def main():
                 expect(page.get_by_role('combobox',name=label,exact=True)).to_be_visible()
                 expect(page.locator('.pagination-control')).to_have_count(2)
                 check_spacing()
+                check_help_width()
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth+1'),path
             print('PASS: shared controls fit mobile layouts on all public pages')
             for width,height in ((1440,900),(390,844),(320,568),(844,390),(768,600)):
