@@ -305,6 +305,35 @@ class AdminV2Tests(fixtures.BackendTests):
         self.assertTrue(result['unchanged'])
         self.assertEqual(schedules.listing()['items'][0],row)
 
+    def test_run_history_paginates_and_filters_beyond_recent_runs(self):
+        stamp = db.now()
+        with db.connect() as con:
+            con.executemany(
+                "INSERT INTO jobs(id,kind,status,conclusion,created_at,updated_at) "
+                "VALUES (?,'daily','completed',?,?,?)",
+                [(i, 'failure' if i == 1 else 'success', stamp, stamp) for i in range(1, 54)],
+            )
+            jobs.event(1, 'finish', '历史任务日志', con=con)
+
+        recent = self.admin('runs').json()['runs']
+        self.assertEqual(len(recent), 50)
+        self.assertEqual(recent[-1]['id'], 4)
+        first = self.admin('runs', page=1).json()
+        self.assertEqual((first['page'], first['pages'], first['total']), (1, 6, 53))
+        self.assertEqual([run['id'] for run in first['runs']], list(range(53, 43, -1)))
+        last = self.admin('runs', page=99).json()
+        self.assertEqual(last['page'], 6)
+        self.assertEqual([run['id'] for run in last['runs']], [3, 2, 1])
+        failed = self.admin('runs', page=2, status='failure').json()
+        self.assertEqual((failed['page'], failed['total'], failed['count']), (1, 1, 53))
+        self.assertEqual(failed['runs'][0]['id'], 1)
+        self.assertEqual(self.admin('runs', page=1, status='queued').json()['runs'], [])
+        self.assertEqual(self.admin('runs', page=0).status_code, 400)
+        self.assertEqual(self.admin('runs', page=1, status='invalid').status_code, 400)
+        old_detail = self.admin('job-detail', runId=1).json()
+        self.assertEqual(old_detail['run']['id'], 1)
+        self.assertEqual(old_detail['events'][0]['message'], '历史任务日志')
+
     def test_progress_journal_handles_daily_batches_and_never_records_raw_secrets(self):
         import logging
         job=self.claim('daily')
