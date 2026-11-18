@@ -107,6 +107,8 @@ def handle(body, ip):
     if action == 'job-detail':
         return jobs.detail(body.get('runId'),body.get('after'))
     if action == 'runs':
+        if 'page' in body:
+            return jobs.runs_page(body['page'], body.get('status', 'all'))
         return {'runs': jobs.runs()}
     if action == 'dispatch':
         return {'accepted': True, 'id': jobs.enqueue(body.get('workflow'), body.get('ruleId'))}

@@ -38,10 +38,11 @@ def event(job_id, stage, message, level='info', data=None, con=None):
 def detail(job_id, after=None):
     if type(job_id) is not int or (after is not None and (type(after) is not int or after<0)):
         fail(400,'任务参数不正确')
-    run=next((r for r in runs() if r['id']==job_id),None)
-    if not run:
-        fail(404,'任务不存在或已不在最近运行列表中')
     with db.connect() as con:
+        job = con.execute('SELECT * FROM jobs WHERE id=?', (job_id,)).fetchone()
+        if not job:
+            fail(404, '任务不存在')
+        run = _serialize_runs(con, [job])[0]
         rows=con.execute('SELECT * FROM (SELECT * FROM job_events WHERE job_id=? AND id>? ORDER BY id DESC LIMIT 2000) ORDER BY id',(job_id,after or 0)).fetchall()
         first=con.execute('SELECT MIN(id) FROM job_events WHERE job_id=?',(job_id,)).fetchone()[0]
     return {'run':run,'events':[{'id':r['id'],'stage':r['stage'],'level':r['level'],'message':r['message'],'data':json.loads(r['data_json']),'at':r['created_at']} for r in rows], 'retainedFrom':first}
@@ -99,22 +100,54 @@ def enqueue(kind, rule_id=None):
 def runs():
     with db.connect() as con:
         rows = con.execute('SELECT * FROM jobs ORDER BY id DESC LIMIT 50').fetchall()
-        steps_by_job = {r['id']: [] for r in rows}
-        if rows:
-            placeholders = ','.join('?' for _ in rows)
-            for step in con.execute(f'SELECT * FROM job_steps WHERE job_id IN ({placeholders}) ORDER BY job_id,rowid',
-                                    [r['id'] for r in rows]):
-                steps_by_job[step['job_id']].append(
-                    {k: step[k] for k in ('name','status','started_at','finished_at','summary')} |
-                    {'progress': json.loads(step['progress_json'])})
-        items = []
-        for r in rows:
-            config = json.loads(r['config_json']) if r['config_json'] else {}
-            items.append({'id': r['id'], 'kind': r['kind'], 'name': KINDS[r['kind']], 'status': r['status'], 'conclusion': r['conclusion'],
-                          'createdAt': r['created_at'], 'updatedAt': r['updated_at'], 'summary': r['summary'], 'steps': steps_by_job[r['id']],
-                          'cancelRequested': bool(r['cancel_requested']), 'parentId': r['parent_id'], 'ruleId': config.get('ruleId'),
-                          'config': config})
-        return items
+        return _serialize_runs(con, rows)
+
+
+def runs_page(page, status):
+    statuses = ('all', 'queued', 'in_progress', 'failure', 'success', 'cancelled', 'timed_out')
+    if type(page) is not int or page < 1 or status not in statuses:
+        fail(400, '运行记录分页参数不正确')
+
+    size = 10
+    where = '' if status == 'all' else ' WHERE status=? OR conclusion=?'
+    params = () if status == 'all' else (status, status)
+    with db.connect() as con:
+        con.execute('BEGIN')
+        count, active = con.execute(
+            "SELECT COUNT(*), COUNT(CASE WHEN status!='completed' THEN 1 END) FROM jobs"
+        ).fetchone()
+        failed = con.execute(
+            "SELECT COUNT(*) FROM (SELECT conclusion FROM jobs ORDER BY id DESC LIMIT 50) "
+            "WHERE conclusion IN ('failure', 'timed_out')"
+        ).fetchone()[0]
+        total = con.execute('SELECT COUNT(*) FROM jobs' + where, params).fetchone()[0] if where else count
+        pages = max(1, (total + size - 1) // size)
+        page = min(page, pages)
+        rows = con.execute(
+            'SELECT * FROM jobs' + where + ' ORDER BY id DESC LIMIT ? OFFSET ?',
+            (*params, size, (page - 1) * size),
+        ).fetchall()
+        return {'runs': _serialize_runs(con, rows), 'page': page, 'pages': pages, 'total': total,
+                'count': count, 'active': active, 'failed': failed}
+
+
+def _serialize_runs(con, rows):
+    steps_by_job = {r['id']: [] for r in rows}
+    if rows:
+        placeholders = ','.join('?' for _ in rows)
+        for step in con.execute(f'SELECT * FROM job_steps WHERE job_id IN ({placeholders}) ORDER BY job_id,rowid',
+                                [r['id'] for r in rows]):
+            steps_by_job[step['job_id']].append(
+                {k: step[k] for k in ('name','status','started_at','finished_at','summary')} |
+                {'progress': json.loads(step['progress_json'])})
+    items = []
+    for r in rows:
+        config = json.loads(r['config_json']) if r['config_json'] else {}
+        items.append({'id': r['id'], 'kind': r['kind'], 'name': KINDS[r['kind']], 'status': r['status'], 'conclusion': r['conclusion'],
+                      'createdAt': r['created_at'], 'updatedAt': r['updated_at'], 'summary': r['summary'], 'steps': steps_by_job[r['id']],
+                      'cancelRequested': bool(r['cancel_requested']), 'parentId': r['parent_id'], 'ruleId': config.get('ruleId'),
+                      'config': config})
+    return items
 
 
 def rerun(job_id, original=False):
