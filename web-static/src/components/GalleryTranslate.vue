@@ -47,7 +47,7 @@
       <div class="gt-header-actions">
         <button v-if="ocrResults.length" class="gt-btn gt-view-toggle" type="button" :aria-pressed="showTranslation" @click="showTranslation = !showTranslation">{{ showTranslation ? '显示原图' : '显示译文' }}</button>
         <button class="gt-btn gt-btn-primary" type="button"
-          :disabled="!imageUrl || imageError || imageLoading || ocrProcessing || translating || imagesLoading"
+          :disabled="!imageReady || imageError || imageLoading || ocrProcessing || translating || imagesLoading"
           @click="missingCount ? retranslateMissing() : performOcrAndTranslate()"
         >{{ ocrProcessing ? '识别中' : translating ? '翻译中' : missingCount ? `补译 ${missingCount} 条` : ocrResults.length ? '重新识别' : '识别并翻译' }}</button>
       </div>
@@ -65,13 +65,12 @@
         @pointerdown="onStagePointerDown"
         @wheel="onStageWheel"
       >
-        <div v-if="imageLoading" class="gt-image-placeholder">
-          <div class="gt-spinner"></div>
-          <span>加载图片...</span>
+        <div v-if="!imageError && !imageReady && (imagesLoading || imageLoading || imageUrl)" class="gt-image-placeholder gt-image-loading">
+          <ImageLoadProgress :stage="imageUrl ? 'image' : imageLoading ? 'address' : 'list'" />
         </div>
-        <div v-else-if="imageError" class="gt-image-placeholder gt-image-error" role="alert"><span>{{ imageError }}</span><button class="gt-btn" @pointerdown.stop @click.stop="retryCurrentImage(true)">重新加载图片</button></div>
+        <div v-if="imageError" class="gt-image-placeholder gt-image-error" role="alert"><span>{{ imageError }}</span><button class="gt-btn" @pointerdown.stop @click.stop="retryCurrentImage(true)">重新加载图片</button></div>
         <!-- 缩放层：图片与 OCR 框同在一个 transform 下，捏合 / 双击放大时框随图一起走 -->
-        <div v-else-if="imageUrl" class="gt-stage" :class="{ 'is-sliding': pageSliding }" :style="stageStyle">
+        <div v-else-if="imageUrl" v-show="imageReady" class="gt-stage" :class="{ 'is-sliding': pageSliding }" :style="stageStyle">
           <img
             ref="imgRef"
             :src="imageUrl"
@@ -83,7 +82,7 @@
             @error="onImageError"
           />
           <!-- OCR boxes overlay -->
-          <div v-if="ocrResults.length && renderTick >= 0" class="gt-boxes-layer">
+          <div v-if="imageReady && ocrResults.length && renderTick >= 0" class="gt-boxes-layer">
             <div
               v-for="(result, i) in ocrResults"
               :key="result._id"
@@ -117,7 +116,7 @@
             </div>
           </div>
         </div>
-        <div v-else class="gt-image-placeholder gt-image-empty">
+        <div v-else-if="!imageLoading && !imagesLoading" class="gt-image-placeholder gt-image-empty">
           <div class="gt-empty-icon">📖</div>
           <p>从右侧选择页面</p>
         </div>
@@ -442,6 +441,7 @@
 
 <script>
 import AppIcon from '@/components/ui/AppIcon.vue'
+import ImageLoadProgress from '@/components/ui/ImageLoadProgress.vue'
 import {readTranslationResponse,scaleOcrResults} from '@/utils/translationApi'
 import { loadGallery } from '@/composables/useGalleryData'
 
@@ -751,7 +751,7 @@ function fitTextToBox(el, minSize = 1) {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default {
-  components: { AppIcon },
+  components: { AppIcon, ImageLoadProgress },
   name: 'GalleryTranslate',
 
   data() {
@@ -777,6 +777,7 @@ export default {
       imageUrl: null,
       imageUrlRaw: null,
       imageLoading: false,
+      imageReady: false,
       imageError: null,
       imageAutoRetried: false,
       imageRequestId: 0,
@@ -990,7 +991,7 @@ export default {
       if (this._suppressClickUntil && Date.now() < this._suppressClickUntil) return
       const next = this.selectedBoxIdx === i ? null : i
       this.selectedBoxIdx = next
-      if (!isMobile()) { this.$nextTick(() => this.$el.querySelector('.gt-result-selected')?.scrollIntoView({ block: 'nearest', behavior: prefersReducedMotion() ? 'instant' : 'smooth' })); return }
+      if (!isMobile()) { this.$nextTick(() => this.$refs.sidebarRef?.querySelector('.gt-result-selected')?.scrollIntoView({ block: 'nearest', behavior: prefersReducedMotion() ? 'instant' : 'smooth' })); return }
       if (next == null) { this.bubbleCard = null; return }
       this.bubbleCard = next
       if (this.sheetState !== 'peek') this.setSheet('peek')
@@ -1017,7 +1018,7 @@ export default {
       this.bubbleCard = null
       this.setSheet('full')
       this.startEdit(index)
-      this.$nextTick(() => this.$el.querySelector(`.gt-result-item[data-idx="${index}"]`)?.scrollIntoView({ block: 'nearest' }))
+      this.$nextTick(() => this.$refs.sidebarRef?.querySelector(`.gt-result-item[data-idx="${index}"]`)?.scrollIntoView({ block: 'nearest' }))
     },
 
     closeBubble() {
@@ -1305,6 +1306,7 @@ export default {
       })
       this.ocrResults = []
       this.selectedBoxIdx = null
+      this.imageReady = false
       this.imageUrl = null
       this.imageUrlRaw = null
       this.nlParam = null
@@ -1372,6 +1374,8 @@ export default {
     },
 
     onImageError() {
+      this.imageReady = false
+      this.imageLoading = false
       if (!this.imageAutoRetried) {
         this.imageAutoRetried = true
         this.retryCurrentImage()
@@ -1390,6 +1394,7 @@ export default {
       const requestId = ++this.imageRequestId
       this.imageLoading = true
       this.imageError = null
+      this.imageReady = false
       this.imageUrl = null
       try {
         const source = new URL(page.pageUrl)
@@ -1477,6 +1482,7 @@ export default {
     },
 
     onImageLoad() {
+      this.imageReady = true
       this.renderTick++
       if (this._enterFrom != null) {
         this._enterFrom = null
@@ -2373,6 +2379,8 @@ export default {
 .gt-image-error { color: var(--danger-color); gap:14px; text-align:center; padding:20px; }
 .gt-strip-error{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 
+.gt-image-loading { position: absolute; inset: 0; pointer-events: none; }
+
 .gt-image-empty { text-align: center; }
 
 .gt-empty-icon { font-size: 40px; }
@@ -3009,15 +3017,6 @@ export default {
 
 /* ── Spinners ────────────────────────────────────────────────────────────────── */
 
-.gt-spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid var(--border-color);
-  border-top-color: var(--primary-color);
-  border-radius: 50%;
-
-}
-
 .gt-spinner-sm {
   width: 16px;
   height: 16px;
@@ -3617,7 +3616,6 @@ export default {
 /* Motion is opt-in; static loading/progress states remain visible. */
 @media (prefers-reduced-motion: no-preference) {
 .gt-progress::after { animation: gt-progress-slide 1.2s var(--ease-in-out) infinite; }
-.gt-spinner { animation: gt-spin 0.7s linear infinite; }
 .gt-spinner-sm { animation: gt-spin 0.7s linear infinite; }
 .gt-toast { animation: gt-toast-in var(--dur-base) ease; }
 }

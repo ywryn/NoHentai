@@ -2,8 +2,7 @@
   <div class="gr-root">
     <!-- Init loading -->
     <div v-if="initLoading" class="gr-center">
-      <div class="reader-spinner" />
-      <p style="color: var(--reader-muted); margin: 0">正在载入画廊…</p>
+      <ImageLoadProgress stage="list" />
     </div>
 
     <!-- Init error -->
@@ -43,6 +42,7 @@
 
 <script setup lang="ts">
 import AppIcon from '@/components/ui/AppIcon.vue'
+import ImageLoadProgress from '@/components/ui/ImageLoadProgress.vue'
 import { ref, provide, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useReader, READER_KEY } from '@/composables/useReader'

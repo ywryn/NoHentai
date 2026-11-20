@@ -174,6 +174,36 @@ def main():
             expect(page.locator('.stats-load-error')).to_be_visible()
             expect(page.locator('.data-panel')).to_have_count(0)
             print('PASS: failed statistics request shows recovery without empty charts')
+            load_requests = {}
+
+            def hold_load(stage):
+                return lambda route: load_requests.update({stage: route})
+
+            for stage, pattern in (
+                ('list', '**/api/gallery-images?*'),
+                ('address', '**/api/image-url?*'),
+                ('image', re.compile(r'/api/image-proxy\?|/staged-image\.png')),
+            ):
+                page.route(pattern, hold_load(stage))
+            for view in ('read', 'translate'):
+                load_requests.clear()
+                page.goto(base+f'/?view={view}#/gallery/1/{view}?token=abcde&page=1')
+                for stage, response in (
+                    ('list', {'json': {'total': 1, 'images': [
+                        {'pageNum': 1, 'pageUrl': 'https://e-hentai.org/s/abcde/1-1',
+                         'thumbSprite': '', 'thumbX': 0, 'thumbW': 100, 'thumbH': 150}]}}),
+                    ('address', {'json': {'imageUrl': base+'/staged-image.png', 'nlParam': None}}),
+                    ('image', {'content_type': 'image/png', 'body': image.getvalue()}),
+                ):
+                    expect(page.locator(f'.image-load-progress.{stage}')).to_be_visible()
+                    for _ in range(100):
+                        if stage in load_requests:
+                            break
+                        page.wait_for_timeout(20)
+                    load_requests[stage].fulfill(**response)
+                expect(page.locator('.pi-img' if view == 'read' else '.gt-page-img')).to_be_visible()
+                expect(page.locator('.image-load-progress')).to_have_count(0)
+            print('PASS: reader and translator show each image loading stage until the image loads')
             assert not errors, errors
             browser.close()
     finally:
