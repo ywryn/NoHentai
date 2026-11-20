@@ -246,9 +246,10 @@ onMounted(() => {
   }
 
   .tab-bar {
+    --tab-bar-gap: calc(10px + env(safe-area-inset-bottom, 0px));
     position: fixed;
     left: 50%;
-    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    bottom: var(--tab-bar-gap);
     transform: translateX(-50%);
     width: calc(100% - 24px);
     max-width: 460px;
@@ -263,6 +264,14 @@ onMounted(() => {
     border: 1px solid var(--row-border);
     border-radius: 20px;
     box-shadow: 0 6px 28px #14203912, 0 1px 3px #14203906;
+  }
+  @supports (height: 100dvh) {
+    .tab-bar {
+      /* Follow the visible height as the browser toolbar expands or collapses. */
+      top: calc(100dvh - var(--tab-bar-gap));
+      bottom: auto;
+      transform: translate(-50%, -100%);
+    }
   }
   @supports not (backdrop-filter: blur(16px)) {
     .tab-bar { background: var(--row-bg); }
