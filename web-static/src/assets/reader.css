@@ -13,16 +13,6 @@
   --reader-anim: 0.28s ease;
 }
 
-.reader-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid rgba(148,163,184,0.2);
-  border-top-color: var(--reader-accent);
-  border-radius: 50%;
-
-}
-@keyframes reader-spin { to { transform: rotate(360deg); } }
-
 .reader-btn {
   background: none;
   border: none;
@@ -85,11 +75,6 @@
 /* Instant (no animation) */
 .instant-enter-active,
 .instant-leave-active { transition: none; }
-
-/* Motion is opt-in; static loading/progress states remain visible. */
-@media (prefers-reduced-motion: no-preference) {
-.reader-spinner { animation: reader-spin 0.8s linear infinite; }
-}
 
 @media (prefers-reduced-motion: reduce) {
   /* A live preference change must also settle an in-flight page turn. */

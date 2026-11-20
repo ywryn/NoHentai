@@ -1,10 +1,10 @@
 <template>
   <div ref="elRef" class="page-image">
-    <div v-if="state === 'loading'" class="pi-center pi-loading" role="status">
-      <div class="reader-spinner" aria-hidden="true" />
-      <span>正在加载第 {{ pageNum }} 页</span>
+    <div v-if="state === 'loading'" class="pi-center pi-loading">
+      <ImageLoadProgress :stage="imgSrc ? 'image' : 'address'" />
     </div>
     <img
+      v-if="imgSrc"
       v-show="state === 'loaded'"
       :src="imgSrc"
       :alt="`第 ${pageNum} 页`"
@@ -22,13 +22,14 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onBeforeUnmount, inject } from 'vue'
+import ImageLoadProgress from '@/components/ui/ImageLoadProgress.vue'
 import { READER_KEY } from '@/composables/useReader'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   pageNum: number
   lazy?: boolean
   active?: boolean
-}>()
+}>(), { active: true })
 
 const reader = inject(READER_KEY)!
 const { getImageUrl, retryImage } = reader
@@ -159,7 +160,6 @@ watch(() => props.pageNum, () => {
   font-size: 12px;
   pointer-events: none;
 }
-.pi-loading .reader-spinner { width: 24px; height: 24px; }
 .pi-img {
   max-width: 100%;
   max-height: 100%;
