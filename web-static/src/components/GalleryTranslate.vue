@@ -1561,10 +1561,10 @@ export default {
      * 翻译一组文本，返回与输入等长的数组，每项 { t, kind, alt } 或 null（模型漏译）。
      * 此前漏译会被回填成原文，界面上看起来像「翻译了但还是日文」。
      */
-    async translateTexts(texts, pageNum) {
+    async translateTexts(texts) {
       const data = await this.postTrans('trans-translate', {
         texts,
-        ...this.buildTranslateContext(pageNum),
+        ...this.buildTranslateContext(),
       })
       return texts.map((_, i) => {
         const item = data.translations?.[i]
@@ -1583,24 +1583,10 @@ export default {
       }
     },
 
-    /**
-     * 翻译上下文：作品标题 / 标签让模型把握题材与口吻，上一页的对照保证人名称谓一致，
-     * 术语表由用户在设置里维护。
-     */
-    buildTranslateContext(pageNum) {
+    buildTranslateContext() {
       const ctx = {}
       if (this.galleryMeta) {
-        ctx.context = {
-          title: this.galleryMeta.title_jpn || this.galleryMeta.title,
-          tags: (this.galleryMeta.tags || []).filter(t => !/^language:/.test(t)),
-        }
-      }
-      const prev = pageNum > 1 ? this.loadPageCache(pageNum - 1) : null
-      if (prev?.ocrResults?.length) {
-        ctx.previous = prev.ocrResults
-          .filter(r => r.translation)
-          .slice(-12)
-          .map(r => [r.text, r.translation])
+        ctx.context = { title: this.galleryMeta.title_jpn || this.galleryMeta.title }
       }
       if (Object.keys(this.glossary).length) ctx.glossary = this.glossary
       return ctx
@@ -1665,7 +1651,7 @@ export default {
       const generation = ++this.processingGeneration
       const pageNum = this.currentPage
       try {
-        const items = await this.translateTexts(idxs.map(i => this.ocrResults[i].text), pageNum)
+        const items = await this.translateTexts(idxs.map(i => this.ocrResults[i].text))
         if (this.currentPage !== pageNum || generation !== this.processingGeneration) return
         const byIdx = new Map(idxs.map((i, k) => [i, items[k]]))
         this.ocrResults = this.ocrResults.map((r, i) => byIdx.has(i) && byIdx.get(i) ? this.applyTranslation(r, byIdx.get(i)) : r)
@@ -1719,7 +1705,7 @@ export default {
       const generation = ++this.processingGeneration
       const pageNum = this.currentPage
       try {
-        const translations = await this.translateTexts(this.ocrResults.map(r => r.text), pageNum)
+        const translations = await this.translateTexts(this.ocrResults.map(r => r.text))
         // 翻译期间用户可能已翻页
         if (this.currentPage !== pageNum || generation !== this.processingGeneration) return
         this.ocrResults = this.ocrResults.map((r, i) => this.applyTranslation(r, translations[i]))
@@ -1763,7 +1749,7 @@ export default {
       const { results, source } = await this.ocrImage(img, this.ocrSource)
       let translated = results
       if (results.length) {
-        const translations = await this.translateTexts(results.map(r => r.text), pageNum)
+        const translations = await this.translateTexts(results.map(r => r.text))
         translated = results.map((r, i) => this.applyTranslation(r, translations[i]))
       }
       if (!this._disposed && !this.loadPageCache(pageNum)) this.writePageCache(pageNum, translated, source)

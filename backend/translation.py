@@ -28,18 +28,11 @@ def context_message(body):
         fail(400, 'context 不正确')
     if context.get('title'):
         parts.append('本作标题：' + str(context['title'])[:200])
-    if isinstance(context.get('tags'), list) and context['tags']:
-        parts.append('本作标签：' + '，'.join(map(str, context['tags'][:40])))
     glossary = body.get('glossary') or {}
     if not isinstance(glossary, dict) or any(not isinstance(v, str) or len(v) > 500 for v in glossary.values()):
         fail(400, '术语表格式不正确')
     if glossary:
         parts.append('术语表（原文→译文，必须遵守）：\n' + '\n'.join(f'{k} → {v}' for k, v in list(glossary.items())[:60]))
-    previous = body.get('previous') or []
-    if not isinstance(previous, list) or any(not isinstance(p, list) or len(p) != 2 or any(not isinstance(v, str) or len(v) > 5000 for v in p) for p in previous):
-        fail(400, '上一页对照格式不正确')
-    if previous:
-        parts.append('上一页的翻译对照（保持人名、称谓、口吻一致）：\n' + '\n'.join(f'{ja} ⇒ {zh}' for ja, zh in previous[-12:]))
     return '\n\n'.join(parts)
 
 
@@ -54,7 +47,7 @@ def translate(body):
     context = context_message(body)
     # Include gateway and key fingerprint: rotating providers cannot reuse another
     # provider's result under the same model label.
-    key = cache_key('tr:v3:', [base, hashlib.sha256(api_key.encode()).hexdigest(), cfg, texts, context])
+    key = cache_key('tr:v4:', [base, hashlib.sha256(api_key.encode()).hexdigest(), cfg, texts, context])
     cached = db.get_cache(key)
     if cached:
         return dict(cached, cached=True)

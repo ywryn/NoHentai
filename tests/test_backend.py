@@ -306,11 +306,19 @@ class BackendTests(unittest.TestCase):
         for name, value in [('LLM_API_BASE', 'https://llm.example/v1'), ('LLM_API_KEY', 'fake-key')]:
             with patch('backend.upstream.validate_url'):
                 services.save(services.FIELDS[name][0], next(g for g in services.status()['groups'] if g['id']==services.FIELDS[name][0])['version'], {name:value})
-        body = {'password': 'trans-test', 'texts': ['おはよう'], 'previous': [['名前', '名字']], 'glossary': {'名前': '名字'}}
+        body = {'password': 'trans-test', 'texts': ['おはよう'],
+                'context': {'title': '测试标题', 'tags': ['artist:test-artist']},
+                'previous': [['前頁原文', '前页译文']], 'glossary': {'名前': '名字'}}
         with patch.object(translation, 'json_request', return_value={'choices': [{'message': {'content': '{"1":{"t":"早上好","k":"dialogue","a":null}}'}}]}) as upstream:
             response = self.client.post('/api/trans-translate', json=body)
             self.assertEqual(response.status_code, 200, response.text)
             self.assertEqual(response.json()['translations'][0]['t'], '早上好')
+            messages = upstream.call_args.kwargs['json']['messages']
+            self.assertEqual(messages[1], {'role': 'system', 'content':
+                             '本作标题：测试标题\n\n术语表（原文→译文，必须遵守）：\n名前 → 名字'})
+            self.assertEqual(json.loads(messages[2]['content']), {'1': 'おはよう'})
+            body['context']['tags'] = []
+            body.pop('previous')
             self.assertTrue(self.client.post('/api/trans-translate', json=body).json()['cached'])
             self.assertEqual(upstream.call_count, 1)
         body['texts'] = ['別の言葉']
