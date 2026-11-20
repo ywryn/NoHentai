@@ -242,11 +242,22 @@ onMounted(() => {
 
   .navigation-bar {
     padding-block: 8px;
-    justify-content: space-between;
+    padding-left: max(var(--page-gutter), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--page-gutter), env(safe-area-inset-right, 0px));
+  }
+
+  .nav-actions { margin-inline-start: auto; }
+  .nav-view-mode:empty { display: none; }
+
+  /* Keep the sticky header surface and its controls in the same paint layer. */
+  .app-shell:has(.gallery-detail-wrapper) > .navigation-bar {
+    background: var(--row-bg);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 
   .tab-bar {
-    --tab-bar-gap: calc(10px + env(safe-area-inset-bottom, 0px));
+    --tab-bar-gap: max(10px, env(safe-area-inset-bottom, 0px));
     position: fixed;
     left: 50%;
     bottom: var(--tab-bar-gap);
