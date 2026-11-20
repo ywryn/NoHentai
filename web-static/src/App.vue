@@ -249,13 +249,6 @@ onMounted(() => {
   .nav-actions { margin-inline-start: auto; }
   .nav-view-mode:empty { display: none; }
 
-  /* Keep the sticky header surface and its controls in the same paint layer. */
-  .app-shell:has(.gallery-detail-wrapper) > .navigation-bar {
-    background: var(--row-bg);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-
   .tab-bar {
     --tab-bar-gap: max(10px, env(safe-area-inset-bottom, 0px));
     position: fixed;
