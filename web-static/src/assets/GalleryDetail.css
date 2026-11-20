@@ -579,7 +579,11 @@
 
 /* ===== 窄屏微调（布局本身已是单列，这里只调间距与表格） ===== */
 @media (max-width: 767px) {
-  .gallery-detail-wrapper { padding: 12px; }
+  .gallery-detail-wrapper {
+    padding-block: 12px;
+    padding-left: max(var(--page-gutter), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--page-gutter), env(safe-area-inset-right, 0px));
+  }
 
   .gd-hero { gap: 12px; }
 
