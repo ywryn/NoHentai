@@ -258,7 +258,7 @@ def main():
             expect(page.locator('.daily-group-pill')).to_be_visible()
             expect(page.locator('.app-shell')).to_have_css('display','block')
             print('PASS: translation entry fits desktop/mobile/error views and scrolls in short viewports')
-            for width,height,nav in ((1440,900,'.nav-menu'),(390,844,'.tab-bar')):
+            for width,height,nav in ((1440,900,'.nav-menu'),(390,844,'.nav-menu')):
                 page.set_viewport_size({'width':width,'height':height})
                 for origin,target,selector,destination in (
                     ('/translate','/','.tl-card','.home-page'),
@@ -277,12 +277,30 @@ def main():
                         function frame(){if(!old.isConnected){window.routeTrace.done=true;return}sample();requestAnimationFrame(frame)}
                         requestAnimationFrame(frame);
                     }""",selector)
+                    if width < 768: page.get_by_role('button',name='页面导航').click()
                     page.locator(f'{nav} a[href="#{target}"]').click()
                     page.wait_for_function('window.routeTrace.done')
                     expect(page.locator(destination)).to_be_visible()
                     samples=page.evaluate('window.routeTrace.samples')
                     assert all(abs(a-b)<1 for sample in samples for a,b in zip(samples[0],sample)),(width,origin,target,samples)
             print('PASS: outgoing translation cards and book lists keep their layout until removed')
+            submitted = []
+            page.route('**/api/trans-verify', lambda r:r.fulfill(json={'ok':True}))
+            def live_results(route):
+                submitted.append(route.request.url)
+                route.fulfill(json={'site':'e-hentai.org','next':'','prev':'','items':[
+                    {'gid':123,'token':'abcde','title':'实时测试','category':'Manga','pages':12,'tags':[]}]})
+            page.route('**/api/live/search?*', live_results)
+            page.goto(base+'/#/live')
+            expect(page.locator('.gallery-results a').first).to_contain_text('实时测试')
+            live_search = page.get_by_role('combobox',name='搜索上游画廊')
+            live_search.fill('artist:test')
+            page.wait_for_timeout(300)
+            assert len(submitted) == 1
+            page.get_by_role('button',name='搜索',exact=True).click()
+            expect(page).to_have_url(re.compile('q=artist'))
+            expect(page.locator('.gallery-results a').first).to_have_attribute('href',re.compile(r'/live/123.*token=abcde'))
+            print('PASS: live search uses shared gallery cards and only queries upstream on submission')
             assert not errors,errors
             browser.close()
     finally:

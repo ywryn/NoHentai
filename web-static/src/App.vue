@@ -2,7 +2,7 @@
 import BrandMark from '@/components/ui/BrandMark.vue'
 import BrandWordmark from '@/components/ui/BrandWordmark.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
-import { onMounted, computed } from 'vue'
+import { onMounted, onBeforeUnmount, computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMomMode } from '@/composables/useMomMode'
 import ThemeToggle from '@/components/ThemeToggle.vue'
@@ -18,7 +18,7 @@ const isImmersivePage = computed(() => Boolean(route.meta.immersive))
 
 /** 视图模式切换只对列表页有意义，其它页面隐藏，避免出现无效控件 */
 const showViewModeToggle = computed(() =>
-  ['/', '/printed', '/daily'].includes(route.path)
+  ['/', '/printed', '/daily', '/live'].includes(route.path)
 )
 
 const navItems = [
@@ -55,58 +55,79 @@ const navItems = [
   },
 ]
 
+const mobile = window.matchMedia('(max-width: 767px)')
+const narrow = ref(mobile.matches)
+const menu = ref<HTMLElement>()
+const trigger = ref<HTMLButtonElement>()
+const open = ref(false)
+const nativePopover = 'showPopover' in HTMLElement.prototype
+function closeMenu() {
+  if (nativePopover && menu.value?.matches(':popover-open')) menu.value.hidePopover()
+  open.value = false
+}
+function toggleMenu() {
+  if (!nativePopover) open.value = !open.value
+}
+function layout() { closeMenu(); narrow.value = mobile.matches }
+function outside(event: Event) {
+  if (open.value && !menu.value?.contains(event.target as Node) && !trigger.value?.contains(event.target as Node)) closeMenu()
+}
+function escape(event: KeyboardEvent) {
+  if (open.value && event.key === 'Escape') { closeMenu(); trigger.value?.focus() }
+}
+watch(() => route.fullPath, closeMenu)
 onMounted(() => {
   initMomMode()
+  mobile.addEventListener('change', layout)
+  if (!nativePopover) {
+    document.addEventListener('pointerdown', outside)
+    document.addEventListener('keydown', escape)
+  }
+})
+onBeforeUnmount(() => {
+  mobile.removeEventListener('change', layout)
+  document.removeEventListener('pointerdown', outside)
+  document.removeEventListener('keydown', escape)
 })
 </script>
 
 <template>
-  <div class="app-shell" :class="{ 'has-tabbar': !isImmersivePage }">
+  <div class="app-shell" :class="{'translate-entry': route.name === 'TranslateLookup'}">
     <a v-if="!isImmersivePage" class="skip-link" href="#main-content" @click.prevent="focusContent">跳至内容</a>
     <header class="navigation-bar" v-if="!isImmersivePage">
       <RouterLink class="brand-logo" to="/" aria-label="NoHentai 首页"><BrandMark :size="32" /><BrandWordmark /></RouterLink>
-
-      <nav class="nav-menu" aria-label="主导航">
-        <RouterLink v-for="item in navItems" :key="item.to" :to="item.to" :title="item.title">
-          {{ item.label }}
-        </RouterLink>
-      </nav>
 
       <div class="nav-actions">
         <span class="nav-view-mode"><ViewModeToggle v-if="showViewModeToggle" /></span>
         <MomModeToggle />
         <ThemeToggle />
+        <button v-if="narrow" ref="trigger" class="nav-trigger" aria-label="页面导航" aria-controls="site-nav" :popovertarget="nativePopover ? 'site-nav' : undefined"
+          :aria-expanded="open" @click="toggleMenu"><AppIcon :name="open ? 'close' : 'menu'" :size="21" /></button>
       </div>
+      <nav ref="menu" id="site-nav" class="nav-menu" :class="{expanded:open}"
+        :popover="narrow && nativePopover ? 'auto' : undefined" aria-label="主导航"
+        @toggle="open = ($event as ToggleEvent).newState === 'open'">
+        <RouterLink v-for="item in navItems" :key="item.to" :to="item.to" @click="closeMenu">
+          <AppIcon v-if="narrow" :name="item.icon" :size="20" />{{ item.label }}
+        </RouterLink>
+      </nav>
     </header>
 
     <component :is="route.path.startsWith('/admin') ? 'div' : 'main'" id="main-content" class="route-shell" tabindex="-1">
-      <router-view v-slot="{ Component }">
-        <Transition name="route-fade" mode="out-in">
-          <component :is="Component" />
-        </Transition>
-      </router-view>
+      <router-view />
     </component>
-
-    <!-- 移动端底部标签栏：常驻可达，触控目标 ≥ 44px -->
-    <nav class="tab-bar" v-if="!isImmersivePage" aria-label="主导航">
-      <RouterLink v-for="item in navItems" :key="item.to" :to="item.to" class="tab-item">
-        <span class="tab-icon"><AppIcon :name="item.icon" :size="21" /></span>
-        <span>{{ item.label }}</span>
-      </RouterLink>
-    </nav>
   </div>
 </template>
 
 <style scoped>
-/* Follow the mounted page, including its leave transition, rather than the target route. */
-.app-shell:has(.tl-container) {
+.app-shell.translate-entry {
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
-.app-shell:has(.tl-container) > .navigation-bar { flex-shrink: 0; }
-.app-shell:has(.tl-container) > .route-shell {
+.app-shell.translate-entry > .navigation-bar { flex-shrink: 0; }
+.app-shell.translate-entry > .route-shell {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -233,102 +254,20 @@ onMounted(() => {
   block-size: 32px;
 }
 
-/* ═══ 移动端底部标签栏 ═══════════════════════════════════ */
 
-.tab-bar { display: none; }
-
-@media (max-width: 767px) {
-  .nav-menu { display: none; }
-  .nav-view-mode { flex-basis: 40px; block-size: 40px; }
-
-  .navigation-bar {
-    padding-block: 8px;
-    padding-left: max(var(--page-gutter), env(safe-area-inset-left, 0px));
-    padding-right: max(var(--page-gutter), env(safe-area-inset-right, 0px));
-  }
-
-  .nav-actions { margin-inline-start: auto; }
-  .nav-view-mode:empty { display: none; }
-
-  .tab-bar {
-    --tab-bar-gap: max(10px, env(safe-area-inset-bottom, 0px));
-    position: fixed;
-    left: 50%;
-    bottom: var(--tab-bar-gap);
-    transform: translateX(-50%);
-    width: calc(100% - 24px);
-    max-width: 460px;
-    box-sizing: border-box;
-    z-index: var(--z-nav);
-    display: flex;
-    gap: 4px;
-    padding: 5px;
-    background: color-mix(in srgb, var(--row-bg) 96%, transparent);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--row-border);
-    border-radius: 20px;
-    box-shadow: 0 6px 28px #14203912, 0 1px 3px #14203906;
-  }
-  @supports (height: 100dvh) {
-    .tab-bar {
-      /* Follow the visible height as the browser toolbar expands or collapses. */
-      top: calc(100dvh - var(--tab-bar-gap));
-      bottom: auto;
-      transform: translate(-50%, -100%);
-    }
-  }
-  @supports not (backdrop-filter: blur(16px)) {
-    .tab-bar { background: var(--row-bg); }
-  }
-  .tab-item {
-    flex: 1;
-    min-width: 0;
-    min-height: 54px;
-    padding: 4px 2px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    border-radius: 14px;
-    text-decoration: none;
-    color: var(--muted-color);
-    font-size: 10px;
-    font-weight: 500;
-    transition: color .18s, background .18s;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .tab-icon { display: grid; place-items: center; width: 34px; height: 27px; border-radius: 9px; }
-  .tab-item svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; }
-  .tab-item.router-link-exact-active { color: var(--primary-color); background: var(--primary-soft-bg); font-weight: 650; }
-  .tab-item:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 1px; }
-  /* 顶栏右侧图标按钮在移动端放大到触控标准 */
-  .nav-actions :deep(button) {
-    width: 40px;
-    height: 40px;
-  }
-
-  /* 为底栏让出空间，避免最后一行内容被遮挡 */
-  .app-shell.has-tabbar .route-shell {
-    padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
-  }
-}
-
-:global(.my-app-light .nav-menu a.router-link-exact-active),
-:global(.my-app-light .tab-item.router-link-exact-active) {
-  background: var(--selection-bg);
-}
-
-/* ═══ 路由过渡 ═══════════════════════════════════════════ */
-
-.route-fade-enter-active,
-.route-fade-leave-active {
-  transition: opacity var(--dur-base) var(--ease-out);
-}
-
-.route-fade-enter-from,
-.route-fade-leave-to {
-  opacity: 0;
+.nav-actions {order:2}
+.nav-trigger {display:grid;place-items:center;width:44px;height:44px;color:var(--text-color);border:1px solid var(--row-border);border-radius:10px;background:var(--row-bg)}
+.nav-trigger[aria-expanded=true] {background:var(--primary-soft-bg);color:var(--primary-on-soft)}
+@media(max-width:767px){
+  .navigation-bar {background:var(--row-bg);backdrop-filter:none;-webkit-backdrop-filter:none}
+  .nav-actions {margin-inline-start:auto;gap:4px}
+  .nav-view-mode {flex-basis:auto;height:auto}
+  .nav-view-mode:empty {display:none}
+  .nav-actions :deep(button){min-width:40px;min-height:44px}
+  .brand-logo {min-width:0;flex-shrink:1}
+  .nav-menu {display:none;position:fixed;inset:68px var(--page-gutter) auto auto;margin:0;width:min(292px,calc(100vw - 24px));max-height:calc(100dvh - 80px);overflow:auto;padding:8px;border:1px solid var(--row-border);border-radius:14px;background:var(--row-bg);color:var(--text-color);box-shadow:0 8px 28px #14203922}
+  .nav-menu.expanded {display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .nav-menu a {display:flex;align-items:center;gap:10px;min-height:46px;box-sizing:border-box;border-radius:8px}
+  .nav-menu a.router-link-exact-active::after {display:none}
 }
 </style>

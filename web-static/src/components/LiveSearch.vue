@@ -1,12 +1,21 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import GallerySearchInput from './GallerySearchInput.vue'
+import GalleryList from './GalleryList.vue'
+import { exTypeClassMap } from '@/utils/galleryUtils'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { liveData, liveUrl } from '@/utils/live'
 const route = useRoute(), router = useRouter()
 const input = ref(''), error = ref(''), busy = ref(false)
-interface Item { gid: number; token: string; title: string; pages: number; thumb: string; category: string }
+interface Item { gid: number; token: string; title: string; pages: number; thumb: string; category: string; tags?:string[]; posted?:string }
 const items = ref<Item[]>([]), host = ref(''), next = ref(''), previous = ref('')
 const detail = ref<{title:string;tags:string[];total:number}|null>(null)
+const cards = computed(() => items.value.map(item => ({
+  key:item.gid, title:item.title, badge:item.category, badgeClass:exTypeClassMap[item.category],
+  pages:item.pages ? item.pages+'p' : '', tags:item.tags || [], date:item.posted,
+  thumb:item.thumb ? liveUrl('image',{site:host.value,imageUrl:item.thumb}) : '',
+  to:{name:'LiveDetail',params:{gid:item.gid},query:{...route.query,site:host.value,token:item.token}}
+})))
 let sequence = 0
 async function load() {
   const id = ++sequence
@@ -33,31 +42,36 @@ function submit() {
 }
 </script>
 <template>
-  <section class="live-panel">
-    <router-link v-if="route.params.gid" :to="{path:'/live',query:{q:route.query.q,cursor:route.query.cursor,prev:route.query.prev,site:route.query.site}}">返回实时搜索</router-link>
-    <h1>{{ detail?.title || '实时搜索' }}</h1><small>{{ host }}</small>
-    <form v-if="!route.params.gid" @submit.prevent="submit"><input v-model="input" aria-label="搜索上游画廊" placeholder="作品名、作者或标签"><button>搜索</button></form>
-    <p v-if="busy" role="status">加载中…</p>
-    <p v-else-if="error" role="alert">{{ error }} <button @click="load">重试</button> <router-link to="/live">重新搜索</router-link></p>
-    <template v-else-if="detail"><p>{{ detail.total }} 页</p><p>{{ detail.tags.join(' · ') }}</p>
-      <router-link :to="{name:'LiveReader',params:route.params,query:route.query}">开始阅读</router-link>
-    </template>
-    <template v-else>
-      <router-link v-for="item in items" :key="item.gid" class="live-result" :to="{name:'LiveDetail',params:{gid:item.gid},query:{...route.query,site:host,token:item.token}}">
-        <img v-if="item.thumb" loading="lazy" alt="" :src="liveUrl('image',{site:host,imageUrl:item.thumb})">
-        <span>{{ item.title }}<small>{{ item.category }} · {{ item.pages }} 页</small></span>
-      </router-link>
-      <p v-if="!items.length">没有匹配的画廊</p>
-      <router-link v-if="previous" :to="{path:'/live',query:{q:route.query.q,site:host,prev:previous}}">上一批结果</router-link>
-      <router-link v-if="next" :to="{path:'/live',query:{q:route.query.q,site:host,cursor:next}}">下一批结果</router-link>
-    </template>
-  </section>
+  <section class="container home-page"><div class="home-shell">
+    <header class="home-header-card">
+      <router-link v-if="route.params.gid" class="live-back" :to="{path:'/live',query:{q:route.query.q,cursor:route.query.cursor,prev:route.query.prev,site:route.query.site}}">‹ 返回实时搜索</router-link>
+      <div class="home-header-main"><div class="home-copy">
+        <h1 class="catalog-title">{{ detail?.title || (route.params.gid ? '画廊详情' : '实时搜索') }}</h1>
+        <span class="catalog-count">{{ host || 'E / Ex' }}<template v-if="detail"> · {{ detail.total }} 页</template></span>
+      </div></div>
+      <div v-if="!route.params.gid" class="home-filter-panel">
+        <GallerySearchInput v-model="input" profile="plain" label="搜索上游画廊" placeholder="搜索作品、作者或标签…" @submit="submit">
+          <template #actions="{submit:commitQuery}"><button class="live-action" @click="commitQuery()">搜索</button></template>
+        </GallerySearchInput>
+      </div>
+    </header>
+    <div v-if="error" class="catalog-error" role="alert"><p>{{error}}</p><button @click="load">重试</button> <router-link to="/live">重新搜索</router-link></div>
+    <div v-else-if="detail" class="home-header-card">
+      <div class="live-tags"><span v-for="tag in detail.tags" :key="tag" class="gr-tag">{{tag}}</span></div>
+      <router-link class="live-action" :to="{name:'LiveReader',params:route.params,query:route.query}">开始阅读</router-link>
+    </div>
+    <p v-else-if="route.params.gid" role="status">加载中…</p>
+    <section v-else class="catalog-results home-content-panel" :aria-busy="busy">
+      <GalleryList :items="cards" :loading="busy" empty-text="没有匹配的画廊" empty-hint="试试其他关键词或标签" />
+      <nav v-if="!busy && (previous || next)" class="live-pagination" aria-label="实时结果翻页">
+        <router-link v-if="previous" class="home-filter-btn" :to="{path:'/live',query:{q:route.query.q,site:host,prev:previous}}">上一批结果</router-link>
+        <router-link v-if="next" class="home-filter-btn" :to="{path:'/live',query:{q:route.query.q,site:host,cursor:next}}">下一批结果</router-link>
+      </nav>
+    </section>
+  </div></section>
 </template>
-<style>
-.live-panel{max-width:54rem;margin:2rem auto;padding:1rem;color:var(--text-color)}
-.live-panel input,.live-panel button,.live-panel a{font:inherit}
-.live-panel input,.live-panel button{padding:.65rem;margin:.35rem;border:1px solid currentColor;border-radius:.45rem;background:var(--card-bg);color:inherit}
-.live-result{display:flex;align-items:center;gap:1rem;padding:.7rem 0;border-bottom:1px solid var(--border-color);color:inherit;text-decoration:none}
-.live-result img{width:3.5rem;height:5rem;object-fit:cover}.mom-mode .live-result img{visibility:hidden}
-.live-result small{display:block;margin-top:.35rem}
+<style scoped>
+.live-back{color:var(--muted-color);font-size:.875rem;text-decoration:none}
+.live-pagination,.live-tags{display:flex;flex-wrap:wrap;gap:8px}
+.live-pagination{justify-content:center;margin:16px 0}
 </style>
