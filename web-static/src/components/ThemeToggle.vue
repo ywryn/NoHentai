@@ -11,6 +11,7 @@
       <AppIcon :name="isDark ? 'sun' : 'moon'" :size="20" />
 
 
+      <slot :state="isDark ? '深色' : '浅色'" />
     </button>
   </div>
 </template>

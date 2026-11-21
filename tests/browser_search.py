@@ -285,14 +285,23 @@ def main():
                     assert all(abs(a-b)<1 for sample in samples for a,b in zip(samples[0],sample)),(width,origin,target,samples)
             print('PASS: outgoing translation cards and book lists keep their layout until removed')
             submitted = []
-            page.route('**/api/trans-verify', lambda r:r.fulfill(json={'ok':True}))
+            authorized = False
+            def verify_search(route):
+                nonlocal authorized
+                authorized = authorized or route.request.post_data_json.get('password') == 'fixture'
+                route.fulfill(status=200 if authorized else 401,json={'ok':authorized})
+            page.route('**/api/trans-verify',verify_search)
+            page.route('**/api/live/directory?*',lambda r:r.fulfill(json={'site':'e-hentai.org','total':12,
+                'images':[], 'gallery':{'title':'实时测试','category':'Manga','filecount':12,'tags':[]}}))
             def live_results(route):
                 submitted.append(route.request.url)
                 route.fulfill(json={'site':'e-hentai.org','next':'','prev':'','items':[
                     {'gid':123,'token':'abcde','title':'实时测试','category':'Manga','pages':12,'tags':[]}]})
             page.route('**/api/live/search?*', live_results)
             page.goto(base+'/#/live')
-            expect(page.locator('.gallery-results a').first).to_contain_text('实时测试')
+            expect(page.locator('.gt-pwd-dialog')).to_be_visible()
+            page.get_by_label('搜索访问密码').fill('fixture')
+            page.get_by_role('button',name='进入',exact=True).click()
             live_search = page.get_by_role('combobox',name='搜索上游画廊')
             live_search.fill('f:chi')
             expect(page.get_by_role('option').first).to_be_visible()
@@ -301,6 +310,11 @@ def main():
             expect(live_search).to_have_value(re.compile('female:'))
             page.get_by_role('button',name='分类',exact=True).click()
             page.get_by_role('checkbox',name='Manga',exact=True).check()
+            page.keyboard.press('Escape')
+            page.wait_for_timeout(650)
+            assert submitted == []
+            expect(page.get_by_role('button',name=re.compile('语法'))).to_have_count(0)
+            page.get_by_role('button',name='搜索',exact=True).click()
             expect(page).to_have_url(re.compile('type=Manga'))
             expect(page.locator('.gallery-results a').first).to_have_attribute('href',re.compile('type=Manga'))
             params = parse_qs(urlsplit(submitted[-1]).query)
@@ -308,19 +322,24 @@ def main():
             page.keyboard.press('Escape')
             page.get_by_role('button',name='全部清除').click()
             expect(live_search).to_have_value('')
-            for theme in range(2):
-                menu=page.get_by_role('button',name='页面导航')
-                values=menu.evaluate("""e=>{
-                    const t=document.querySelector('#theme-btn'), icon=e.querySelector('svg').getBoundingClientRect(),
-                        r=e.getBoundingClientRect(), cs=getComputedStyle(e), ts=getComputedStyle(t)
-                    return [Math.abs(icon.x+icon.width/2-r.x-r.width/2),Math.abs(icon.y+icon.height/2-r.y-r.height/2),
-                        ...['borderRadius','backgroundColor','borderColor','width','height','padding'].map(k=>cs[k]===ts[k])]
-                }""")
-                assert max(values[:2]) < 1 and all(values[2:]),values
-                page.locator('#theme-btn').click()
-                page.mouse.move(0,300)
-                page.wait_for_timeout(350)
-            print('PASS: live tag completion, upstream category filter and clear; toolbar geometry and theme parity')
+            page.locator('.gallery-results a').first.click()
+            expect(page.locator('.gallery-detail-page .gd-hero')).to_be_visible()
+            expect(page.locator('.gd-action-primary')).to_have_attribute('href',re.compile('/live/123/read'))
+            page.get_by_role('link',name='返回搜索').click()
+            expect(page.locator('.gallery-results a').first).to_be_visible()
+            assert len(submitted) == 1
+            expect(page.locator('#theme-btn')).to_be_hidden()
+            menu=page.get_by_role('button',name='页面导航')
+            menu.click()
+            rows=page.locator('#site-nav a,#site-nav button').evaluate_all('els=>els.map(e=>e.getBoundingClientRect().top)')
+            assert len(rows)==9 and all(b>a for a,b in zip(rows,rows[1:])),rows
+            page.locator('#theme-btn').click()
+            page.locator('.mom-mode-btn').click()
+            page.locator('.view-mode-btn').click()
+            page.keyboard.press('Escape')
+            expect(menu).to_have_attribute('aria-expanded','false')
+            assert len(submitted) == 1
+            print('PASS: shared password gate, manual-only search, detail/return reuse and single-column mobile menu')
             assert not errors,errors
             browser.close()
     finally:

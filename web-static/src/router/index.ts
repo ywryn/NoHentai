@@ -48,9 +48,9 @@ const routes: RouteRecordRaw[] = [
       })),
     ],
   },
-  { path: '/live', name: 'LiveSearch', component: () => import('@/components/LiveAccess.vue'), meta: {title: '实时搜索'} },
-  { path: '/live/:gid', name: 'LiveDetail', component: () => import('@/components/LiveAccess.vue'), meta: {title: '实时详情'} },
-  { path: '/live/:gid/read', name: 'LiveReader', component: () => import('@/components/LiveAccess.vue'), meta: {title: '实时阅读', immersive: true} },
+  { path: '/live', name: 'LiveSearch', component: () => import('@/components/LiveAccess.vue'), meta: {title: '搜索'} },
+  { path: '/live/:gid', name: 'LiveDetail', component: () => import('@/components/LiveAccess.vue'), meta: {title: '画廊详情'} },
+  { path: '/live/:gid/read', name: 'LiveReader', component: () => import('@/components/LiveAccess.vue'), meta: {title: '阅读器', immersive: true} },
   {
     path: '/daily',
     name: 'DailySearch',

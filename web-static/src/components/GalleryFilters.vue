@@ -8,10 +8,10 @@ import { parseQuery, parsedTerms, removeQueryTerm } from '@/utils/gallerySearch'
 
 const props = defineProps({
   query: {type:String, required:true}, types: {type:Array, required:true},
-  counts: Object, totals: Object, label: {type:String, default:'搜索画廊'},
+  counts: Object, totals: Object, submitting:Boolean, label: {type:String, default:'搜索画廊'},
   profile: {type:String, default:'gallery'}, debounce: {type:Number, default:220}
 })
-const emit = defineEmits(['change'])
+const emit = defineEmits(['change','submit'])
 const categoryPopover = ref(), categoryOpen = ref(false), searchInputRef = ref()
 const searchQuery = computed({ get: () => props.query, set: value => emit('change', value, props.types) })
 const activeTypes = computed(() => props.types)
@@ -37,7 +37,7 @@ function clearAll() { searchInputRef.value?.reset(); emit('change','',[]) }
 </script>
 <template>
         <div class="home-filter-panel">
-          <GallerySearchInput ref="searchInputRef" v-model="searchQuery" :label="label" :profile="profile" :debounce="debounce">
+          <GallerySearchInput ref="searchInputRef" v-model="searchQuery" :label="label" :profile="profile" :debounce="debounce" :search-button="profile === 'live'" :submitting="submitting" @search-click="value => emit('submit',value,types)">
             <template #actions>
             <button
               class="home-filter-btn"

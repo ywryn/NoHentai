@@ -21,13 +21,16 @@
           </div>
 
           <nav v-if="galleryData.token" class="gd-actions" aria-label="画廊操作">
-            <RouterLink class="gd-action gd-action-primary" :to="{name:'GalleryReader',params:{gid:sourceGid},query:{token:galleryData.token,page:'1'}}">
+            <RouterLink class="gd-action gd-action-primary" :to="readerRoute(1)">
               <AppIcon name="book-open" :size="20" />
               <span>开始阅读</span>
             </RouterLink>
-            <RouterLink class="gd-action gd-action-secondary" :to="{name:'GalleryTranslate',params:{gid:sourceGid},query:{token:galleryData.token,page:'1'}}">
+            <RouterLink v-if="!live" class="gd-action gd-action-secondary" :to="{name:'GalleryTranslate',params:{gid:sourceGid},query:{token:galleryData.token,page:'1'}}">
               <AppIcon name="translate" :size="20" />
               <span>翻译</span>
+            </RouterLink>
+            <RouterLink v-else class="gd-action gd-action-secondary" :to="{path:'/live',query:searchQuery()}">
+              <AppIcon name="arrow-left" :size="20" /><span>返回搜索</span>
             </RouterLink>
           </nav>
 
@@ -42,9 +45,9 @@
             </div>
             <div class="gd-meta-item">
               <span class="gd-meta-key">发布时间</span>
-              <span class="gd-meta-val">{{ formatDate(galleryData.posted) || "未知" }}</span>
+              <span class="gd-meta-val">{{ galleryData.postedLabel || formatDate(galleryData.posted) || "未知" }}</span>
             </div>
-            <div class="gd-meta-item">
+            <div v-if="!live" class="gd-meta-item">
               <span class="gd-meta-key">收藏时间</span>
               <span class="gd-meta-val">{{ formatFavDate(galleryData.favTime) }}</span>
             </div>
@@ -193,6 +196,7 @@ import AppIcon from '@/components/ui/AppIcon.vue'
 import StaticRating from '@/components/ui/StaticRating.vue';
 import ToggleSwitch from "primevue/toggleswitch";
 import { exTypeClassMap } from '@/utils/galleryUtils';
+import { liveData, liveUrl } from '@/utils/live';
 import { loadGallery } from '@/composables/useGalleryData';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';
@@ -200,6 +204,7 @@ const THUMBS_PER_PAGE = 20;
 
 export default {
   name: "GalleryDetail",
+  props: { live: Boolean },
   components: { AppIcon, StaticRating, ToggleSwitch },
   data() {
     return {
@@ -211,6 +216,8 @@ export default {
       error: null,
       // Thumbnails
       thumbImages: [],
+      livePartCount:1,
+      liveFirst:null,
       thumbTotal: 0,
       thumbSource: null,
       thumbLoading: false,
@@ -229,7 +236,7 @@ export default {
   },
   watch: {
     '$route'() {
-      if (this.$route.name !== 'GalleryDetail') return
+      if (this.$route.name !== (this.live ? 'LiveDetail' : 'GalleryDetail')) return
       this.thumbImages = [];
       this.thumbTotal = 0;
       this.thumbSource = null;
@@ -267,6 +274,16 @@ export default {
 
       try {
         const source = this.$route.query.source === 'daily' ? 'daily' : 'favorites';
+        if (this.live) {
+          const {site,token} = this.$route.query
+          const data = await liveData('directory', {gid,site,token,details:'true'}, this._galleryAbort.signal)
+          if (generation !== this.requestGeneration) return
+          this.liveFirst = data
+          this.livePartCount = data.partCount || 1
+          this.galleryData = {...data.gallery, token, sourceUrl:`https://${data.site}/g/${gid}/${token}/`,
+            thumb:data.gallery.thumb ? liveUrl('image',{site:data.site,imageUrl:data.gallery.thumb}) : ''}
+          return
+        }
         const result = await loadGallery(gid, source, this._galleryAbort.signal);
         if (generation !== this.requestGeneration) return;
         this.galleryData = { ...result.gallery, tags: result.tagDetails };
@@ -302,7 +319,7 @@ export default {
 
     /* 标签 → 首页精确检索 */
     tagSearchRoute(tag) {
-      return { path: '/', query: { q: `${tag.namespace}:"${tag.value}$"` } };
+      return { path: this.live ? '/live' : '/', query: { q: `${tag.namespace}:"${tag.value}$"` } };
     },
 
     async copyTag(tag) {
@@ -333,12 +350,22 @@ export default {
       this.thumbLoading = true;
       this.thumbError = null;
       try {
-        const res = await fetch(`${API_BASE}/api/gallery-images?gid=${this.sourceGid}&token=${this.galleryData.token}`, { signal: this._thumbAbort.signal });
-        const data = await res.json().catch(() => ({}));
+        let data
+        if (this.live) {
+          const {site, token} = this.$route.query
+          const part = this.thumbPage === 0 ? this.liveFirst :
+            await liveData('directory',{gid:this.itemId,site,token,part:String(this.thumbPage)},this._thumbAbort.signal)
+          data = {...part,source:site.split('.')[0],images:part.images.map(img=>({...img,
+            thumbSprite:img.thumbSprite ? liveUrl('image',{site,imageUrl:img.thumbSprite}) : ''}))}
+        } else {
+          const res = await fetch(`${API_BASE}/api/gallery-images?gid=${this.sourceGid}&token=${this.galleryData.token}`, {signal:this._thumbAbort.signal})
+          data = await res.json().catch(()=>({}))
+          if (!res.ok && !data.error) throw new Error('获取缩略图失败，请重试')
+        }
         if (generation !== this.requestGeneration) return;
         if (data.error === 'exhentai_blocked') {
           this.thumbError = 'exhentai_blocked';
-        } else if (data.error || !res.ok) {
+        } else if (data.error) {
           throw new Error(data.error || '获取缩略图失败，请重试');
         } else {
           if (!Array.isArray(data.images)) throw new Error('缩略图列表无效，请重试');
@@ -368,9 +395,17 @@ export default {
       }
     },
 
-    prevThumbPage() { this.thumbPage-- },
-    nextThumbPage() { this.thumbPage++ },
+    prevThumbPage() { this.thumbPage--; if (this.live) this.fetchThumbnails() },
+    nextThumbPage() { this.thumbPage++; if (this.live) this.fetchThumbnails() },
 
+    searchQuery() {
+      const {q,type,cursor,prev} = this.$route.query
+      return {q,type,cursor,prev}
+    },
+    readerRoute(page) {
+      return {name:this.live ? 'LiveReader' : 'GalleryReader', params:{gid:this.sourceGid},
+        query:{...(this.live ? this.$route.query : {}),token:this.galleryData.token,page:String(page)}}
+    },
     openExHentai() {
       if (/Android/i.test(navigator.userAgent)) {
         window.location.href = this.externalLink;
@@ -380,11 +415,7 @@ export default {
     },
 
     openReader(pageNum) {
-      this.$router.push({
-        name: 'GalleryReader',
-        params: { gid: this.sourceGid },
-        query: { page: pageNum, token: this.galleryData.token },
-      });
+      this.$router.push(this.readerRoute(pageNum));
     },
 
     cellStyle(img) {
@@ -428,16 +459,18 @@ export default {
     statsCards() {
       return [
         { label: '页数', value: `${this.galleryData?.filecount || 0} 页` },
-        { label: '文件体积', value: this.formatFileSize(this.galleryData?.filesize || 0) },
-        { label: '收藏夹', value: this.galleryData?.favCategory || '未分类' },
+        { label: '文件体积', value: this.live ? this.galleryData.sizeLabel || '未知' : this.formatFileSize(this.galleryData?.filesize || 0) },
+        ...(this.live ? [] : [{ label: '收藏夹', value: this.galleryData?.favCategory || '未分类' }]),
         { label: '上传者', value: this.galleryData?.uploader || '未知' },
       ];
     },
     pagedThumbs() {
+      if (this.live) return this.thumbImages
       const start = this.thumbPage * THUMBS_PER_PAGE;
       return this.thumbImages.slice(start, start + THUMBS_PER_PAGE);
     },
     thumbTotalPages() {
+      if (this.live) return this.livePartCount
       return Math.ceil(this.thumbImages.length / THUMBS_PER_PAGE);
     },
     groupedTags() {

@@ -10,6 +10,7 @@
     >
       <AppIcon :name="isMomMode ? 'eye-off' : 'eye'" :size="20" />
 
+      <slot :state="isMomMode ? '已开启' : '已关闭'" />
     </button>
   </div>
 </template>

@@ -269,10 +269,10 @@ def live_search(request: Request, q: str = Query('', max_length=500), cursor: st
 
 @app.get('/api/live/directory')
 def live_directory(request: Request, site: str, gid: str = Query(pattern=r'^[1-9][0-9]{0,14}$'),
-                   token: str = Query(pattern=r'^[a-zA-Z0-9]{5,64}$'), part: int = Query(0, ge=0, le=5000)):
+                   token: str = Query(pattern=r'^[a-zA-Z0-9]{5,64}$'), part: int = Query(0, ge=0, le=5000), details: bool = False):
     from . import live
     live_access(request)
-    return safely(live.directory, site, gid, token, part)
+    return safely(live.directory, site, gid, token, part, details)
 
 
 @app.get('/api/live/image-url')
