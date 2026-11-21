@@ -10,9 +10,11 @@ const props = defineProps({
   profile: { type: String, default: 'gallery' },
   variant: { type: String, default: 'public' },
   help: { type: Boolean, default: true },
+  searchButton: Boolean,
+  submitting: Boolean,
   debounce: { type: Number, default: 220 },
 })
-const emit = defineEmits(['update:modelValue', 'submit'])
+const emit = defineEmits(['update:modelValue', 'submit', 'search-click'])
 const id = `catalog-search-${getCurrentInstance().uid}`
 const input = ref(null), text = ref(props.modelValue), caret = ref(text.value.length)
 const focused = ref(false), helpOpen = ref(false), composing = ref(false)
@@ -80,7 +82,8 @@ defineExpose({ focus, clear, reset, currentText: () => text.value })
         </ul>
       </div>
       <slot name="actions" :submit="() => commit(true)" />
-      <button v-if="help && profile !== 'plain'" type="button" class="search-control-help" :aria-expanded="helpOpen" :aria-controls="`${id}-help`" @click="helpOpen = !helpOpen">语法 <span aria-hidden="true">{{helpOpen ? '−' : '＋'}}</span></button>
+      <button v-if="searchButton" type="button" class="search-control-help" :disabled="submitting || composing" @click="emit('search-click',text)">搜索</button>
+      <button v-else-if="help && profile !== 'plain'" type="button" class="search-control-help" :aria-expanded="helpOpen" :aria-controls="`${id}-help`" @click="helpOpen = !helpOpen">语法 <span aria-hidden="true">{{helpOpen ? '−' : '＋'}}</span></button>
     </div>
     <small v-if="failure" class="search-control-note" role="status">{{failure}}</small>
     <div v-if="helpOpen && help && profile !== 'plain'" :id="`${id}-help`" class="search-control-syntax">

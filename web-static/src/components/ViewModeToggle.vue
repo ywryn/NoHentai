@@ -7,7 +7,8 @@
   >
     <AppIcon :name="viewMode === 'card' ? 'grid' : 'list'" :size="20" />
 
-  </button>
+      <slot :state="viewMode === 'card' ? '列表' : '封面'" />
+    </button>
 </template>
 
 <script setup lang="ts">

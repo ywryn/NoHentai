@@ -46,7 +46,7 @@ const navItems = [
     title: 'Daily Search',
     icon: 'calendar',
   },
-  { to: '/live', label: '实时', title: '实时搜索', icon: 'search' },
+  { to: '/live', label: '搜索', title: '搜索', icon: 'search' },
   {
     to: '/translate',
     label: '翻译',
@@ -98,9 +98,11 @@ onBeforeUnmount(() => {
       <RouterLink class="brand-logo" to="/" aria-label="NoHentai 首页"><BrandMark :size="32" /><BrandWordmark /></RouterLink>
 
       <div class="nav-actions">
+        <template v-if="!narrow">
         <span class="nav-view-mode"><ViewModeToggle v-if="showViewModeToggle" /></span>
         <MomModeToggle />
         <ThemeToggle />
+        </template>
         <button v-if="narrow" ref="trigger" class="nav-trigger toolbar-icon-button" aria-label="页面导航" aria-controls="site-nav" :popovertarget="nativePopover ? 'site-nav' : undefined"
           :aria-expanded="open" @click="toggleMenu"><AppIcon :name="open ? 'close' : 'menu'" :size="20" /></button>
       </div>
@@ -110,6 +112,11 @@ onBeforeUnmount(() => {
         <RouterLink v-for="item in navItems" :key="item.to" :to="item.to" @click="closeMenu">
           <AppIcon v-if="narrow" :name="item.icon" :size="20" />{{ item.label }}
         </RouterLink>
+        <div v-if="narrow" class="menu-settings">
+          <ThemeToggle v-slot="{state}">明暗主题<small>{{ state }}</small></ThemeToggle>
+          <MomModeToggle v-slot="{state}">妈妈模式<small>{{ state }}</small></MomModeToggle>
+          <ViewModeToggle v-if="showViewModeToggle" v-slot="{state}">浏览视图<small>{{ state }}</small></ViewModeToggle>
+        </div>
       </nav>
     </header>
 
@@ -263,9 +270,13 @@ onBeforeUnmount(() => {
   .nav-view-mode:empty {display:none}
   .nav-actions :deep(button){min-width:40px;min-height:44px}
   .brand-logo {min-width:0;flex-shrink:1}
-  .nav-menu {display:none;position:fixed;inset:68px var(--page-gutter) auto auto;margin:0;width:min(292px,calc(100vw - 24px));max-height:calc(100dvh - 80px);overflow:auto;padding:8px;border:1px solid var(--row-border);border-radius:14px;background:var(--row-bg);color:var(--text-color);box-shadow:0 8px 28px #14203922}
-  .nav-menu.expanded {display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .nav-menu {display:none;position:fixed;inset:68px var(--page-gutter) auto auto;margin:0;width:min(228px,calc(100vw - 24px));max-height:calc(100dvh - 80px);overflow:auto;padding:8px;border:1px solid var(--row-border);border-radius:14px;background:var(--row-bg);color:var(--text-color);box-shadow:0 8px 28px #14203922}
+  .nav-menu.expanded {display:grid;grid-template-columns:minmax(0,1fr)}
   .nav-menu a {display:flex;align-items:center;gap:10px;min-height:46px;box-sizing:border-box;border-radius:8px}
+  .menu-settings{display:grid;gap:2px;margin-top:4px;padding-top:6px;border-top:1px solid var(--row-border)}
+  .menu-settings :deep(button){display:flex;align-items:center;justify-content:flex-start;width:100%;height:46px;gap:10px;padding:8px 14px;border:0;border-radius:8px;background:transparent;color:var(--text-color);font:inherit;font-size:14px;font-weight:700}
+  .menu-settings :deep(button:hover){background:var(--hover-bg);color:var(--text-color)}
+  .menu-settings small{margin-inline-start:auto;color:var(--muted-color);font-weight:500}
   .nav-menu a.router-link-exact-active::after {display:none}
 }
 </style>

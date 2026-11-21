@@ -1,9 +1,10 @@
 """Request-scoped access to the configured gallery site."""
+import re
 from urllib.parse import parse_qs, urlencode, urljoin, urlsplit
 from bs4 import BeautifulSoup
 import httpx
 from app.exhentai_search import GalleryListParser
-from . import media
+from . import media, catalog, db
 from .security import credential, fail
 from .upstream import fetch, GALLERY_HOSTS
 
@@ -47,14 +48,46 @@ def search(query, cursor, expected, prev, excluded_categories=0):
             'prev': parse_qs(urlsplit(page.get('prev_url') or '').query).get('prev', [''])[0]}
 
 
-def directory(host, gid, token, part):
+def gallery_metadata(soup, url, total):
+    def text(selector):
+        element = soup.select_one(selector)
+        return element.get_text(strip=True) if element else ''
+
+    fields = {}
+    for label in soup.select('#gdd .gdt1'):
+        value = label.find_next_sibling('td')
+        if value:
+            fields[label.get_text(strip=True).rstrip(':')] = value.get_text(strip=True)
+    cover = soup.select_one('#gd1 [style*="url("], #gd1[style*="url("]')
+    match = re.search(r"""url\(['"]?([^)'"]+)""", cover['style']) if cover else None
+    cover_img = soup.select_one('#gd1 img[src]')
+    thumb = match[1] if match else cover_img['src'] if cover_img else ''
+    rating = re.search(r'([0-5](?:\.\d+)?)$', text('#rating_label'))
+    tags = []
+    with db.connect() as con:
+        dictionary = catalog.translations(con)
+        for row in soup.select('#taglist tr'):
+            ns = row.select_one('td')
+            namespace = ns.get_text(strip=True).rstrip(':') if ns else 'other'
+            for anchor in row.select('a'):
+                value = anchor.get_text(strip=True)
+                tag = f'{namespace}:{value}'
+                tags.append({'tag':tag, 'namespace':namespace, 'value':value,
+                             'tag_cn':dictionary.get(tag, {}).get('name', '')})
+    return {'title': text('#gn') or text('#gj'), 'title_jpn':text('#gj'), 'category':text('#gdc'),
+            'uploader':text('#gdn a'), 'filecount':total, 'postedLabel':fields.get('Posted'),
+            'sizeLabel':fields.get('File Size'), 'thumb':urljoin(url,thumb) if thumb else '',
+            'rating':float(rating[1]) if rating else None, 'tags':tags}
+
+
+def directory(host, gid, token, part, details=False):
     host = site(host)
     url = f'https://{host}/g/{gid}/{token}/?nw=always&p={part}'
     soup = BeautifulSoup(document(url), 'html.parser')
     page = media.parse_gallery_page(soup)
     if not page or not page[1]:
         fail(403, '画廊不可访问，请检查站点权限')
-    total, images, _ = page
+    total, images, part_count = page
     if not 0 < total <= 100000:
         fail(502, '画廊页数无效')
     numbers = [image['pageNum'] for image in images]
@@ -67,8 +100,11 @@ def directory(host, gid, token, part):
     title = soup.select_one('#gj')
     if not title or not title.get_text(strip=True):
         title = soup.select_one('#gn')
-    return {'total': total, 'images': images, 'title': title.get_text(strip=True) if title else gid,
+    result = {'total': total, 'images': images, 'partCount':part_count, 'title': title.get_text(strip=True) if title else gid,
             'tags': [a.get_text(strip=True) for a in soup.select('#taglist a')], 'site': host}
+    if details:
+        result['gallery'] = gallery_metadata(soup, url, total)
+    return result
 
 
 def resolve(host, url):

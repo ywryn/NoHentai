@@ -42,7 +42,9 @@ def main():
             page.screenshot(path=str(output/'narrow-desktop-component.png'))
             page.locator('.gallery-results').evaluate("e=>e.style.width=''")
             page.set_viewport_size({'width':320,'height':844})
+            page.get_by_role('button',name='页面导航').click()
             page.get_by_role('button',name='切换为封面视图',exact=True).click()
+            page.keyboard.press('Escape')
             expect(page.locator('.vm-cover-card')).to_have_count(6)
             grid=page.locator('.vm-cover-grid')
             assert grid.evaluate("e=>getComputedStyle(e).gridTemplateColumns.split(' ').length")==2
