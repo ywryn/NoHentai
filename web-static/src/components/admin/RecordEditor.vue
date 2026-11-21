@@ -174,12 +174,21 @@ onBeforeUnmount(()=>{ sequence++;matchSequence++;window.removeEventListener('bef
 </script>
 <template>
   <div class="a-page" :aria-busy="loading || busy">
-    <header class="a-page-heading"><div class="a-page-title"><AdminMenuButton /><div><h1>{{ titles[kind] }}</h1><p role="status">{{ busy ? '正在处理…' : dirty ? '当前条目有未保存修改' : '' }}</p></div></div><div class="a-heading-actions"><button class="a-button" :disabled="busy" @click="reload">刷新列表</button><button class="a-button" :disabled="busy" @click="add">{{ kind==='gallery' ? '新增首页图书' : kind==='book' ? '新增书目' : '新增分组' }}</button><button v-if="kind!=='book'" class="a-button a-primary" :disabled="busy || !dirty" @click="save">保存当前条目</button></div></header>
+    <header class="a-page-heading"><div class="a-page-title"><AdminMenuButton /><div><h1>{{ titles[kind] }}</h1><p role="status">{{ busy ? '正在处理…' : dirty ? '当前条目有未保存修改' : '' }}</p></div></div><div class="a-heading-actions"><button class="a-button" :disabled="busy" @click="reload">刷新列表</button><button class="a-button" :disabled="busy" @click="add">{{ kind==='gallery' ? '新增首页图书' : kind==='book' ? '新增书目' : '新增分组' }}</button><button v-if="kind==='daily'" type="button" class="a-button a-primary" :disabled="busy || !dirty" @click="save">保存当前条目</button></div></header>
     <div v-if="error" class="a-alert a-alert-error" role="alert">{{ error }} <a v-if="errorStatus===401" href="#/admin" target="_blank">新标签页登录</a><button v-if="data" class="a-text-button" @click="exportDraft">导出草稿</button></div>
     <div v-if="notice" class="a-alert a-alert-success" role="status">{{ notice }} <RouterLink v-if="kind==='daily'" to="/admin/tasks">查看任务</RouterLink></div>
     <div class="a-master-detail a-gallery-layout" :class="{'a-detail-open':detailOpen}">
-      <aside class="a-card a-master-list"><label v-if="kind==='gallery'" class="a-field">条目来源<select v-model="origin"><option value="all">全部</option><option value="sync">E 站同步</option><option value="manual">手动新增</option></select></label><div v-if="kind!=='daily'" class="a-search-row"><GallerySearchInput v-model="query" variant="admin" :profile="kind==='book'?'book':'gallery'" label="查找条目" :placeholder="kind==='book'?'编号、书名、日文名或标签…':'标题、ID、画廊链接或标签…'"/></div><div class="a-list-caption">共 {{ total }} 条 <span v-if="loading">正在加载…</span></div><div class="a-gallery-list"><button v-for="item in list" :key="item.id" class="a-gallery-row" :class="{'is-selected':selected?.id===item.id}" @click="choose(item)"><img v-if="rowThumb(item)" class="ops-list-cover" :src="rowThumb(item)" alt="条目封面" referrerpolicy="no-referrer" @error="$event.target.style.visibility='hidden'"/><span v-if="kind==='daily'" class="ops-rule-icon"><AdminIcon name="filter" :size="20"/></span><span class="a-gallery-copy"><strong>{{ name(item) }}</strong><span v-if="kind==='gallery'" class="ops-category" :style="{'--category':exTypeDotColors[item.effective.category]}">{{item.effective.category}}</span><span>{{ kind==='gallery' ? '#'+item.id : kind==='book' ? item.data.ID : '回溯 '+item.data.cutoffDays+' 天 · '+categoryMask.filter(([,mask])=>Boolean(item.data.categories&mask)).length+' 个分类' }}</span><span v-if="item.origin==='manual'" class="a-badge a-badge-accent">手动新增 · {{ item.data.published ? '已发布' : '草稿' }}</span><span v-else-if="kind==='gallery' && Object.keys(item.data).length" class="a-badge a-badge-accent">人工覆盖</span></span><AdminIcon name="chevron" /></button><p v-if="!loading&&!list.length" class="a-empty">没有匹配的条目</p></div><footer class="a-pagination"><button class="a-button" :disabled="page<=1||loading" @click="load(page-1)">上一页</button><span>{{page}} / {{pages}}</span><button class="a-button" :disabled="page>=pages||loading" @click="load(page+1)">下一页</button></footer></aside>
-      <section class="a-card a-detail-pane"><template v-if="data"><button class="a-button a-mobile-back" @click="detailOpen=false">返回列表</button><div class="a-section-heading"><h2>{{ kind==='gallery' ? (manual ? '首页图书信息' : '编辑画廊展示信息') : kind==='book' ? '书目信息' : '搜索规则' }}</h2><button class="a-button" @click="exportDraft">导出草稿</button></div>
+      <aside class="a-card a-master-list"><div v-if="kind!=='daily'" class="a-search-row">
+        <GallerySearchInput v-model="query" variant="admin" :profile="kind==='book'?'book':'gallery'" label="查找条目" :placeholder="kind==='book'?'编号、书名、日文名或标签…':'标题、ID、画廊链接或标签…'"/>
+        <fieldset v-if="kind==='gallery'" class="record-origin">
+          <legend class="a-sr-only">条目来源</legend>
+          <label v-for="[value, label] in [['all', '全部'], ['sync', 'E 站同步'], ['manual', '手动新增']]" :key="value">
+            <input v-model="origin" class="a-sr-only" type="radio" name="record-origin" :value="value" />
+            <span>{{ label }}</span>
+          </label>
+        </fieldset>
+      </div><div class="a-list-caption">共 {{ total }} 条 <span v-if="loading">正在加载…</span></div><div class="a-gallery-list"><button v-for="item in list" :key="item.id" class="a-gallery-row" :class="{'is-selected':selected?.id===item.id}" @click="choose(item)"><img v-if="rowThumb(item)" class="ops-list-cover" :src="rowThumb(item)" alt="条目封面" referrerpolicy="no-referrer" @error="$event.target.style.visibility='hidden'"/><span v-if="kind==='daily'" class="ops-rule-icon"><AdminIcon name="filter" :size="20"/></span><span class="a-gallery-copy"><strong>{{ name(item) }}</strong><span v-if="kind==='gallery'" class="ops-category" :style="{'--category':exTypeDotColors[item.effective.category]}">{{item.effective.category}}</span><span>{{ kind==='gallery' ? '#'+item.id : kind==='book' ? item.data.ID : '回溯 '+item.data.cutoffDays+' 天 · '+categoryMask.filter(([,mask])=>Boolean(item.data.categories&mask)).length+' 个分类' }}</span><span v-if="item.origin==='manual'" class="a-badge a-badge-accent">手动新增 · {{ item.data.published ? '已发布' : '草稿' }}</span><span v-else-if="kind==='gallery' && Object.keys(item.data).length" class="a-badge a-badge-accent">人工覆盖</span></span><AdminIcon name="chevron" /></button><p v-if="!loading&&!list.length" class="a-empty">没有匹配的条目</p></div><footer class="a-pagination"><button class="a-button" :disabled="page<=1||loading" @click="load(page-1)">上一页</button><span>{{page}} / {{pages}}</span><button class="a-button" :disabled="page>=pages||loading" @click="load(page+1)">下一页</button></footer></aside>
+      <section class="a-card a-detail-pane record-detail" :class="{'has-record': data && kind==='gallery'}"><template v-if="data"><div class="record-detail-body"><button class="a-button a-mobile-back" @click="detailOpen=false">返回列表</button><div class="a-section-heading"><h2>{{ kind==='gallery' ? (manual ? '首页图书信息' : '编辑画廊展示信息') : kind==='book' ? '书目信息' : '搜索规则' }}</h2><button class="a-button" @click="exportDraft">导出草稿</button></div>
         <component :is="kind==='book' ? 'form' : 'div'" id="record-edit-fields" @submit.prevent="save">
         <fieldset :disabled="busy" class="a-form-stack">
           <template v-if="kind==='gallery'">
@@ -195,7 +204,7 @@ onBeforeUnmount(()=>{ sequence++;matchSequence++;window.removeEventListener('bef
               <p v-if="selected.duplicate" class="a-field-help">该画廊已有 E 站同步条目，公开前请核对是否重复展示。</p>
               <label class="a-switch-row"><span>发布到首页</span><input type="checkbox" v-model="data.published" /></label>
             </template>
-            <label v-else class="a-switch-row"><span>在公开列表中显示</span><input type="checkbox" :checked="!effective.hidden" @change="editGallery('hidden',!$event.target.checked)" /></label><button v-if="!manual" type="button" class="a-button" @click="remove">恢复全部来源值</button>
+            <label v-else class="a-switch-row"><span>在公开列表中显示</span><input type="checkbox" :checked="!effective.hidden" @change="editGallery('hidden',!$event.target.checked)" /></label>
           </template>
           <template v-else-if="kind==='book'">
             <div class="a-form-grid"><label v-for="[key,label] in [['书名','中文书名'],['日文名','日文书名'],['ID','书目编号（允许重复）'],['收价','收价'],['原价','原价']]" :key="key" class="a-field">{{label}}<input v-model="data[key]" maxlength="5000" /></label><label class="a-field a-wide">备注<textarea v-model="data['备注']" rows="3" /></label></div>
@@ -209,8 +218,76 @@ onBeforeUnmount(()=>{ sequence++;matchSequence++;window.removeEventListener('bef
           </template>
         </fieldset>
         </component>
-        <div class="v2-record-actions"><button v-if="kind==='book'" type="submit" form="record-edit-fields" class="a-button a-primary" :disabled="busy || !dirty">保存这本书</button><button v-if="kind!=='gallery'" class="a-button" :disabled="busy||dirty||!selected.id" @click="move(-1)">上移</button><button v-if="kind!=='gallery'" class="a-button" :disabled="busy||dirty||!selected.id" @click="move(1)">下移</button><button class="a-button" :disabled="busy||dirty||!selected.id" title="保存或放弃当前草稿后查看与恢复历史" @click="history.open(recordKind,selected.id)">修改历史</button><button v-if="dirty" class="a-button" @click="data=clone(JSON.parse(original))">放弃修改</button><button v-if="kind!=='gallery' || manual" class="a-button a-danger-text" :disabled="busy" @click="remove">删除条目</button></div>
+        </div>
+        <footer class="v2-record-actions">
+          <button v-if="kind==='book'" type="submit" form="record-edit-fields" class="a-button a-primary" :disabled="busy || !dirty">保存这本书</button>
+          <button v-else-if="kind==='gallery'" type="button" class="a-button a-primary" :disabled="busy || !dirty" @click="save">保存当前条目</button>
+          <button v-if="dirty" type="button" class="a-button" @click="data=clone(JSON.parse(original))">放弃修改</button>
+          <template v-if="kind!=='gallery'">
+            <button type="button" class="a-button" :disabled="busy||dirty||!selected.id" @click="move(-1)">上移</button>
+            <button type="button" class="a-button" :disabled="busy||dirty||!selected.id" @click="move(1)">下移</button>
+          </template>
+          <button type="button" class="a-button" :disabled="busy||dirty||!selected.id" title="保存或放弃当前草稿后查看与恢复历史" @click="history.open(recordKind,selected.id)">修改历史</button>
+          <button v-if="kind==='gallery' && !manual" type="button" class="a-button" :disabled="busy || !Object.keys(data).length" @click="remove">恢复全部来源值</button>
+          <button v-else type="button" class="a-button a-danger-text" :disabled="busy" @click="remove">删除条目</button>
+        </footer>
       </template><div v-else class="a-empty">选择一个条目，或从上方新增。</div></section>
     </div><RecordHistory ref="history" @restored="reload" />
   </div>
 </template>
+
+<style scoped>
+.record-origin {
+  display: flex;
+  gap: 4px;
+  margin: 10px 0 0;
+  padding: 3px;
+  min-inline-size: 0;
+  border: 1px solid var(--a-border);
+  border-radius: 8px;
+  background: var(--a-subtle);
+}
+.record-origin label { flex: 1; min-inline-size: 0; cursor: pointer; }
+.record-origin span {
+  display: grid;
+  place-items: center;
+  min-block-size: 34px;
+  padding: 3px;
+  border-radius: 5px;
+  color: var(--a-muted);
+  font-size: 12px;
+  text-align: center;
+}
+.record-origin input:checked + span {
+  background: var(--a-soft);
+  color: var(--a-accent);
+  font-weight: 600;
+}
+.record-origin input:focus-visible + span { outline: 2px solid var(--a-accent); outline-offset: -2px; }
+.record-detail.has-record {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+.record-detail.has-record .record-detail-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 20px;
+}
+.record-detail.has-record .v2-record-actions {
+  flex: none;
+  margin: 0;
+  padding: 12px 20px max(12px, env(safe-area-inset-bottom, 0px));
+  background: var(--a-panel);
+}
+@media (max-width: 640px) {
+  .a-master-detail.a-detail-open > .record-detail.has-record { padding: 0; }
+  .a-master-detail:not(.a-detail-open) > .record-detail.has-record { display: none; }
+  .record-origin span { min-block-size: 44px; }
+  .record-detail.has-record .record-detail-body { padding: 16px; }
+  .record-detail.has-record .v2-record-actions { padding-inline: 16px; }
+}
+</style>
