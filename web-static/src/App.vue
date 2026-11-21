@@ -18,7 +18,7 @@ const isImmersivePage = computed(() => Boolean(route.meta.immersive))
 
 /** 视图模式切换只对列表页有意义，其它页面隐藏，避免出现无效控件 */
 const showViewModeToggle = computed(() =>
-  ['/', '/printed', '/daily', '/live'].includes(route.path)
+  ['/', '/printed', '/daily', '/search'].includes(route.path)
 )
 
 const navItems = [
@@ -46,7 +46,7 @@ const navItems = [
     title: 'Daily Search',
     icon: 'calendar',
   },
-  { to: '/live', label: '搜索', title: '搜索', icon: 'search' },
+  { to: '/search', label: '搜索', title: '搜索', icon: 'search' },
   {
     to: '/translate',
     label: '翻译',

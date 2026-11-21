@@ -147,6 +147,10 @@ def translation_index(serialized):
             for group in json.loads(serialized).get('data', []) for value, detail in group.get('data', {}).items()}
 
 
+def list_tag_labels(tags, index):
+    return [index.get(tag, {}).get('name') or tag.split(':', 1)[-1] for tag in tags]
+
+
 _translation_cache = {}
 
 
@@ -211,7 +215,7 @@ def cached_page(database_path, revision, query, types, page, per_page):
         for gallery in rows:
             item = {k: gallery.get(k) for k in LIST_FIELDS}
             tags = [tag for tag in gallery.get('tags', []) if isinstance(tag, str) and ':' in tag][:8]
-            item['tagLabels'] = [index.get(tag, {}).get('name') or tag.split(':', 1)[1] for tag in tags]
+            item['tagLabels'] = list_tag_labels(tags, index)
             items.append(item)
         return {'items': items, 'total': total, 'totalAll': sum(counts.values()), 'page': page, 'perPage': per_page,
                 'categoryCounts': category_counts, 'totalCategoryCounts': counts}

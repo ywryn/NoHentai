@@ -43,6 +43,11 @@ def search(query, cursor, expected, prev, excluded_categories=0):
     page = GalleryListParser.parse(document(f'https://{host}/?' + urlencode(params)).decode('utf-8', 'replace'))
     if page['error']:
         fail(502, '无法读取实时列表，请检查上游登录或稍后重试')
+    if page['galleries']:
+        with db.connect() as con:
+            dictionary = catalog.translations(con)
+            for gallery in page['galleries']:
+                gallery['tagLabels'] = catalog.list_tag_labels(gallery.get('tags', []), dictionary)
     cursor = parse_qs(urlsplit(page['next_url'] or '').query).get('next', [''])[0]
     return {'site': host, 'items': page['galleries'], 'next': cursor,
             'prev': parse_qs(urlsplit(page.get('prev_url') or '').query).get('prev', [''])[0]}

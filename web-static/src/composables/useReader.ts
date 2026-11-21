@@ -93,7 +93,7 @@ export function useReader(liveSite?: string) {
     }
   }
 
-  async function init(gid: string, token: string, startPage: number) {
+  async function init(gid: string, token: string, startPage: number, preloadNeighbors = true) {
     initLoading.value = true
     initError.value = null
     try {
@@ -121,7 +121,7 @@ export function useReader(liveSite?: string) {
       initError.value = e.message ?? 'Failed to load gallery'
     } finally {
       initLoading.value = false
-      if (!initError.value) goTo(startPage)
+      if (!initError.value && preloadNeighbors) goTo(startPage)
     }
   }
 

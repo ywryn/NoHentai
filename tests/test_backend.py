@@ -359,8 +359,11 @@ class BackendTests(unittest.TestCase):
             with patch.dict(os.environ, {'LIVE_SITE':'exhentai.org'}):
                 self.assertEqual(self.client.get(urls[1]).status_code, 409)
                 self.assertEqual(self.client.get(urls[0]).json()['site'], 'exhentai.org')
+        with db.connect() as con:
+            db.put_snapshot(con, 'translations', {'data':[{'namespace':'language','data':{'chinese':{'name':'汉语'}}}]})
         listing = b"""<table class="itg"><tr><td class="gl3c"><a href="/g/2/abcde/">
-            <div class="glink">Fixture title</div></a></td></tr></table>
+            <div class="glink">Fixture title</div></a><div class="gt" title="language:chinese"></div>
+            <div class="gt" title="other:unlisted"></div></td></tr></table>
             <a id="uprev" href="/?prev=5">Prev</a><a id="unext" href="/?next=2">Next</a>"""
         gallery = b"""<h1 id="gn">Fixture title</h1><div id="gdc">Manga</div><div id="gdn"><a>Fixture author</a></div><table id="gdd"><tr><td class="gdt1">Length:</td>
             <td>2 pages</td></tr></table><div id="gdt"><a href="/s/aa/2-2"></a></div>"""
@@ -368,6 +371,7 @@ class BackendTests(unittest.TestCase):
                 'backend.db.get_cache', side_effect=AssertionError), patch('backend.db.set_cache', side_effect=AssertionError):
             page = self.client.get(urls[0], params={'q':'sample', 'prev':'7', 'f_cats':1019}).json()
             self.assertEqual((page['items'][0]['title'], page['prev'], page['next']), ('Fixture title','5','2'))
+            self.assertEqual(page['items'][0]['tagLabels'], ['汉语', 'unlisted'])
             response = self.client.get(urls[1]+'&part=1&details=true')
             self.assertEqual(response.json()['gallery']['category'], 'Manga')
             self.assertEqual(response.json()['gallery']['uploader'], 'Fixture author')

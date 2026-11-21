@@ -414,6 +414,8 @@
 </template>
 
 <script>
+import { markRaw } from 'vue'
+import { useReader } from '@/composables/useReader'
 import AccessPassword from './AccessPassword.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import ImageLoadProgress from '@/components/ui/ImageLoadProgress.vue'
@@ -728,6 +730,7 @@ function fitTextToBox(el, minSize = 1) {
 export default {
   components: { AppIcon, ImageLoadProgress, AccessPassword },
   name: 'GalleryTranslate',
+  props: { live: Boolean },
 
   data() {
     return {
@@ -750,7 +753,6 @@ export default {
       // Current page
       currentPage: 1,
       imageUrl: null,
-      imageUrlRaw: null,
       imageLoading: false,
       imageReady: false,
       imageError: null,
@@ -817,6 +819,17 @@ export default {
   },
 
   computed: {
+    thumbnailSprites() {
+      const sprites = new Map()
+      for (const img of this.galleryImages) {
+        if (!img.thumbSprite) continue
+        const meta = sprites.get(img.thumbSprite) || { count: 0, maxOffset: 0 }
+        meta.count++
+        meta.maxOffset = Math.max(meta.maxOffset, -img.thumbX)
+        sprites.set(img.thumbSprite, meta)
+      }
+      return sprites
+    },
     totalPages() {
       return this.galleryImages.length
     },
@@ -874,6 +887,12 @@ export default {
       .catch(() => {})
 
     this.loadGlossary()
+    if (this.live) {
+      this.liveReader = markRaw(useReader(String(this.$route.query.site || '')))
+      this.passwordVerified = true
+      this.loadGalleryImages()
+      return
+    }
     loadGallery(this.gid).then(result => {
       this.galleryMeta = result.gallery
     }).catch(() => { this.galleryMeta = null })
@@ -1222,6 +1241,17 @@ export default {
       this.imagesLoading = true
       this.imagesError = null
       try {
+        if (this.live) {
+          const reader = this.liveReader
+          await reader.init(this.gid, this.token, this.currentPage, false)
+          if (this._disposed) return
+          if (reader.initError.value) throw new Error(reader.initError.value)
+          this.galleryImages = reader.pages.value
+          this.galleryMeta = { title: reader.galleryTitle.value }
+          this.$nextTick(() => this.setupThumbObserver())
+          this.goToPage(Math.min(Math.max(this.currentPage, 1), this.totalPages))
+          return
+        }
         const res = await fetch(`${API_BASE}/api/gallery-images?gid=${this.gid}&token=${this.token}`)
         const data = await res.json().catch(() => ({}))
         if (data.error === 'exhentai_blocked') {
@@ -1232,20 +1262,6 @@ export default {
           if (!Array.isArray(data.images) || !data.images.length) throw new Error('未获取到页面列表，请重试')
           this.galleryImages = data.images.slice(0, data.total)
           this.thumbSource = data.source || null
-          // Compute sprite count and max offset for thumbnail rendering
-          const spriteMeta = {}
-          for (const img of this.galleryImages) {
-            const prev = spriteMeta[img.thumbSprite] || { count: 0, maxOffset: 0 }
-            spriteMeta[img.thumbSprite] = {
-              count: prev.count + 1,
-              maxOffset: Math.max(prev.maxOffset, -img.thumbX),
-            }
-          }
-          for (const img of this.galleryImages) {
-            const meta = spriteMeta[img.thumbSprite] || { count: 1, maxOffset: 0 }
-            img.spriteN = meta.count
-            img.spriteMaxOffset = meta.maxOffset
-          }
           // Load the initial page
           const targetPage = Math.min(Math.max(this.currentPage, 1), data.total)
           this.loadedThumbPages = {}
@@ -1261,6 +1277,26 @@ export default {
 
     // ── Page navigation ───────────────────────────────────────────────────────
 
+    async resolvePageImage(pageNum, refresh = false) {
+      if (this.live) {
+        const reader = this.liveReader
+        return refresh && reader.pages.value[pageNum - 1]?.pageUrl
+          ? reader.retryImage(pageNum, this.nlParam)
+          : reader.getImageUrl(pageNum)
+      }
+      const page = this.galleryImages[pageNum - 1]
+      if (!page?.pageUrl) throw new Error('无法获取页面 URL')
+      const source = new URL(page.pageUrl)
+      if (refresh && this.nlParam) source.searchParams.set('nl', this.nlParam)
+      const params = new URLSearchParams({pageUrl: source.href})
+      if (refresh) params.set('refresh', 'true')
+      const res = await fetch(`${API_BASE}/api/image-url?${params}`)
+      if (!res.ok) throw new Error('获取图片地址失败，请重试')
+      const data = await res.json()
+      if (data.error || !data.imageUrl) throw new Error(data.error || '未返回有效图片地址')
+      return { imageUrl: `${API_BASE}/api/image-proxy?imageUrl=${encodeURIComponent(data.imageUrl)}`, nlParam: data.nlParam }
+    },
+
     async goToPage(pageNum) {
       const requestId = ++this.imageRequestId
       this.processingGeneration++
@@ -1273,15 +1309,14 @@ export default {
       // 不是由 turnPage 发起的切页（缩略图 / 预取等待）就不带过场
       if (this._enterFrom == null) this.finishSlide()
       this.$router.replace({
-        name: 'GalleryTranslate',
+        name: this.live ? 'LiveTranslate' : 'GalleryTranslate',
         params: { gid: this.gid },
-        query: { token: this.token, page: String(pageNum) },
+        query: { ...this.$route.query, token: this.token, page: String(pageNum) },
       })
       this.ocrResults = []
       this.selectedBoxIdx = null
       this.imageReady = false
       this.imageUrl = null
-      this.imageUrlRaw = null
       this.nlParam = null
       this.imageError = null
       this.imageLoading = true
@@ -1298,25 +1333,10 @@ export default {
         }
       })
 
-      const img = this.galleryImages[pageNum - 1]
-      if (!img?.pageUrl) {
-        this.imageLoading = false
-        this.imageError = '无法获取页面 URL'
-        this.finishSlide()
-        return
-      }
-
       try {
-        const res = await fetch(
-          `${API_BASE}/api/image-url?pageUrl=${encodeURIComponent(img.pageUrl)}`
-        )
-        if (!res.ok) throw new Error('获取图片地址失败，请重试')
-        const data = await res.json()
+        const data = await this.resolvePageImage(pageNum)
         if (requestId !== this.imageRequestId) return
-        if (data.error) throw new Error(data.error)
-        if (!data.imageUrl) throw new Error('未返回有效图片地址')
-        this.imageUrlRaw = data.imageUrl
-        this.imageUrl = `${API_BASE}/api/image-proxy?imageUrl=${encodeURIComponent(data.imageUrl)}`
+        this.imageUrl = data.imageUrl
         this.nlParam = data.nlParam
         // 这一页正在后台预取的话，等它写完缓存再读
         if (this._prefetch?.[pageNum]) {
@@ -1362,7 +1382,7 @@ export default {
       if (this.imageLoading) return
       const pageNum = this.currentPage
       const page = this.galleryImages[pageNum - 1]
-      if (!page?.pageUrl) { this.loadGalleryImages(); return }
+      if (!page?.pageUrl && !this.live) { this.loadGalleryImages(); return }
       if (manual) this.imageAutoRetried = true
       const requestId = ++this.imageRequestId
       this.imageLoading = true
@@ -1370,16 +1390,10 @@ export default {
       this.imageReady = false
       this.imageUrl = null
       try {
-        const source = new URL(page.pageUrl)
-        if (this.nlParam) source.searchParams.set('nl', this.nlParam)
-        const response = await fetch(`${API_BASE}/api/image-url?pageUrl=${encodeURIComponent(source.href)}&refresh=true`)
-        if (!response.ok) throw new Error('获取图片地址失败，请重试')
-        const data = await response.json()
+        const data = await this.resolvePageImage(pageNum, true)
         if (requestId !== this.imageRequestId) return
-        if (data.error || !data.imageUrl) throw new Error(data.error || '未返回有效图片地址')
-        this.imageUrlRaw = data.imageUrl
         this.nlParam = data.nlParam
-        this.imageUrl = `${API_BASE}/api/image-proxy?imageUrl=${encodeURIComponent(data.imageUrl)}`
+        this.imageUrl = data.imageUrl
       } catch (e) {
         if (requestId === this.imageRequestId) this.imageError = `图片加载失败: ${e.message}`
       } finally {
@@ -1717,14 +1731,10 @@ export default {
     },
 
     async prefetchPage(pageNum) {
-      const meta = this.galleryImages[pageNum - 1]
-      if (!meta?.pageUrl) return
-      const res = await fetch(`${API_BASE}/api/image-url?pageUrl=${encodeURIComponent(meta.pageUrl)}`)
-      const data = await res.json()
-      if (data.error) throw new Error(data.error)
+      const data = await this.resolvePageImage(pageNum)
       const img = new Image()
       img.crossOrigin = 'anonymous'
-      img.src = `${API_BASE}/api/image-proxy?imageUrl=${encodeURIComponent(data.imageUrl)}`
+      img.src = data.imageUrl
       await img.decode()
       const { results, source } = await this.ocrImage(img, this.ocrSource)
       let translated = results
@@ -1875,9 +1885,8 @@ export default {
     },
 
     thumbInnerStyle(img) {
-      if (!this.loadedThumbPages[img.pageNum]) return { width: '100%', height: '100%' }
-      const N = img.spriteN || 1
-      const maxOffset = img.spriteMaxOffset || 0
+      if (!img.thumbSprite || !this.loadedThumbPages[img.pageNum]) return { width: '100%', height: '100%' }
+      const { count: N, maxOffset } = this.thumbnailSprites.get(img.thumbSprite)
       const posX = maxOffset > 0 ? (-img.thumbX / maxOffset) * 100 : 0
       return {
         backgroundImage: `url(${img.thumbSprite})`,

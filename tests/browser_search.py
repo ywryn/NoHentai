@@ -291,14 +291,25 @@ def main():
                 authorized = authorized or route.request.post_data_json.get('password') == 'fixture'
                 route.fulfill(status=200 if authorized else 401,json={'ok':authorized})
             page.route('**/api/trans-verify',verify_search)
-            page.route('**/api/live/directory?*',lambda r:r.fulfill(json={'site':'e-hentai.org','total':12,
-                'images':[], 'gallery':{'title':'实时测试','category':'Manga','filecount':12,'tags':[]}}))
+            parts = []
+            def directory(route):
+                part = int(parse_qs(urlsplit(route.request.url).query).get('part',['0'])[0])
+                parts.append(part)
+                route.fulfill(json={'site':'e-hentai.org','total':2,'title':'实时测试','partCount':2,
+                    'images':[{'pageNum':part+1,'pageUrl':f'https://e-hentai.org/s/a/123-{part+1}',
+                               'thumbSprite':'','thumbX':0,'thumbW':80,'thumbH':120}],
+                    'gallery':{'title':'实时测试','category':'Manga','filecount':2,'tags':[]}})
+            page.route('**/api/live/directory?*', directory)
+            page.route('**/api/live/image-url?*',lambda r:r.fulfill(json={'imageUrl':'https://ehgt.org/fixture.png'}))
+            page.route('**/api/live/image?*',lambda r:r.fulfill(content_type='image/svg+xml',
+                body='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"></svg>'))
             def live_results(route):
                 submitted.append(route.request.url)
                 route.fulfill(json={'site':'e-hentai.org','next':'','prev':'','items':[
-                    {'gid':123,'token':'abcde','title':'实时测试','category':'Manga','pages':12,'tags':[]}]})
+                    {'gid':123,'token':'abcde','title':'实时测试','category':'Manga','pages':2,'tags':['language:chinese'],'tagLabels':['汉语']}]})
             page.route('**/api/live/search?*', live_results)
-            page.goto(base+'/#/live')
+            page.goto(base+'/#/live?q=fixture')
+            expect(page).to_have_url(base+'/#/search?q=fixture')
             expect(page.locator('.gt-pwd-dialog')).to_be_visible()
             page.get_by_label('搜索访问密码').fill('fixture')
             page.get_by_role('button',name='进入',exact=True).click()
@@ -317,6 +328,7 @@ def main():
             page.get_by_role('button',name='搜索',exact=True).click()
             expect(page).to_have_url(re.compile('type=Manga'))
             expect(page.locator('.gallery-results a').first).to_have_attribute('href',re.compile('type=Manga'))
+            expect(page.locator('.gallery-results a').first).to_contain_text('汉语')
             params = parse_qs(urlsplit(submitted[-1]).query)
             assert params['f_cats'] == ['1019'] and 'female:' in params['q'][0], params
             page.keyboard.press('Escape')
@@ -324,8 +336,23 @@ def main():
             expect(live_search).to_have_value('')
             page.locator('.gallery-results a').first.click()
             expect(page.locator('.gallery-detail-page .gd-hero')).to_be_visible()
-            expect(page.locator('.gd-action-primary')).to_have_attribute('href',re.compile('/live/123/read'))
-            page.get_by_role('link',name='返回搜索').click()
+            expect(page.locator('.gd-action-primary')).to_have_attribute('href',re.compile('/search/123/read'))
+            page.locator('.gd-actions').get_by_role('link',name='翻译',exact=True).click()
+            expect(page).to_have_url(re.compile('/search/123/translate'))
+            expect(page.locator('.gt-page-img')).to_have_attribute('src',re.compile('/api/live/image[?]'))
+            page.route('**/api/trans-ocr',lambda r:r.fulfill(json={'results':[{'text':'fixture','confidence':1,'bbox':[1,1,12,12]}],'source':'vision'}))
+            page.route('**/api/trans-translate',lambda r:r.fulfill(json={'translations':[{'t':'测试译文'}]}))
+            page.get_by_role('button',name='识别并翻译').click()
+            expect(page.get_by_role('button',name='重新识别')).to_be_enabled()
+            assert '测试译文' in page.evaluate("localStorage.getItem('trans_cache_123_p1')")
+            assert 1 not in parts
+            page.locator('.gt-thumb[data-page="2"]').evaluate('el=>el.click()')
+            expect(page).to_have_url(re.compile('page=2'))
+            expect(page.locator('.gt-page-img')).to_have_attribute('src',re.compile('/api/live/image[?]'))
+            assert parts.count(1)==1
+            page.go_back()
+            expect(page.locator('.gallery-detail-page .gd-hero')).to_be_visible()
+            page.go_back()
             expect(page.locator('.gallery-results a').first).to_be_visible()
             assert len(submitted) == 1
             expect(page.locator('#theme-btn')).to_be_hidden()

@@ -25,12 +25,9 @@
               <AppIcon name="book-open" :size="20" />
               <span>开始阅读</span>
             </RouterLink>
-            <RouterLink v-if="!live" class="gd-action gd-action-secondary" :to="{name:'GalleryTranslate',params:{gid:sourceGid},query:{token:galleryData.token,page:'1'}}">
+            <RouterLink class="gd-action gd-action-secondary" :to="{name:live ? 'LiveTranslate' : 'GalleryTranslate',params:{gid:sourceGid},query:{...(live ? $route.query : {}),token:galleryData.token,page:'1'}}">
               <AppIcon name="translate" :size="20" />
               <span>翻译</span>
-            </RouterLink>
-            <RouterLink v-else class="gd-action gd-action-secondary" :to="{path:'/live',query:searchQuery()}">
-              <AppIcon name="arrow-left" :size="20" /><span>返回搜索</span>
             </RouterLink>
           </nav>
 
@@ -319,7 +316,7 @@ export default {
 
     /* 标签 → 首页精确检索 */
     tagSearchRoute(tag) {
-      return { path: this.live ? '/live' : '/', query: { q: `${tag.namespace}:"${tag.value}$"` } };
+      return { path: this.live ? '/search' : '/', query: { q: `${tag.namespace}:"${tag.value}$"` } };
     },
 
     async copyTag(tag) {
@@ -398,10 +395,6 @@ export default {
     prevThumbPage() { this.thumbPage--; if (this.live) this.fetchThumbnails() },
     nextThumbPage() { this.thumbPage++; if (this.live) this.fetchThumbnails() },
 
-    searchQuery() {
-      const {q,type,cursor,prev} = this.$route.query
-      return {q,type,cursor,prev}
-    },
     readerRoute(page) {
       return {name:this.live ? 'LiveReader' : 'GalleryReader', params:{gid:this.sourceGid},
         query:{...(this.live ? this.$route.query : {}),token:this.galleryData.token,page:String(page)}}

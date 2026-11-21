@@ -9,7 +9,7 @@ import { liveData, liveUrl } from '@/utils/live'
 const route = useRoute(), router = useRouter()
 const input = ref(''), types = ref<string[]>([])
 const error = ref(''), busy = ref(false), searched = ref(false)
-interface Item { gid:number; token:string; title:string; pages:number; thumb:string; category:string; tags?:string[]; posted?:string }
+interface Item { gid:number; token:string; title:string; pages:number; thumb:string; category:string; tagLabels?:string[]; tags?:string[]; posted?:string }
 const items = ref<Item[]>([]), host = ref(''), next = ref(''), previous = ref('')
 const applied = ref({q:'', types:[] as string[]})
 let controller: AbortController | undefined
@@ -22,7 +22,7 @@ onActivated(() => {
 onDeactivated(() => { controller?.abort(); busy.value = false })
 const cards = computed(() => items.value.map(item => ({
   key:item.gid, title:item.title, badge:item.category, badgeClass:exTypeClassMap[item.category],
-  pages:item.pages ? item.pages+'p' : '', tags:item.tags || [], date:item.posted,
+  pages:item.pages ? item.pages+'p' : '', tags:item.tagLabels || item.tags || [], date:item.posted,
   thumb:item.thumb ? liveUrl('image',{site:host.value,imageUrl:item.thumb}) : '',
   to:{name:'LiveDetail',params:{gid:item.gid},query:{...route.query,site:host.value,token:item.token}}
 })))
@@ -41,7 +41,7 @@ async function search(q:string, selected:string[], cursor='', prev='') {
     items.value=data.items; host.value=data.site; next.value=data.next; previous.value=data.prev
     searched.value=true
     applied.value={q:q.trim(),types:[...selected]}
-    const target={path:'/live',query:{q:q.trim() || undefined,type:selected.join(',') || undefined,cursor:cursor || undefined,prev:prev || undefined}}
+    const target={path:'/search',query:{q:q.trim() || undefined,type:selected.join(',') || undefined,cursor:cursor || undefined,prev:prev || undefined}}
     lastUrl=router.resolve(target).fullPath
     await router.replace(target)
   } catch (e) {
