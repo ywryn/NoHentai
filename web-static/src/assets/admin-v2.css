@@ -196,3 +196,16 @@
   .ops-run-header { gap: 8px; }
   .ops-run-actions { justify-content: flex-start; }
 }
+
+.my-app-light .admin-shell :is(.a-nav-group > a.router-link-active, .a-gallery-row.is-selected, .a-rule-row.is-selected, .a-radio-card.is-selected) {
+  background: var(--selection-bg);
+  --a-muted: var(--selection-secondary-text);
+  --a-faint: var(--selection-secondary-text);
+}
+.my-app-light .admin-shell .a-nav-group > a.router-link-active {
+  box-shadow: inset 3px 0 var(--selection-edge);
+}
+.my-app-light .admin-shell .ops-tabs button[aria-selected=true] {
+  background: var(--selection-bg);
+  border-bottom-color: var(--selection-edge);
+}

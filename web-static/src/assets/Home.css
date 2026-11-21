@@ -195,6 +195,11 @@
   color: var(--primary-on-soft);
 }
 
+.my-app-light .home-filter-btn.is-on {
+  background: var(--selection-bg);
+  border-color: var(--selection-edge);
+}
+
 .home-filter-caret {
   font-size: 10px;
   opacity: 0.7;
