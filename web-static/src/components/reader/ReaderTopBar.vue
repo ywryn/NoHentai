@@ -48,6 +48,12 @@
           </div>
         </template>
 
+        <button type="button" class="tb-toggle-item tb-setting-switch" role="switch"
+          :aria-checked="isMomMode" @click="toggleMomMode">
+          <span class="tb-label">妈妈模式</span>
+          <span aria-hidden="true" class="tb-toggle" :class="{ 'tb-toggle-on': isMomMode }" />
+        </button>
+
         <div class="tb-toggle-item">
           <span class="tb-label">缩略图栏</span>
           <button
@@ -97,6 +103,7 @@
 <script setup lang="ts">
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { ref, computed, inject } from 'vue'
+import { useMomMode } from '@/composables/useMomMode'
 import { READER_KEY } from '@/composables/useReader'
 
 defineProps<{
@@ -109,6 +116,7 @@ defineEmits<{
   toggleThumbGrid: []
 }>()
 
+const { isMomMode, toggleMomMode } = useMomMode()
 const reader = inject(READER_KEY)!
 const { settings, updateSetting, currentPage, total, effectivePagesPerScreen } = reader
 
@@ -193,6 +201,17 @@ const progress = computed(() => (total.value ? (currentPage.value / total.value)
   outline-offset: 1px;
 }
 
+.tb-setting-switch {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.tb-setting-switch:focus-visible {
+  outline: 2px solid var(--reader-accent);
+  outline-offset: -2px;
+}
+
 .tb-toggle {
   position: relative;
   width: 34px;
@@ -250,7 +269,12 @@ const progress = computed(() => (total.value ? (currentPage.value / total.value)
 /* 宽屏设置项常驻，齿轮按钮无用 */
 .tb-settings { display: flex; }
 .tb-controls { display:none;position:absolute;right:12px;top:calc(100% + 8px);z-index:30;flex-direction:column;align-items:stretch;gap:8px;padding:16px;min-width:220px;border:1px solid var(--reader-border);border-radius:12px;background:#151b19;box-shadow:0 16px 36px #0007 }
-.tb-controls.is-open{display:flex}
+.tb-controls.is-open{
+  display:flex;
+  box-sizing:border-box;
+  max-height:calc(100dvh - 64px);
+  overflow-y:auto;
+}
 .top-bar{position:relative}
 .tb-control,.tb-toggle-item{justify-content:space-between;min-height:40px}
 .tb-counter{border:0;background:none;cursor:pointer;font:inherit}

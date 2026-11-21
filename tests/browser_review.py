@@ -86,6 +86,18 @@ def main():
                 touch.reload()
                 img = touch.locator('.pi-img:visible').first
                 expect(img).to_be_visible()
+                settings = touch.get_by_role('button',name='阅读设置')
+                settings.tap()
+                privacy = touch.get_by_role('switch',name='妈妈模式')
+                privacy.tap()
+                expect(privacy).to_be_checked()
+                expect(img).to_have_css('filter',touch.evaluate("'blur('+getComputedStyle(document.documentElement).getPropertyValue('--mom-mode-blur').trim()+')'"))
+                touch.reload()
+                settings.tap()
+                expect(privacy).to_be_checked()
+                privacy.tap()
+                expect(img).to_have_css('filter','none')
+                settings.tap()
                 box = img.bounding_box()
                 x, y = int(box['x']+box['width']*.15), int(box['y']+box['height']*.5)
                 touch.evaluate("""() => {
