@@ -342,6 +342,17 @@ def main():
                     page.locator('.a-confirm').get_by_role('button',name='恢复版本',exact=True).click()
                     expect(page.locator('dialog[open]')).to_have_count(0)
                     assert page.request.get(BASE+'/api/galleries/'+first_gid).json()['gallery']['title']!='standalone browser smoke title'
+                    page.get_by_role('button',name='新增首页图书',exact=True).click()
+                    page.get_by_label('展示标题',exact=True).fill('Browser manual gallery')
+                    page.locator('.ops-category-picker button').filter(has_text='Manga').click()
+                    page.get_by_role('button',name='保存当前条目',exact=True).click()
+                    expect(page.get_by_text('手动新增 · 草稿',exact=True)).to_be_visible()
+                    page.get_by_label('发布到首页',exact=True).check()
+                    page.get_by_role('button',name='保存当前条目',exact=True).click()
+                    expect(page.get_by_text('手动新增 · 已发布',exact=True)).to_be_visible()
+                    manual_item, = page.request.get(BASE+'/api/galleries',params={'q':'Browser manual gallery'}).json()['items']
+                    assert manual_item['gid'].startswith('local-')
+                    assert page.request.get(BASE+'/api/galleries/'+manual_item['gid']).json()['gallery']['title']=='Browser manual gallery'
                     page.locator('.a-sidebar').get_by_role('link',name='实体书单',exact=True).click()
                     page.get_by_role('button',name='新增书目',exact=True).click()
                     page.get_by_label('中文书名',exact=True).fill('Browser test book')
@@ -355,7 +366,7 @@ def main():
                     page.locator('input[type=file]').set_input_files({'name':'cover.png','mimeType':'image/png','buffer':stream.getvalue()})
                     expect(page.locator('.v2-cover img')).to_be_visible()
                     page.wait_for_function('document.querySelector(".v2-cover img")?.naturalWidth > 0')
-                    page.get_by_role('button',name='保存当前条目',exact=True).click()
+                    page.locator('.v2-record-actions').get_by_role('button',name='保存这本书',exact=True).click()
                     expect(page.locator('.a-alert-success')).to_be_visible()
                     assert any(item['book']['书名']=='Browser test book' for item in page.request.get(BASE+'/api/books').json()['items'])
                     page.get_by_role('button',name='删除条目',exact=True).click()

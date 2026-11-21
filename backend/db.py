@@ -36,7 +36,8 @@ def connect():
 def initialize():
     with connect() as con:
         con.execute('PRAGMA journal_mode=WAL')
-        if con.execute('PRAGMA user_version').fetchone()[0] > 3:
+        from .migrations import SCHEMA_VERSION, upgrade
+        if con.execute('PRAGMA user_version').fetchone()[0] > SCHEMA_VERSION:
             raise RuntimeError('数据库版本高于此代码版本，拒绝降级启动')
         con.executescript('''
         CREATE TABLE IF NOT EXISTS galleries (gid TEXT PRIMARY KEY, position INTEGER NOT NULL, data TEXT NOT NULL);
@@ -53,7 +54,6 @@ def initialize():
         CREATE TABLE IF NOT EXISTS jobs (id INTEGER PRIMARY KEY, kind TEXT NOT NULL, status TEXT NOT NULL,
             conclusion TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, summary TEXT NOT NULL DEFAULT '');
         ''')
-        from .migrations import upgrade
         upgrade(con, now())
         # Expiry maintenance stays bounded even after long-running traffic.
         for statement in (

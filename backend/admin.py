@@ -1,6 +1,6 @@
 import json
 import time
-from . import db, jobs, security, settings, records, services, schedules, operations
+from . import cover_cache, db, jobs, security, settings, records, services, schedules, operations
 from .validation import validate, merge
 from .security import fail
 
@@ -42,7 +42,11 @@ def handle(body, ip):
         from .media_store import upload
         return upload(body.get('imageBase64'))
     if action == 'records':
-        return records.list_records(body.get('kind'), str(body.get('query') or ''), body.get('page') or 1)
+        return records.list_records(body.get('kind'), str(body.get('query') or ''), body.get('page') or 1, body.get('origin', 'sync'))
+    if action == 'cover-refresh':
+        with db.connect() as con:
+            cover_cache.refresh(con, records.gallery_dto(con, str(body.get('id') or ''))['source'])
+        return {'ok': True}
     if action == 'record':
         return records.load(body.get('kind'), str(body.get('id') or ''))
     if action in ('record-save', 'record-delete'):

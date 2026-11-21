@@ -1,10 +1,11 @@
 """Run with: uvicorn backend.main:app --host 127.0.0.1 --port 8000"""
 from contextlib import asynccontextmanager
+import re
 from fastapi import FastAPI, Request, HTTPException, Body, Query
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from . import admin, db, settings, public, media, translation, security, catalog, services, media_store, operations, stats, observability
+from . import admin, cover_cache, db, settings, public, media, translation, security, catalog, services, media_store, operations, stats, observability
 from cryptography.fernet import Fernet
 
 
@@ -125,7 +126,8 @@ def download_backup(request: Request, name: str):
 
 @app.get('/media/{filename}')
 def cover_file(filename: str):
-    return FileResponse(media_store.find(filename), media_type='image/webp', headers={'Cache-Control': 'public, max-age=31536000, immutable'})
+    path = cover_cache.find(filename) if re.fullmatch(r'source-[a-f0-9]{64}\.webp', filename) else media_store.find(filename)
+    return FileResponse(path, media_type='image/webp', headers={'Cache-Control': 'public, max-age=31536000, immutable'})
 
 
 @app.get('/api/revision')

@@ -43,7 +43,7 @@ def cookies():
     }.items() if v)
 
 
-def fetch(url, gallery=False, image=False, **kwargs):
+def fetch(url, gallery=False, image=False, *, cover_validators=None, **kwargs):
     if os.getenv('NOHENTAI_DISABLE_UPSTREAM') == '1':
         fail(503, '验收环境未启用外部服务')
     # Follow each redirect explicitly, applying the host/network checks again.
@@ -52,8 +52,12 @@ def fetch(url, gallery=False, image=False, **kwargs):
         headers = {'User-Agent': 'Mozilla/5.0 NoHentai/2.0', 'Referer': 'https://e-hentai.org/'}
         if urlsplit(url).hostname == 'exhentai.org':
             headers['Cookie'] = cookies()
-        with httpx.Client(timeout=45, follow_redirects=False) as client:
+        if cover_validators is not None:
+            headers.update(cover_validators)
+        with httpx.Client(timeout=8 if cover_validators is not None else 45, follow_redirects=False) as client:
             with client.stream('GET', url, headers=headers, **kwargs) as response:
+                if response.status_code == 304 and cover_validators:
+                    return None, response.headers
                 if response.is_redirect:
                     url = urljoin(url, response.headers['location'])
                     continue
@@ -64,7 +68,7 @@ def fetch(url, gallery=False, image=False, **kwargs):
                     if length > MAX_IMAGE:
                         fail(502, '上游响应过大')
                     chunks.append(chunk)
-                return b''.join(chunks), response.headers.get('content-type', '')
+                return b''.join(chunks), response.headers if cover_validators is not None else response.headers.get('content-type', '')
     fail(502, '上游重定向过多')
 
 

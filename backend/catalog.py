@@ -3,7 +3,7 @@ import json
 import math
 import re
 from functools import lru_cache
-from . import db, settings
+from . import cover_cache, db, settings
 from .security import fail
 
 ALIASES = {'f': 'female', 'm': 'male', 'a': 'artist', 'p': 'parody', 'c': 'character', 'l': 'language',
@@ -20,9 +20,24 @@ VISIBLE = """WITH effective AS MATERIALIZED (
 )"""
 
 
+HOME_VISIBLE = VISIBLE.replace(
+    "\n), visible AS MATERIALIZED",
+    """
+ UNION ALL
+ SELECT 'local-' || id, -rowid,
+        json_set(data,'$.gid','local-' || id,'$.hidden',json(json_extract(data,'$.published') IS NOT 1))
+ FROM manual_galleries
+), visible AS MATERIALIZED""",
+)
+
+
+def source_link(value):
+    return re.fullmatch(r'https://(?:e-hentai|exhentai)\.org/g/([1-9][0-9]{0,14})/([a-zA-Z0-9]{1,40})/?', value)
+
+
 def gallery_lookup(query):
     value = query.strip()
-    if re.fullmatch(r'[0-9]+', value):
+    if re.fullmatch(r'[0-9]+|local-[a-f0-9]{32}', value):
         return value
     link = re.fullmatch(r'https?://(?:e-hentai|exhentai)\.org/g/([0-9]+)/[a-zA-Z0-9]+/?(?:[?#].*)?', value, re.I)
     return link[1] if link else None
@@ -155,7 +170,10 @@ def list_galleries(query='', types='', page=1, per_page=30):
     # translations bump it in the SAME write transaction as their data.
     with db.connect() as con:
         revision = db.snapshot(con, 'catalog-revision')
-    return cached_page(str(settings.DB_PATH), revision, query, types, page, per_page)
+        result = cached_page(str(settings.DB_PATH), revision, query, types, page, per_page)
+        items = [dict(item) for item in result['items']]
+        cover_cache.prefer(con, items)
+    return dict(result, items=items)
 
 
 @lru_cache(maxsize=64)
@@ -170,7 +188,7 @@ def cached_page(database_path, revision, query, types, page, per_page):
         con.execute('PRAGMA temp_store=MEMORY')
         con.create_function('unicode_lower', 1, lambda v: str(v).lower(), deterministic=True)
         con.execute('BEGIN')
-        matched = VISIBLE + f', matched AS MATERIALIZED (SELECT * FROM visible WHERE {condition})'
+        matched = HOME_VISIBLE + f', matched AS MATERIALIZED (SELECT * FROM visible WHERE {condition})'
         selected = "json_extract(data,'$.category') IN (" + ','.join('?' for _ in categories) + ')' if categories else '1'
         sql = matched + f''', selected AS MATERIALIZED (SELECT * FROM matched WHERE {selected}),
         totals AS (SELECT COUNT(*) AS n FROM selected),
@@ -224,22 +242,36 @@ def suggest_tags(token):
 
 
 def gallery_detail(gid, source='favorites'):
-    if not re.fullmatch(r'[1-9][0-9]{0,14}', gid):
+    manual = re.fullmatch(r'local-([a-f0-9]{32})', gid)
+    if not manual and not re.fullmatch(r'[1-9][0-9]{0,14}', gid):
         fail(400, '画廊 ID 不正确')
     with db.connect() as con:
         con.execute('BEGIN')
-        patch = con.execute('SELECT data FROM gallery_overrides WHERE gid=?', (gid,)).fetchone()
-        gallery = None
-        if source != 'daily':
-            row = con.execute('SELECT data FROM galleries WHERE gid=?', (gid,)).fetchone()
-            gallery = json.loads(row[0]) if row else None
-        if gallery is None:
-            gallery = next((g for group in db.snapshot(con, 'daily', []) for g in group.get('galleries', []) if str(g.get('gid')) == gid), None)
-        if gallery is None:
-            fail(404, '未找到此画廊')
-        gallery = dict(gallery, **(json.loads(patch[0]) if patch else {}))
-        if gallery.get('hidden'):
-            fail(404, '未找到此画廊')
+        if manual:
+            row = con.execute('SELECT data FROM manual_galleries WHERE id=?', (manual[1],)).fetchone()
+            gallery = json.loads(row[0]) if row else {}
+            if source == 'daily' or not gallery.get('published'):
+                fail(404, '未找到此画廊')
+            gallery.update(gid=gid)
+            linked = gallery.get('linkedGid')
+            if linked:
+                row = con.execute('SELECT data FROM galleries WHERE gid=?', (linked,)).fetchone()
+                if row:
+                    gallery['token'] = json.loads(row[0]).get('token')
+            if gallery.get('sourceUrl'):
+                link = source_link(gallery['sourceUrl'])
+                gallery.update(linkedGid=link[1], token=link[2])
+        else:
+            patch = con.execute('SELECT data FROM gallery_overrides WHERE gid=?', (gid,)).fetchone()
+            row = con.execute('SELECT data FROM galleries WHERE gid=?', (gid,)).fetchone() if source != 'daily' else None
+            gallery = json.loads(row[0]) if row else next(
+                (g for group in db.snapshot(con, 'daily', []) for g in group.get('galleries', []) if str(g.get('gid')) == gid), None)
+            if gallery is None:
+                fail(404, '未找到此画廊')
+            gallery = dict(gallery, **(json.loads(patch[0]) if patch else {}))
+            if gallery.get('hidden'):
+                fail(404, '未找到此画廊')
+        cover_cache.prefer(con, [gallery])
         index = translations(con)
         details = []
         for tag in gallery.get('tags', []):

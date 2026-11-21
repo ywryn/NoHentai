@@ -4,13 +4,13 @@ import math
 import re
 import uuid
 from fastapi import HTTPException
-from . import db, catalog
+from . import cover_cache, db, catalog
 from .security import fail
-from .validation import validate
+from .validation import text, validate
 from app.daily_config import without_display_labels
 
-TABLES = {'gallery': 'gallery_overrides', 'book': 'books', 'daily': 'daily_rules'}
-RESOURCES = {'gallery': 'overrides', 'book': 'printed', 'daily': 'daily'}
+TABLES = {'gallery': 'gallery_overrides', 'manual': 'manual_galleries', 'book': 'books', 'daily': 'daily_rules'}
+RESOURCES = {'gallery': 'overrides', 'manual': 'overrides', 'book': 'printed', 'daily': 'daily'}
 
 
 def check_kind(kind):
@@ -52,12 +52,29 @@ def gallery_dto(con, gid, index=None):
                             patch['version'] if patch else None, patch['updated_at'] if patch else None, index)
 
 
+def manual_dto(con, found, index):
+    if not found:
+        fail(404, '记录不存在，可能已被删除')
+    record_id = found['id']
+    data = json.loads(found['data'])
+    linked = data.get('linkedGid')
+    return {'id': record_id, 'origin': 'manual', 'source': {}, 'data': data,
+            'effective': dict(data, gid='local-' + record_id),
+            'tagNames': {tag: index.get(tag, {}).get('name', '') for tag in data.get('tags', [])},
+            'duplicate': bool(linked and con.execute('SELECT 1 FROM galleries WHERE gid=?', (linked,)).fetchone()),
+            'version': found['version'], 'updatedAt': found['updated_at']}
+
+
 def load(kind, record_id):
     check_kind(kind)
     with db.connect() as con:
         con.execute('BEGIN')
         if kind == 'gallery':
-            return gallery_dto(con, record_id)
+            result = gallery_dto(con, record_id)
+            cover_cache.prefer(con, [result['effective']])
+            return result
+        if kind == 'manual':
+            return manual_dto(con, row(con, kind, record_id), catalog.translations(con))
         found = row(con, kind, record_id)
         if not found:
             fail(404, '记录不存在，可能已被删除')
@@ -99,8 +116,10 @@ def book_term_sql(term):
     return '(' + ' OR '.join(part[0] for part in parts) + ')', [value for part in parts for value in part[1]]
 
 
-def list_records(kind, query='', page=1):
+def list_records(kind, query='', page=1, origin='sync'):
     check_kind(kind)
+    if origin not in ('all', 'sync', 'manual'):
+        fail(400, '来源筛选不正确')
     page = max(1, min(10000, int(page)))
     if len(query) > 2000:
         fail(400, '搜索内容过长')
@@ -108,33 +127,20 @@ def list_records(kind, query='', page=1):
         con.create_function('unicode_lower', 1, lambda v: str(v).lower(), deterministic=True)
         con.execute('PRAGMA temp_store=MEMORY')
         con.execute('BEGIN')
-        if kind == 'gallery':
-            if not query.strip():
-                total = con.execute('SELECT COUNT(*) FROM galleries').fetchone()[0]
-                page = min(page, max(1, math.ceil(total / 30)))
-                ids = [r[0] for r in con.execute('SELECT gid FROM galleries ORDER BY position LIMIT 30 OFFSET ?', ((page-1)*30,))]
-            else:
-                condition, params = catalog.filter_sql(query)
-                cte = catalog.VISIBLE.replace("COALESCE(json_extract(data,'$.hidden'),0)=0", '1')
-                result = con.execute(cte + f''', matched AS MATERIALIZED (
-                    SELECT gid,position FROM visible WHERE {condition}
-                ), totals AS (SELECT COUNT(*) AS n FROM matched),
-                paged AS (SELECT gid FROM matched ORDER BY position LIMIT 30
-                    OFFSET min(?, ((SELECT max(n-1,0) FROM totals)/30)*30))
-                SELECT (SELECT n FROM totals) AS total,
-                    (SELECT json_group_array(gid) FROM paged) AS ids''', params + [(page-1)*30]).fetchone()
-                total = result['total']
-                page = min(page, max(1, math.ceil(total / 30)))
-                ids = json.loads(result['ids'])
-            index=catalog.translations(con)
-            if ids:
-                placeholders = ','.join('?' for _ in ids)
-                records = {r['gid']: r for r in con.execute(f'''SELECT g.gid,g.data AS source_data,p.data AS patch_data,p.version,p.updated_at
-                    FROM galleries g LEFT JOIN gallery_overrides p ON p.gid=g.gid WHERE g.gid IN ({placeholders})''', ids)}
-                items = [gallery_dto_data(gid, records[gid]['source_data'], records[gid]['patch_data'],
-                                          records[gid]['version'], records[gid]['updated_at'], index) for gid in ids]
-            else:
-                items = []
+        if kind in ('gallery', 'manual'):
+            if kind == 'manual':
+                origin = 'manual'
+            scope = {'all': '1', 'manual': "gid GLOB 'local-*'", 'sync': "gid NOT GLOB 'local-*'"}[origin]
+            condition, params = catalog.filter_sql(query)
+            cte = catalog.HOME_VISIBLE.replace("COALESCE(json_extract(data,'$.hidden'),0)=0", '1')
+            match = cte + f' SELECT gid FROM visible WHERE {scope} AND ({condition})'
+            total = con.execute(f'SELECT COUNT(*) FROM ({match})', params).fetchone()[0]
+            page = min(page, max(1, math.ceil(total / 30)))
+            ids = [r[0] for r in con.execute(match + ' ORDER BY position,gid LIMIT 30 OFFSET ?', params + [(page-1)*30])]
+            index = catalog.translations(con)
+            items = [manual_dto(con, row(con, 'manual', gid[6:]), index) if gid.startswith('local-')
+                     else gallery_dto(con, gid, index) for gid in ids]
+            cover_cache.prefer(con, [item['effective'] for item in items])
         else:
             if kind == 'book':
                 condition, params = catalog.filter_sql(query, BOOK_FIELDS, book_term_sql)
@@ -167,6 +173,36 @@ def audit(con, kind, record_id, version, before, after, message):
          db.dumps(changes), db.now(), message)).lastrowid
 
 
+def validate_manual(data):
+    extra = {'description', 'linkedGid', 'sourceUrl', 'published'}
+    if not isinstance(data, dict):
+        fail(400, '首页图书格式不正确')
+    normalized = dict(data)
+    for key in ('title', 'title_jpn', 'description', 'linkedGid', 'sourceUrl'):
+        value = normalized.get(key, '')
+        if not text(value, 5000 if key == 'description' else 500):
+            fail(400, '首页图书文字格式不正确')
+        normalized[key] = value.strip()
+    if not normalized['title'] and not normalized['title_jpn']:
+        fail(400, '请输入图书标题')
+    if not normalized.get('category'):
+        fail(400, '请选择图书分类')
+    if not normalized.get('thumb'):
+        normalized.pop('thumb', None)
+    validate('overrides', {'1': {k: v for k, v in normalized.items() if k not in extra and k != 'hidden'}})
+    if 'hidden' in normalized or type(normalized.get('published', False)) is not bool:
+        fail(400, '公开状态不正确')
+    normalized.setdefault('published', False)
+    link = catalog.source_link(normalized['sourceUrl']) if normalized['sourceUrl'] else None
+    if normalized['sourceUrl'] and not link:
+        fail(400, '请输入有效的 E 站画廊链接')
+    if link:
+        normalized['linkedGid'] = link[1]
+    if normalized['linkedGid'] and not re.fullmatch(r'[1-9][0-9]{0,14}', normalized['linkedGid']):
+        fail(400, '关联画廊 ID 不正确')
+    return normalized
+
+
 def write(con, kind, record_id, expected, data, delete=False, message='保存条目'):
     check_kind(kind)
     if kind != 'gallery' and record_id is not None and (not isinstance(record_id, str) or not re.fullmatch(r'[a-f0-9]{32}', record_id)):
@@ -188,6 +224,13 @@ def write(con, kind, record_id, expected, data, delete=False, message='保存条
         if data.get('thumb') and not con.execute('SELECT 1 FROM media WHERE filename=?',(data['thumb'].split('/')[-1],)).fetchone():
             fail(400,'覆盖封面不存在，请先上传')
         delete = False  # Versioned tombstone keeps resetting safe across concurrent editors.
+    elif kind == 'manual':
+        if not delete:
+            data = validate_manual(data)
+            if data.get('thumb') and not con.execute('SELECT 1 FROM media WHERE filename=?', (data['thumb'].split('/')[-1],)).fetchone():
+                fail(400, '封面不存在，请先上传')
+            if data.get('linkedGid') and con.execute('SELECT 1 FROM galleries WHERE gid=?', (data['linkedGid'],)).fetchone():
+                warnings.append('此画廊也在 E 站同步条目中，请核对是否重复展示')
     elif not delete:
         data = validate('printed', [data])[0] if kind == 'book' else validate('daily', [data])[0]
         if kind == 'book' and data['sid'] and not con.execute('SELECT 1 FROM galleries WHERE gid=?', (data['sid'],)).fetchone():
@@ -216,6 +259,8 @@ def write(con, kind, record_id, expected, data, delete=False, message='保存条
         con.execute(f'DELETE FROM {TABLES[kind]} WHERE {key_field(kind)}=?', (record_id,))
     elif kind == 'gallery':
         con.execute('INSERT OR REPLACE INTO gallery_overrides VALUES (?,?,?,?)', (record_id, db.dumps(data), version, db.now()))
+    elif kind == 'manual':
+        con.execute('INSERT INTO manual_galleries VALUES (?,?,?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data,version=excluded.version,updated_at=excluded.updated_at', (record_id, db.dumps(data), version, db.now()))
     else:
         position = current['position'] if current else con.execute(f'SELECT COALESCE(MAX(position),-1)+1 FROM {TABLES[kind]}').fetchone()[0]
         if kind == 'book':
