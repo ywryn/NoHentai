@@ -29,9 +29,11 @@ def document(url):
     return content
 
 
-def search(query, cursor, expected, prev):
+def search(query, cursor, expected, prev, excluded_categories=0):
     host = site(expected)
     params = {'f_search': query, 'inline_set': 'dm_c'}
+    if excluded_categories:
+        params['f_cats'] = excluded_categories
     if cursor:
         params['next'] = cursor
     if prev:

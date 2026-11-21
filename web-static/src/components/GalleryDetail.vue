@@ -229,6 +229,7 @@ export default {
   },
   watch: {
     '$route'() {
+      if (this.$route.name !== 'GalleryDetail') return
       this.thumbImages = [];
       this.thumbTotal = 0;
       this.thumbSource = null;

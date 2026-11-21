@@ -1,3 +1,5 @@
+export const categoryMasks = [['Misc',1],['Doujinshi',2],['Manga',4],['Artist CG',8],['Game CG',16],['Image Set',32],['Cosplay',64],['Asian Porn',128],['Non-H',256],['Western',512]]
+
 export const exTypeList = [
   { name: 'Doujinshi',  color: 'red' },
   { name: 'Manga',      color: 'orange' },

@@ -366,12 +366,13 @@ class BackendTests(unittest.TestCase):
             <td>2 pages</td></tr></table><div id="gdt"><a href="/s/aa/2-2"></a></div>"""
         with patch('backend.live.document', side_effect=[listing, gallery]) as fetch, patch(
                 'backend.db.get_cache', side_effect=AssertionError), patch('backend.db.set_cache', side_effect=AssertionError):
-            page = self.client.get(urls[0], params={'q':'sample', 'prev':'7'}).json()
+            page = self.client.get(urls[0], params={'q':'sample', 'prev':'7', 'f_cats':1019}).json()
             self.assertEqual((page['items'][0]['title'], page['prev'], page['next']), ('Fixture title','5','2'))
             response = self.client.get(urls[1]+'&part=1')
             self.assertEqual(response.headers['cache-control'], 'no-store')
             self.assertEqual(response.json()['images'][0]['pageUrl'],'https://e-hentai.org/s/aa/2-2')
             self.assertIn('prev=7', fetch.call_args_list[0].args[0])
+            self.assertIn('f_cats=1019', fetch.call_args_list[0].args[0])
             self.assertIn('p=1', fetch.call_args_list[1].args[0])
         with patch('backend.media.fetch', return_value=(b'<img id="img" src="https://ehgt.org/p.png">','text/html')), patch(
                 'backend.media.validate_url'), patch('backend.db.set_cache', side_effect=AssertionError):
