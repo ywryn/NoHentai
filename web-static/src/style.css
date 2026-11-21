@@ -819,6 +819,7 @@ dialog::backdrop { overflow: hidden; overscroll-behavior: contain; }
   --text-color:#29352f;--title-color:#202d26;--muted-color:#5f6c63;
   --hover-bg:#e9eee7;--row-hover-bg:#f7f9f5;--sidebar-bg:#edf1ea;
   --primary-color:#37644e;--primary-color-hover:#254b38;--primary-contrast:#fff;
+  --selection-bg:#d9e9df;--selection-edge:#50765f;--selection-secondary-text:#526256;
   --primary-soft-bg:#37644e0c;--primary-soft-border:#37644e40;--primary-on-soft:#315a45;
   --tag-bg:#f5f7f2;--tag-border:#e0e6dc;--tag-color:#5a685c;--placeholder-bg:#e8ede3;
 }

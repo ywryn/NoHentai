@@ -314,6 +314,12 @@ onMounted(() => {
   }
 }
 
+:global(.my-app-light .nav-menu a.router-link-exact-active),
+:global(.my-app-light .tab-item.router-link-exact-active) {
+  background: var(--selection-bg);
+  box-shadow: inset 0 0 0 1px var(--selection-edge);
+}
+
 /* ═══ 路由过渡 ═══════════════════════════════════════════ */
 
 .route-fade-enter-active,
