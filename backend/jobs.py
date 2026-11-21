@@ -12,7 +12,7 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from cryptography.fernet import Fernet
-from . import db, settings, security
+from . import cover_cache, db, settings, security
 from app.daily_config import conditions
 from .security import credential, fail
 
@@ -366,6 +366,8 @@ def execute(job_id, allow_shrink=False):
                     except (ValueError, TypeError, KeyError, AttributeError):
                         raise JobFailure('标签词典校验失败，保留上一份完整数据') from None
                 db.put_snapshot(con, stage, data)
+        if 'favorites' in collected or 'daily' in collected:
+            cover_cache.enqueue_current(con)
         db.put_snapshot(con, 'release', {'commit': f'job-{job_id}', 'builtAt': db.now()})
         event(job_id,'publish','完整性与版本检查通过，数据已事务发布',con=con)
         con.execute("UPDATE jobs SET status='completed',conclusion='success',updated_at=?,summary=? WHERE id=?", (db.now(), '同步完成，数据已发布', job_id))
@@ -422,6 +424,10 @@ def work(once=False):
                 if once:
                     return
                 if not row:
+                    try:
+                        cover_cache.fetch_next()
+                    except Exception:
+                        logging.getLogger(__name__).exception("封面缓存处理失败")
                     time.sleep(2)
 
 

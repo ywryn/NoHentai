@@ -9,7 +9,7 @@
             <span class="category-badge" :class="categoryClass">{{ getDisplayCategory() }}</span>
             <img :src="coverSrc" :alt="`${getDisplayTitle()} 封面`" />
           </div>
-          <a class="external-link cover-ext-link" :href="externalLink" @click.prevent="openExHentai">在 ExHentai 打开</a>
+          <a v-if="externalLink" class="external-link cover-ext-link" :href="externalLink" @click.prevent="openExHentai">打开来源画廊</a>
         </div>
 
         <div class="gd-main">
@@ -17,14 +17,15 @@
 
             <h1 class="title">{{ getDisplayTitle() }}</h1>
             <p v-if="galleryData.title_jpn" class="subtitle">{{ galleryData.title_jpn }}</p>
+            <p v-if="galleryData.description" class="subtitle gd-description">{{ galleryData.description }}</p>
           </div>
 
           <nav v-if="galleryData.token" class="gd-actions" aria-label="画廊操作">
-            <RouterLink class="gd-action gd-action-primary" :to="{name:'GalleryReader',params:{gid:itemId},query:{token:galleryData.token,page:'1'}}">
+            <RouterLink class="gd-action gd-action-primary" :to="{name:'GalleryReader',params:{gid:sourceGid},query:{token:galleryData.token,page:'1'}}">
               <AppIcon name="book-open" :size="20" />
               <span>开始阅读</span>
             </RouterLink>
-            <RouterLink class="gd-action gd-action-secondary" :to="{name:'GalleryTranslate',params:{gid:itemId},query:{token:galleryData.token,page:'1'}}">
+            <RouterLink class="gd-action gd-action-secondary" :to="{name:'GalleryTranslate',params:{gid:sourceGid},query:{token:galleryData.token,page:'1'}}">
               <AppIcon name="translate" :size="20" />
               <span>翻译</span>
             </RouterLink>
@@ -125,7 +126,7 @@
       </section>
 
       <!-- ========== Thumbnail Gallery ========== -->
-      <section class="thumb-section">
+      <section v-if="galleryData.token" class="thumb-section">
         <div class="panel-header">
           <div>
             <div class="panel-eyebrow">浏览</div>
@@ -331,7 +332,7 @@ export default {
       this.thumbLoading = true;
       this.thumbError = null;
       try {
-        const res = await fetch(`${API_BASE}/api/gallery-images?gid=${this.itemId}&token=${this.galleryData.token}`, { signal: this._thumbAbort.signal });
+        const res = await fetch(`${API_BASE}/api/gallery-images?gid=${this.sourceGid}&token=${this.galleryData.token}`, { signal: this._thumbAbort.signal });
         const data = await res.json().catch(() => ({}));
         if (generation !== this.requestGeneration) return;
         if (data.error === 'exhentai_blocked') {
@@ -380,7 +381,7 @@ export default {
     openReader(pageNum) {
       this.$router.push({
         name: 'GalleryReader',
-        params: { gid: this.itemId },
+        params: { gid: this.sourceGid },
         query: { page: pageNum, token: this.galleryData.token },
       });
     },
@@ -414,8 +415,11 @@ export default {
     coverSrc() {
       return this.galleryData?.thumb || this.galleryData?.image || '/placeholder.png';
     },
+    sourceGid() {
+      return this.galleryData?.linkedGid || this.itemId;
+    },
     externalLink() {
-      return `https://exhentai.org/g/${this.itemId}/${this.galleryData?.token || ''}`;
+      return this.galleryData?.sourceUrl || (this.galleryData?.token ? `https://exhentai.org/g/${this.sourceGid}/${this.galleryData.token}` : null);
     },
     categoryClass() {
       return exTypeClassMap[this.getDisplayCategory()] || 'default';

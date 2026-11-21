@@ -30,6 +30,8 @@ def initialize_data(source=None):
         for name, value in resources.items():
             db.put_resource(con, name, value, '初次导入')
         db.put_snapshot(con, 'daily', daily)
+        from . import cover_cache
+        cover_cache.enqueue_current(con)
         db.put_snapshot(con, 'translations', translations)
         db.put_snapshot(con, 'release', {'commit': 'initial-import', 'builtAt': db.now()})
     print(f'已导入 {len(galleries)} 个收藏画廊、{len(resources["printed"])} 条书目')

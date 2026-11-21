@@ -1,5 +1,5 @@
 import json
-from . import db, stats
+from . import cover_cache, db, stats
 from .daily import result_groups
 from .validation import merge, books_csv
 
@@ -13,9 +13,13 @@ def dataset(name):
         con.execute('BEGIN')
         patches, version = db.resource(con, 'overrides')
         if name == 'galleries.json':
-            return merge(db.galleries(con), patches)
+            galleries = merge(db.galleries(con), patches)
+            cover_cache.prefer(con, galleries)
+            return galleries
         if name == 'daily_search.json':
-            return [dict(g, galleries=merge(g['galleries'], patches)) for g in result_groups(con)]
+            groups = [dict(g, galleries=merge(g['galleries'], patches)) for g in result_groups(con)]
+            cover_cache.prefer(con, [row for group in groups for row in group['galleries']])
+            return groups
         if name == 'future_digi.csv':
             return books_csv([json.loads(r[0]) for r in con.execute('SELECT data FROM books ORDER BY position')])
         if name == 'translations.json':
@@ -45,6 +49,7 @@ def books():
             if gallery:
                 gallery = {key: gallery.get(key) for key in (*catalog.LIST_FIELDS,'tags','uploader')}
             items.append({'id': row['id'], 'book': json.loads(row['book']), 'gallery': gallery})
+        cover_cache.prefer(con, [item['gallery'] for item in items])
         # Only dictionaries used by linked books are returned, never the full tag database.
         used = {tag for item in items if item['gallery'] for tag in item['gallery'].get('tags', [])}
         translation_groups = {}
@@ -61,6 +66,7 @@ def daily():
         con.execute('BEGIN')
         patches, _ = db.resource(con, 'overrides')
         groups = [dict(g, galleries=merge(g.get('galleries', []), patches)) for g in result_groups(con)]
+        cover_cache.prefer(con, [row for group in groups for row in group['galleries']])
         index = catalog.translations(con)
         tags = {tag for group in groups for g in group['galleries'] for tag in g.get('tags', [])}
         translated = {}

@@ -2,7 +2,7 @@
 import json
 import uuid
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 
 def upgrade(con, now):
@@ -15,8 +15,11 @@ def upgrade(con, now):
     # Recheck after acquiring the write lock (multiple Uvicorn processes start).
     if con.execute('PRAGMA user_version').fetchone()[0] >= SCHEMA_VERSION:
         return
-    if con.execute('PRAGMA user_version').fetchone()[0] == 2:
+    version = con.execute('PRAGMA user_version').fetchone()[0]
+    if version == 2:
         upgrade_events(con)
+    if version >= 2:
+        upgrade_home_catalog(con)
         return
     statements = [
         'CREATE TABLE resource_versions(name TEXT PRIMARY KEY, version TEXT NOT NULL)',
@@ -77,9 +80,26 @@ def upgrade(con, now):
         con.execute('INSERT INTO service_versions VALUES (?,?)', (group, uuid.uuid4().hex))
     con.execute('PRAGMA user_version=2')
     upgrade_events(con)
+    upgrade_home_catalog(con)
 
 
 def upgrade_events(con):
     con.execute("CREATE TABLE job_events(id INTEGER PRIMARY KEY, job_id INTEGER NOT NULL REFERENCES jobs(id) ON DELETE CASCADE, stage TEXT NOT NULL, level TEXT NOT NULL, message TEXT NOT NULL, data_json TEXT NOT NULL, created_at TEXT NOT NULL)")
     con.execute('CREATE INDEX job_events_lookup ON job_events(job_id,id)')
     con.execute('PRAGMA user_version=3')
+
+def upgrade_home_catalog(con):
+    from . import cover_cache
+    con.execute("""CREATE TABLE IF NOT EXISTS manual_galleries (
+        id TEXT PRIMARY KEY, data TEXT NOT NULL, version TEXT NOT NULL, updated_at TEXT NOT NULL
+    )""")
+    con.execute("""CREATE TABLE IF NOT EXISTS source_covers (
+        url TEXT PRIMARY KEY, digest TEXT, etag TEXT, modified TEXT, next_check REAL
+    )""")
+    con.execute("""CREATE TABLE IF NOT EXISTS source_cover_refs (
+        gid TEXT NOT NULL, url TEXT NOT NULL, previous_url TEXT, PRIMARY KEY(gid,url)
+    )""")
+    con.execute('CREATE INDEX IF NOT EXISTS source_cover_refs_url ON source_cover_refs(url)')
+    con.execute('CREATE INDEX IF NOT EXISTS source_covers_pending ON source_covers(next_check)')
+    cover_cache.enqueue_current(con)
+    con.execute('PRAGMA user_version=4')

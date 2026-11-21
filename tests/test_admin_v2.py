@@ -14,13 +14,67 @@ from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 from PIL import Image
 import test_backend as fixtures
-from backend import db, settings, records, services, security, jobs, schedules
+from backend import cover_cache, db, settings, records, services, security, jobs, schedules
 from backend.main import app
 
 BOOK, GALLERY, DICTIONARY = fixtures.BOOK, fixtures.GALLERY, fixtures.DICTIONARY
 
 
 class AdminV2Tests(fixtures.BackendTests):
+    def test_manual_home_gallery_remains_independent_after_source_sync(self):
+        draft = {'title': '手动新增测试', 'category': 'Manga', 'tags': ['artist:test'],
+                 'sourceUrl': 'https://e-hentai.org/g/123/abcdef1234'}
+        created = self.admin('record-save', kind='manual', version='0', data=draft)
+        self.assertEqual(created.status_code, 200, created.text)
+        record = created.json()
+        route = '/api/galleries/local-' + record['id']
+        self.assertEqual(self.client.get(route).status_code, 404)
+        published = self.admin('record-save', kind='manual', id=record['id'], version=record['version'],
+                               data=dict(draft, published=True)).json()
+        job = self.claim('favorites')
+        with patch.object(jobs, 'collect_favorites', return_value=[dict(GALLERY, title='new source title')]):
+            jobs.execute(job)
+        result = self.client.get('/api/galleries', params={'q': '手动新增测试'}).json()
+        self.assertEqual([g['gid'] for g in result['items']], ['local-' + record['id']])
+        gallery = self.client.get(route).json()['gallery']
+        self.assertEqual((gallery['title'], gallery['linkedGid'], gallery['token']),
+                         (draft['title'], '123', 'abcdef1234'))
+        self.assertEqual(self.client.get('/api/galleries/123').json()['gallery']['title'], 'new source title')
+        self.assertEqual(self.admin('records', kind='gallery', origin='manual').json()['total'], 1)
+        deleted = self.admin('record-delete', kind='manual', id=record['id'], version=published['version']).json()
+        self.assertEqual(self.client.get(route).status_code, 404)
+        self.assertEqual(self.admin('record-restore', historyId=deleted['historyId'], version='0').status_code, 200)
+        self.assertEqual(self.client.get(route).status_code, 200)
+
+    def test_source_cover_cache_deduplicates_revalidates_and_keeps_previous(self):
+        first, second = 'https://ehgt.org/test-first.jpg', 'https://ehgt.org/test-second.jpg'
+        image = io.BytesIO()
+        Image.new('RGB', (4, 4), 'navy').save(image, format='PNG')
+        with db.connect() as con:
+            db.replace_galleries(con, [dict(GALLERY, thumb=first), dict(GALLERY, gid=124, thumb=first)])
+            cover_cache.enqueue_current(con)
+        with patch.object(cover_cache.upstream, 'fetch', return_value=(image.getvalue(), {'etag': 'test'})) as fetch:
+            cover_cache.fetch_next()
+            cover_cache.fetch_next()
+            self.assertEqual(fetch.call_count, 1)
+        items = self.client.get('/api/galleries').json()['items']
+        local = items[0]['thumb']
+        self.assertTrue(local.startswith('/media/source-'))
+        self.assertEqual(items[1]['thumb'], local)
+        self.assertEqual(self.client.get(local).headers['content-type'], 'image/webp')
+        with db.connect() as con:
+            db.replace_galleries(con, [dict(GALLERY, thumb=second), dict(GALLERY, gid=124, thumb=first)])
+            cover_cache.enqueue_current(con)
+        self.assertEqual(self.client.get('/api/galleries/123').json()['gallery']['thumb'], local)
+        with patch.object(cover_cache.upstream, 'fetch', return_value=(image.getvalue(), {})):
+            cover_cache.fetch_next()
+        self.assertEqual(self.client.get('/api/galleries/123').json()['gallery']['thumb'], local)
+        with db.connect() as con:
+            con.execute('UPDATE source_covers SET next_check=0 WHERE url=?', (first,))
+        with patch.object(cover_cache.upstream, 'fetch', return_value=(None, {})) as fetch:
+            cover_cache.fetch_next()
+            fetch.assert_called_once_with(first, image=True, cover_validators={'If-None-Match': 'test'})
+
     def test_record_versions_are_independent_and_restore_creates_history(self):
         with db.connect() as con:
             db.replace_galleries(con, [dict(GALLERY,gid=1),dict(GALLERY,gid=2)])
@@ -384,7 +438,7 @@ class AdminV2Tests(fixtures.BackendTests):
         db.initialize();db.initialize()
         self.assertEqual(self.admin('records',kind='book').json()['items'],before)
         self.assertEqual(jobs.runs()[0]['id'],job)
-        with db.connect() as con:self.assertEqual(con.execute('PRAGMA user_version').fetchone()[0],3)
+        with db.connect() as con:self.assertEqual(con.execute('PRAGMA user_version').fetchone()[0],4)
 
     def test_migration_is_idempotent_and_preserves_v1_data(self):
         path=Path(self.tmp.name)/'legacy.sqlite3'
@@ -408,7 +462,7 @@ class AdminV2Tests(fixtures.BackendTests):
                 self.assertEqual(db.resource(con,'printed')[0],[BOOK,BOOK])
                 self.assertEqual(db.resource(con,'daily')[0],self.daily)
                 self.assertEqual(db.resource(con,'overrides')[0],{'123':{'title':'manual'}})
-                self.assertEqual(con.execute('PRAGMA user_version').fetchone()[0],3)
+                self.assertEqual(con.execute('PRAGMA user_version').fetchone()[0],4)
                 self.assertIsNone(con.execute("SELECT 1 FROM resources WHERE name='printed'").fetchone())
                 self.assertEqual(con.execute('SELECT title FROM galleries').fetchone()[0],'source')
             db.initialize()
