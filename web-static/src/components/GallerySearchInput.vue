@@ -108,6 +108,5 @@ defineExpose({ focus, clear, reset })
 :global(.my-app-light .search-control-suggestions li[aria-selected=true]) {
   background: var(--selection-bg);
   --search-muted: var(--selection-secondary-text);
-  box-shadow: inset 3px 0 var(--selection-edge);
 }
 </style>
