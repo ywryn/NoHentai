@@ -1,5 +1,8 @@
 import base64
 import hashlib
+import html
+import httpx
+from fastapi import HTTPException
 import json
 import re
 import time
@@ -40,17 +43,63 @@ def translate(body):
     texts = body.get('texts')
     if not isinstance(texts, list) or not 1 <= len(texts) <= 200 or any(not isinstance(t, str) or len(t) > 5000 for t in texts) or sum(map(len, texts)) > 50000:
         fail(400, 'texts 应包含 1–200 条文字，总长度最多 50000')
+    context = context_message(body)
     cfg = config()
     api_key, base = credential('LLM_API_KEY'), credential('LLM_API_BASE').rstrip('/')
-    if not api_key or not base:
-        fail(503, 'LLM 未配置')
-    context = context_message(body)
-    # Include gateway and key fingerprint: rotating providers cannot reuse another
-    # provider's result under the same model label.
-    key = cache_key('tr:v4:', [base, hashlib.sha256(api_key.encode()).hexdigest(), cfg, texts, context])
+    google = credential('GOOGLE_TRANSLATE_API_KEY')
+    key = cache_key('tr:v5:', [base, hashlib.sha256(api_key.encode()).hexdigest(), bool(google), cfg, texts, context])
     cached = db.get_cache(key)
     if cached:
         return dict(cached, cached=True)
+    try:
+        if not api_key or not base:
+            fail(503, 'LLM 未配置')
+        translations = ai_translate(texts, context, cfg, api_key, base)
+    except (httpx.HTTPError, HTTPException, ValueError, TypeError, KeyError, IndexError, AttributeError):
+        if not google:
+            raise
+        translations = [None] * len(texts)
+    missing = [i for i, text in enumerate(texts) if text.strip() and not translations[i]]
+    if google and missing:
+        monthly_limit = int(credential('GOOGLE_TRANSLATE_MONTHLY_CHARS'))
+        for indices in fallback_batches(missing, texts):
+            chars = sum(len(texts[i]) for i in indices)
+            month = datetime.now(timezone.utc).strftime('%Y-%m')
+            if not db.reserve('google-translate:' + month, monthly_limit, 35 * 86400, chars):
+                continue
+            try:
+                data = json_request('POST', 'https://translation.googleapis.com/language/translate/v2',
+                                    headers={'X-Goog-Api-Key': google}, timeout=20,
+                                    json={'q': [texts[i] for i in indices], 'target': 'zh-CN', 'format': 'text'})
+                items = data['data']['translations']
+                if not isinstance(items, list) or len(items) != len(indices):
+                    continue
+                for idx, item in zip(indices, items):
+                    value = item.get('translatedText') if isinstance(item, dict) else None
+                    if isinstance(value, str) and value.strip():
+                        translations[idx] = {'t': html.unescape(value.strip()), 'source': 'google'}
+            except (httpx.HTTPError, HTTPException, ValueError, KeyError, TypeError):
+                continue
+    result = {'translations': translations}
+    if all(translations):
+        db.set_cache(key, result, 7 * 86400)
+    return result
+
+
+def fallback_batches(missing, texts):
+    batch, size = [], 0
+    for idx in missing:
+        length = len(texts[idx])
+        if batch and (size + length > 5000 or len(batch) == 64):
+            yield batch
+            batch, size = [], 0
+        batch.append(idx)
+        size += length
+    if batch:
+        yield batch
+
+
+def ai_translate(texts, context, cfg, api_key, base):
     messages = [{'role': 'system', 'content': (settings.ROOT / 'backend/translate-prompt.txt').read_text()}]
     if context:
         messages.append({'role': 'system', 'content': context})
@@ -79,10 +128,7 @@ def translate(body):
         translations.append({'t': t, 'kind': kind if kind in ('dialogue', 'narration', 'sfx') else 'dialogue',
                              'alt': str(alt).strip() if alt and str(alt).strip() != t else None,
                              'ja_leak': bool(re.search(r'[\u3040-\u30ff]', t))})
-    result = {'translations': translations}
-    if all(translations):
-        db.set_cache(key, result, 7 * 86400)
-    return result
+    return translations
 
 
 def bounds(points):

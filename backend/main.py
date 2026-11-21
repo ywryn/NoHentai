@@ -217,12 +217,18 @@ def lookup_api(request: Request, word: str):
 
 
 def trans_auth(request, body):
-    safely(security.trans_auth, body.get('password'), request.client.host)
+    if 'password' in body:
+        safely(security.trans_auth, body['password'], request.client.host)
+    else:
+        security.check_cost_ticket(request.cookies.get(security.COST_COOKIE))
 
 
 @app.post('/api/trans-verify')
-def verify_api(request: Request, body: dict = Body(...)):
+def verify_api(request: Request, response: Response, body: dict = Body(...)):
     trans_auth(request, body)
+    if 'password' in body:
+        response.set_cookie(security.COST_COOKIE, security.cost_ticket(), max_age=security.COST_TTL,
+                            httponly=True, secure=request.url.scheme == 'https', samesite='strict', path='/api')
     return {'ok': True}
 
 
@@ -245,3 +251,42 @@ def ocr_api(request: Request, body: dict = Body(...)):
 @app.api_route('/api/printed-books', methods=['GET', 'POST'])
 def obsolete():
     raise HTTPException(410, '请使用独立管理后台')
+
+
+def live_access(request, count=60):
+    security.check_cost_ticket(request.cookies.get(security.COST_COOKIE))
+    limit(request, 'live-' + request.url.path, count)
+
+
+@app.get('/api/live/search')
+def live_search(request: Request, q: str = Query('', max_length=500), cursor: str = Query('', pattern=r'^[0-9]{0,20}$'),
+                site: str = '', prev: str = Query('', pattern=r'^[0-9]{0,20}$')):
+    from . import live
+    live_access(request)
+    return safely(live.search, q, cursor, site, prev)
+
+
+@app.get('/api/live/directory')
+def live_directory(request: Request, site: str, gid: str = Query(pattern=r'^[1-9][0-9]{0,14}$'),
+                   token: str = Query(pattern=r'^[a-zA-Z0-9]{5,64}$'), part: int = Query(0, ge=0, le=5000)):
+    from . import live
+    live_access(request)
+    return safely(live.directory, site, gid, token, part)
+
+
+@app.get('/api/live/image-url')
+def live_image_url(request: Request, site: str, pageUrl: str):
+    from . import live
+    live_access(request, 180)
+    return safely(live.resolve, site, pageUrl)
+
+
+@app.get('/api/live/image')
+def live_image(request: Request, imageUrl: str, site: str):
+    from . import live
+    live_access(request, 240)
+    live.site(site)
+    content, mime = safely(media.fetch, imageUrl, False, True)
+    if not mime.lower().startswith('image/') or mime.split(';')[0].lower() == 'image/svg+xml':
+        raise HTTPException(502, '上游未返回位图图片')
+    return Response(content, media_type=mime, headers={'X-Accel-Buffering': 'no'})

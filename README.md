@@ -42,6 +42,12 @@ npm run dev
 
 后台支持逐条编辑与历史恢复、封面上传、分组服务配置、持久化任务与调度、Cookie 登录和账户会话管理。首次从 `ADMIN_PASSWORD` 创建管理员后，密码由数据库管理。调度默认暂停，在服务凭证验证后通过后台启用；旧 `nohentai-sync.timer` 保持关闭。schema 1 / 2 自动事务升级到 schema 3，上线前必须备份并验证副本，降级需恢复对应旧库。
 
+## 实时搜索与翻译
+
+在管理后台的「服务配置 → 收藏来源」选择实时搜索站点。Ex 使用已配置的来源凭据。实时搜索与翻译/OCR 共用工作台密码，一次验证有效 72 小时。目录、搜索结果与图片按需转发。
+
+在「服务配置 → 翻译服务」填写独立的 Cloud Translation API 密钥，可对 AI 缺译的文本使用 Google Translate 并显示来源。每月字符上限按 UTC 计算，设为 0 可暂停调用。启用前请核对适用界面的展示条件，尤其是成人内容页面的商标限制。[Cloud Translation](https://cloud.google.com/translate) · [展示要求及免责声明](https://cloud.google.com/translate/attribution)
+
 ## 验证
 
 ```sh

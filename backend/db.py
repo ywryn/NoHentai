@@ -165,18 +165,18 @@ def set_cache(key, data, ttl):
         con.execute('INSERT OR REPLACE INTO cache VALUES (?,?,?)', (key, dumps(data), time.time() + ttl))
 
 
-def reserve(key, limit, ttl):
+def reserve(key, limit, ttl, amount=1):
     """Atomic fixed-window counter shared by all API workers."""
-    if limit <= 0:
+    if not 0 < amount <= limit:
         return False
     stamp = time.time()
     with connect() as con:
-        result = con.execute('''INSERT INTO counters(key,count,expires) VALUES (?,1,?)
+        result = con.execute('''INSERT INTO counters(key,count,expires) VALUES (?,?,?)
             ON CONFLICT(key) DO UPDATE SET
-              count=CASE WHEN counters.expires<=? THEN 1 ELSE counters.count+1 END,
+              count=CASE WHEN counters.expires<=? THEN excluded.count ELSE counters.count+excluded.count END,
               expires=CASE WHEN counters.expires<=? THEN excluded.expires ELSE counters.expires END
-            WHERE counters.expires<=? OR counters.count<?''',
-            (key, stamp + ttl, stamp, stamp, stamp, limit))
+            WHERE counters.expires<=? OR counters.count+excluded.count<=?''',
+            (key, amount, stamp + ttl, stamp, stamp, stamp, limit))
         # Avoid a table-wide DELETE on every request. The indexed, occasional
         # sweep keeps obsolete keys bounded without serializing all requests.
         if random.randrange(128) == 0:

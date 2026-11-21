@@ -131,6 +131,7 @@ onBeforeUnmount(() => { scrollObserver?.disconnect(); resizeObserver?.disconnect
 
 <style scoped>
 .scroll-view {
+  touch-action: manipulation;
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;

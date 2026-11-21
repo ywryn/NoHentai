@@ -1,5 +1,11 @@
 <template>
-  <div class="gr-root">
+  <div class="gr-root" @pointerdown.capture="zoom.down" @pointermove.capture="zoom.move"
+    @pointerup.capture="zoom.up" @pointercancel.capture="zoom.cancel" @click.capture="zoom.click">
+    <div v-if="picture" class="reader-zoom" role="dialog" aria-label="图片放大">
+      <img :src="picture.src" alt="放大阅读" :style="{width:picture.width+'px',height:picture.height+'px',transform:
+        'translate('+picture.x+'px,'+picture.y+'px) scale('+picture.scale+')'}">
+      <button class="reader-btn" @click="zoom.reset">还原</button>
+    </div>
     <!-- Init loading -->
     <div v-if="initLoading" class="gr-center">
       <ImageLoadProgress stage="list" />
@@ -41,6 +47,7 @@
 </template>
 
 <script setup lang="ts">
+import { useReaderZoom } from '@/composables/useReaderZoom'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import ImageLoadProgress from '@/components/ui/ImageLoadProgress.vue'
 import { ref, provide, onMounted, onBeforeUnmount, watch } from 'vue'
@@ -56,7 +63,8 @@ import '@/assets/reader.css'
 const route  = useRoute()
 const router = useRouter()
 
-const reader = useReader()
+const liveSite = route.name === 'LiveReader' ? String(route.query.site || '') : undefined
+const reader = useReader(liveSite)
 provide(READER_KEY, reader)
 
 const { initLoading, initError, settings, currentPage, prev, next, updateSetting, onResize, init } = reader
@@ -71,6 +79,13 @@ const showThumbGrid = ref(false)
 const chromeVisible = ref(true)
 
 
+const zoom = useReaderZoom(target => {
+  if (target.classList.contains('click-zone-left')) settings.bookDirection === 'rtl' ? next() : prev()
+  else if (target.classList.contains('click-zone-right')) settings.bookDirection === 'rtl' ? prev() : next()
+  else chromeVisible.value = !chromeVisible.value
+})
+const { picture } = zoom
+
 /** 中间 40% 区域此前什么都不做，这里让它切换工具栏显隐 */
 function onSurfaceClick(e: MouseEvent) {
   const target = e.target as HTMLElement
@@ -81,11 +96,13 @@ function onSurfaceClick(e: MouseEvent) {
 /** 直接粘贴 URL 进入时 router.back() 会把用户带离本站 */
 function exit() {
   if (window.history.state?.back) router.back()
+  else if (liveSite !== undefined) router.push({ name: 'LiveDetail', params: { gid }, query: route.query })
   else router.push({ name: 'GalleryDetail', params: { gid } })
 }
 
 function onKey(e: KeyboardEvent) {
   // Native directory dialog owns dismissal and focus while it is open.
+  if (picture.value) { if (e.key === 'Escape') zoom.reset(); return }
   if (showThumbGrid.value) return
   if (['INPUT','TEXTAREA','SELECT'].includes((e.target as HTMLElement).tagName)) return
   const rtl = settings.bookDirection === 'rtl'
@@ -103,6 +120,7 @@ function onKey(e: KeyboardEvent) {
 }
 
 watch(currentPage, page => {
+  zoom.reset()
   const pageParam = String(page)
   if ((route.query.page as string | undefined) === pageParam) return
   router.replace({
@@ -137,6 +155,10 @@ onBeforeUnmount(() => {
   user-select: none;
   color: var(--reader-text);
 }
+.gr-content {touch-action:manipulation}
+.reader-zoom{position:fixed;inset:0;z-index:100;overflow:hidden;background:var(--reader-bg);touch-action:none}
+.reader-zoom img{position:absolute;top:0;left:0;max-width:none;max-height:none;transform-origin:0 0;pointer-events:none}
+.reader-zoom button{position:absolute;right:1rem;top:max(1rem,env(safe-area-inset-top))}
 .gr-center {
   flex: 1;
   display: flex;
