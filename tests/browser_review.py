@@ -88,13 +88,29 @@ def main():
                 expect(img).to_be_visible()
                 box = img.bounding_box()
                 x, y = int(box['x']+box['width']*.15), int(box['y']+box['height']*.5)
-                for scale in (2,3,1):
+                touch.evaluate("""() => {
+                    window.zoomAnimations = []
+                    const animate = Element.prototype.animate
+                    Element.prototype.animate = function(frames, options) {
+                      if (this.matches('.reader-zoom img')) window.zoomAnimations.push(options.duration)
+                      return animate.call(this,frames,options)
+                    }
+                }""")
+                if mode == 'book':
+                    expect(touch.locator('.click-zone-center')).to_have_css('-webkit-tap-highlight-color','rgba(0, 0, 0, 0)')
+                previous_scale = 1
+                for step in (1,2,3):
                     touch.touchscreen.tap(x,y)
                     touch.touchscreen.tap(x,y)
-                    if scale == 1:
+                    if step == 3:
                         expect(touch.locator('.reader-zoom')).to_have_count(0)
                     else:
-                        expect(touch.locator('.reader-zoom img')).to_have_attribute('style',re.compile(rf'scale\({scale}\)'))
+                        overlay = touch.locator('.reader-zoom img')
+                        expect(overlay).to_be_visible()
+                        scale = float(re.search(r'scale\(([^)]+)',overlay.get_attribute('style'))[1])
+                        assert scale > previous_scale
+                        previous_scale = scale
+                assert touch.evaluate('window.zoomAnimations') == [300,300,300]
                 expect(touch.locator('.tb-counter')).to_have_text('1 / 2')
             touch.close()
             print('PASS: mobile edge double taps cycle zoom without turning the page in both reading modes')

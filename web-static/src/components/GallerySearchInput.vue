@@ -77,7 +77,7 @@ defineExpose({ focus, clear, reset })
           </li>
         </ul>
       </div>
-      <slot name="actions" />
+      <slot name="actions" :submit="() => commit(true)" />
       <button v-if="help && profile !== 'plain'" type="button" class="search-control-help" :aria-expanded="helpOpen" :aria-controls="`${id}-help`" @click="helpOpen = !helpOpen">语法 <span aria-hidden="true">{{helpOpen ? '−' : '＋'}}</span></button>
     </div>
     <small v-if="failure" class="search-control-note" role="status">{{failure}}</small>

@@ -224,7 +224,7 @@ def main():
                         expect(page).to_have_url(re.compile('[?&]page=2'))
                         page.reload();expect(daily_cards).to_have_count(min(30,len(daily_groups[daily_index]['galleries'])-30))
                     page.set_viewport_size({'width':390,'height':844})
-                    expect(page.locator('.tab-bar')).to_be_visible()
+                    expect(page.get_by_role('button',name='页面导航')).to_be_visible()
                     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth+1')
                     page.screenshot(path='/tmp/nohentai-daily-mobile.png',full_page=True)
                     expect(page.locator('details.daily-rule')).to_be_visible()

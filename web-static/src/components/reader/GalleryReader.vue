@@ -4,7 +4,7 @@
     <div v-if="picture" class="reader-zoom" role="dialog" aria-label="图片放大">
       <img :src="picture.src" alt="放大阅读" :style="{width:picture.width+'px',height:picture.height+'px',transform:
         'translate('+picture.x+'px,'+picture.y+'px) scale('+picture.scale+')'}">
-      <button class="reader-btn" @click="zoom.reset">还原</button>
+      <button class="reader-btn" @click="zoom.restore">还原</button>
     </div>
     <!-- Init loading -->
     <div v-if="initLoading" class="gr-center">

@@ -166,6 +166,8 @@ function onTouchEnd(e: TouchEvent) {
 }
 
 .click-zone {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
   position: absolute;
   top: 0;
   bottom: 0;

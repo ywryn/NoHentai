@@ -131,6 +131,7 @@ onBeforeUnmount(() => { scrollObserver?.disconnect(); resizeObserver?.disconnect
 
 <style scoped>
 .scroll-view {
+  -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   flex: 1;
   overflow-y: auto;

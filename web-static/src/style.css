@@ -930,5 +930,5 @@ button,a,input,summary,select,textarea{touch-action:manipulation}
     --tag-color: CanvasText; --tag-bg: Canvas; --tag-border: ButtonText;
   }
   :is(.nav-menu, .a-nav-group) a[aria-current=page] { outline: 1px solid Highlight; outline-offset: 2px; }
-  .tab-item[aria-current=page] { outline: 1px solid Highlight; outline-offset: -3px; }
+  .nav-menu a[aria-current=page] { outline: 1px solid Highlight; outline-offset: -3px; }
 }
