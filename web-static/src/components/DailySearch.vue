@@ -4,7 +4,7 @@ import {useRouter,useRoute} from 'vue-router'
 import {watchPublicRevision} from '@/composables/useGalleryData'
 import {useViewMode} from '@/composables/useViewMode'
 import {parseQuery,passesQuery,matchGalleryTerm} from '@/utils/gallerySearch'
-import {exTypeDotColors,exTypeClassMap,formatTimestamp,enrichTags} from '@/utils/galleryUtils'
+import {categoryMasks,exTypeDotColors,exTypeClassMap,formatTimestamp,enrichTags} from '@/utils/galleryUtils'
 import GalleryList from './GalleryList.vue'
 import GallerySearchInput from './GallerySearchInput.vue'
 import Paginator from './Paginator.vue'
@@ -14,7 +14,6 @@ const perPage=30
 const groupIndex=computed(()=>Math.max(0,Math.min(groups.value.length-1,(parseInt(route.query.group)||1)-1)))
 const currentGroup=computed(()=>groups.value[groupIndex.value]||null)
 const rule=computed(()=>currentGroup.value?.conditions||null)
-const categoryMasks=[['Misc',1],['Doujinshi',2],['Manga',4],['Artist CG',8],['Game CG',16],['Image Set',32],['Cosplay',64],['Asian Porn',128],['Non-H',256],['Western',512]]
 const ruleCategories=computed(()=>categoryMasks.filter(([,mask])=>Boolean(rule.value?.categories&mask)))
 function pageRange(value){if(value.minPages==null&&value.maxPages==null)return '不限';if(value.minPages==null)return `最多 ${value.maxPages} 页`;if(value.maxPages==null)return `至少 ${value.minPages} 页`;return `${value.minPages}–${value.maxPages} 页`}
 

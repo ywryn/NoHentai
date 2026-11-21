@@ -10,7 +10,7 @@ import GallerySearchInput from '@/components/GallerySearchInput.vue'
 import GalleryPreview from './GalleryPreview.vue'
 import GalleryTagEditor from './GalleryTagEditor.vue'
 import {sameContent, recordDraft} from '@/utils/adminDrafts'
-import {exTypeDotColors} from '@/utils/galleryUtils'
+import {categoryMasks as categoryMask,exTypeDotColors} from '@/utils/galleryUtils'
 const props = defineProps({ kind: { type: String, required: true } })
 const confirm = inject('adminConfirm'), navigation = inject('adminOpenNavigation')
 const titles = { gallery: '画廊', book: '实体书单', daily: '每日筛选' }
@@ -34,7 +34,6 @@ const effective = computed(() => {
 })
 const labels = [['title','展示标题'], ['title_jpn','日文标题'], ['uploader','上传者']]
 const selectedRuleCategories=computed(()=>categoryMask.filter(([,mask])=>Boolean(data.value?.categories&mask)))
-const categoryMask = [['Misc',1],['Doujinshi',2],['Manga',4],['Artist CG',8],['Game CG',16],['Image Set',32],['Cosplay',64],['Asian Porn',128],['Non-H',256],['Western',512]]
 let sequence = 0, matchSequence = 0
 const clone = value => JSON.parse(JSON.stringify(value))
 function name(item) { return props.kind === 'gallery' ? item.effective.title_jpn || item.effective.title || `#${item.id}` : props.kind === 'book' ? item.data['书名'] || item.data['日文名'] || '新书目' : item.data.name }

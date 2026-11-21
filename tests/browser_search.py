@@ -294,13 +294,33 @@ def main():
             page.goto(base+'/#/live')
             expect(page.locator('.gallery-results a').first).to_contain_text('实时测试')
             live_search = page.get_by_role('combobox',name='搜索上游画廊')
-            live_search.fill('artist:test')
-            page.wait_for_timeout(300)
-            assert len(submitted) == 1
-            page.get_by_role('button',name='搜索',exact=True).click()
-            expect(page).to_have_url(re.compile('q=artist'))
-            expect(page.locator('.gallery-results a').first).to_have_attribute('href',re.compile(r'/live/123.*token=abcde'))
-            print('PASS: live search uses shared gallery cards and only queries upstream on submission')
+            live_search.fill('f:chi')
+            expect(page.get_by_role('option').first).to_be_visible()
+            live_search.press('ArrowDown')
+            live_search.press('Enter')
+            expect(live_search).to_have_value(re.compile('female:'))
+            page.get_by_role('button',name='分类',exact=True).click()
+            page.get_by_role('checkbox',name='Manga',exact=True).check()
+            expect(page).to_have_url(re.compile('type=Manga'))
+            expect(page.locator('.gallery-results a').first).to_have_attribute('href',re.compile('type=Manga'))
+            params = parse_qs(urlsplit(submitted[-1]).query)
+            assert params['f_cats'] == ['1019'] and 'female:' in params['q'][0], params
+            page.keyboard.press('Escape')
+            page.get_by_role('button',name='全部清除').click()
+            expect(live_search).to_have_value('')
+            for theme in range(2):
+                menu=page.get_by_role('button',name='页面导航')
+                values=menu.evaluate("""e=>{
+                    const t=document.querySelector('#theme-btn'), icon=e.querySelector('svg').getBoundingClientRect(),
+                        r=e.getBoundingClientRect(), cs=getComputedStyle(e), ts=getComputedStyle(t)
+                    return [Math.abs(icon.x+icon.width/2-r.x-r.width/2),Math.abs(icon.y+icon.height/2-r.y-r.height/2),
+                        ...['borderRadius','backgroundColor','borderColor','width','height','padding'].map(k=>cs[k]===ts[k])]
+                }""")
+                assert max(values[:2]) < 1 and all(values[2:]),values
+                page.locator('#theme-btn').click()
+                page.mouse.move(0,300)
+                page.wait_for_timeout(350)
+            print('PASS: live tag completion, upstream category filter and clear; toolbar geometry and theme parity')
             assert not errors,errors
             browser.close()
     finally:

@@ -18,7 +18,9 @@ const input = ref(null), text = ref(props.modelValue), caret = ref(text.value.le
 const focused = ref(false), helpOpen = ref(false), composing = ref(false)
 const enabled = computed(() => props.profile !== 'plain' && !composing.value)
 const { items, highlight, visible, failure, close, move } = useSearchSuggestions(text, caret, enabled, focused)
-const syntax = computed(() => props.profile === 'book' ? [...SEARCH_SYNTAX_HELP, ...BOOK_SEARCH_FIELDS] : SEARCH_SYNTAX_HELP)
+const syntax = computed(() => props.profile === 'live'
+  ? SEARCH_SYNTAX_HELP.filter(item => ['A B', '-A', '"A B"', 'tag$', 'f: m: a:'].includes(item.syntax))
+  : props.profile === 'book' ? [...SEARCH_SYNTAX_HELP, ...BOOK_SEARCH_FIELDS] : SEARCH_SYNTAX_HELP)
 let timer, blurTimer
 watch(() => props.modelValue, value => {
   clearTimeout(timer)
@@ -57,14 +59,14 @@ function blur() { blurTimer = setTimeout(() => { focused.value = false; close() 
 function onFocus() { clearTimeout(blurTimer); focused.value = true }
 function selection(event) { caret.value = event.target.selectionStart ?? text.value.length }
 onBeforeUnmount(() => { clearTimeout(timer); clearTimeout(blurTimer) })
-defineExpose({ focus, clear, reset })
+defineExpose({ focus, clear, reset, currentText: () => text.value })
 </script>
 <template>
   <div class="search-control" :class="`search-control-${variant}`" :data-search-profile="profile">
     <div class="search-control-row">
       <div class="search-control-box">
         <AppIcon name="search" :size="20" class="search-control-icon" />
-        <input :id="id" ref="input" :value="text" type="text" inputmode="search" maxlength="2000" :aria-label="label" :placeholder="placeholder"
+        <input :id="id" ref="input" :value="text" type="text" inputmode="search" :maxlength="profile === 'live' ? 500 : 2000" :aria-label="label" :placeholder="placeholder"
           role="combobox" aria-autocomplete="list" :aria-controls="`${id}-options`" :aria-expanded="visible"
           :aria-activedescendant="visible && highlight >= 0 ? `${id}-option-${highlight}` : undefined"
           autocomplete="off" spellcheck="false" @input="readInput" @keydown="key" @keyup="selection" @click="selection" @select="selection"

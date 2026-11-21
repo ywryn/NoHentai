@@ -234,6 +234,34 @@ button:hover {
   color: #fff;
 }
 
+.toolbar-icon-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-color);
+  color: var(--text-color);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.toolbar-icon-button:hover {
+  background: var(--bg-color);
+  border-color: var(--primary-color);
+}
+
+.toolbar-icon-button:hover svg {
+  color: var(--primary-color);
+}
+
 /* ── 统一焦点指示 ────────────────────────────────────────
    组件不得使用 outline:none 裸移除，需覆盖时请覆盖此变量。 */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {

@@ -260,10 +260,11 @@ def live_access(request, count=60):
 
 @app.get('/api/live/search')
 def live_search(request: Request, q: str = Query('', max_length=500), cursor: str = Query('', pattern=r'^[0-9]{0,20}$'),
-                site: str = '', prev: str = Query('', pattern=r'^[0-9]{0,20}$')):
+                site: str = '', prev: str = Query('', pattern=r'^[0-9]{0,20}$'),
+                f_cats: int = Query(0, ge=0, le=1023)):
     from . import live
     live_access(request)
-    return safely(live.search, q, cursor, site, prev)
+    return safely(live.search, q, cursor, site, prev, f_cats)
 
 
 @app.get('/api/live/directory')

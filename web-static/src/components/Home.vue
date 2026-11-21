@@ -9,62 +9,8 @@
           </div>
         </div>
 
-        <div class="home-filter-panel">
-          <GallerySearchInput ref="searchInputRef" v-model="searchQuery" label="搜索画廊">
-            <template #actions>
-            <button
-              class="home-filter-btn"
-              :class="{ 'is-on': activeTypes.length }"
-              type="button"
-              aria-haspopup="dialog"
-              :aria-expanded="categoryOpen"
-              :title="activeTypes.length ? `已选 ${activeTypes.length} 个分类` : '按分类筛选'"
-              @click="toggleCategoryPanel"
-            >
-              <span
-                v-if="activeTypes.length"
-                class="home-type-dot"
-                :style="{ background: exTypeDotColors[activeTypes[0]] }"
-              ></span>
-              <AppIcon name="filter" :size="20" v-else />
-              {{ categoryLabel }}
-              <span class="home-filter-caret" aria-hidden="true"><AppIcon name="chevron-down" :size="18" /></span>
-            </button>
-            </template>
-          </GallerySearchInput>
-
-          <!-- 当前生效的筛选条件：逐项可移除 -->
-          <div v-if="isFiltered" class="home-active-filters">
-
-            <button
-              v-for="term in activeTerms"
-              :key="`t-${term.raw}`"
-              class="home-filter-chip"
-              :class="{ 'is-exclude': term.mode === 'exclude', 'is-or': term.mode === 'or' }"
-              type="button"
-              :title="`移除条件：${term.raw}`"
-              @click="removeTerm(term)"
-            >
-              <span v-if="term.mode === 'exclude'" class="chip-sign">−</span>
-              <span v-else-if="term.mode === 'or'" class="chip-sign">或</span>
-              {{ term.raw.replace(/^[-~]/, '') }}
-              <span class="chip-x" aria-hidden="true"><AppIcon name="close" :size="18" /></span>
-            </button>
-            <button
-              v-for="type in activeTypes"
-              :key="`c-${type}`"
-              class="home-filter-chip is-category"
-              type="button"
-              :title="`移除分类：${type}`"
-              @click="toggleType(type)"
-            >
-              <span class="home-type-dot" :style="{ background: exTypeDotColors[type] }"></span>
-              {{ type }}
-              <span class="chip-x" aria-hidden="true"><AppIcon name="close" :size="18" /></span>
-            </button>
-            <button class="home-clear-all" type="button" @click="clearAll">全部清除</button>
-          </div>
-        </div>
+        <GalleryFilters :query="appliedQuery" :types="activeTypes" :counts="typeCounts" :totals="totalTypeCounts"
+          @change="changeFilters" />
       </div>
 
       <section class="home-content-panel catalog-results" :aria-busy="loading" aria-label="画廊列表">
@@ -82,54 +28,21 @@
         <Paginator v-if="totalPages > 1 && !error" :page="currentPage" :total="totalPages" @go="goToPage" />
       </section>
 
-      <Popover ref="categoryPopover" class="category-popover" @show="categoryOpen = true" @hide="categoryOpen = false">
-        <div class="category-panel">
-          <div class="category-panel-head">
-            <span class="category-panel-title">按分类筛选</span>
-            <button
-              v-if="activeTypes.length"
-              class="category-reset"
-              type="button"
-              @click="activeTypes = []"
-            >清除</button>
-          </div>
-          <ul class="category-list">
-            <li v-for="opt in categoryOptions" :key="opt.name">
-              <label class="category-row" :class="{ 'is-empty': opt.count === 0 && !opt.checked }">
-                <input
-                  type="checkbox"
-                  class="category-check"
-                  :checked="opt.checked"
-                  :disabled="opt.count === 0 && !opt.checked"
-                  @change="toggleType(opt.name)"
-                />
-                <span class="home-type-dot" :style="{ background: opt.color }"></span>
-                <span class="category-name">{{ opt.name }}</span>
-                <span class="category-count">{{ opt.count }}</span>
-              </label>
-            </li>
-          </ul>
-        </div>
-      </Popover>
-
     </div>
   </div>
 </template>
 
 <script setup>
-import AppIcon from '@/components/ui/AppIcon.vue'
+import GalleryFilters from './GalleryFilters.vue'
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import Popover from 'primevue/popover'
 import GalleryList from '@/components/GalleryList.vue'
 import Paginator from '@/components/Paginator.vue'
-import GallerySearchInput from '@/components/GallerySearchInput.vue'
-import { exTypeList, exTypeDotColors, exTypeClassMap, formatTimestamp } from '@/utils/galleryUtils'
+import { exTypeClassMap, formatTimestamp } from '@/utils/galleryUtils'
 import { loadGalleryPage, watchPublicRevision } from '@/composables/useGalleryData'
 import {
   parseQuery,
   parsedTerms,
-  removeQueryTerm,
 } from '@/utils/gallerySearch'
 
 const PER_PAGE = 30
@@ -142,15 +55,11 @@ function setQuery(patch, history = false) {
   for (const key of Object.keys(query)) if (query[key] === undefined || query[key] === '') delete query[key]
   if (JSON.stringify(query) !== JSON.stringify(route.query)) router[history ? 'push' : 'replace']({ query })
 }
-const appliedQuery = computed({
-  get: () => String(route.query.q || ''),
-  set: q => { if (q.trim() !== String(route.query.q || '')) setQuery({ q: q.trim(), page: undefined }) },
-})
-const searchQuery = appliedQuery
-const activeTypes = computed({
-  get: () => String(route.query.type || '').split(',').filter(Boolean),
-  set: types => setQuery({ type: types.join(','), page: undefined }),
-})
+const appliedQuery = computed(() => String(route.query.q || ''))
+const activeTypes = computed(() => String(route.query.type || '').split(',').filter(Boolean))
+function changeFilters(q, types) {
+  setQuery({q:q.trim(), type:types.join(','), page:undefined})
+}
 const currentPage = computed({
   get: () => Math.max(1, Number.parseInt(route.query.page) || 1),
   set: page => setQuery({ page: page > 1 ? String(page) : undefined }, true),
@@ -159,45 +68,8 @@ const pageItems = ref([]), totalRecords = ref(0), totalAll = ref(0)
 const typeCounts = ref({}), totalTypeCounts = ref({})
 const perPage = ref(PER_PAGE), loading = ref(true), error = ref('')
 
-const searchInputRef = ref()
-const categoryPopover = ref()
-const categoryOpen = ref(false)
-
-
-/* ── 过滤（即时，与 Printed 页行为一致） ───────────────────────── */
-
-const parsedQuery = computed(() => parseQuery(appliedQuery.value.trim()))
-const activeTerms = computed(() => parsedTerms(parsedQuery.value))
-
-/**
- * 分类选项。
- * 以 exTypeList 为基准，另外补上数据里出现过但不在标准分类表中的类目
- * （如收藏夹里的 private），否则这些画廊无法通过分类筛到。
- * 按全量数量降序，显示的是当前查询下的数量，便于预判点击结果。
- */
-const categoryOptions = computed(() => {
-  const known = new Set(exTypeList.map(t => t.name))
-  const extras = Object.keys(totalTypeCounts.value).filter(name => name && !known.has(name))
-  return [...exTypeList.map(t => t.name), ...extras]
-    .map(name => ({
-      name,
-      color: exTypeDotColors[name] || 'var(--faint-color)',
-      count: typeCounts.value[name] || 0,
-      total: totalTypeCounts.value[name] || 0,
-      checked: activeTypes.value.includes(name),
-    }))
-    .sort((a, b) => b.total - a.total)
-})
-
-const categoryLabel = computed(() => {
-  const n = activeTypes.value.length
-  if (n === 0) return '分类'
-  if (n === 1) return activeTypes.value[0]
-  return `${activeTypes.value[0]} +${n - 1}`
-})
-
 const totalPages = computed(() => Math.max(1, Math.ceil(totalRecords.value / perPage.value)))
-const isFiltered = computed(() => activeTerms.value.length > 0 || activeTypes.value.length > 0)
+const isFiltered = computed(() => parsedTerms(parseQuery(appliedQuery.value)).length > 0 || activeTypes.value.length > 0)
 
 const normalizedItems = computed(() =>
   pageItems.value.map(item => {
@@ -221,31 +93,14 @@ const normalizedItems = computed(() =>
   })
 )
 
-function toggleType(type) {
-  activeTypes.value = activeTypes.value.includes(type)
-    ? activeTypes.value.filter(t => t !== type) : [...activeTypes.value, type]
-}
-
-function removeTerm(term) {
-  searchQuery.value = removeQueryTerm(searchQuery.value, term)
-}
-
-function clearAll() {
-  searchInputRef.value?.reset()
-  setQuery({ q: undefined, type: undefined, page: undefined })
-}
-
 function goToPage(page) {
   currentPage.value = Math.max(1, Math.min(totalPages.value, Number(page) || 1))
-}
-
-function toggleCategoryPanel(event) {
-  categoryPopover.value?.toggle(event)
 }
 
 /* Query state lives in the URL. Abort obsolete requests and ignore stale replies. */
 let pageController, requestVersion = 0
 async function fetchPage() {
+  if (route.name !== 'Home') return
   pageController?.abort()
   pageController = new AbortController()
   const version = ++requestVersion

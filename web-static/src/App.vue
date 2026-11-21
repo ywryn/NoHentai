@@ -101,8 +101,8 @@ onBeforeUnmount(() => {
         <span class="nav-view-mode"><ViewModeToggle v-if="showViewModeToggle" /></span>
         <MomModeToggle />
         <ThemeToggle />
-        <button v-if="narrow" ref="trigger" class="nav-trigger" aria-label="页面导航" aria-controls="site-nav" :popovertarget="nativePopover ? 'site-nav' : undefined"
-          :aria-expanded="open" @click="toggleMenu"><AppIcon :name="open ? 'close' : 'menu'" :size="21" /></button>
+        <button v-if="narrow" ref="trigger" class="nav-trigger toolbar-icon-button" aria-label="页面导航" aria-controls="site-nav" :popovertarget="nativePopover ? 'site-nav' : undefined"
+          :aria-expanded="open" @click="toggleMenu"><AppIcon :name="open ? 'close' : 'menu'" :size="20" /></button>
       </div>
       <nav ref="menu" id="site-nav" class="nav-menu" :class="{expanded:open}"
         :popover="narrow && nativePopover ? 'auto' : undefined" aria-label="主导航"
@@ -256,8 +256,6 @@ onBeforeUnmount(() => {
 
 
 .nav-actions {order:2}
-.nav-trigger {display:grid;place-items:center;width:44px;height:44px;color:var(--text-color);border:1px solid var(--row-border);border-radius:10px;background:var(--row-bg)}
-.nav-trigger[aria-expanded=true] {background:var(--primary-soft-bg);color:var(--primary-on-soft)}
 @media(max-width:767px){
   .navigation-bar {background:var(--row-bg);backdrop-filter:none;-webkit-backdrop-filter:none}
   .nav-actions {margin-inline-start:auto;gap:4px}
