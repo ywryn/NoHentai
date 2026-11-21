@@ -265,12 +265,15 @@ def main():
                     page.get_by_label('管理密码', exact=True).fill(password)
                     page.get_by_role('button', name='登录', exact=True).click()
                     expect(page.get_by_role('heading', name='站点概览')).to_be_visible()
+                    expect(page.locator('.ops-page-header.a-page-heading')).to_have_css('padding-top','0px')
                     cookies=browser.contexts[0].cookies()
                     assert any(cookie['name']=='nohentai_admin' and cookie['httpOnly'] for cookie in cookies)
                     assert page.evaluate('localStorage.getItem("nohentai-admin-session-v1")') is None
                     for name, heading in [('画廊','画廊'),('实体书单','实体书单'),('每日筛选','每日筛选'),('服务配置','服务配置'),('任务与调度','同步任务与调度'),('服务状态','服务状态'),('修改记录','修改记录'),('备份与恢复','备份与恢复'),('账户与会话','账户与会话')]:
                         page.locator('.a-sidebar').get_by_role('link',name=name,exact=True).click()
                         expect(page.get_by_role('heading',name=heading,exact=True).first).to_be_visible()
+                        if name in ('任务与调度', '服务状态'):
+                            expect(page.locator('.ops-page-header.a-page-heading')).to_have_css('padding-bottom','0px')
                         assert page.locator('.a-alert-error').count()==0,name
                         if name=='服务状态':
                             expect(page.locator('.ops-health-banner')).to_be_visible()

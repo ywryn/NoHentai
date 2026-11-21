@@ -128,7 +128,7 @@ onBeforeRouteLeave(async()=>!dirty.value||await confirm({title:'放弃未保存�
 onBeforeUnmount(()=>{clearInterval(timer);clearInterval(clockTimer);window.removeEventListener('beforeunload',beforeUnload)})
 </script>
 <template><div class="a-page ops-page" :aria-busy="busy||loading">
-<header class="ops-page-header"><div class="ops-header-copy"><AdminMenuButton /><span class="ops-kicker">AUTOMATION / 运行中心</span><h1>同步任务与调度</h1><p>让任务在后台推进，让每一步都清晰可见。</p></div><button class="a-button" :disabled="busy || loading || changingPage" @click="load"><AdminIcon name="refresh" :size="16"/>刷新</button></header>
+<header class="a-page-heading ops-page-header"><div class="a-page-title"><AdminMenuButton /><h1>同步任务与调度</h1></div><button class="a-button" :disabled="busy || loading || changingPage" @click="load"><AdminIcon name="refresh" :size="16"/>刷新</button></header>
 <div v-if="error" class="a-alert a-alert-error" role="alert">{{error}}</div><div v-if="notice" class="a-alert a-alert-success" role="status">{{notice}}</div>
 <section class="ops-command-bar"><div class="ops-live-dot" :class="{'is-running':runPage.active}"></div><div><strong>{{runPage.active?`${runPage.active} 个任务正在推进`:'队列空闲，随时准备执行'}}</strong><small>{{runPage.failed?`${runPage.failed} 个最近任务需要关注`:'任务成功后自动发布，抓取期间继续提供现有内容'}}</small></div><button class="a-button a-primary" :disabled="busy" @click="all"><AdminIcon name="plus" :size="16"/>分别同步全部</button></section>
 <AdminTabs v-model="tab" label="任务视图" :items="[{id:'runs',label:'运行记录',icon:'tasks',count:runPage.count},{id:'schedules',label:'每日调度',icon:'clock',count:schedules.filter(s=>s.enabled).length+' / '+schedules.length}]"/>
