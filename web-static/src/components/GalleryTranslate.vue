@@ -41,6 +41,10 @@
       <button class="gt-back-btn" aria-label="返回详情" @click="$router.back()"><AppIcon name="arrow-left" :size="18" /></button>
 
       <div class="gt-header-info">
+        <a v-if="googleCount" href="https://translate.google.com/" target="_blank" rel="noopener noreferrer"
+           class="gt-google-source" :aria-label="`本页 ${googleCount} 条由 Google 翻译`">
+          <img src="@/assets/google-translate.png" alt="Powered by Google Translate">{{ googleCount }} 条
+        </a>
         <span v-if="totalPages" class="gt-header-pages">{{ currentPage }} / {{ totalPages }}</span>
       </div>
 
@@ -342,7 +346,7 @@
             <template v-else>
               <div v-if="result.translation" class="gt-result-trans-row">
                 <p class="gt-result-trans">
-                  <span v-if="result.kind && result.kind !== 'dialogue'" class="gt-kind-tag">{{ kindLabel(result.kind) }}</span>{{ result.translation }}
+                  <small v-if="result.translationSource === 'google'">由 Google 翻译 · </small><span v-if="result.kind && result.kind !== 'dialogue'" class="gt-kind-tag">{{ kindLabel(result.kind) }}</span>{{ result.translation }}
                 </p>
                 <button class="gt-result-edit-btn" type="button" title="编辑译文" aria-label="编辑译文" @click.stop="startEdit(i)"><AppIcon name="edit" :size="16" /></button>
               </div>
@@ -367,7 +371,7 @@
           <button class="gt-bc-close" type="button" aria-label="关闭" @click="closeBubble"><AppIcon name="close" :size="18" /></button>
         </div>
         <p class="gt-bc-orig">{{ ocrResults[bubbleCard].text }}</p>
-        <p v-if="ocrResults[bubbleCard].translation" class="gt-bc-trans">{{ ocrResults[bubbleCard].translation }}</p>
+        <p v-if="ocrResults[bubbleCard].translation" class="gt-bc-trans"><small v-if="ocrResults[bubbleCard].translationSource === 'google'">由 Google 翻译 · </small>{{ ocrResults[bubbleCard].translation }}</p>
         <p v-else class="gt-bc-trans gt-bc-pending">尚未翻译</p>
         <button class="gt-bc-edit" type="button" @click="editBubble">{{ ocrResults[bubbleCard].translation ? '编辑译文' : '手动填写' }}</button>
         <p v-if="ocrResults[bubbleCard].alt" class="gt-bc-alt">备选：{{ ocrResults[bubbleCard].alt }}</p>
@@ -446,7 +450,7 @@ import {readTranslationResponse,scaleOcrResults} from '@/utils/translationApi'
 import { loadGallery } from '@/composables/useGalleryData'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
-const SESSION_KEY = 'trans_password'
+
 const TRANS_CACHE_TTL = 3 * 24 * 60 * 60 * 1000
 /* 每画廊术语表：{ 原文: 译文 }，随翻译请求一起送给模型 */
 const GLOSSARY_KEY_PREFIX = 'trans_glossary_'
@@ -845,6 +849,7 @@ export default {
     totalPages() {
       return this.galleryImages.length
     },
+    googleCount() { return this.ocrResults.filter(r => r.translationSource === 'google').length },
     missingCount() {
       return this.ocrResults.filter(r => !r.translation).length
     },
@@ -902,11 +907,8 @@ export default {
       this.galleryMeta = result.gallery
     }).catch(() => { this.galleryMeta = null })
 
-    const savedPwd = sessionStorage.getItem(SESSION_KEY)
-    if (savedPwd) {
-      this.passwordInput = savedPwd
-      this.verifyPassword()
-    }
+    sessionStorage.removeItem('trans_password')
+    this.verifyPassword(true)
   },
 
   mounted() {
@@ -1210,26 +1212,26 @@ export default {
 
     // ── Auth ──────────────────────────────────────────────────────────────────
 
-    async verifyPassword() {
-      if (!this.passwordInput) return
+    async verifyPassword(probe = false) {
+      const silent = probe === true
+      if (!silent && !this.passwordInput) return
       this.passwordLoading = true
       this.passwordError = ''
       try {
         const res = await fetch(`${API_BASE}/api/trans-verify`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: this.passwordInput }),
+          body: JSON.stringify(silent ? {} : { password: this.passwordInput }),
         })
         if (res.ok) {
-          sessionStorage.setItem(SESSION_KEY, this.passwordInput)
+          this.passwordInput = ''
           this.passwordVerified = true
           this.$nextTick(() => {
             if (this.$refs.containerRef) this._ro?.observe(this.$refs.containerRef)
           })
           this.loadGalleryImages()
         } else {
-          this.passwordError = '密码错误'
-          sessionStorage.removeItem(SESSION_KEY)
+          if (!silent) this.passwordError = '密码错误'
         }
       } catch {
         this.passwordError = '验证失败，请检查网络'
@@ -1547,7 +1549,7 @@ export default {
       const res = await fetch(`${API_BASE}/api/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: sessionStorage.getItem(SESSION_KEY), ...body }),
+        body: JSON.stringify(body),
       })
       return readTranslationResponse(res)
     },
@@ -1584,6 +1586,7 @@ export default {
       return {
         ...result,
         translation: item?.t ?? null,
+        translationSource: item?.source,
         kind: item?.kind ?? result.kind ?? null,
         alt: item?.alt ?? null,
       }
@@ -1639,7 +1642,7 @@ export default {
       const text = this.editingText.trim()
       this.editingIdx = null
       if (!this.ocrResults[i]) return
-      this.ocrResults = this.ocrResults.map((r, idx) => idx === i ? { ...r, translation: text || null, edited: !!text } : r)
+      this.ocrResults = this.ocrResults.map((r, idx) => idx === i ? { ...r, translationSource: null, translation: text || null, edited: !!text } : r)
       this.unfitBoxes = {}
       this.savePageCache()
       this.$nextTick(() => this.applyTextFit())
@@ -1784,7 +1787,6 @@ export default {
     },
 
     handleAuthError() {
-      sessionStorage.removeItem(SESSION_KEY)
       this.passwordVerified = false
       this.passwordInput = ''
       this.passwordError = '密码已失效，请重新输入'
@@ -3030,6 +3032,7 @@ export default {
 
 /* ── Toasts ──────────────────────────────────────────────────────────────────── */
 
+.gt-google-source {display:inline-flex;align-items:center;gap:.35rem;background:white;color:#222;padding:2px 4px;font-size:12px}
 .gt-toasts {
   position: fixed;
   bottom: 24px;

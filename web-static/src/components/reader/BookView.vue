@@ -4,6 +4,7 @@
     class="book-view"
     @touchstart.passive="onTouchStart"
     @touchend.passive="onTouchEnd"
+    @touchcancel.passive="cancelSwipe"
   >
     <Transition
       v-for="spread in cachedSpreads"
@@ -92,11 +93,19 @@ const cachedSpreads = computed<Spread[]>(() => {
 function onClickLeft() { settings.bookDirection === 'rtl' ? next() : prev() }
 function onClickRight() { settings.bookDirection === 'rtl' ? prev() : next() }
 
-let touchX = 0
-function onTouchStart(e: TouchEvent) { touchX = e.touches[0].clientX }
+let swipeStart: {id: number; x: number; y: number} | null = null
+function cancelSwipe() { swipeStart = null }
+function onTouchStart(e: TouchEvent) {
+  const touch = e.touches[0]
+  swipeStart = e.touches.length === 1 ? {id:touch.identifier, x:touch.clientX, y:touch.clientY} : null
+}
 function onTouchEnd(e: TouchEvent) {
-  const dx = e.changedTouches[0].clientX - touchX
-  if (Math.abs(dx) < 40) return
+  const start = swipeStart
+  swipeStart = null
+  const touch = e.changedTouches[0]
+  if (!start || e.touches.length || touch.identifier !== start.id) return
+  const dx = touch.clientX - start.x
+  if (Math.abs(dx) < 40 || Math.abs(dx) <= Math.abs(touch.clientY - start.y)) return
   dx < 0 ? onClickRight() : onClickLeft()
 }
 </script>

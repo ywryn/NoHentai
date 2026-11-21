@@ -8,7 +8,10 @@ from .upstream import fetch, json_request, validate_url
 
 def gallery_page(url):
     content, _ = fetch(url, gallery=True)
-    soup = BeautifulSoup(content, 'html.parser')
+    return parse_gallery_page(BeautifulSoup(content, 'html.parser'))
+
+
+def parse_gallery_page(soup):
     if not soup.select_one('#gdt'):
         return None
     total = 0
@@ -74,12 +77,12 @@ def gallery_images(gid, token):
     fail(403, 'exhentai_blocked')
 
 
-def image_url(page_url, refresh=False):
+def image_url(page_url, refresh=False, persistent=True):
     validate_url(page_url, gallery=True)
     if not re.fullmatch(r'/s/[a-zA-Z0-9]+/[0-9]+-[0-9]+/?', urlsplit(page_url).path):
         fail(400, '图片页面路径不正确')
     key = 'image-url:' + page_url
-    cached = None if refresh else db.get_cache(key)
+    cached = None if refresh or not persistent else db.get_cache(key)
     if cached:
         return cached
     content, _ = fetch(page_url, gallery=True)
@@ -91,7 +94,8 @@ def image_url(page_url, refresh=False):
     link = soup.select_one('#loadfail, a[onclick*="nl("]')
     nl = re.search(r"nl\('([^']+)'\)", link.get('onclick', '')) if link else None
     result = {'imageUrl': img['src'], 'nlParam': nl[1] if nl else None}
-    db.set_cache(key, result, 900)
+    if persistent:
+        db.set_cache(key, result, 900)
     return result
 
 

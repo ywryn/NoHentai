@@ -1,5 +1,6 @@
 // web-static/src/composables/useReader.ts
 import { ref, reactive, computed } from 'vue'
+import { liveData, liveUrl } from '@/utils/live'
 import type { InjectionKey } from 'vue'
 
 const API_BASE = (import.meta as any).env?.VITE_API_BASE ?? ''
@@ -47,7 +48,7 @@ function loadSettings(): ReaderSettings {
   }
 }
 
-export function useReader() {
+export function useReader(liveSite?: string) {
   const pages = ref<PageInfo[]>([])
   const total = ref(0)
   const galleryTitle = ref('')
@@ -82,10 +83,33 @@ export function useReader() {
     try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...settings })) } catch {}
   }
 
+  let liveGallery = {gid:'', token:'', site:liveSite ?? ''}
+  let perPart = 1
+  const directories = new Map<number, Promise<void>>()
+  function installPages(items: PageInfo[]) {
+    for (const item of items) {
+      pages.value[item.pageNum - 1] = {...item, thumbSprite: item.thumbSprite ?
+        liveUrl('image', { site: liveGallery.site, imageUrl: item.thumbSprite }) : ''}
+    }
+  }
+
   async function init(gid: string, token: string, startPage: number) {
     initLoading.value = true
     initError.value = null
     try {
+      if (liveSite !== undefined) {
+        liveGallery = {gid, token, site:liveSite}
+        const data = await liveData('directory', liveGallery)
+        liveGallery.site = data.site
+        perPart = data.images.length
+        total.value = data.total
+        galleryTitle.value = data.title
+        pages.value = Array.from({length:data.total}, (_, i) => ({
+          pageNum:i+1, pageUrl:'', thumbSprite:'', thumbX:0, thumbW:100, thumbH:142
+        }))
+        installPages(data.images)
+        return
+      }
       const res = await fetch(`${API_BASE}/api/gallery-images?gid=${encodeURIComponent(gid)}&token=${encodeURIComponent(token)}`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
@@ -107,10 +131,18 @@ export function useReader() {
     const inflight = inflightCache.get(pageNum)
     if (inflight) return inflight
 
+    if (liveSite !== undefined && !pages.value[pageNum - 1]?.pageUrl) {
+      const part = Math.floor((pageNum - 1) / perPart)
+      if (!directories.has(part)) directories.set(part,
+        liveData('directory', {...liveGallery, part:String(part)}).then(data => installPages(data.images))
+          .finally(() => directories.delete(part)))
+      await directories.get(part)
+    }
     const pg = pages.value.find(p => p.pageNum === pageNum)
     if (!pg) throw new Error(`Page ${pageNum} not found`)
 
     const promise = (async () => {
+      if (liveSite !== undefined) return liveImage(pg.pageUrl)
       const res = await fetch(`${API_BASE}/api/image-url?pageUrl=${encodeURIComponent(pg.pageUrl)}`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
@@ -127,6 +159,12 @@ export function useReader() {
     return promise
   }
 
+  async function liveImage(pageUrl: string): Promise<ImageData> {
+    const site = liveGallery.site
+    const data = await liveData('image-url', {site, pageUrl})
+    return { imageUrl: liveUrl('image', {site, imageUrl:data.imageUrl}), nlParam:data.nlParam }
+  }
+
   async function retryImage(pageNum: number, nlParam?: string | null): Promise<ImageData> {
     imageCache.delete(pageNum)
     const pg = pages.value.find(p => p.pageNum === pageNum)
@@ -136,6 +174,12 @@ export function useReader() {
       // Remove any existing nl= param before appending
       pageUrl = pageUrl.replace(/([?&])nl=[^&]*/g, '$1').replace(/[?&]$/, '')
       pageUrl += (pageUrl.includes('?') ? '&' : '?') + `nl=${encodeURIComponent(nlParam)}`
+    }
+    if (liveSite !== undefined) {
+      if (!pageUrl) return getImageUrl(pageNum)
+      const result = await liveImage(pageUrl)
+      imageCache.set(pageNum, result)
+      return result
     }
     const res = await fetch(`${API_BASE}/api/image-url?pageUrl=${encodeURIComponent(pageUrl)}&refresh=true`)
     if (!res.ok) throw new Error(`HTTP ${res.status}`)

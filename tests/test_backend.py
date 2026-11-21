@@ -327,6 +327,60 @@ class BackendTests(unittest.TestCase):
             self.assertEqual(response.status_code, 502)
             self.assertNotIn('private-key', response.text)
 
+    def test_google_fallback_preserves_positions_and_quota(self):
+        with patch.dict(os.environ, {'GOOGLE_TRANSLATE_API_KEY':'fixture', 'GOOGLE_TRANSLATE_MONTHLY_CHARS':'4',
+                                    'LLM_API_BASE':'https://example.org', 'LLM_API_KEY':'fixture'}):
+            google = {'data': {'translations':[{'translatedText':'补译'}]}}
+            with patch.object(translation, 'ai_translate', return_value=[None, {'t':'成功'}]), patch.object(
+                    translation, 'json_request', return_value=google) as call:
+                result = translation.translate({'texts':['第一', '第二']})
+                self.assertEqual(result['translations'], [{'t':'补译','source':'google'}, {'t':'成功'}])
+                self.assertEqual(call.call_args.kwargs['json']['q'], ['第一'])
+                self.assertTrue(translation.translate({'texts':['第一', '第二']})['cached'])
+                with patch.object(translation, 'ai_translate', side_effect=ValueError()):
+                    self.assertEqual(translation.translate({'texts':['第三']})['translations'][0]['source'], 'google')
+                    self.assertEqual(translation.translate({'texts':['第四']})['translations'], [None])
+                self.assertEqual(call.call_count, 2)
+
+    def test_live_session_search_read_and_expire(self):
+        urls = ['/api/live/search', '/api/live/directory?site=e-hentai.org&gid=2&token=abcde',
+                '/api/live/image-url?site=e-hentai.org&pageUrl=https://e-hentai.org/s/abc/2-1',
+                '/api/live/image?site=e-hentai.org&imageUrl=https://ehgt.org/p.png']
+        for url in urls:
+            self.assertEqual(self.client.get(url).status_code, 401)
+        response = self.client.post('/api/trans-verify', json={'password':'trans-test'})
+        self.assertIn('HttpOnly', response.headers['set-cookie'])
+        self.assertIn('Max-Age=259200', response.headers['set-cookie'])
+        with patch('time.time', return_value=time.time() + 71 * 3600):
+            self.assertEqual(self.client.post('/api/trans-verify', json={}).status_code, 200)
+        self.assertEqual(self.client.post('/api/trans-verify', json={}).status_code, 200)
+        with patch('backend.live.document', return_value=b'No hits found'), patch('backend.db.set_cache', side_effect=AssertionError):
+            self.assertEqual(self.client.get(urls[0]).json()['items'], [])
+            with patch.dict(os.environ, {'LIVE_SITE':'exhentai.org'}):
+                self.assertEqual(self.client.get(urls[1]).status_code, 409)
+                self.assertEqual(self.client.get(urls[0]).json()['site'], 'exhentai.org')
+        listing = b"""<table class="itg"><tr><td class="gl3c"><a href="/g/2/abcde/">
+            <div class="glink">Fixture title</div></a></td></tr></table>
+            <a id="uprev" href="/?prev=5">Prev</a><a id="unext" href="/?next=2">Next</a>"""
+        gallery = b"""<h1 id="gn">Fixture title</h1><table id="gdd"><tr><td class="gdt1">Length:</td>
+            <td>2 pages</td></tr></table><div id="gdt"><a href="/s/aa/2-2"></a></div>"""
+        with patch('backend.live.document', side_effect=[listing, gallery]) as fetch, patch(
+                'backend.db.get_cache', side_effect=AssertionError), patch('backend.db.set_cache', side_effect=AssertionError):
+            page = self.client.get(urls[0], params={'q':'sample', 'prev':'7'}).json()
+            self.assertEqual((page['items'][0]['title'], page['prev'], page['next']), ('Fixture title','5','2'))
+            response = self.client.get(urls[1]+'&part=1')
+            self.assertEqual(response.headers['cache-control'], 'no-store')
+            self.assertEqual(response.json()['images'][0]['pageUrl'],'https://e-hentai.org/s/aa/2-2')
+            self.assertIn('prev=7', fetch.call_args_list[0].args[0])
+            self.assertIn('p=1', fetch.call_args_list[1].args[0])
+        with patch('backend.media.fetch', return_value=(b'<img id="img" src="https://ehgt.org/p.png">','text/html')), patch(
+                'backend.media.validate_url'), patch('backend.db.set_cache', side_effect=AssertionError):
+            self.assertEqual(self.client.get(urls[2]).json()['imageUrl'], 'https://ehgt.org/p.png')
+        with patch('time.time', return_value=time.time()+security.COST_TTL+1):
+            self.assertEqual(self.client.get(urls[0]).status_code, 401)
+        with patch.dict(os.environ, {'TRANS_PASSWORD':'rotated'}):
+            self.assertEqual(self.client.post('/api/trans-verify',json={}).status_code, 401)
+
     def test_ocr_sources_and_persistent_quota_fallback(self):
         services.save('ocr', next(g for g in services.status()['groups'] if g['id']=='ocr')['version'], {'GOOGLE_VISION_API_KEY':'fake-vision-key'})
         body = {'password': 'trans-test', 'imageBase64': base64.b64encode(b'fake-jpg').decode(), 'ocrSource': 'google'}

@@ -24,7 +24,6 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 # 配置日志
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # ============================================================================
@@ -296,6 +295,9 @@ class GalleryListParser:
             next_link = soup.find("a", id="unext")
             if next_link and next_link.get("href"):
                 result["next_url"] = next_link["href"]
+            prev_link = soup.select_one("a#uprev[href]")
+            if prev_link:
+                result["prev_url"] = prev_link["href"]
 
         except Exception as e:
             result["error"] = f"HTML解析错误: {str(e)}"
@@ -713,4 +715,5 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     main()

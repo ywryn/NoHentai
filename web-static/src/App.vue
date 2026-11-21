@@ -46,6 +46,7 @@ const navItems = [
     title: 'Daily Search',
     icon: 'calendar',
   },
+  { to: '/live', label: '实时', title: '实时搜索', icon: 'search' },
   {
     to: '/translate',
     label: '翻译',

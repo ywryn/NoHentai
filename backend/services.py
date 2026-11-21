@@ -13,6 +13,9 @@ from .security import fail
 GROUPS = {'favorites': '收藏来源', 'translate': '翻译服务', 'ocr': '文字识别'}
 # key: group, label, type, default, bounds/choices
 FIELDS = {
+ 'LIVE_SITE': ('favorites', '实时搜索站点', 'select', 'e-hentai.org', ['e-hentai.org', 'exhentai.org']),
+ 'GOOGLE_TRANSLATE_MONTHLY_CHARS': ('translate', 'Google 兜底每月字符上限', 'number', 500000, (0, 100000000)),
+ 'GOOGLE_TRANSLATE_API_KEY': ('translate', 'Google 翻译兜底 Key（留空关闭）', 'secret', '', None),
  'EXHENTAI_BASE_URL': ('favorites', '收藏页地址', 'url', 'https://exhentai.org/favorites.php', None),
  'EXHENTAI_COOKIE_MEMBER_ID': ('favorites', 'Member ID', 'secret', '', None),
  'EXHENTAI_COOKIE_PASS_HASH': ('favorites', 'Pass Hash', 'secret', '', None),
@@ -23,7 +26,7 @@ FIELDS = {
  'LLM_API_KEY': ('translate', 'API Key', 'secret', '', None),
  'model': ('translate', '模型', 'text', None, None),
  'jsonMode': ('translate', 'JSON 输出模式', 'select', None, [None, True, False]),
- 'TRANS_PASSWORD': ('translate', '工作台密码', 'secret', '', None),
+ 'TRANS_PASSWORD': ('translate', '翻译与实时搜索共用密码', 'secret', '', None),
  'LLM_TIMEOUT_SECONDS': ('translate', '请求超时（秒）', 'number', 90, (10, 150)),
  'LLM_CONCURRENCY': ('translate', '同时执行的翻译请求', 'number', 2, (1, 8)),
  'defaultOcr': ('ocr', '默认识别服务', 'select', 'google', ['google', 'paddle', 'ocrspace']),

@@ -5,7 +5,7 @@ import secrets
 import time
 from contextlib import contextmanager
 from contextvars import ContextVar
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 from fastapi import HTTPException
 from . import db, settings
 
@@ -154,3 +154,22 @@ def trans_auth(password, ip):
     expected = credential('TRANS_PASSWORD')
     if not expected or not isinstance(password, str) or len(password) > TRANS_PASSWORD_MAX_LENGTH or not hmac.compare_digest(digest(password), digest(expected)):
         fail(401, 'invalid_password')
+
+
+COST_COOKIE = COOKIE + '_cost'
+COST_TTL = 3 * 24 * 60 * 60
+
+
+def cost_ticket():
+    fingerprint = 'cost:' + digest(credential('TRANS_PASSWORD'))
+    return Fernet(settings.encryption_key()).encrypt(fingerprint.encode()).decode()
+
+
+def check_cost_ticket(ticket):
+    try:
+        payload = Fernet(settings.encryption_key()).decrypt((ticket or '').encode(), ttl=COST_TTL)
+    except InvalidToken:
+        fail(401, '请重新输入访问密码')
+    password = credential('TRANS_PASSWORD')
+    if not password or not hmac.compare_digest(payload, ('cost:' + digest(password)).encode()):
+        fail(401, '访问密码已更新')

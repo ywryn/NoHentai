@@ -45,7 +45,12 @@ def main():
                     route.fulfill(content_type='image/png',body=image.getvalue())
             page.route('**/fixture.png*',picture)
             page.route('**/api/image-proxy?*',picture)
-            page.route('**/api/trans-verify',lambda r:r.fulfill(json={'ok':True}))
+            authorized = False
+            def verify(route):
+                nonlocal authorized
+                authorized = authorized or bool(route.request.post_data_json.get('password'))
+                route.fulfill(status=200 if authorized else 401, json={'ok': authorized})
+            page.route('**/api/trans-verify', verify)
             translated=[]
             def translate(route):
                 translated.append(route.request.post_data_json)
@@ -68,6 +73,32 @@ def main():
             page.keyboard.press('ArrowRight')
             page.wait_for_function("Math.abs(document.querySelector('.scroll-page:nth-child(3)').getBoundingClientRect().top-document.querySelector('.scroll-view').getBoundingClientRect().top)<2")
             print('PASS: scroll reader initial page, directory, keyboard and asynchronous image resize alignment')
+
+            touch = browser.new_page(has_touch=True, is_mobile=True, viewport={'width':390,'height':844})
+            touch.route('**/api/gallery-images?*', lambda r:r.fulfill(json={'total':2,'images':[
+                {'pageNum':i,'pageUrl':str(i),'thumbSprite':'','thumbX':0,'thumbW':100,'thumbH':150}
+                for i in (1,2)]}))
+            touch.route('**/api/image-url?*', lambda r:r.fulfill(json={'imageUrl':base+'/fixture.png'}))
+            touch.route('**/fixture.png', picture)
+            for mode in ('book','scroll'):
+                touch.goto(base+'/#/gallery/1/read?token=abcde')
+                touch.evaluate("mode=>localStorage.setItem('reader-settings',JSON.stringify({readingMode:mode,pagesPerScreen:1}))",mode)
+                touch.reload()
+                img = touch.locator('.pi-img:visible').first
+                expect(img).to_be_visible()
+                box = img.bounding_box()
+                x, y = int(box['x']+box['width']*.15), int(box['y']+box['height']*.5)
+                for scale in (2,3,1):
+                    touch.touchscreen.tap(x,y)
+                    touch.touchscreen.tap(x,y)
+                    if scale == 1:
+                        expect(touch.locator('.reader-zoom')).to_have_count(0)
+                    else:
+                        expect(touch.locator('.reader-zoom img')).to_have_attribute('style',re.compile(rf'scale\({scale}\)'))
+                expect(touch.locator('.tb-counter')).to_have_text('1 / 2')
+            touch.close()
+            print('PASS: mobile edge double taps cycle zoom without turning the page in both reading modes')
+
 
             pending=[]
             page.route('**/api/trans-ocr',lambda r:pending.append(r))
