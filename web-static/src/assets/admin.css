@@ -31,7 +31,7 @@ html.admin-active,html.admin-active body,.admin-shell,.admin-shell *{scrollbar-w
 html.admin-active::-webkit-scrollbar,html.admin-active body::-webkit-scrollbar,.admin-shell::-webkit-scrollbar,.admin-shell *::-webkit-scrollbar{display:none;width:0;height:0}
 @media(max-width:900px){.a-content{padding-top:20px}.a-gallery-list{max-height:calc(100dvh - 260px)}}
 @media(max-width:640px){.a-content{padding-top:16px}.a-page{gap:16px}.a-page-heading{align-items:flex-start;min-height:46px}.a-page-heading h1{font-size:21px;line-height:1.35;margin-bottom:3px}.a-page-heading p{font-size:10px}.a-heading-actions{padding-top:0;gap:5px}.a-heading-actions .a-button{font-size:10px!important;min-height:34px;padding:7px}.a-page-title>.a-mobile-menu{display:flex;width:32px;min-height:32px;padding:6px;flex-shrink:0}.a-page-title>.a-mobile-menu svg{width:18px;height:18px}.a-gallery-list,.a-book-list{max-height:none}.a-page-heading .a-page-title{gap:8px}.a-remember-login{font-size:12px}}
-/* Save status and actions belong to the heading, with no floating footer. */
+/* Page-level controls and status. */
 .a-page-heading{align-items:center;flex-wrap:wrap}.a-page-title{flex:1;min-width:180px}.a-heading-actions{flex-wrap:wrap;justify-content:flex-end}.a-heading-status{display:flex;align-items:center;gap:8px;color:var(--a-muted);min-width:0;margin-top:5px}.a-heading-status>div{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;min-width:0}.a-heading-status strong{font-size:11px;font-weight:450;line-height:1.6}.a-heading-status small{font-size:10px;color:var(--a-faint);line-height:1.6}.a-heading-status .a-save-indicator{width:5px;height:5px}.a-heading-actions>.a-primary{min-height:38px}
 @media(max-width:1180px){.a-heading-status small{display:none}}
 @media(max-width:640px){.a-page-heading{gap:12px;align-items:flex-start}.a-page-title{flex-basis:100%;min-width:0}.a-heading-actions{width:100%;gap:7px;justify-content:flex-end}.a-heading-actions .a-secondary-action-label{display:none}.a-heading-actions>.a-button:not(.a-primary){width:35px;min-height:35px;padding:8px}.a-heading-actions>.a-primary{min-height:36px;min-width:104px}.a-heading-status{gap:7px;margin-top:3px}.a-heading-status strong{font-size:10px}.a-heading-actions .a-more-menu>summary{min-height:35px;width:35px}.a-heading-status>div{gap:0}}
@@ -68,4 +68,24 @@ html.admin-workspace-fixed,html.admin-workspace-fixed body,html.admin-workspace-
   .a-workflow { transition: border-color .15s; }
   .a-button:active, .a-workflow:hover { transform: none; }
   .admin-shell input.a-switch:before { transition: none; }
+}
+
+/* Compact workspace headings. Details and editing actions live in the panes. */
+.admin-shell .a-content { padding-block-start: 12px; }
+.admin-shell .a-page { gap: 14px; }
+.admin-shell .a-page-heading {
+  min-block-size: 0;
+  align-items: center;
+  gap: 6px 12px;
+  margin-block: 0;
+  padding-block: 0;
+}
+.admin-shell .a-page-heading h1 { margin-block: 0; line-height: 1.25; }
+.admin-shell .a-page-heading p { margin-block: 2px 0; line-height: 1.4; }
+.admin-shell .a-page-heading p:empty { display: none; }
+@media (max-width: 640px) {
+  .admin-shell .a-content { padding-block-start: 8px; }
+  .admin-shell .a-page { gap: 10px; }
+  .admin-shell .a-page-heading .a-page-title { flex: 1 1 120px; align-items: center; }
+  .admin-shell .a-page-heading .a-heading-actions { width: auto; max-width: 100%; }
 }

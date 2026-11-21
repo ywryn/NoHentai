@@ -47,7 +47,6 @@ onBeforeUnmount(()=>stopRevision?.())
 
 :global(.my-app-light .daily-group-pill.active) {
   background: var(--selection-bg);
-  border-color: var(--selection-edge);
   color: var(--primary-on-soft);
 }
 </style>

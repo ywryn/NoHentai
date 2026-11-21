@@ -197,7 +197,6 @@
 
 .my-app-light .home-filter-btn.is-on {
   background: var(--selection-bg);
-  border-color: var(--selection-edge);
 }
 
 .home-filter-caret {

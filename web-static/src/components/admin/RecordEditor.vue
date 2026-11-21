@@ -188,7 +188,7 @@ onBeforeUnmount(()=>{ sequence++;matchSequence++;window.removeEventListener('bef
           </label>
         </fieldset>
       </div><div class="a-list-caption">共 {{ total }} 条 <span v-if="loading">正在加载…</span></div><div class="a-gallery-list"><button v-for="item in list" :key="item.id" class="a-gallery-row" :class="{'is-selected':selected?.id===item.id}" @click="choose(item)"><img v-if="rowThumb(item)" class="ops-list-cover" :src="rowThumb(item)" alt="条目封面" referrerpolicy="no-referrer" @error="$event.target.style.visibility='hidden'"/><span v-if="kind==='daily'" class="ops-rule-icon"><AdminIcon name="filter" :size="20"/></span><span class="a-gallery-copy"><strong>{{ name(item) }}</strong><span v-if="kind==='gallery'" class="ops-category" :style="{'--category':exTypeDotColors[item.effective.category]}">{{item.effective.category}}</span><span>{{ kind==='gallery' ? '#'+item.id : kind==='book' ? item.data.ID : '回溯 '+item.data.cutoffDays+' 天 · '+categoryMask.filter(([,mask])=>Boolean(item.data.categories&mask)).length+' 个分类' }}</span><span v-if="item.origin==='manual'" class="a-badge a-badge-accent">手动新增 · {{ item.data.published ? '已发布' : '草稿' }}</span><span v-else-if="kind==='gallery' && Object.keys(item.data).length" class="a-badge a-badge-accent">人工覆盖</span></span><AdminIcon name="chevron" /></button><p v-if="!loading&&!list.length" class="a-empty">没有匹配的条目</p></div><footer class="a-pagination"><button class="a-button" :disabled="page<=1||loading" @click="load(page-1)">上一页</button><span>{{page}} / {{pages}}</span><button class="a-button" :disabled="page>=pages||loading" @click="load(page+1)">下一页</button></footer></aside>
-      <section class="a-card a-detail-pane record-detail" :class="{'has-record': data && kind!=='book'}"><template v-if="data"><div class="record-detail-body"><button class="a-button a-mobile-back" @click="detailOpen=false">返回列表</button><div class="a-section-heading"><h2>{{ kind==='gallery' ? (manual ? '首页图书信息' : '编辑画廊展示信息') : kind==='book' ? '书目信息' : '搜索规则' }}</h2><button class="a-button" @click="exportDraft">导出草稿</button></div>
+      <section class="a-card a-detail-pane"><template v-if="data"><button class="a-button a-mobile-back" @click="detailOpen=false">返回列表</button><div class="a-section-heading"><h2>{{ kind==='gallery' ? (manual ? '首页图书信息' : '编辑画廊展示信息') : kind==='book' ? '书目信息' : '搜索规则' }}</h2><button class="a-button" @click="exportDraft">导出草稿</button></div>
         <component :is="kind==='book' ? 'form' : 'div'" id="record-edit-fields" @submit.prevent="save">
         <fieldset :disabled="busy" class="a-form-stack">
           <template v-if="kind==='gallery'">
@@ -218,7 +218,6 @@ onBeforeUnmount(()=>{ sequence++;matchSequence++;window.removeEventListener('bef
           </template>
         </fieldset>
         </component>
-        </div>
         <footer class="v2-record-actions">
           <button v-if="kind==='book'" type="submit" form="record-edit-fields" class="a-button a-primary" :disabled="busy || !dirty">保存这本书</button>
           <button v-else type="button" class="a-button a-primary" :disabled="busy || !dirty" @click="save">{{ kind==='daily' ? '保存规则' : '保存当前条目' }}</button>
@@ -265,33 +264,9 @@ onBeforeUnmount(()=>{ sequence++;matchSequence++;window.removeEventListener('bef
 }
 :global(.my-app-light .record-origin input:checked + span) {
   background: var(--selection-bg);
-  box-shadow: inset 0 0 0 1px var(--selection-edge);
 }
 .record-origin input:focus-visible + span { outline: 2px solid var(--a-accent); outline-offset: -2px; }
-.record-detail.has-record {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  padding: 0;
-}
-.record-detail.has-record .record-detail-body {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
-  padding: 20px;
-}
-.record-detail.has-record .v2-record-actions {
-  flex: none;
-  margin: 0;
-  padding: 12px 20px max(12px, env(safe-area-inset-bottom, 0px));
-  background: var(--a-panel);
-}
 @media (max-width: 640px) {
-  .a-master-detail.a-detail-open > .record-detail.has-record { padding: 0; }
-  .a-master-detail:not(.a-detail-open) > .record-detail.has-record { display: none; }
   .record-origin span { min-block-size: 44px; }
-  .record-detail.has-record .record-detail-body { padding: 16px; }
-  .record-detail.has-record .v2-record-actions { padding-inline: 16px; }
 }
 </style>
