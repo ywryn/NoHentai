@@ -280,16 +280,39 @@ def save(kind, record_id, version, data, delete=False):
         return write(con, kind, record_id, version, data, delete)
 
 
-def history(kind=None, record_id=None):
+def history_page(con, source, params, page, focus_id=None):
+    if type(page) is not int or page < 1:
+        fail(400, '修改记录分页参数不正确')
+    size = 20
+    con.execute('BEGIN')
+    total = con.execute('SELECT COUNT(*) ' + source, params).fetchone()[0]
+    pages = max(1, (total + size - 1) // size)
+    if focus_id is not None:
+        newer = con.execute('SELECT COUNT(*) ' + source + ' AND id > ?', (*params, focus_id)).fetchone()[0]
+        page = newer // size + 1
+    page = min(page, pages)
+    rows = con.execute('SELECT * ' + source + ' ORDER BY id DESC LIMIT ? OFFSET ?',
+                       (*params, size, (page - 1) * size)).fetchall()
+    return rows, {'page': page, 'pages': pages, 'total': total}
+
+
+def history(kind=None, record_id=None, page=None, focus_id=None):
     where, params = [], []
     if kind:
         check_kind(kind)
         where.append('kind=?'); params.append(kind)
     if record_id:
         where.append('record_id=?'); params.append(record_id)
+    if focus_id is not None and (not kind or not record_id or type(focus_id) is not int or not 0 < focus_id < 2**63):
+        fail(400, '修改记录定位参数不正确')
+    source = 'FROM record_history' + (' WHERE ' + ' AND '.join(where) if where else '')
     with db.connect() as con:
-        rows = con.execute('SELECT * FROM record_history' + (' WHERE ' + ' AND '.join(where) if where else '') + ' ORDER BY id DESC LIMIT 100', params)
-        return {'items': [{'id': r['id'], 'kind': r['kind'], 'recordId': r['record_id'], 'version': r['version'], 'before': json.loads(r['before_json']) if r['before_json'] else None,
+        if page is None:
+            rows = con.execute('SELECT * ' + source + ' ORDER BY id DESC LIMIT 100', params).fetchall()
+            pagination = {}
+        else:
+            rows, pagination = history_page(con, source, params, page, focus_id)
+        return {**pagination, 'items': [{'id': r['id'], 'kind': r['kind'], 'recordId': r['record_id'], 'version': r['version'], 'before': json.loads(r['before_json']) if r['before_json'] else None,
                           'after': json.loads(r['after_json']) if r['after_json'] else None, 'changes': json.loads(r['changes_json']), 'date': r['created_at'], 'message': r['message']} for r in rows]}
 
 

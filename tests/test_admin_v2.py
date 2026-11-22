@@ -93,6 +93,44 @@ class AdminV2Tests(fixtures.BackendTests):
         self.assertEqual(self.client.get('/api/galleries/2').json()['gallery']['title'],'B')
         self.assertEqual(self.admin('record-restore',historyId=history[-1]['id'],version=first.json()['version']).status_code,409)
 
+    def test_history_pages_include_old_entries_and_locate_selected_version(self):
+        existing_events = [event['id'] for event in self.admin('audit-events').json()['items']]
+        with db.connect() as con:
+            history_ids = [
+                records.audit(con, 'gallery', '123', str(i), {'title': str(i)}, {'title': str(i + 1)}, '测试修改')
+                for i in range(121)
+            ]
+            event_ids = [
+                con.execute('INSERT INTO history(resource,version,data,created_at,message) VALUES(?,?,?,?,?)',
+                            ('test-config', str(i), '{"fields":[]}', db.now(), '测试配置')).lastrowid
+                for i in range(105)
+            ]
+            con.execute('INSERT INTO history(resource,version,data,created_at,message) VALUES(?,?,?,?,?)',
+                        ('printed', 'test', '[]', db.now(), '不计入配置操作'))
+
+        for action, ids in [('record-history', history_ids), ('audit-events', existing_events + event_ids)]:
+            pages = (len(ids) + 19) // 20
+            seen = []
+            for page in range(1, pages + 1):
+                response = self.admin(action, page=page)
+                self.assertEqual(response.status_code, 200, response.text)
+                result = response.json()
+                self.assertEqual((result['page'], result['pages'], result['total']), (page, pages, len(ids)))
+                self.assertLessEqual(len(result['items']), 20)
+                seen.extend(item['id'] for item in result['items'])
+            self.assertEqual(seen, sorted(ids, reverse=True))
+            self.assertEqual(self.admin(action, page=100000).json()['page'], pages)
+            self.assertEqual(self.admin(action, page=False).status_code, 400)
+            self.assertEqual(len(self.admin(action).json()['items']), 100)
+
+        old_id = history_ids[0]
+        result = self.admin('record-history', kind='gallery', id='123', page=1, focusId=old_id).json()
+        self.assertEqual((result['page'], result['items'][0]['id']), (7, old_id))
+        empty = self.admin('record-history', kind='gallery', id='999', page=10).json()
+        self.assertEqual(empty, {'page': 1, 'pages': 1, 'total': 0, 'items': []})
+        restored = self.admin('record-restore', historyId=old_id, version='0')
+        self.assertEqual(restored.status_code, 200, restored.text)
+
     def test_books_have_stable_ids_no_duplicate_storage_and_delete_restore(self):
         original=self.admin('records',kind='book').json()['items'][0]
         created=self.admin('record-save',kind='book',version='0',data=dict(BOOK)).json()
