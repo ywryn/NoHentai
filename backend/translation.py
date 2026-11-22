@@ -43,52 +43,76 @@ def translate(body):
     texts = body.get('texts')
     if not isinstance(texts, list) or not 1 <= len(texts) <= 200 or any(not isinstance(t, str) or len(t) > 5000 for t in texts) or sum(map(len, texts)) > 50000:
         fail(400, 'texts 应包含 1–200 条文字，总长度最多 50000')
-    context = context_message(body)
-    cfg = config()
-    api_key, base = credential('LLM_API_KEY'), credential('LLM_API_BASE').rstrip('/')
-    google = credential('GOOGLE_TRANSLATE_API_KEY')
-    key = cache_key('tr:v5:', [base, hashlib.sha256(api_key.encode()).hexdigest(), bool(google), cfg, texts, context])
+    engine = body.get('engine', 'legacy')
+    if engine not in ('legacy', 'model', 'google'):
+        fail(400, '翻译方式不正确')
+
+    google = credential('GOOGLE_TRANSLATE_API_KEY') if engine != 'model' else ''
+    indices = [i for i, text in enumerate(texts) if text.strip()]
+    if engine == 'google':
+        if not google:
+            fail(503, 'Google 翻译未配置')
+        key = cache_key('tr:google:', [hashlib.sha256(google.encode()).hexdigest(), texts])
+    else:
+        context = context_message(body)
+        cfg = config()
+        api_key, base = credential('LLM_API_KEY'), credential('LLM_API_BASE').rstrip('/')
+        scope = 'tr:model:' if engine == 'model' else 'tr:v5:'
+        key = cache_key(scope, [base, hashlib.sha256(api_key.encode()).hexdigest(), bool(google), cfg, texts, context])
     cached = db.get_cache(key)
     if cached:
         return dict(cached, cached=True)
-    try:
-        if not api_key or not base:
-            fail(503, 'LLM 未配置')
-        translations = ai_translate(texts, context, cfg, api_key, base)
-    except (httpx.HTTPError, HTTPException, ValueError, TypeError, KeyError, IndexError, AttributeError):
-        if not google:
-            raise
-        translations = [None] * len(texts)
-    missing = [i for i, text in enumerate(texts) if text.strip() and not translations[i]]
+
+    translations = [None] * len(texts)
+    if engine != 'google':
+        try:
+            if not api_key or not base:
+                fail(503, '模型翻译未配置')
+            translations = ai_translate(texts, context, cfg, api_key, base)
+        except (httpx.HTTPError, HTTPException, ValueError, TypeError, KeyError, IndexError, AttributeError):
+            if not google:
+                raise
+    missing = [i for i in indices if not translations[i]]
     if google and missing:
-        monthly_limit = int(credential('GOOGLE_TRANSLATE_MONTHLY_CHARS'))
-        for indices in fallback_batches(missing, texts):
-            chars = sum(len(texts[i]) for i in indices)
-            month = datetime.now(timezone.utc).strftime('%Y-%m')
-            if not db.reserve('google-translate:' + month, monthly_limit, 35 * 86400, chars):
-                continue
-            try:
-                data = json_request('POST', 'https://translation.googleapis.com/language/translate/v2',
-                                    headers={'X-Goog-Api-Key': google}, timeout=20,
-                                    json={'q': [texts[i] for i in indices], 'target': 'zh-CN', 'format': 'text'})
-                items = data['data']['translations']
-                if not isinstance(items, list) or len(items) != len(indices):
-                    continue
-                for idx, item in zip(indices, items):
-                    value = item.get('translatedText') if isinstance(item, dict) else None
-                    if isinstance(value, str) and value.strip():
-                        translations[idx] = {'t': html.unescape(value.strip()), 'source': 'google'}
-            except (httpx.HTTPError, HTTPException, ValueError, KeyError, TypeError):
-                continue
+        quota_exhausted = translate_google(texts, missing, translations, google)
+        if engine == 'google' and not any(translations):
+            if quota_exhausted:
+                fail(429, 'Google 翻译已达到每月字符上限')
+            fail(502, 'Google 翻译未返回有效译文')
     result = {'translations': translations}
-    if all(translations):
+    if indices and all(translations[i] for i in indices):
         db.set_cache(key, result, 7 * 86400)
     return result
 
 
-def fallback_batches(missing, texts):
+def translate_google(texts, indices, translations, api_key):
+    monthly_limit = int(credential('GOOGLE_TRANSLATE_MONTHLY_CHARS'))
+    month = datetime.now(timezone.utc).strftime('%Y-%m')
+    quota_exhausted = False
+    for batch in google_batches(indices, texts):
+        chars = sum(len(texts[i]) for i in batch)
+        if not db.reserve('google-translate:' + month, monthly_limit, 35 * 86400, chars):
+            quota_exhausted = True
+            continue
+        try:
+            data = json_request('POST', 'https://translation.googleapis.com/language/translate/v2',
+                                headers={'X-Goog-Api-Key': api_key}, timeout=20,
+                                json={'q': [texts[i] for i in batch], 'target': 'zh-CN', 'format': 'text'})
+            items = data['data']['translations']
+            if not isinstance(items, list) or len(items) != len(batch):
+                continue
+            for idx, item in zip(batch, items):
+                value = item.get('translatedText') if isinstance(item, dict) else None
+                if isinstance(value, str) and value.strip():
+                    translations[idx] = {'t': html.unescape(value.strip()), 'source': 'google'}
+        except (httpx.HTTPError, HTTPException, ValueError, KeyError, TypeError):
+            continue
+    return quota_exhausted
+
+
+def google_batches(indices, texts):
     batch, size = [], 0
-    for idx in missing:
+    for idx in indices:
         length = len(texts[idx])
         if batch and (size + length > 5000 or len(batch) == 64):
             yield batch

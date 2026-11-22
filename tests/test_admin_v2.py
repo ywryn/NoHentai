@@ -226,6 +226,23 @@ class AdminV2Tests(fixtures.BackendTests):
             self.assertEqual(self.admin('service-save',service='ocr',version=group['version'],values={},operations={'OCR_SPACE_KEY':'inherit'}).status_code,200)
             self.assertEqual(security.credential('OCR_SPACE_KEY'),'env-secret')
 
+    def test_translation_providers_have_independent_settings_and_checks(self):
+        groups = {group['id']: group for group in self.admin('services').json()['groups']}
+        google = groups['translate-google']
+        model = groups['translate']
+        self.assertIn('GOOGLE_TRANSLATE_API_KEY', {field['key'] for field in google['fields']})
+        self.assertNotIn('GOOGLE_TRANSLATE_API_KEY', {field['key'] for field in model['fields']})
+        with patch('backend.translation.translate', return_value={'translations': [{'t': '测试'}]}) as translate:
+            for group, engine in [(google, 'google'), (model, 'model')]:
+                self.assertTrue(self.admin('service-test', service=group['id']).json()['ok'])
+                self.assertEqual(translate.call_args.args[0]['engine'], engine)
+        self.assertEqual(self.admin('service-save', service=google['id'], version=google['version'],
+                                    values={'GOOGLE_TRANSLATE_MONTHLY_CHARS': 3000}).status_code, 200)
+        groups = {group['id']: group for group in self.admin('services').json()['groups']}
+        self.assertNotEqual(groups[google['id']]['version'], google['version'])
+        self.assertEqual(groups[model['id']]['version'], model['version'])
+        self.assertEqual(groups[model['id']]['check']['version'], model['version'])
+
     def test_service_current_values_and_empty_secret_override(self):
         with patch.dict(os.environ, {'OCR_SPACE_KEY': 'env-secret', 'LLM_MODEL': 'inherited-model'}):
             groups = {g['id']: g for g in self.admin('services').json()['groups']}

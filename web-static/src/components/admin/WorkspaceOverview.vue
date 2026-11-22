@@ -11,7 +11,7 @@ const failures=computed(()=>data.value?.recent.filter(r=>['failure','timed_out']
 const enabled=computed(()=>data.value?.schedules.filter(s=>s.enabled)||[])
 const services=computed(()=>(data.value?.services||[]).map(group=>{
  const fields=Object.fromEntries(group.fields.map(f=>[f.key,f]))
- const required=group.id==='favorites'?['EXHENTAI_COOKIE_MEMBER_ID','EXHENTAI_COOKIE_PASS_HASH','EXHENTAI_COOKIE_IGNEOUS']:group.id==='translate'?['LLM_API_BASE','LLM_API_KEY','TRANS_PASSWORD']:[{google:'GOOGLE_VISION_API_KEY',paddle:'PADDLEOCR_API_TOKEN',ocrspace:'OCR_SPACE_KEY'}[fields.defaultOcr?.value||'google']]
+ const required=group.id==='favorites'?['EXHENTAI_COOKIE_MEMBER_ID','EXHENTAI_COOKIE_PASS_HASH','EXHENTAI_COOKIE_IGNEOUS']:group.id==='translate'?['LLM_API_BASE','LLM_API_KEY','TRANS_PASSWORD']:group.id==='translate-google'?['GOOGLE_TRANSLATE_API_KEY']:[{google:'GOOGLE_VISION_API_KEY',paddle:'PADDLEOCR_API_TOKEN',ocrspace:'OCR_SPACE_KEY'}[fields.defaultOcr?.value||'google']]
  const missing=required.filter(key=>!fields[key]?.configured)
  const tested=group.check?.version===group.version
  return {...group,missing,state:missing.length?'missing':!tested?'unchecked':group.check.ok?'ready':'failed',stateName:missing.length?'待配置':!tested?'待验证':group.check.ok?'连接正常':'需要处理',configured:required.length-missing.length,total:required.length}

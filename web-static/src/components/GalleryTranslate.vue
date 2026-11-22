@@ -11,10 +11,6 @@
       <button class="gt-back-btn" aria-label="返回详情" @click="$router.back()"><AppIcon name="arrow-left" :size="18" /></button>
 
       <div class="gt-header-info">
-        <a v-if="googleCount" href="https://translate.google.com/" target="_blank" rel="noopener noreferrer"
-           class="gt-google-source" :aria-label="`本页 ${googleCount} 条由 Google 翻译`">
-          <img src="@/assets/google-translate.png" alt="Powered by Google Translate">{{ googleCount }} 条
-        </a>
         <span v-if="totalPages" class="gt-header-pages">{{ currentPage }} / {{ totalPages }}</span>
       </div>
 
@@ -182,6 +178,13 @@
             <button class="gt-clear-btn" :disabled="!ocrResults.length" @click="clearResults">清空</button>
           </div>
           <div class="gt-cfg-row">
+            <label class="gt-cfg-key" for="gt-translation-engine">翻译</label>
+            <select id="gt-translation-engine" class="gt-engine-select" v-model="translationEngine" :disabled="ocrProcessing || translating">
+              <option value="model">模型翻译</option>
+              <option value="google">Google 翻译 API</option>
+            </select>
+          </div>
+          <div class="gt-cfg-row">
             <span class="gt-cfg-key">显示</span>
             <div class="gt-chip-group">
               <button class="gt-chip" :class="{ active: showBoxes }" @click="showBoxes = !showBoxes">框</button>
@@ -226,7 +229,7 @@
               spellcheck="false"
               @blur="commitGlossary"
             ></textarea>
-            <span class="gt-glossary-hint">按画廊保存，随每次翻译一起提交给模型</span>
+            <span class="gt-glossary-hint">按画廊保存，仅模型翻译使用术语表</span>
           </div>
           <div class="gt-cfg-row">
             <span class="gt-cfg-key">学习</span>
@@ -316,7 +319,7 @@
             <template v-else>
               <div v-if="result.translation" class="gt-result-trans-row">
                 <p class="gt-result-trans">
-                  <small v-if="result.translationSource === 'google'">由 Google 翻译 · </small><span v-if="result.kind && result.kind !== 'dialogue'" class="gt-kind-tag">{{ kindLabel(result.kind) }}</span>{{ result.translation }}
+                  <span v-if="result.kind && result.kind !== 'dialogue'" class="gt-kind-tag">{{ kindLabel(result.kind) }}</span>{{ result.translation }}
                 </p>
                 <button class="gt-result-edit-btn" type="button" title="编辑译文" aria-label="编辑译文" @click.stop="startEdit(i)"><AppIcon name="edit" :size="16" /></button>
               </div>
@@ -341,7 +344,7 @@
           <button class="gt-bc-close" type="button" aria-label="关闭" @click="closeBubble"><AppIcon name="close" :size="18" /></button>
         </div>
         <p class="gt-bc-orig">{{ ocrResults[bubbleCard].text }}</p>
-        <p v-if="ocrResults[bubbleCard].translation" class="gt-bc-trans"><small v-if="ocrResults[bubbleCard].translationSource === 'google'">由 Google 翻译 · </small>{{ ocrResults[bubbleCard].translation }}</p>
+        <p v-if="ocrResults[bubbleCard].translation" class="gt-bc-trans">{{ ocrResults[bubbleCard].translation }}</p>
         <p v-else class="gt-bc-trans gt-bc-pending">尚未翻译</p>
         <button class="gt-bc-edit" type="button" @click="editBubble">{{ ocrResults[bubbleCard].translation ? '编辑译文' : '手动填写' }}</button>
         <p v-if="ocrResults[bubbleCard].alt" class="gt-bc-alt">备选：{{ ocrResults[bubbleCard].alt }}</p>
@@ -426,6 +429,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || ''
 
 const TRANS_CACHE_TTL = 3 * 24 * 60 * 60 * 1000
 /* 每画廊术语表：{ 原文: 译文 }，随翻译请求一起送给模型 */
+const TRANSLATION_ENGINE_KEY = 'trans_engine'
 const GLOSSARY_KEY_PREFIX = 'trans_glossary_'
 const KIND_LABEL = { dialogue: '对白', narration: '旁白', sfx: '拟声' }
 
@@ -508,6 +512,13 @@ const POS_COLOR = {
   '助詞':     '#22d3ee',  // cyan
   '助動詞':   '#34d399',  // emerald
   '連体詞':   '#a3e635',  // lime
+}
+
+function savedTranslationEngine() {
+  try {
+    if (localStorage.getItem(TRANSLATION_ENGINE_KEY) === 'google') return 'google'
+  } catch {}
+  return 'model'
 }
 
 function hasKanji(str) {
@@ -786,6 +797,7 @@ export default {
       sheetDragH: null,
       selectedBoxIdx: null,
       ocrSource: 'google',
+      translationEngine: savedTranslationEngine(),
       lastOcrSource: null,
       expandedBboxes: {},
       /* 字号压到地板仍放不下的框 → 只显示序号徽标 */
@@ -833,7 +845,6 @@ export default {
     totalPages() {
       return this.galleryImages.length
     },
-    googleCount() { return this.ocrResults.filter(r => r.translationSource === 'google').length },
     missingCount() {
       return this.ocrResults.filter(r => !r.translation).length
     },
@@ -851,6 +862,9 @@ export default {
   },
 
   watch: {
+    translationEngine(engine) {
+      try { localStorage.setItem(TRANSLATION_ENGINE_KEY, engine) } catch {}
+    },
     renderTick() {
       if (this.showTranslation && this.ocrResults.some(r => r.translation)) {
         this.expandedBboxes = {}
@@ -1554,10 +1568,11 @@ export default {
      * 翻译一组文本，返回与输入等长的数组，每项 { t, kind, alt } 或 null（模型漏译）。
      * 此前漏译会被回填成原文，界面上看起来像「翻译了但还是日文」。
      */
-    async translateTexts(texts) {
+    async translateTexts(texts, engine = this.translationEngine) {
       const data = await this.postTrans('trans-translate', {
         texts,
-        ...this.buildTranslateContext(),
+        engine,
+        ...(engine === 'model' ? this.buildTranslateContext() : {}),
       })
       return texts.map((_, i) => {
         const item = data.translations?.[i]
@@ -1731,6 +1746,7 @@ export default {
     },
 
     async prefetchPage(pageNum) {
+      const engine = this.translationEngine
       const data = await this.resolvePageImage(pageNum)
       const img = new Image()
       img.crossOrigin = 'anonymous'
@@ -1739,10 +1755,12 @@ export default {
       const { results, source } = await this.ocrImage(img, this.ocrSource)
       let translated = results
       if (results.length) {
-        const translations = await this.translateTexts(results.map(r => r.text))
+        const translations = await this.translateTexts(results.map(r => r.text), engine)
         translated = results.map((r, i) => this.applyTranslation(r, translations[i]))
       }
-      if (!this._disposed && !this.loadPageCache(pageNum)) this.writePageCache(pageNum, translated, source)
+      if (!this._disposed && engine === this.translationEngine && !this.loadPageCache(pageNum)) {
+        this.writePageCache(pageNum, translated, source)
+      }
     },
 
     deleteResult(i) {
@@ -2451,6 +2469,22 @@ export default {
   flex-shrink: 0;
 }
 
+.gt-engine-select {
+  max-width: calc(100% - 42px);
+  min-height: 34px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 7px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  font: inherit;
+  font-size: 13px;
+}
+
+@media (max-width: 767px) {
+  .gt-engine-select { min-height: 42px; font-size: 16px; }
+}
+
 /* Segmented control (OCR source) */
 .gt-seg-ctrl {
   display: flex;
@@ -2927,7 +2961,6 @@ export default {
 
 /* ── Toasts ──────────────────────────────────────────────────────────────────── */
 
-.gt-google-source {display:inline-flex;align-items:center;gap:.35rem;background:white;color:#222;padding:2px 4px;font-size:12px}
 .gt-toasts {
   position: fixed;
   bottom: 24px;

@@ -342,6 +342,33 @@ class BackendTests(unittest.TestCase):
                     self.assertEqual(translation.translate({'texts':['第四']})['translations'], [None])
                 self.assertEqual(call.call_count, 2)
 
+    def test_explicit_translation_engines_route_and_cache_independently(self):
+        body = {'password': 'trans-test', 'texts': ['おはよう']}
+        with patch.dict(os.environ, {'GOOGLE_TRANSLATE_API_KEY': 'fixture', 'GOOGLE_TRANSLATE_MONTHLY_CHARS': '5',
+                                    'LLM_API_BASE': 'https://example.org', 'LLM_API_KEY': 'fixture'}):
+            google = {'data': {'translations': [{'translatedText': '普通译文'}]}}
+            with patch.object(translation, 'ai_translate', return_value=[{'t': '模型译文'}]) as model, patch.object(
+                    translation, 'json_request', return_value=google) as upstream:
+                def request(engine, **changes):
+                    return self.client.post('/api/trans-translate', json=dict(body, engine=engine) | changes)
+
+                self.assertEqual(request('google').json()['translations'], [{'t': '普通译文', 'source': 'google'}])
+                model.assert_not_called()
+                self.assertTrue(request('google').json()['cached'])
+                upstream.assert_called_once()
+                self.assertEqual(request('model', glossary={'名前': '名字'}).json()['translations'], [{'t': '模型译文'}])
+                self.assertIn('名前 → 名字', model.call_args.args[1])
+                self.assertFalse(request('model').json().get('cached', False))
+                self.assertTrue(request('model').json()['cached'])
+                self.assertEqual(request('google', texts=['おやすみ']).status_code, 429)
+                self.assertEqual(request('other').status_code, 400)
+                model.side_effect = ValueError()
+                self.assertGreaterEqual(request('model', texts=['別の言葉']).status_code, 400)
+                upstream.assert_called_once()
+            with patch.dict(os.environ, {'GOOGLE_TRANSLATE_API_KEY': ''}):
+                response = self.client.post('/api/trans-translate', json=dict(body, engine='google'))
+                self.assertEqual(response.status_code, 503)
+
     def test_live_session_search_read_and_expire(self):
         urls = ['/api/live/search', '/api/live/directory?site=e-hentai.org&gid=2&token=abcde',
                 '/api/live/image-url?site=e-hentai.org&pageUrl=https://e-hentai.org/s/abc/2-1',

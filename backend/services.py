@@ -10,25 +10,25 @@ from cryptography.fernet import Fernet
 from . import db, security, settings
 from .security import fail
 
-GROUPS = {'favorites': '收藏来源', 'translate': '翻译服务', 'ocr': '文字识别'}
+GROUPS = {'favorites': '收藏来源', 'translate-google': '普通翻译服务', 'translate': '模型翻译服务', 'ocr': '文字识别'}
 # key: group, label, type, default, bounds/choices
 FIELDS = {
  'LIVE_SITE': ('favorites', '实时搜索站点', 'select', 'e-hentai.org', ['e-hentai.org', 'exhentai.org']),
- 'GOOGLE_TRANSLATE_MONTHLY_CHARS': ('translate', 'Google 兜底每月字符上限', 'number', 500000, (0, 100000000)),
- 'GOOGLE_TRANSLATE_API_KEY': ('translate', 'Google 翻译兜底 Key（留空关闭）', 'secret', '', None),
  'EXHENTAI_BASE_URL': ('favorites', '收藏页地址', 'url', 'https://exhentai.org/favorites.php', None),
  'EXHENTAI_COOKIE_MEMBER_ID': ('favorites', 'Member ID', 'secret', '', None),
  'EXHENTAI_COOKIE_PASS_HASH': ('favorites', 'Pass Hash', 'secret', '', None),
  'EXHENTAI_COOKIE_IGNEOUS': ('favorites', 'Igneous', 'secret', '', None),
  'MAX_RETRIES': ('favorites', '元数据重试次数', 'number', 5, (0, 10)),
  'RETRY_DELAY_SECONDS': ('favorites', '重试间隔（秒）', 'number', 2, (0, 60)),
+ 'GOOGLE_TRANSLATE_API_KEY': ('translate-google', 'Google 翻译 API Key', 'secret', '', None),
+ 'GOOGLE_TRANSLATE_MONTHLY_CHARS': ('translate-google', 'Google 每月字符上限', 'number', 500000, (0, 100000000)),
  'LLM_API_BASE': ('translate', 'API 地址（含 /v1）', 'url', '', None),
  'LLM_API_KEY': ('translate', 'API Key', 'secret', '', None),
  'model': ('translate', '模型', 'text', None, None),
  'jsonMode': ('translate', 'JSON 输出模式', 'select', None, [None, True, False]),
  'TRANS_PASSWORD': ('translate', '翻译与实时搜索共用密码', 'secret', '', None),
  'LLM_TIMEOUT_SECONDS': ('translate', '请求超时（秒）', 'number', 90, (10, 150)),
- 'LLM_CONCURRENCY': ('translate', '同时执行的翻译请求', 'number', 2, (1, 8)),
+ 'LLM_CONCURRENCY': ('translate', '翻译并发上限（两种方式共用）', 'number', 2, (1, 8)),
  'defaultOcr': ('ocr', '默认识别服务', 'select', 'google', ['google', 'paddle', 'ocrspace']),
  'GOOGLE_VISION_API_KEY': ('ocr', 'Google Vision API Key', 'secret', '', None),
  'PADDLEOCR_API_TOKEN': ('ocr', 'PaddleOCR Token', 'secret', '', None),
@@ -41,7 +41,7 @@ FIELDS = {
 def version(con, group):
     row = con.execute('SELECT version FROM service_versions WHERE name=?', (group,)).fetchone()
     config = db.resource(con, 'translate')[0] if group in ('translate','ocr') else {}
-    related = {key:config[key] for key in (('model','jsonMode') if group=='translate' else ('defaultOcr',)) if key in config}
+    related = {key: config[key] for key in (('model', 'jsonMode') if group == 'translate' else ('defaultOcr',)) if key in config}
     effective = {name: security.credential(name, con) for name,field in FIELDS.items() if field[0]==group and name in settings.BUSINESS_NAMES}
     if group=='translate':
         effective['LLM_MODEL']=security.credential('LLM_MODEL',con) or 'gpt-4o-mini'
@@ -170,7 +170,8 @@ def save(group, expected, values, operations=None):
         if any(name in config for name in values):
             from .validation import validate
             db.put_resource(con, 'translate', validate('translate', config), '保存服务参数')
-        con.execute('UPDATE service_versions SET version=? WHERE name=?', (secrets.token_hex(16), group))
+        con.execute('INSERT INTO service_versions(name, version) VALUES (?, ?) '
+                    'ON CONFLICT(name) DO UPDATE SET version=excluded.version', (group, secrets.token_hex(16)))
         # Audit field names only. Neither old nor new secret values enter history.
         names = sorted(set(values) | set(operations))
         con.execute('INSERT INTO history(resource,version,data,created_at,message) VALUES (?,?,?,?,?)',
@@ -191,9 +192,10 @@ def test(group):
             from bs4 import BeautifulSoup
             ok = BeautifulSoup(content, 'html.parser').select_one('table.itg') is not None
             message = '已通过收藏页访问验证' if ok else '未读取到收藏列表，请检查 Cookie 与来源访问状态'
-        elif group == 'translate':
+        elif group in ('translate', 'translate-google'):
             from .translation import translate
-            result = translate({'texts': ['接続テスト ' + secrets.token_hex(3)]})
+            engine = 'google' if group == 'translate-google' else 'model'
+            result = translate({'engine': engine, 'texts': ['接続テスト ' + secrets.token_hex(3)]})
             ok = bool(result.get('translations') and result['translations'][0])
             message = '翻译服务请求成功' if ok else '服务已响应，但没有返回有效译文'
         else:
