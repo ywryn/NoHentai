@@ -140,8 +140,17 @@ class AdminV2Tests(fixtures.BackendTests):
         with db.connect() as con:
             self.assertIsNone(con.execute("SELECT 1 FROM resources WHERE name='printed'").fetchone())
             self.assertEqual(con.execute('SELECT COUNT(*) FROM books').fetchone()[0],2)
-        self.assertEqual(self.client.get('/api/books').json()['items'][0]['book']['书名'],'updated')
-        deleted=self.admin('record-delete',kind='book',id=original['id'],version=changed.json()['version'])
+        def assert_book_order(expected):
+            self.assertEqual([item['id'] for item in self.client.get('/api/books').json()['items']], expected)
+            self.assertEqual([item['id'] for item in self.admin('records',kind='book').json()['items']], expected)
+
+        assert_book_order([created['id'], original['id']])
+        moved = self.admin('record-reorder', kind='book', id=original['id'],
+                           version=changed.json()['version'], direction=-1)
+        self.assertEqual(moved.status_code, 200, moved.text)
+        assert_book_order([original['id'], created['id']])
+        current = self.admin('record', kind='book', id=original['id']).json()
+        deleted=self.admin('record-delete',kind='book',id=original['id'],version=current['version'])
         self.assertEqual(deleted.status_code,200)
         restored=self.admin('record-restore',historyId=deleted.json()['historyId'],version='0')
         self.assertEqual(restored.status_code,200,restored.text)

@@ -149,7 +149,8 @@ def list_records(kind, query='', page=1, origin='sync'):
                 params = [query.lower()] if query else []
             total = con.execute(f'SELECT COUNT(*) FROM {TABLES[kind]} WHERE {condition}', params).fetchone()[0]
             page = min(page, max(1, math.ceil(total / 30)))
-            items = [dto(r,kind) for r in con.execute(f'SELECT * FROM {TABLES[kind]} WHERE {condition} ORDER BY position LIMIT 30 OFFSET ?', params + [(page-1)*30])]
+            order = 'DESC' if kind == 'book' else 'ASC'
+            items = [dto(r,kind) for r in con.execute(f'SELECT * FROM {TABLES[kind]} WHERE {condition} ORDER BY position {order} LIMIT 30 OFFSET ?', params + [(page-1)*30])]
         if kind=='book':
             gids = list({item['data'].get('sid') for item in items if item['data'].get('sid')})
             linked = {}
@@ -337,7 +338,8 @@ def reorder(kind, record_id, direction, expected):
         current = row(con, kind, record_id)
         if not current or current['version'] != expected:
             fail(409, '条目已变更，请刷新后重试')
-        op, order = ('<', 'DESC') if direction < 0 else ('>', 'ASC')
+        position_direction = -direction if kind == 'book' else direction
+        op, order = ('<', 'DESC') if position_direction < 0 else ('>', 'ASC')
         neighbor = con.execute(f'SELECT * FROM {TABLES[kind]} WHERE position {op} ? ORDER BY position {order} LIMIT 1', (current['position'],)).fetchone()
         if neighbor:
             for item, position in [(current, neighbor['position']), (neighbor, current['position'])]:
