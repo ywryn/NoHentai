@@ -5,6 +5,7 @@ import AppIcon from '@/components/ui/AppIcon.vue'
 import { onMounted, onBeforeUnmount, computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMomMode } from '@/composables/useMomMode'
+import { useTouchScrollIndicator } from '@/composables/useTouchScrollIndicator'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import MomModeToggle from '@/components/MomModeToggle.vue'
 import ViewModeToggle from '@/components/ViewModeToggle.vue'
@@ -60,36 +61,7 @@ const narrow = ref(mobile.matches)
 const menu = ref<HTMLElement>()
 const trigger = ref<HTMLButtonElement>()
 const open = ref(false)
-const scrollIndicator = ref<HTMLElement>()
-const touchScroll = window.matchMedia('(hover: none) and (pointer: coarse) and (forced-colors: none)')
-const supportsTouchIndicator = CSS.supports('scrollbar-width', 'none')
-let scrollIndicatorTimer: ReturnType<typeof setTimeout> | undefined
-
-function hideScrollIndicator() {
-  clearTimeout(scrollIndicatorTimer)
-  scrollIndicator.value?.removeAttribute('data-scrolling')
-}
-
-function showScrollIndicator(event: Event) {
-  const indicator = scrollIndicator.value
-  if (!supportsTouchIndicator || !touchScroll.matches || !indicator) return
-
-  const area = event.currentTarget as HTMLElement
-  const { clientHeight, scrollHeight, scrollTop } = area
-  const scrollRange = scrollHeight - clientHeight
-  if (scrollRange <= 0) {
-    hideScrollIndicator()
-    return
-  }
-
-  const thumbHeight = Math.min(clientHeight, Math.max(32, clientHeight * clientHeight / scrollHeight))
-  const progress = Math.min(1, Math.max(0, scrollTop / scrollRange))
-  indicator.style.blockSize = `${thumbHeight}px`
-  indicator.style.transform = `translateY(${(thumbHeight - clientHeight) * (1 - progress)}px)`
-  indicator.setAttribute('data-scrolling', '')
-  clearTimeout(scrollIndicatorTimer)
-  scrollIndicatorTimer = setTimeout(hideScrollIndicator, 650)
-}
+const hideScrollIndicator = useTouchScrollIndicator()
 const nativePopover = 'showPopover' in HTMLElement.prototype
 function closeMenu() {
   if (nativePopover && menu.value?.matches(':popover-open')) menu.value.hidePopover()
@@ -118,7 +90,6 @@ onMounted(() => {
   }
 })
 onBeforeUnmount(() => {
-  hideScrollIndicator()
   mobile.removeEventListener('change', layout)
   document.removeEventListener('pointerdown', outside)
   document.removeEventListener('keydown', escape)
@@ -154,16 +125,14 @@ onBeforeUnmount(() => {
       </nav>
     </header>
 
-    <component :is="route.path.startsWith('/admin') ? 'div' : 'main'" id="main-content" class="route-shell" :class="{ 'public-scroll-area visible-scrollbar': !isImmersivePage }" :tabindex="isImmersivePage ? -1 : 0" @scroll.passive="showScrollIndicator">
+    <component :is="route.path.startsWith('/admin') ? 'div' : 'main'" id="main-content" class="route-shell" :class="{ 'public-scroll-area visible-scrollbar touch-scroll-area': !isImmersivePage }" :tabindex="isImmersivePage ? -1 : 0">
       <router-view />
     </component>
-    <span v-if="!isImmersivePage && supportsTouchIndicator" ref="scrollIndicator" class="touch-scroll-indicator" aria-hidden="true"></span>
   </div>
 </template>
 
 <style scoped>
 .public-layout {
-  position: relative;
   block-size: 100vh;
   block-size: 100dvh;
   display: flex;
@@ -184,40 +153,6 @@ onBeforeUnmount(() => {
 
 @media (hover: hover) and (pointer: fine) {
   .public-scroll-area { scrollbar-gutter: stable; }
-}
-
-.touch-scroll-indicator { display: none; }
-
-@supports (scrollbar-width: none) {
-  @media (hover: none) and (pointer: coarse) and (forced-colors: none) {
-    .public-scroll-area { scrollbar-width: none; }
-
-    .touch-scroll-indicator {
-      display: block;
-      position: absolute;
-      inset-inline-end: 2px;
-      inset-block-end: 0;
-      inline-size: 8px;
-      border-radius: 100px;
-      background: var(--scrollbar-thumb);
-      box-shadow: 0 0 0 1px var(--scrollbar-track);
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .touch-scroll-indicator[data-scrolling] { opacity: 1; }
-
-    @media (prefers-reduced-motion: no-preference) {
-      .touch-scroll-indicator:not([data-scrolling]) { transition: opacity var(--dur-base) var(--ease-out); }
-    }
-
-    @media (prefers-contrast: more) {
-      .touch-scroll-indicator {
-        --scrollbar-thumb: CanvasText;
-        --scrollbar-track: Canvas;
-      }
-    }
-  }
 }
 
 .translate-entry > .public-scroll-area {

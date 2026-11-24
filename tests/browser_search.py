@@ -49,6 +49,8 @@ def main():
                 rows=[{'id':str(g['gid']),'version':'0','data':{},'source':g,'effective':g} for g in found[(target-1)*30:target*30]]
                 route.fulfill(json={'items':rows,'total':len(found),'page':target,'pages':(len(found)+29)//30})
         elif body['action']=='record': route.fulfill(json={'id':'1','version':'0','data':{},'source':galleries[0],'effective':galleries[0]})
+        elif body['action']=='overview':
+            route.fulfill(json={'counts':{'galleries':65,'overrides':0,'books':65,'rules':0},'recent':[],'schedules':[],'successes':{}})
         else: raise AssertionError('Unexpected admin operation: '+body['action'])
     try:
         with sync_playwright() as p:
@@ -134,8 +136,33 @@ def main():
             touch.emulate_media(forced_colors='active')
             expect(touch_area).to_have_css('scrollbar-width','auto')
             expect(indicator).to_have_css('display','none')
-            touch.close()
             print('PASS: wider touch indicator follows scrolling, hides on idle and respects forced colors')
+            touch.emulate_media(forced_colors='none')
+            touch.set_viewport_size({'width':390,'height':500})
+            touch.route('**/api/admin/session',lambda r:r.fulfill(json={'session':{'csrf':'fixture'}}))
+            touch.route('**/api/admin',admin)
+            touch.goto(base+'/#/admin/galleries')
+            gallery_list=touch.locator('.a-gallery-list')
+            expect(gallery_list.locator('.a-gallery-row')).to_have_count(30)
+            expect(gallery_list).to_have_css('scrollbar-width','none')
+            gallery_list.evaluate('e=>{e.scrollTop=250}')
+            expect(indicator).to_have_css('opacity','1')
+            expect(indicator).to_have_css('width','8px')
+            assert indicator.bounding_box()['y']>=gallery_list.bounding_box()['y']
+            touch.get_by_role('button',name='打开管理导航').click()
+            drawer=touch.get_by_role('dialog',name='管理导航')
+            expect(drawer).to_be_visible()
+            expect(drawer).to_have_css('scrollbar-width','none')
+            drawer.evaluate('e=>{e.scrollTop=100}')
+            expect(drawer.locator('.touch-scroll-indicator')).to_have_css('opacity','1')
+            expect(indicator).to_have_css('opacity','0')
+            touch.goto(base+'/#/admin/overview')
+            expect(touch.locator('.ops-overview-hero')).to_be_visible()
+            expect(touch.locator('html')).to_have_css('scrollbar-width','none')
+            touch.evaluate('window.scrollTo(0, 200)')
+            expect(touch.locator('body > .touch-scroll-indicator')).to_have_css('opacity','1')
+            touch.close()
+            print('PASS: admin page, list and top-layer drawer use the same mobile scroll indicator')
             pagination=[]
             for path,label in (('/printed','搜索书单'),('/','搜索画廊'),('/daily','搜索每日画廊')):
                 page.goto(base+'/#'+path)

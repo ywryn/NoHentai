@@ -162,6 +162,39 @@ html {
   }
 }
 
+.touch-scroll-indicator { display: none; }
+
+@supports (scrollbar-width: none) {
+  @media (hover: none) and (pointer: coarse) and (forced-colors: none) {
+    :is(.touch-scroll-area, html.admin-active) { scrollbar-width: none; }
+
+    .touch-scroll-indicator {
+      display: block;
+      position: fixed;
+      z-index: var(--z-popover);
+      inline-size: 8px;
+      border-radius: 100px;
+      background: var(--scrollbar-thumb);
+      box-shadow: 0 0 0 1px var(--scrollbar-track);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .touch-scroll-indicator[data-scrolling] { opacity: 1; }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .touch-scroll-indicator:not([data-scrolling]) { transition: opacity var(--dur-base) var(--ease-out); }
+    }
+
+    @media (prefers-contrast: more) {
+      .touch-scroll-indicator {
+        --scrollbar-thumb: CanvasText;
+        --scrollbar-track: Canvas;
+      }
+    }
+  }
+}
+
 html.home-scroll-locked,
 body.home-scroll-locked {
   overflow: hidden;
