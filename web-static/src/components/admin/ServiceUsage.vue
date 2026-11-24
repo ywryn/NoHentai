@@ -58,7 +58,6 @@ onMounted(loadProviderUsage)
         </div>
       </dl>
       <p v-else class="ops-muted">当前未能读取本站预扣计数。</p>
-      <p class="ops-muted">发送请求前计入。Google 云端计费及免费抵扣未接入此面板。</p>
     </section>
 
     <section class="provider-usage" aria-labelledby="provider-usage-title" :aria-busy="loading">
