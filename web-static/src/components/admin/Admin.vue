@@ -53,7 +53,7 @@ onBeforeUnmount(()=>{document.documentElement.classList.remove('admin-active','a
       </main><footer class="a-login-footer">NoHentai</footer>
     </template>
     <template v-else>
-      <aside class="a-sidebar visible-scrollbar">
+      <aside class="a-sidebar" tabindex="0">
         <RouterLink to="/admin/overview" class="a-brand"><BrandMark admin :size="36" /><span>NoHentai<small>管理工作空间</small></span></RouterLink>
         <nav aria-label="管理功能"><div v-for="group in navigation" :key="group.label" class="a-nav-group"><p>{{ group.label }}</p><RouterLink v-for="[path, label, icon] in group.items" :key="path" :to="`/admin/${path}`"><AdminIcon :name="icon" :size="19" /><span>{{ label }}</span><span v-if="route.path === `/admin/${path}`" class="a-nav-active-dot" /></RouterLink></div></nav>
         <div class="a-sidebar-footer"><RouterLink to="/"><AdminIcon name="arrow" :size="18" />查看网站</RouterLink><AdminPrivacyToggle /><button @click="toggleTheme"><AdminIcon :name="isDark ? 'sun' : 'moon'" :size="18" />{{ isDark ? '切换浅色外观' : '切换深色外观' }}</button><button @click="lock"><AdminIcon name="logout" :size="18" />退出管理</button></div>
