@@ -1,6 +1,7 @@
 """Shared search and pagination behavior, using only mocked data and local built assets."""
 import re
 import threading
+import time
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
@@ -64,6 +65,21 @@ def main():
             page.route('**/api/tags/suggestions?*',suggestions)
             page.route('**/api/admin/session',lambda r:r.fulfill(json={'session':{'csrf':'fixture'}}))
             page.route('**/api/admin',admin)
+            page.add_init_script("""if (location.hash.startsWith('#/admin/')) {
+                window.sawPublicNavigation = false
+                new MutationObserver(() => {
+                    if (document.querySelector('.navigation-bar')) window.sawPublicNavigation = true
+                }).observe(document, { childList: true, subtree: true })
+            }""")
+            def delay_admin_chunk(request):
+                time.sleep(.25)
+                request.continue_()
+            page.route('**/assets/Admin-*.js',delay_admin_chunk)
+            page.goto(base+'/#/admin/galleries')
+            expect(page.locator('.a-gallery-list .a-gallery-row')).to_have_count(30)
+            assert page.evaluate('window.sawPublicNavigation') is False
+            page.unroute('**/assets/Admin-*.js',delay_admin_chunk)
+            print('PASS: a cold admin load skips the public navigation shell')
             def check_spacing():
                 gaps=page.locator('.catalog-results').evaluate('''e=>{
                     const bars=e.querySelectorAll('.pagination-control'),list=e.querySelector('.gallery-list,.vm-cover-grid');

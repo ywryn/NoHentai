@@ -75,14 +75,15 @@ onMounted(loadProviderUsage)
             <div>
               <dt>团队当月开销</dt>
               <dd><strong>{{ amount(xai.spendUsd) }}</strong></dd>
-              <dd class="usage-detail">{{ xai.month }} · UTC</dd>
+              <dd v-if="xai.checkedAt" class="usage-detail">
+                <time :datetime="xai.checkedAt">{{ formatDate(xai.checkedAt) }}</time>
+              </dd>
             </div>
             <div>
               <dt>团队预付余额</dt>
               <dd><strong>{{ amount(xai.balanceUsd) }}</strong></dd>
             </div>
           </dl>
-          <p class="ops-muted">上次查询 {{ formatDate(xai.checkedAt) }}。供应商汇总可能延迟。</p>
         </template>
         <p v-else-if="!loading" class="ops-muted" role="status">
           {{ xai?.state === 'unconfigured' ? '尚未配置 xAI 团队账单凭据。' :

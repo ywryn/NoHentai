@@ -24,4 +24,5 @@ app.use(router); // 挂载路由
 // 注册 Tooltip 全局指令
 app.directive('tooltip', Tooltip);
 
-app.mount('#app')
+// Resolve the initial route before rendering public or immersive navigation.
+router.isReady().then(() => app.mount('#app'))
