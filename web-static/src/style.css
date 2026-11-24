@@ -74,8 +74,15 @@
   --danger-color: #f87171;
   --warning-color: #fbbf24;
   --placeholder-bg: #1a2640;
-  --scrollbar-track: #263343;
-  --scrollbar-thumb: #91a5bd;
+  --scrollbar-track: var(--surface-color);
+  --scrollbar-thumb: var(--muted-color);
+}
+
+@supports (color: color-mix(in srgb, black, white)) {
+  :root,
+  .my-app-dark {
+    --scrollbar-thumb: color-mix(in srgb, var(--muted-color) 75%, var(--border-color));
+  }
 }
 
 /* 浅色主题 - 护眼暖米色调 */
@@ -121,7 +128,7 @@ html {
   transition: background-color var(--dur-slow) var(--ease-out), color var(--dur-slow) var(--ease-out);
 }
 
-/* Touch-first devices use the platform scrollbar, including its own hide timing. */
+/* Pointer-driven scrollbars keep the browser's native drag interaction. */
 @media (hover: hover) and (pointer: fine) and (forced-colors: none) {
   body {
     scrollbar-color: auto; /* The viewport colors should not cascade into every panel. */
