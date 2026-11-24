@@ -141,6 +141,11 @@ onBeforeUnmount(() => {
   overflow: auto;
 }
 
+/* Loading placeholders should not move a restored history position. */
+.public-scroll-area:has([aria-busy="true"]) {
+  overflow-anchor: none;
+}
+
 .public-scroll-area:focus-visible {
   outline: 2px solid var(--primary-color);
   outline-offset: -2px;
