@@ -89,12 +89,32 @@ const routes: RouteRecordRaw[] = [
 ]
 
 const history = createWebHashHistory()
-const contentScrollPositions = new Map<string, { top: number; left: number }>()
+type ContentScrollPosition = { top: number; left: number }
+const contentScrollPositions = new Map<string, ContentScrollPosition>()
+let pendingScrollRestore: MutationObserver | undefined
 let activeEntry: string | undefined
 let activePosition: unknown
 
 function publicScrollArea() {
   return document.querySelector<HTMLElement>('#main-content.public-scroll-area')
+}
+
+function restoreContentScroll(area: HTMLElement, position: ContentScrollPosition) {
+  const loading = '.catalog-results[aria-busy="true"]'
+  if (!area.querySelector(loading)) {
+    area.scrollTo(position)
+    return
+  }
+
+  // Restore against the real list, once placeholder rows have been replaced.
+  const observer = new MutationObserver(() => {
+    if (area.querySelector(loading)) return
+    observer.disconnect()
+    pendingScrollRestore = undefined
+    area.scrollTo(position)
+  })
+  observer.observe(area, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-busy'] })
+  pendingScrollRestore = observer
 }
 
 const router = createRouter({
@@ -105,7 +125,7 @@ const router = createRouter({
     if (!area || to.meta.immersive) return savedPosition || false
 
     if (savedPosition && activeEntry) {
-      area.scrollTo(contentScrollPositions.get(activeEntry) ?? { top: 0, left: 0 })
+      restoreContentScroll(area, contentScrollPositions.get(activeEntry) ?? { top: 0, left: 0 })
     } else if (!from.matched.length || to.path !== from.path || to.query.page !== from.query.page) {
       area.scrollTo({ top: 0, left: 0 })
     }
@@ -118,6 +138,8 @@ const BASE_TITLE = 'NoHentai | の変態'
 /* 路由切换时更新标题，便于区分多标签页与浏览历史 */
 router.afterEach((to, _from, failure) => {
   if (failure) return
+  pendingScrollRestore?.disconnect()
+  pendingScrollRestore = undefined
   // afterEach runs before Vue replaces the view. Capture the outgoing history entry.
   const position = history.state.position
   const area = publicScrollArea()
