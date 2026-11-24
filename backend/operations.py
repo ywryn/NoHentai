@@ -4,7 +4,8 @@ import sqlite3
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from . import db, settings, security
+from . import db, settings, security, traffic
+from .migrations import SCHEMA_VERSION
 from .security import fail
 
 
@@ -46,6 +47,7 @@ def overview():
             'SELECT key, count FROM counters WHERE key IN (?, ?) AND expires > ?',
             (vision_key, translation_key, time.time()))}
         schedule = [dict(r) for r in con.execute('SELECT * FROM schedules')]
+        visit_totals = traffic.overview(con)
     service_groups = status()['groups']
     service_fields = {field['key']: field for group in service_groups for field in group['fields']}
     local_usage = {'month': month, 'items': [
@@ -57,7 +59,7 @@ def overview():
          'configured': service_fields['GOOGLE_TRANSLATE_API_KEY']['configured']},
     ]}
     return {'counts': counts, 'successes': successes, 'recent': recent, 'workerAlive': time.time()-heartbeat < 60,
-            'checks': checks, 'localUsage': local_usage,
+            'checks': checks, 'localUsage': local_usage, 'traffic': visit_totals,
             'usage': [{'name': vision_key, 'count': counters[vision_key]}] if vision_key in counters else [],
             'schedules': schedule, 'backup': next(iter(backups()['items']), None),
-            'schema': 3, 'workerHeartbeat': heartbeat, 'databaseBytes': settings.DB_PATH.stat().st_size, 'services': service_groups, 'checkedAt':db.now()}
+            'schema': SCHEMA_VERSION, 'workerHeartbeat': heartbeat, 'databaseBytes': settings.DB_PATH.stat().st_size, 'services': service_groups, 'checkedAt':db.now()}

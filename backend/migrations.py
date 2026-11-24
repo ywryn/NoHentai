@@ -2,7 +2,7 @@
 import json
 import uuid
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 
 def upgrade(con, now):
@@ -18,8 +18,10 @@ def upgrade(con, now):
     version = con.execute('PRAGMA user_version').fetchone()[0]
     if version == 2:
         upgrade_events(con)
-    if version >= 2:
+    if 2 <= version < 4:
         upgrade_home_catalog(con)
+    if version >= 2:
+        upgrade_traffic(con)
         return
     statements = [
         'CREATE TABLE resource_versions(name TEXT PRIMARY KEY, version TEXT NOT NULL)',
@@ -81,6 +83,7 @@ def upgrade(con, now):
     con.execute('PRAGMA user_version=2')
     upgrade_events(con)
     upgrade_home_catalog(con)
+    upgrade_traffic(con)
 
 
 def upgrade_events(con):
@@ -103,3 +106,13 @@ def upgrade_home_catalog(con):
     con.execute('CREATE INDEX IF NOT EXISTS source_covers_pending ON source_covers(next_check)')
     cover_cache.enqueue_current(con)
     con.execute('PRAGMA user_version=4')
+
+
+def upgrade_traffic(con):
+    con.execute("""CREATE TABLE IF NOT EXISTS traffic_visitors (
+        visitor BLOB PRIMARY KEY, last_day TEXT NOT NULL
+    ) WITHOUT ROWID""")
+    con.execute("""CREATE TABLE IF NOT EXISTS traffic_daily (
+        day TEXT PRIMARY KEY, views INTEGER NOT NULL, visitors INTEGER NOT NULL, new_visitors INTEGER NOT NULL
+    ) WITHOUT ROWID""")
+    con.execute('PRAGMA user_version=5')

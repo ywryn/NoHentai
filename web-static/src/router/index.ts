@@ -133,11 +133,24 @@ const router = createRouter({
   },
 })
 
+let visitRequest = Promise.resolve()
+
+function recordPageVisit() {
+  // Serialize visits within a tab so the first response can establish the visitor cookie.
+  visitRequest = visitRequest.then(async () => {
+    await fetch('/api/visits', { method: 'POST', keepalive: true, referrerPolicy: 'no-referrer' })
+  }).catch(() => {})
+}
+
 const BASE_TITLE = 'NoHentai | の変態'
 
 /* 路由切换时更新标题，便于区分多标签页与浏览历史 */
-router.afterEach((to, _from, failure) => {
+router.afterEach((to, from, failure) => {
   if (failure) return
+  if (to.matched.length && to.matched[0].path !== '/admin' &&
+      (!from.matched.length || to.path.replace(/\/+$/, '') !== from.path.replace(/\/+$/, ''))) {
+    recordPageVisit()
+  }
   pendingScrollRestore?.disconnect()
   pendingScrollRestore = undefined
   // afterEach runs before Vue replaces the view. Capture the outgoing history entry.

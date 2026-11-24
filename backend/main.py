@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request, HTTPException, Body, Query
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from . import admin, cover_cache, db, settings, public, media, translation, security, catalog, services, media_store, operations, stats, observability
+from . import admin, cover_cache, db, settings, public, media, translation, security, catalog, services, media_store, operations, stats, observability, traffic
 from cryptography.fernet import Fernet
 
 
@@ -80,6 +80,19 @@ def safely(fn, *args):
     except Exception as exc:
         observability.log_failure(getattr(fn, '__name__', type(fn).__name__), exc)
         raise HTTPException(502, '服务暂时不可用，请检查服务器配置与任务记录') from None
+
+
+@app.post(traffic.COOKIE_PATH, status_code=204)
+def page_visit(request: Request):
+    if request.headers.get('sec-fetch-site') not in (None, 'same-origin'):
+        raise HTTPException(403, '不允许的请求来源')
+    cookie = traffic.record_visit(request.cookies.get(traffic.COOKIE))
+    response = Response(status_code=204)
+    if cookie:
+        response.set_cookie(traffic.COOKIE, cookie, max_age=traffic.COOKIE_MAX_AGE,
+                            path=traffic.COOKIE_PATH, secure=request.url.scheme == 'https',
+                            httponly=True, samesite='lax')
+    return response
 
 
 @app.get('/api/health')

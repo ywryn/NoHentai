@@ -51,7 +51,8 @@ def main():
                 route.fulfill(json={'items':rows,'total':len(found),'page':target,'pages':(len(found)+29)//30})
         elif body['action']=='record': route.fulfill(json={'id':'1','version':'0','data':{},'source':galleries[0],'effective':galleries[0]})
         elif body['action']=='overview':
-            route.fulfill(json={'counts':{'galleries':65,'overrides':0,'books':65,'rules':0},'recent':[],'schedules':[],'successes':{}})
+            route.fulfill(json={'counts':{'galleries':65,'overrides':0,'books':65,'rules':0},'recent':[],'schedules':[],'successes':{},
+                'traffic':{'date':'2026-11-24','timezone':'Asia/Shanghai','todayViews':14,'todayVisitors':8,'totalViews':128,'totalVisitors':42}})
         else: raise AssertionError('Unexpected admin operation: '+body['action'])
     try:
         with sync_playwright() as p:
@@ -65,6 +66,12 @@ def main():
             page.route('**/api/tags/suggestions?*',suggestions)
             page.route('**/api/admin/session',lambda r:r.fulfill(json={'session':{'csrf':'fixture'}}))
             page.route('**/api/admin',admin)
+            visit_paths=[]
+            def visit(route):
+                visit_paths.append(page.url)
+                assert route.request.method=='POST' and route.request.post_data is None
+                route.fulfill(status=204)
+            page.route('**/api/visits',visit)
             page.add_init_script("""if (location.hash.startsWith('#/admin/')) {
                 window.sawPublicNavigation = false
                 new MutationObserver(() => {
@@ -80,6 +87,18 @@ def main():
             assert page.evaluate('window.sawPublicNavigation') is False
             page.unroute('**/assets/Admin-*.js',delay_admin_chunk)
             print('PASS: a cold admin load skips the public navigation shell')
+            assert not visit_paths
+            with page.expect_request('**/api/visits'):
+                page.goto(base+'/#/daily')
+            expect(page.locator('.daily-group-pill')).to_be_visible()
+            with page.expect_request('**/api/visits'):
+                page.reload()
+            expect(page.locator('.daily-group-pill')).to_be_visible()
+            page.goto(base+'/#/daily?page=2')
+            expect(page).to_have_url(base+'/#/daily?page=2')
+            page.wait_for_timeout(200)
+            assert len(visit_paths)==2,visit_paths
+            print('PASS: page visits count public navigation and reload, with query-only changes excluded')
             def check_spacing():
                 gaps=page.locator('.catalog-results').evaluate('''e=>{
                     const bars=e.querySelectorAll('.pagination-control'),list=e.querySelector('.gallery-list,.vm-cover-grid');
@@ -174,6 +193,9 @@ def main():
             expect(indicator).to_have_css('opacity','0')
             touch.goto(base+'/#/admin/overview')
             expect(touch.locator('.ops-overview-hero')).to_be_visible()
+            totals=touch.get_by_role('region',name='访问统计')
+            expect(totals.locator('dd')).to_have_text(['14','8','128','42'])
+            expect(totals).to_contain_text('北京时间')
             expect(touch.locator('html')).to_have_css('scrollbar-width','none')
             touch.evaluate('window.scrollTo(0, 200)')
             expect(touch.locator('body > .touch-scroll-indicator')).to_have_css('opacity','1')

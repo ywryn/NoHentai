@@ -27,8 +27,50 @@ onBeforeUnmount(()=>{clearInterval(timer);window.removeEventListener('focus',foc
 </script>
 <template><div class="a-page ops-page" :aria-busy="busy"><header class="a-page-heading ops-page-header"><div class="a-page-title"><AdminMenuButton /><h1>{{healthOnly?'服务状态':'站点概览'}}</h1></div><div class="a-heading-actions ops-refresh"><small>{{checked?'更新于 '+new Date(checked).toLocaleTimeString('zh-CN',{hour12:false}):'正在读取状态'}}</small><button class="a-button" :disabled="busy" @click="load"><AdminIcon name="refresh" :size="16"/>{{busy?'更新中':'刷新状态'}}</button></div></header><div v-if="error" class="a-alert a-alert-error" role="alert">{{error}}</div><template v-if="data">
 <template v-if="!healthOnly"><section class="ops-overview-hero"><div><span class="ops-kicker">YOUR COLLECTION</span><h2>{{data.counts.galleries.toLocaleString()}}<small>个画廊</small></h2><p>{{data.counts.overrides}} 条人工调整 · {{data.counts.books}} 本实体书 · {{data.counts.rules}} 个每日筛选组</p><RouterLink to="/admin/galleries" class="a-button">管理画廊 <AdminIcon name="arrow" :size="16"/></RouterLink></div><aside><div class="ops-section-title"><span class="ops-live-dot" :class="{'is-running':data.workerAlive}"></span><strong>{{!data.workerAlive?'同步引擎需要检查':active.length?'同步正在进行':'同步引擎已就绪'}}</strong></div><p>{{!data.workerAlive?'队列与现有内容已保留，恢复 worker 后继续处理。':active.length?`${active.length} 个任务在队列中，当前内容持续可用。`:enabled.length?`${enabled.length} 项每日调度已启用，下一次更新将按计划执行。`:'自动同步已暂停，可以手动运行或设置每日计划。'}}</p><RouterLink :to="active.length?'/admin/tasks?run='+active[0].id:'/admin/tasks'">{{active.length?'查看实时进度':'管理任务与调度'}} <AdminIcon name="arrow-right" :size="16" /></RouterLink></aside></section>
+<section v-if="data.traffic" class="a-card ops-surface" aria-labelledby="overview-traffic">
+  <header class="ops-section-title">
+    <h2 id="overview-traffic">访问统计</h2>
+    <small class="ops-muted">{{ data.traffic.date }} · 北京时间</small>
+  </header>
+  <dl class="traffic-stats">
+    <div><dt>今日访问量</dt><dd>{{ data.traffic.todayViews.toLocaleString('zh-CN') }}</dd></div>
+    <div><dt>今日访客数</dt><dd>{{ data.traffic.todayVisitors.toLocaleString('zh-CN') }}</dd></div>
+    <div><dt>累计访问量</dt><dd>{{ data.traffic.totalViews.toLocaleString('zh-CN') }}</dd></div>
+    <div><dt>累计访客数</dt><dd>{{ data.traffic.totalVisitors.toLocaleString('zh-CN') }}</dd></div>
+  </dl>
+  <p class="ops-muted">访客按浏览器去重。</p>
+</section>
 <div class="ops-overview-grid"><section class="a-card ops-surface"><div class="ops-section-title"><div><span class="ops-kicker">DATA FRESHNESS</span><h2>数据更新</h2></div><RouterLink to="/admin/tasks" class="a-text-button">查看全部 <AdminIcon name="arrow-right" :size="16" /></RouterLink></div><div class="ops-freshness"><article v-for="schedule in data.schedules" :key="schedule.kind"><span class="ops-launch-icon"><AdminIcon :name="schedule.kind==='favorites'?'gallery':schedule.kind==='daily'?'filter':'translate'"/></span><div><strong>{{labels[schedule.kind]}}</strong><p>{{data.successes[schedule.kind]?'最近成功 '+formatDate(data.successes[schedule.kind].at):'尚无独立同步成功记录'}}</p><small>{{schedule.enabled?'下次 '+formatDate(schedule.next_run_at):'每日调度已暂停'}}</small></div><span class="ops-state" :class="schedule.enabled?'success':'paused'">{{schedule.enabled?'自动':'手动'}}</span></article></div></section><section class="a-card ops-surface ops-attention"><span class="ops-kicker">NEXT ACTION</span><h2>需要关注</h2><RouterLink v-if="!data.workerAlive" to="/admin/health"><AdminIcon name="pulse"/><div><strong>同步引擎心跳异常</strong><p>检查 worker 状态，任务可能暂时无法领取。</p></div><AdminIcon name="arrow-right" :size="16" /></RouterLink><RouterLink v-if="failures.length" :to="'/admin/tasks?run='+failures[0].id"><AdminIcon name="info"/><div><strong>{{failures.length}} 次最近运行未成功</strong><p>查看日志，再选择重跑或续跑失败步骤。</p></div><AdminIcon name="arrow-right" :size="16" /></RouterLink><RouterLink v-if="services.some(s=>s.state!=='ready')" to="/admin/health"><AdminIcon name="key"/><div><strong>{{services.filter(s=>s.state!=='ready').length}} 项业务连接待确认</strong><p>检查配置完整性并验证实际连接。</p></div><AdminIcon name="arrow-right" :size="16" /></RouterLink><RouterLink v-if="!data.backup" to="/admin/backups"><AdminIcon name="download"/><div><strong>创建第一份备份</strong><p>先保留快照，再开始下一次调整。</p></div><AdminIcon name="arrow-right" :size="16" /></RouterLink><p v-if="data.workerAlive&&!failures.length&&services.every(s=>s.state==='ready')&&data.backup" class="ops-clear-state"><AdminIcon name="check" :size="30"/>当前没有需要处理的事项。</p></section></div>
 <section class="a-card ops-surface"><div class="ops-section-title"><div><span class="ops-kicker">ACTIVITY</span><h2>最近运行</h2></div><RouterLink to="/admin/history" class="a-text-button">内容修改记录 <AdminIcon name="arrow-right" :size="16" /></RouterLink></div><div class="ops-activity"><RouterLink v-for="run in data.recent.slice(0,5)" :key="run.id" :to="'/admin/tasks?run='+run.id"><span class="ops-activity-dot" :class="run.conclusion||run.status"></span><strong>{{labels[run.kind]}} <small>#{{run.id}}</small></strong><span class="ops-activity-summary">{{run.summary||'等待领取'}}</span><span class="ops-state" :class="run.conclusion||run.status">{{state(run)}}</span><time>{{formatDate(run.updated_at)}}</time><AdminIcon name="chevron" :size="16"/></RouterLink><div v-if="!data.recent.length" class="ops-empty"><AdminIcon name="clock" :size="30"/><p>还没有运行记录。初次导入的数据已可使用。</p><RouterLink to="/admin/tasks" class="a-text-button">开始第一次同步 <AdminIcon name="arrow-right" :size="16" /></RouterLink></div></div></section></template>
 <template v-else><section class="ops-health-banner" :class="{'needs-attention':!data.workerAlive}"><span class="ops-health-orb"><AdminIcon :name="data.workerAlive?'check':'info'" :size="30"/></span><div><span class="ops-kicker">INFRASTRUCTURE</span><h2>{{data.workerAlive?'站点基础服务运行正常':'同步引擎需要检查'}}</h2><p>API 与数据库可用{{data.workerAlive?'，后台 worker 正常发送心跳':'，但暂未收到 worker 的新心跳'}}。业务连接状态见下方。</p></div><span class="ops-state" :class="data.workerAlive?'success':'failure'">{{data.workerAlive?'运行中':'需要关注'}}</span></section><div class="ops-health-metrics"><article><AdminIcon name="pulse"/><small>管理 API 往返</small><strong>{{latency}}<em>ms</em></strong><span>包含网络和数据库查询</span></article><article><AdminIcon name="tasks"/><small>同步 worker</small><strong>{{data.workerAlive?'在线':'异常'}}</strong><span>{{data.workerHeartbeat?'心跳 '+formatDate(data.workerHeartbeat*1000):'尚未收到心跳'}}</span></article><article><AdminIcon name="grid"/><small>SQLite 存储</small><strong>{{fileSize(data.databaseBytes)}}</strong><span>Schema {{data.schema}} · 数据库连接正常</span></article><article><AdminIcon name="download"/><small>最近备份</small><strong>{{data.backup?'已保留':'待创建'}}</strong><span>{{data.backup?formatDate(data.backup.modified*1000):'到备份页创建一致性快照'}}</span></article></div>
 <section class="a-card ops-surface"><div class="ops-section-title"><div><span class="ops-kicker">CONNECTIONS</span><h2>业务服务连接</h2></div><RouterLink to="/admin/services" class="a-text-button">管理配置 <AdminIcon name="arrow-right" :size="16" /></RouterLink></div><p class="ops-muted">配置完整表示必需项已填写；只有当前配置通过真实请求测试，才显示连接正常。</p><div class="ops-connections"><article v-for="service in services" :key="service.id"><span class="ops-launch-icon"><AdminIcon :name="service.id==='favorites'?'gallery':service.id==='ocr'?'search':'translate'"/></span><div><div class="ops-section-title"><h3>{{service.label}}</h3><span class="ops-state" :class="service.state">{{service.stateName}}</span></div><div class="ops-connection-meter"><i v-for="n in service.total" :key="n" :class="{'is-filled':n<=service.configured}"/></div><p>{{service.missing.length?`必需配置 ${service.configured} / ${service.total} 项已填写`:service.state==='unchecked'?'配置已填写，等待验证当前连接':service.check?.message}}</p><small>{{service.check?(service.state==='unchecked'?'旧配置验证 ':'最近验证 ')+formatDate(service.check.checked_at):'尚未发送连接测试'}}</small></div><RouterLink :to="'/admin/services?group='+service.id" class="a-button">{{service.missing.length?'补全配置':service.state==='ready'?'查看配置':'验证连接'}}<AdminIcon name="arrow" :size="15"/></RouterLink></article></div></section>
 <ServiceUsage :local-usage="data.localUsage" /></template></template><div v-else-if="busy" class="ops-empty">正在读取工作空间…</div></div></template>
+
+<style scoped>
+.traffic-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.traffic-stats > div {
+  padding: 10px 12px;
+  border: 1px solid var(--a-border);
+  border-radius: 8px;
+  background: var(--a-subtle);
+}
+
+.traffic-stats dt {
+  color: var(--a-muted);
+  font-size: 12px;
+}
+
+.traffic-stats dd {
+  margin-inline-start: 0;
+  font-size: 22px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+</style>

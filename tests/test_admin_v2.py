@@ -15,8 +15,9 @@ from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 from PIL import Image
 import test_backend as fixtures
-from backend import cover_cache, db, settings, records, services, security, jobs, schedules
+from backend import cover_cache, db, settings, records, services, security, jobs, schedules, traffic
 from backend.main import app
+from backend.migrations import SCHEMA_VERSION
 
 BOOK, GALLERY, DICTIONARY = fixtures.BOOK, fixtures.GALLERY, fixtures.DICTIONARY
 
@@ -202,6 +203,31 @@ class AdminV2Tests(fixtures.BackendTests):
         self.assertEqual(self.admin('overview').status_code,401)
         self.assertFalse(security.verify_password(password))
         self.assertTrue(security.verify_password('a-new-long-password'))
+
+    def test_traffic_overview_deduplicates_browsers_daily_and_lifetime(self):
+        route = traffic.COOKIE_PATH
+        with patch.object(traffic, 'today', return_value='2026-11-24'), TestClient(app, base_url='https://testserver') as other:
+            denied = self.client.post(route, headers={'Sec-Fetch-Site': 'cross-site'})
+            self.assertEqual(denied.status_code, 403)
+            self.assertEqual(self.admin('overview').json()['traffic']['totalViews'], 0)
+            first = self.client.post(route)
+            self.assertEqual(first.status_code, 204)
+            self.assertIn('HttpOnly', first.headers['set-cookie'])
+            self.assertEqual(self.client.post(route).status_code, 204)
+            second = other.post(route)
+            self.assertEqual(second.status_code, 204)
+            self.assertIn('Secure', second.headers['set-cookie'])
+            self.assertEqual(self.client.post('/api/admin', json={'action': 'overview'}).status_code, 401)
+            self.assertEqual(self.admin('overview').json()['traffic'], {
+                'date': '2026-11-24', 'timezone': 'Asia/Shanghai',
+                'todayViews': 3, 'todayVisitors': 2, 'totalViews': 3, 'totalVisitors': 2,
+            })
+        with patch.object(traffic, 'today', return_value='2026-11-25'):
+            self.assertEqual(self.client.post(route).status_code, 204)
+            self.assertEqual(self.admin('overview').json()['traffic'], {
+                'date': '2026-11-25', 'timezone': 'Asia/Shanghai',
+                'todayViews': 1, 'todayVisitors': 1, 'totalViews': 4, 'totalVisitors': 2,
+            })
 
     def test_health_overview_reports_both_current_month_site_counters(self):
         month = datetime.now(timezone.utc).strftime('%Y-%m')
@@ -553,7 +579,7 @@ class AdminV2Tests(fixtures.BackendTests):
         db.initialize();db.initialize()
         self.assertEqual(self.admin('records',kind='book').json()['items'],before)
         self.assertEqual(jobs.runs()[0]['id'],job)
-        with db.connect() as con:self.assertEqual(con.execute('PRAGMA user_version').fetchone()[0],4)
+        with db.connect() as con:self.assertEqual(con.execute('PRAGMA user_version').fetchone()[0],SCHEMA_VERSION)
 
     def test_migration_is_idempotent_and_preserves_v1_data(self):
         path=Path(self.tmp.name)/'legacy.sqlite3'
@@ -577,7 +603,7 @@ class AdminV2Tests(fixtures.BackendTests):
                 self.assertEqual(db.resource(con,'printed')[0],[BOOK,BOOK])
                 self.assertEqual(db.resource(con,'daily')[0],self.daily)
                 self.assertEqual(db.resource(con,'overrides')[0],{'123':{'title':'manual'}})
-                self.assertEqual(con.execute('PRAGMA user_version').fetchone()[0],4)
+                self.assertEqual(con.execute('PRAGMA user_version').fetchone()[0],SCHEMA_VERSION)
                 self.assertIsNone(con.execute("SELECT 1 FROM resources WHERE name='printed'").fetchone())
                 self.assertEqual(con.execute('SELECT title FROM galleries').fetchone()[0],'source')
             db.initialize()
