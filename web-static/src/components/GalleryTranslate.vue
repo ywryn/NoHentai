@@ -36,13 +36,14 @@
         @wheel="onStageWheel"
       >
         <div v-if="!imageError && !imageReady && (imagesLoading || imageLoading || imageUrl)" class="gt-image-placeholder gt-image-loading">
-          <ImageLoadProgress :stage="imageUrl ? 'image' : imageLoading ? 'address' : 'list'" />
+          <ImageLoadProgress :stage="imageLoading || imageUrl ? 'image' : 'list'" />
         </div>
-        <div v-if="imageError" class="gt-image-placeholder gt-image-error" role="alert"><span>{{ imageError }}</span><button class="gt-btn" @pointerdown.stop @click.stop="retryCurrentImage(true)">重新加载图片</button></div>
+        <div v-if="imageError" class="gt-image-placeholder gt-image-error" role="alert"><span>{{ imageError }}</span><button class="gt-btn" @pointerdown.stop @click.stop="retryCurrentImage()">重新加载图片</button></div>
         <!-- 缩放层：图片与 OCR 框同在一个 transform 下，捏合 / 双击放大时框随图一起走 -->
         <div v-else-if="imageUrl" v-show="imageReady" class="gt-stage" :class="{ 'is-sliding': pageSliding }" :style="stageStyle">
           <img
             ref="imgRef"
+            :key="imageUrl"
             :src="imageUrl"
             class="gt-page-img"
             alt="manga page"
@@ -759,7 +760,6 @@ export default {
       galleryImages: [],
       imagesLoading: false,
       imagesError: null,
-      thumbSource: null,
 
       // Current page
       currentPage: 1,
@@ -770,7 +770,7 @@ export default {
       imageAutoRetried: false,
       imageRequestId: 0,
       processingGeneration: 0,
-      nlParam: null,
+      imageVersion: null,
 
       // OCR / translate state
       ocrResults: [],
@@ -902,10 +902,12 @@ export default {
 
     this.loadGlossary()
     if (this.live) {
-      this.liveReader = markRaw(useReader(String(this.$route.query.site || '')))
+      this.imageReader = markRaw(useReader(String(this.$route.query.site || '')))
       this.passwordVerified = true
       this.loadGalleryImages()
       return
+    } else {
+      this.imageReader = markRaw(useReader())
     }
     loadGallery(this.gid).then(result => {
       this.galleryMeta = result.gallery
@@ -922,6 +924,8 @@ export default {
 
   beforeUnmount() {
     this.imageRequestId++
+    this.releasePageImage()
+    this._prefetchController?.abort()
     this._disposed = true
     this.processingGeneration++
     this._ro?.disconnect()
@@ -1255,33 +1259,15 @@ export default {
       this.imagesLoading = true
       this.imagesError = null
       try {
-        if (this.live) {
-          const reader = this.liveReader
-          await reader.init(this.gid, this.token, this.currentPage, false)
-          if (this._disposed) return
-          if (reader.initError.value) throw new Error(reader.initError.value)
-          this.galleryImages = reader.pages.value
-          this.galleryMeta = { title: reader.galleryTitle.value }
-          this.$nextTick(() => this.setupThumbObserver())
-          this.goToPage(Math.min(Math.max(this.currentPage, 1), this.totalPages))
-          return
-        }
-        const res = await fetch(`${API_BASE}/api/gallery-images?gid=${this.gid}&token=${this.token}`)
-        const data = await res.json().catch(() => ({}))
-        if (data.error === 'exhentai_blocked') {
-          this.imagesError = 'ExHentai 独占画廊，服务器无法访问缩略图'
-        } else if (data.error || !res.ok) {
-          throw new Error(data.error || '获取页面列表失败，请重试')
-        } else {
-          if (!Array.isArray(data.images) || !data.images.length) throw new Error('未获取到页面列表，请重试')
-          this.galleryImages = data.images.slice(0, data.total)
-          this.thumbSource = data.source || null
-          // Load the initial page
-          const targetPage = Math.min(Math.max(this.currentPage, 1), data.total)
-          this.loadedThumbPages = {}
-          this.$nextTick(() => this.setupThumbObserver())
-          this.goToPage(targetPage)
-        }
+        const reader = this.imageReader
+        await reader.init(this.gid, this.token, this.currentPage, false)
+        if (this._disposed) return
+        if (reader.initError.value) throw new Error(reader.initError.value)
+        this.galleryImages = reader.pages.value
+        if (this.live) this.galleryMeta = { title: reader.galleryTitle.value }
+        this.loadedThumbPages = {}
+        this.$nextTick(() => this.setupThumbObserver())
+        this.goToPage(Math.min(Math.max(this.currentPage, 1), this.totalPages))
       } catch (e) {
         this.imagesError = e.message
       } finally {
@@ -1291,32 +1277,19 @@ export default {
 
     // ── Page navigation ───────────────────────────────────────────────────────
 
-    async resolvePageImage(pageNum, refresh = false) {
-      if (this.live) {
-        const reader = this.liveReader
-        return refresh && reader.pages.value[pageNum - 1]?.pageUrl
-          ? reader.retryImage(pageNum, this.nlParam)
-          : reader.getImageUrl(pageNum)
-      }
-      const page = this.galleryImages[pageNum - 1]
-      if (!page?.pageUrl) throw new Error('无法获取页面 URL')
-      const source = new URL(page.pageUrl)
-      if (refresh && this.nlParam) source.searchParams.set('nl', this.nlParam)
-      const params = new URLSearchParams({pageUrl: source.href})
-      if (refresh) params.set('refresh', 'true')
-      const res = await fetch(`${API_BASE}/api/image-url?${params}`)
-      if (!res.ok) throw new Error('获取图片地址失败，请重试')
-      const data = await res.json()
-      if (data.error || !data.imageUrl) throw new Error(data.error || '未返回有效图片地址')
-      return { imageUrl: `${API_BASE}/api/image-proxy?imageUrl=${encodeURIComponent(data.imageUrl)}`, nlParam: data.nlParam }
+    releasePageImage() {
+      this._imageController?.abort()
+      if (this.imageUrl) URL.revokeObjectURL(this.imageUrl)
+      this.imageUrl = null
+      this.imageVersion = null
     },
 
-    async goToPage(pageNum) {
+    async goToPage(pageNum, refresh = false) {
       const requestId = ++this.imageRequestId
       this.processingGeneration++
       this.ocrProcessing = false
       this.translating = false
-      this.imageAutoRetried = false
+      this.imageAutoRetried = refresh
       this.currentPage = pageNum
       this.resetZoom()
       this.bubbleCard = null
@@ -1330,8 +1303,9 @@ export default {
       this.ocrResults = []
       this.selectedBoxIdx = null
       this.imageReady = false
-      this.imageUrl = null
-      this.nlParam = null
+      this.releasePageImage()
+      const controller = new AbortController()
+      this._imageController = controller
       this.imageError = null
       this.imageLoading = true
 
@@ -1348,15 +1322,18 @@ export default {
       })
 
       try {
-        const data = await this.resolvePageImage(pageNum)
+        const data = await this.imageReader.loadPageImage(pageNum, { refresh, signal: controller.signal })
         if (requestId !== this.imageRequestId) return
-        this.imageUrl = data.imageUrl
-        this.nlParam = data.nlParam
+        if (this._prefetchPage && this._prefetchPage !== pageNum) this._prefetchController?.abort()
+        this.imageUrl = URL.createObjectURL(data.blob)
+        this.imageVersion = data.version
         // 这一页正在后台预取的话，等它写完缓存再读
         if (this._prefetch?.[pageNum]) {
           this.imageLoading = false
           this.ocrProcessing = true
-          try { await this._prefetch[pageNum] } finally { this.ocrProcessing = false }
+          try { await this._prefetch[pageNum] } finally {
+            if (requestId === this.imageRequestId) this.ocrProcessing = false
+          }
           if (requestId !== this.imageRequestId) return
         }
         const cached = this.loadPageCache(pageNum)
@@ -1380,7 +1357,8 @@ export default {
       }
     },
 
-    onImageError() {
+    onImageError(event) {
+      if (event.currentTarget.src !== this.imageUrl) return
       this.imageReady = false
       this.imageLoading = false
       if (!this.imageAutoRetried) {
@@ -1392,27 +1370,8 @@ export default {
       }
     },
 
-    async retryCurrentImage(manual = false) {
-      if (this.imageLoading) return
-      const pageNum = this.currentPage
-      const page = this.galleryImages[pageNum - 1]
-      if (!page?.pageUrl && !this.live) { this.loadGalleryImages(); return }
-      if (manual) this.imageAutoRetried = true
-      const requestId = ++this.imageRequestId
-      this.imageLoading = true
-      this.imageError = null
-      this.imageReady = false
-      this.imageUrl = null
-      try {
-        const data = await this.resolvePageImage(pageNum, true)
-        if (requestId !== this.imageRequestId) return
-        this.nlParam = data.nlParam
-        this.imageUrl = data.imageUrl
-      } catch (e) {
-        if (requestId === this.imageRequestId) this.imageError = `图片加载失败: ${e.message}`
-      } finally {
-        if (requestId === this.imageRequestId) this.imageLoading = false
-      }
+    retryCurrentImage() {
+      return this.goToPage(this.currentPage, true)
     },
 
     /** 结束 / 取消翻页过场，位移归零 */
@@ -1482,7 +1441,8 @@ export default {
       })
     },
 
-    onImageLoad() {
+    onImageLoad(event) {
+      if (event.currentTarget.src !== this.imageUrl) return
       this.imageReady = true
       this.renderTick++
       if (this._enterFrom != null) {
@@ -1738,28 +1698,41 @@ export default {
       if (!this.autoTranslate) return
       const next = this.currentPage + 1
       if (next > this.totalPages) return
-      if (this.loadPageCache(next)) return
       if (!this._prefetch) this._prefetch = {}
       if (this._prefetch[next]) return
-      const task = this.prefetchPage(next).catch(() => {}).finally(() => { delete this._prefetch[next] })
-      this._prefetch[next] = task
+      if (this._prefetchController) return
+      const controller = new AbortController()
+      this._prefetchController = controller
+      this._prefetchPage = next
+      this._prefetch[next] = this.prefetchPage(next, controller.signal).catch(() => {}).finally(() => {
+        delete this._prefetch[next]
+        this._prefetchController = null
+        this._prefetchPage = null
+      })
     },
 
-    async prefetchPage(pageNum) {
+    async prefetchPage(pageNum, signal) {
       const engine = this.translationEngine
-      const data = await this.resolvePageImage(pageNum)
+      const { blob, version } = await this.imageReader.loadPageImage(pageNum, { background: true, signal })
+      if (this.loadPageCache(pageNum, version)) return
       const img = new Image()
-      img.crossOrigin = 'anonymous'
-      img.src = data.imageUrl
-      await img.decode()
-      const { results, source } = await this.ocrImage(img, this.ocrSource)
-      let translated = results
-      if (results.length) {
-        const translations = await this.translateTexts(results.map(r => r.text), engine)
-        translated = results.map((r, i) => this.applyTranslation(r, translations[i]))
-      }
-      if (!this._disposed && engine === this.translationEngine && !this.loadPageCache(pageNum)) {
-        this.writePageCache(pageNum, translated, source)
+      const url = URL.createObjectURL(blob)
+      try {
+        img.src = url
+        await img.decode()
+        if (signal.aborted) return
+        const { results, source } = await this.ocrImage(img, this.ocrSource)
+        if (signal.aborted) return
+        let translated = results
+        if (results.length) {
+          const translations = await this.translateTexts(results.map(r => r.text), engine)
+          translated = results.map((r, i) => this.applyTranslation(r, translations[i]))
+        }
+        if (!signal.aborted && engine === this.translationEngine && !this.loadPageCache(pageNum, version)) {
+          this.writePageCache(pageNum, translated, source, version)
+        }
+      } finally {
+        URL.revokeObjectURL(url)
       }
     },
 
@@ -1886,6 +1859,8 @@ export default {
         }
         if (Object.keys(batch).length) {
           this.loadedThumbPages = { ...this.loadedThumbPages, ...batch }
+          const numbers = Object.keys(batch).map(Number)
+          void this.imageReader.loadThumbnails(Math.min(...numbers), Math.max(...numbers))
         }
       }, { root: strip, rootMargin: '0px 150px' })
 
@@ -1997,7 +1972,7 @@ export default {
     // ── Translation cache ─────────────────────────────────────────────────────
 
     cacheKey(pageNum) {
-      return `trans_cache_${this.gid}_p${pageNum}`
+      return `trans_cache_${this.$route.query.site || 'catalog'}_${this.gid}_p${pageNum}`
     },
 
     savePageCache() {
@@ -2005,13 +1980,15 @@ export default {
       this.writePageCache(this.currentPage, this.ocrResults, this.lastOcrSource)
     },
 
-    writePageCache(pageNum, ocrResults, lastOcrSource) {
+    writePageCache(pageNum, ocrResults, lastOcrSource, version = this.imageVersion) {
+      if (!version) return
       try {
-        localStorage.setItem(this.cacheKey(pageNum), JSON.stringify({ ocrResults, lastOcrSource, ts: Date.now() }))
+        localStorage.setItem(this.cacheKey(pageNum), JSON.stringify({ ocrResults, lastOcrSource, version, ts: Date.now() }))
       } catch {}
     },
 
-    loadPageCache(pageNum) {
+    loadPageCache(pageNum, version = this.imageVersion) {
+      if (!version) return null
       try {
         const raw = localStorage.getItem(this.cacheKey(pageNum))
         if (!raw) return null
@@ -2020,7 +1997,7 @@ export default {
           localStorage.removeItem(this.cacheKey(pageNum))
           return null
         }
-        return entry
+        return entry.version === version ? entry : null
       } catch { return null }
     },
 

@@ -1,11 +1,12 @@
 <template>
   <div ref="elRef" class="page-image">
     <div v-if="state === 'loading'" class="pi-center pi-loading">
-      <ImageLoadProgress :stage="imgSrc ? 'image' : 'address'" />
+      <ImageLoadProgress stage="image" />
     </div>
     <img
       v-if="imgSrc"
       v-show="state === 'loaded'"
+      :key="imgSrc"
       :src="imgSrc"
       :alt="`第 ${pageNum} 页`"
       class="pi-img"
@@ -14,7 +15,7 @@
       @error="onImgError"
     />
     <div v-if="state === 'error'" class="pi-center pi-error">
-      <p>第 {{ pageNum }} 页加载失败</p>
+      <p>第 {{ pageNum }} 页加载失败{{ errorMessage ? `：${errorMessage}` : '' }}</p>
       <button class="reader-btn" @click="retry">重试</button>
     </div>
   </div>
@@ -32,48 +33,52 @@ const props = withDefaults(defineProps<{
 }>(), { active: true })
 
 const reader = inject(READER_KEY)!
-const { getImageUrl, retryImage } = reader
+const { loadPageImage } = reader
 
 type State = 'idle' | 'loading' | 'loaded' | 'error'
 const state  = ref<State>('idle')
 const imgSrc = ref('')
 const elRef  = ref<HTMLElement | null>(null)
-let nlParam: string | null = null
+const errorMessage = ref('')
 let observer: IntersectionObserver | null = null
+let request: AbortController | undefined
 let autoRetried = false
 
-async function load() {
-  state.value = 'loading'
+function clearImage() {
+  request?.abort()
+  if (imgSrc.value) URL.revokeObjectURL(imgSrc.value)
   imgSrc.value = ''
-  autoRetried = false
+}
+
+async function load(refresh = false) {
+  clearImage()
+  const controller = new AbortController()
+  request = controller
+  state.value = 'loading'
+  errorMessage.value = ''
+  autoRetried = refresh
   try {
-    const data = await getImageUrl(props.pageNum)
-    nlParam  = data.nlParam
-    imgSrc.value = data.imageUrl
-    // state transitions to 'loaded' via @load event
-  } catch {
+    const { blob } = await loadPageImage(props.pageNum, { refresh, signal: controller.signal })
+    if (!controller.signal.aborted) imgSrc.value = URL.createObjectURL(blob)
+  } catch (error) {
+    if (controller.signal.aborted) return
+    errorMessage.value = error instanceof Error ? error.message : ''
     state.value = 'error'
   }
 }
 
-async function retry() {
-  state.value = 'loading'
-  imgSrc.value = ''
-  try {
-    const data = await retryImage(props.pageNum, nlParam)
-    nlParam  = data.nlParam
-    imgSrc.value = data.imageUrl
-  } catch {
-    state.value = 'error'
-  }
+function retry() { void load(true) }
+function isCurrent(event: Event) {
+  return imgSrc.value && (event.currentTarget as HTMLImageElement).src === imgSrc.value
 }
-
-function onLoad() { state.value = 'loaded' }
-function onImgError() {
-  if (!autoRetried) {
-    autoRetried = true
-    retry()
-  } else {
+function onLoad(event: Event) {
+  if (isCurrent(event)) state.value = 'loaded'
+}
+function onImgError(event: Event) {
+  if (!isCurrent(event)) return
+  if (!autoRetried) retry()
+  else {
+    errorMessage.value = '图片解码失败'
     state.value = 'error'
   }
 }
@@ -108,6 +113,10 @@ watch(() => props.active, active => {
   if (active === false) {
     observer?.disconnect()
     observer = null
+    if (state.value === 'loading') {
+      clearImage()
+      state.value = 'idle'
+    }
     return
   }
   observer?.disconnect()
@@ -118,13 +127,13 @@ watch(() => props.active, active => {
 })
 
 onBeforeUnmount(() => {
+  clearImage()
   observer?.disconnect()
 })
 
 watch(() => props.pageNum, () => {
   state.value = 'idle'
-  imgSrc.value = ''
-  nlParam = null
+  clearImage()
   autoRetried = false
   observer?.disconnect()
   observer = null

@@ -1,6 +1,7 @@
 // web-static/src/composables/useReader.ts
 import { ref, reactive, computed } from 'vue'
 import { liveData, liveUrl } from '@/utils/live'
+import { fetchPageImage } from '@/utils/pageImage'
 import type { InjectionKey } from 'vue'
 
 const API_BASE = (import.meta as any).env?.VITE_API_BASE ?? ''
@@ -13,11 +14,6 @@ export interface PageInfo {
   thumbX: number
   thumbW: number
   thumbH: number
-}
-
-export interface ImageData {
-  imageUrl: string
-  nlParam: string | null
 }
 
 export interface ReaderSettings {
@@ -59,8 +55,6 @@ export function useReader(liveSite?: string) {
   const windowWidth = ref(window.innerWidth)
   const windowHeight = ref(window.innerHeight)
   const settings = reactive<ReaderSettings>(loadSettings())
-  const imageCache = new Map<number, ImageData>()
-  const inflightCache = new Map<number, Promise<ImageData>>()
 
   /**
    * 双页对开的启用条件。
@@ -83,13 +77,37 @@ export function useReader(liveSite?: string) {
     try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...settings })) } catch {}
   }
 
-  let liveGallery = {gid:'', token:'', site:liveSite ?? ''}
+  let gallery = { gid: '', token: '' }
+  let source: string | undefined
+  let site = liveSite
   let perPart = 1
+  let partCount = 1
   const directories = new Map<number, Promise<void>>()
+  const loadedParts = new Set<number>()
+  let prefetch: AbortController | undefined
+
+  async function fetchDirectory(part: number, background = false, refresh = false) {
+    if (site !== undefined) return liveData('directory', { ...gallery, site, part: String(part) })
+    const params = new URLSearchParams({ ...gallery, part: String(part) })
+    if (source) params.set('source', source)
+    if (refresh) params.set('refresh', 'true')
+    const init: RequestInit & { priority?: 'low' } = background ? { priority: 'low' } : {}
+    const res = await fetch(`${API_BASE}/api/gallery-images/part?${params}`, init)
+    const data = await res.json()
+    if (!res.ok) {
+      throw new Error(data.error === 'exhentai_blocked' ? '画廊不可访问，请检查站点权限' : data.error || '获取页面列表失败')
+    }
+    return data
+  }
+
   function installPages(items: PageInfo[]) {
     for (const item of items) {
-      pages.value[item.pageNum - 1] = {...item, thumbSprite: item.thumbSprite ?
-        liveUrl('image', { site: liveGallery.site, imageUrl: item.thumbSprite }) : ''}
+      pages.value[item.pageNum - 1] = {
+        ...item,
+        thumbSprite: item.thumbSprite && site !== undefined
+          ? liveUrl('image', { site, imageUrl: item.thumbSprite })
+          : item.thumbSprite,
+      }
     }
   }
 
@@ -97,114 +115,86 @@ export function useReader(liveSite?: string) {
     initLoading.value = true
     initError.value = null
     try {
-      if (liveSite !== undefined) {
-        liveGallery = {gid, token, site:liveSite}
-        const data = await liveData('directory', liveGallery)
-        liveGallery.site = data.site
-        perPart = data.images.length
-        total.value = data.total
-        galleryTitle.value = data.title
-        pages.value = Array.from({length:data.total}, (_, i) => ({
-          pageNum:i+1, pageUrl:'', thumbSprite:'', thumbX:0, thumbW:100, thumbH:142
-        }))
-        installPages(data.images)
-        return
-      }
-      const res = await fetch(`${API_BASE}/api/gallery-images?gid=${encodeURIComponent(gid)}&token=${encodeURIComponent(token)}`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = await res.json()
-      if (data.error) throw new Error(data.error)
-      pages.value = (data.images ?? []) as PageInfo[]
-      total.value = data.total as number
-      galleryTitle.value = `Gallery #${gid}`
-    } catch (e: any) {
-      initError.value = e.message ?? 'Failed to load gallery'
+      gallery = { gid, token }
+      source = undefined
+      directories.clear()
+      loadedParts.clear()
+      const data = await fetchDirectory(0)
+      if (!data.images?.length) throw new Error('未获取到页面列表，请重试')
+      source = data.source
+      site = data.site ?? liveSite
+      perPart = data.images.length
+      partCount = data.partCount ?? 1
+      total.value = data.total
+      galleryTitle.value = data.title ?? `Gallery #${gid}`
+      pages.value = Array.from({ length: data.total }, (_, i) => ({
+        pageNum: i + 1, pageUrl: '', thumbSprite: '', thumbX: 0, thumbW: 100, thumbH: 142,
+      }))
+      installPages(data.images)
+      loadedParts.add(0)
+    } catch (e) {
+      initError.value = e instanceof Error ? e.message : '获取页面列表失败'
     } finally {
       initLoading.value = false
       if (!initError.value && preloadNeighbors) goTo(startPage)
     }
   }
 
-  async function getImageUrl(pageNum: number): Promise<ImageData> {
-    const cached = imageCache.get(pageNum)
-    if (cached) return cached
-    const inflight = inflightCache.get(pageNum)
-    if (inflight) return inflight
-
-    if (liveSite !== undefined && !pages.value[pageNum - 1]?.pageUrl) {
-      const part = Math.floor((pageNum - 1) / perPart)
-      if (!directories.has(part)) directories.set(part,
-        liveData('directory', {...liveGallery, part:String(part)}).then(data => installPages(data.images))
-          .finally(() => directories.delete(part)))
-      await directories.get(part)
-    }
-    const pg = pages.value.find(p => p.pageNum === pageNum)
-    if (!pg) throw new Error(`Page ${pageNum} not found`)
-
-    const promise = (async () => {
-      if (liveSite !== undefined) return liveImage(pg.pageUrl)
-      const res = await fetch(`${API_BASE}/api/image-url?pageUrl=${encodeURIComponent(pg.pageUrl)}`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = await res.json()
-      if (data.error) throw new Error(data.error)
-      return { imageUrl: data.imageUrl, nlParam: data.nlParam ?? null } as ImageData
-    })()
-
-    inflightCache.set(pageNum, promise)
-    promise
-      .then(r => { imageCache.set(pageNum, r) })
-      .catch(() => {})
-      .finally(() => { inflightCache.delete(pageNum) })
-
-    return promise
+  function partFor(pageNum: number) {
+    return Math.min(partCount - 1, Math.floor((pageNum - 1) / perPart))
   }
 
-  async function liveImage(pageUrl: string): Promise<ImageData> {
-    const site = liveGallery.site
-    const data = await liveData('image-url', {site, pageUrl})
-    return { imageUrl: liveUrl('image', {site, imageUrl:data.imageUrl}), nlParam:data.nlParam }
+  function loadPart(part: number, background = false, refresh = false) {
+    const pending = directories.get(part)
+    if (pending) return pending
+    const task = fetchDirectory(part, background, refresh).then(data => {
+      if (data.total !== total.value) throw new Error('画廊页数已变化，请重新打开')
+      if (part === 0) {
+        perPart = data.images.length
+        partCount = data.partCount ?? 1
+      }
+      installPages(data.images)
+      loadedParts.add(part)
+    }).finally(() => directories.delete(part))
+    directories.set(part, task)
+    return task
   }
 
-  async function retryImage(pageNum: number, nlParam?: string | null): Promise<ImageData> {
-    imageCache.delete(pageNum)
-    const pg = pages.value.find(p => p.pageNum === pageNum)
-    if (!pg) throw new Error(`Page ${pageNum} not found`)
-    let pageUrl = pg.pageUrl
-    if (nlParam) {
-      // Remove any existing nl= param before appending
-      pageUrl = pageUrl.replace(/([?&])nl=[^&]*/g, '$1').replace(/[?&]$/, '')
-      pageUrl += (pageUrl.includes('?') ? '&' : '?') + `nl=${encodeURIComponent(nlParam)}`
+  async function loadThumbnails(first: number, last: number) {
+    if (!total.value) return
+    for (let part = partFor(first); part <= partFor(last); part++) {
+      if (!loadedParts.has(part)) await loadPart(part, true).catch(() => {})
     }
-    if (liveSite !== undefined) {
-      if (!pageUrl) return getImageUrl(pageNum)
-      const result = await liveImage(pageUrl)
-      imageCache.set(pageNum, result)
-      return result
+  }
+
+  async function loadPageImage(pageNum: number, options: Parameters<typeof fetchPageImage>[2] = {}) {
+    const part = partFor(pageNum)
+    if (!pages.value[pageNum - 1]?.pageUrl) {
+      await loadPart(part, options.background)
+      if (!pages.value[pageNum - 1]?.pageUrl) {
+        await loadPart(0, options.background, true)
+        const refreshedPart = partFor(pageNum)
+        if (refreshedPart > 0) await loadPart(refreshedPart, options.background, true)
+      }
     }
-    const res = await fetch(`${API_BASE}/api/image-url?pageUrl=${encodeURIComponent(pageUrl)}&refresh=true`)
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const data = await res.json()
-    if (data.error) throw new Error(data.error)
-    const result: ImageData = { imageUrl: data.imageUrl, nlParam: data.nlParam ?? null }
-    imageCache.set(pageNum, result)
-    return result
+    const pageUrl = pages.value[pageNum - 1]?.pageUrl
+    if (!pageUrl) throw new Error(`无法定位第 ${pageNum} 页，请重新打开画廊`)
+    return fetchPageImage(pageUrl, site, options)
   }
 
   function preload(center: number) {
+    prefetch?.abort()
+    // Live images are intentionally not retained by the browser HTTP cache.
+    if (site !== undefined) return
     const step = settings.readingMode === 'scroll' ? 1 : effectivePagesPerScreen.value
-    const targets = new Set<number>()
-
-    for (const off of [1, -1]) {
-      const start = center + off * step
-      if (start < 1 || start > total.value) continue
-      targets.add(start)
-      if (step === 2 && start + 1 <= total.value) targets.add(start + 1)
-    }
-
-    for (const pageNum of targets) {
-      getImageUrl(pageNum).catch(() => {})
-    }
+    const next = center + step
+    if (next > total.value) return
+    const controller = new AbortController()
+    prefetch = controller
+    void loadPageImage(next, { signal: controller.signal, background: true }).catch(() => {})
   }
+
+  function stopPreload() { prefetch?.abort() }
 
   function goTo(pageNum: number) {
     const n = Math.max(1, Math.min(total.value, pageNum))
@@ -219,7 +209,7 @@ export function useReader(liveSite?: string) {
   return {
     pages, total, galleryTitle, initLoading, initError,
     currentPage, navigation, settings, effectivePagesPerScreen, windowWidth, windowHeight,
-    imageCache, getImageUrl, retryImage,
+    loadPageImage, loadThumbnails, stopPreload,
     updateSetting, init, goTo, prev, next, preload, onResize,
   }
 }

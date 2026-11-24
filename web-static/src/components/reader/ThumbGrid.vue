@@ -32,7 +32,7 @@
 
 <script setup lang="ts">
 import AppIcon from '@/components/ui/AppIcon.vue'
-import { inject, computed, nextTick, onMounted, onBeforeUnmount, ref } from 'vue'
+import { inject, computed, watch, nextTick, onMounted, onBeforeUnmount, ref } from 'vue'
 import { READER_KEY } from '@/composables/useReader'
 import type { PageInfo } from '@/composables/useReader'
 
@@ -43,6 +43,10 @@ const { pages, currentPage, total, goTo } = reader
 const WINDOW_SIZE = 120
 const windowStart = ref(Math.max(0, Math.floor((currentPage.value - 1) / WINDOW_SIZE) * WINDOW_SIZE))
 const visiblePages = computed(() => pages.value.slice(windowStart.value, windowStart.value + WINDOW_SIZE))
+watch(() => [visiblePages.value[0]?.pageNum, visiblePages.value.at(-1)?.pageNum], ([first, last]) => {
+  if (first && last) void reader.loadThumbnails(first, last)
+}, { immediate: true })
+
 const jumpPage = ref(String(currentPage.value))
 const jumpInput = ref<HTMLInputElement | null>(null)
 const gridEl = ref<HTMLElement | null>(null)

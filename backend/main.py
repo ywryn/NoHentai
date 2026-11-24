@@ -1,6 +1,8 @@
 """Run with: uvicorn backend.main:app --host 127.0.0.1 --port 8000"""
 from contextlib import asynccontextmanager
+import hashlib
 import re
+from urllib.parse import urlsplit
 from fastapi import FastAPI, Request, HTTPException, Body, Query
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response, FileResponse
@@ -22,7 +24,8 @@ async def lifespan(app):
 
 app = FastAPI(title='NoHentai', lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 app.add_middleware(CORSMiddleware, allow_origins=settings.origins(), allow_methods=['GET', 'POST'],
-                   allow_headers=['Content-Type', 'X-CSRF-Token'], allow_credentials=False)
+                   allow_headers=['Content-Type', 'X-CSRF-Token', 'X-Page-Image-Refresh'],
+                   allow_credentials=False, expose_headers=['ETag'])
 
 
 @app.middleware('http')
@@ -48,7 +51,8 @@ async def protect(request, call_next):
             response = await call_next(request)
         response.headers['X-Request-ID'] = request_id
         response.headers['X-Content-Type-Options'] = 'nosniff'
-        if request.url.path.startswith('/api/'):
+        if request.url.path.startswith('/api/') and (
+                request.url.path != '/api/page-image' or 'Cache-Control' not in response.headers):
             response.headers['Cache-Control'] = 'no-store'
         return response
     finally:
@@ -204,6 +208,35 @@ def limit(request, key, count=60):
 def gallery_api(request: Request, gid: str, token: str):
     limit(request, 'gallery', 30)
     return safely(media.gallery_images, gid, token)
+
+
+@app.get('/api/gallery-images/part')
+def gallery_part_api(request: Request, gid: str, token: str, part: int = Query(0, ge=0, le=5000),
+                     source: str | None = Query(None, pattern=r'^(e-hentai\.org|exhentai\.org)$'),
+                     refresh: bool = False):
+    limit(request, 'gallery-part', 60)
+    return safely(media.gallery_part, gid, token, part, source, refresh)
+
+
+@app.get('/api/page-image')
+def page_image_api(request: Request, pageUrl: str, site: str | None = None):
+    refresh = request.headers.get('x-page-image-refresh') == '1'
+    if site is None:
+        limit(request, 'page-image', 180)
+        if refresh:
+            limit(request, 'image-refresh', 30)
+    else:
+        from . import live
+        live_access(request, 240)
+        validate_page_site = live.site(site)
+        if safely(lambda: urlsplit(pageUrl).hostname) != validate_page_site:
+            raise HTTPException(400, '图片来源与当前站点不符')
+    content, mime = safely(lambda: media.page_image(pageUrl, refresh=refresh, persistent=site is None))
+    return Response(content, media_type=mime, headers={
+        'Cache-Control': 'private, no-store' if site is not None else 'private, max-age=900',
+        'ETag': '"' + hashlib.sha256(content).hexdigest() + '"',
+        'X-Content-Type-Options': 'nosniff',
+    })
 
 
 @app.get('/api/image-url')

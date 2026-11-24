@@ -404,9 +404,11 @@ def main():
                                'thumbSprite':'','thumbX':0,'thumbW':80,'thumbH':120}],
                     'gallery':{'title':'实时测试','category':'Manga','filecount':2,'tags':[]}})
             page.route('**/api/live/directory?*', directory)
-            page.route('**/api/live/image-url?*',lambda r:r.fulfill(json={'imageUrl':'https://ehgt.org/fixture.png'}))
-            page.route('**/api/live/image?*',lambda r:r.fulfill(content_type='image/svg+xml',
-                body='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"></svg>'))
+            def live_picture(route):
+                assert parse_qs(urlsplit(route.request.url).query)['site'] == ['e-hentai.org']
+                route.fulfill(content_type='image/svg+xml', headers={'ETag': '"fixture"'},
+                    body='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"></svg>')
+            page.route('**/api/page-image?*', live_picture)
             def live_results(route):
                 submitted.append(route.request.url)
                 route.fulfill(json={'site':'e-hentai.org','next':'','prev':'','items':[
@@ -443,16 +445,15 @@ def main():
             expect(page.locator('.gd-action-primary')).to_have_attribute('href',re.compile('/search/123/read'))
             page.locator('.gd-actions').get_by_role('link',name='翻译',exact=True).click()
             expect(page).to_have_url(re.compile('/search/123/translate'))
-            expect(page.locator('.gt-page-img')).to_have_attribute('src',re.compile('/api/live/image[?]'))
+            expect(page.locator('.gt-page-img')).to_have_attribute('src',re.compile('^blob:'))
             page.route('**/api/trans-ocr',lambda r:r.fulfill(json={'results':[{'text':'fixture','confidence':1,'bbox':[1,1,12,12]}],'source':'vision'}))
             page.route('**/api/trans-translate',lambda r:r.fulfill(json={'translations':[{'t':'测试译文'}]}))
             page.get_by_role('button',name='识别并翻译').click()
             expect(page.get_by_role('button',name='重新识别')).to_be_enabled()
-            assert '测试译文' in page.evaluate("localStorage.getItem('trans_cache_123_p1')")
-            assert 1 not in parts
+            assert '测试译文' in page.evaluate("localStorage.getItem('trans_cache_e-hentai.org_123_p1')")
             page.locator('.gt-thumb[data-page="2"]').evaluate('el=>el.click()')
             expect(page).to_have_url(re.compile('page=2'))
-            expect(page.locator('.gt-page-img')).to_have_attribute('src',re.compile('/api/live/image[?]'))
+            expect(page.locator('.gt-page-img')).to_have_attribute('src',re.compile('^blob:'))
             assert parts.count(1)==1
             page.go_back()
             expect(page.locator('.gallery-detail-page .gd-hero')).to_be_visible()

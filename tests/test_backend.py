@@ -369,6 +369,53 @@ class BackendTests(unittest.TestCase):
                 response = self.client.post('/api/trans-translate', json=dict(body, engine='google'))
                 self.assertEqual(response.status_code, 503)
 
+    def test_page_image_retries_with_nl_and_versions_bytes(self):
+        page = 'https://e-hentai.org/s/abc/123-1'
+        first = 'https://ehgt.org/old.jpg'
+        second = 'https://ehgt.org/new.jpg'
+        with patch('backend.media.validate_url'), patch('backend.media.fetch') as fetch:
+            fetch.side_effect = [
+                (b"""<img id="img" src="https://ehgt.org/old.jpg"><a id="loadfail" onclick="nl('next')"></a>""", 'text/html'),
+                httpx.HTTPStatusError('gone', request=httpx.Request('GET', first), response=httpx.Response(404)),
+                (f'<img id="img" src="{second}">'.encode(), 'text/html'),
+                (b'image bytes', 'image/jpeg'),
+            ]
+            response = self.client.get('/api/page-image', params={'pageUrl': page})
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.content, b'image bytes')
+            self.assertEqual(response.headers['cache-control'], 'private, max-age=900')
+            self.assertIn('etag', response.headers)
+            self.assertEqual(fetch.call_args_list[2].args[0], page + '?nl=next')
+            self.assertEqual(db.get_cache('image-url:' + page)['imageUrl'], second)
+
+        with patch('backend.media.validate_url'), patch('backend.media.fetch') as fetch:
+            fetch.return_value = (b'<img id="img" src="https://ehgt.org/509.gif">', 'text/html')
+            response = self.client.get('/api/page-image', params={'pageUrl': page}, headers={'X-Page-Image-Refresh': '1'})
+            self.assertEqual(response.status_code, 509)
+            self.assertEqual(response.headers['cache-control'], 'no-store')
+            fetch.assert_called_once()
+
+    def test_page_image_live_requires_session_and_disables_cache(self):
+        params = {'site': 'e-hentai.org', 'pageUrl': 'https://e-hentai.org/s/abc/123-1'}
+        self.assertEqual(self.client.get('/api/page-image', params=params).status_code, 401)
+        self.client.post('/api/trans-verify', json={'password': 'trans-test'})
+        with patch('backend.media.page_image', return_value=(b'image', 'image/png')) as load:
+            response = self.client.get('/api/page-image', params=params)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.headers['cache-control'], 'private, no-store')
+            load.assert_called_once_with(params['pageUrl'], refresh=False, persistent=False)
+
+    def test_gallery_directory_fetches_only_the_requested_part(self):
+        with patch('backend.media.gallery_page', return_value=(20, [
+            {'pageNum': 11, 'pageUrl': '/s/abc/123-11', 'thumbSprite': ''}
+        ], 2)) as fetch:
+            response = self.client.get('/api/gallery-images/part', params={
+                'gid': '123', 'token': 'abcde', 'part': 1, 'source': 'e-hentai.org'
+            })
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json()['images'][0]['pageUrl'], 'https://e-hentai.org/s/abc/123-11')
+            fetch.assert_called_once_with('https://e-hentai.org/g/123/abcde/?nw=always&p=1')
+
     def test_live_session_search_read_and_expire(self):
         urls = ['/api/live/search', '/api/live/directory?site=e-hentai.org&gid=2&token=abcde',
                 '/api/live/image-url?site=e-hentai.org&pageUrl=https://e-hentai.org/s/abc/2-1',

@@ -138,6 +138,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  reader.stopPreload()
   window.removeEventListener('keydown', onKey)
   window.removeEventListener('resize', onResize)
 })

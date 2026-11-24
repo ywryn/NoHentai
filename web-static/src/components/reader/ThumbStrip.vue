@@ -29,6 +29,10 @@ const visiblePages = computed(() => {
   return pages.value.slice(start, start + 80)
 })
 
+watch(() => [visiblePages.value[0]?.pageNum, visiblePages.value.at(-1)?.pageNum], ([first, last]) => {
+  if (first && last) void reader.loadThumbnails(first, last)
+}, { immediate: true })
+
 function isActive(pageNum: number) {
   const cur = currentPage.value
   const step = effectivePagesPerScreen.value

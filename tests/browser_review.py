@@ -8,6 +8,7 @@ import re
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import threading
+from urllib.parse import parse_qs, urlsplit
 from PIL import Image
 from playwright.sync_api import sync_playwright, expect
 
@@ -30,21 +31,18 @@ def main():
             browser = p.chromium.launch(headless=True)
             page = browser.new_page(service_workers='block', viewport={'width':1440,'height':1000})
             errors = []; page.on('pageerror', lambda error: errors.append(str(error)))
-            page.route('**/api/gallery-images?*', lambda r:r.fulfill(json={'total':5,'images':[
+            page.route('**/api/gallery-images/part?*', lambda r:r.fulfill(json={'total':5,'images':[
                 {'pageNum':i,'pageUrl':f'https://e-hentai.org/s/abcde/1-{i}','thumbSprite':'','thumbX':0,'thumbW':100,'thumbH':150} for i in range(1,6)]}))
             requests = []
-            def image_url(route):
-                requests.append(route.request.url)
-                route.fulfill(json={'imageUrl':base+'/fixture.png?request='+str(len(requests)),'nlParam':None})
-            page.route('**/api/image-url?*', image_url)
-            fail_image = {'value':False}
+            fail_image = {'value': False}
+            image_version = {'value': '"fixture"'}
             def picture(route):
+                requests.append(route.request.headers.get('x-page-image-refresh'))
                 if fail_image['value']:
-                    route.fulfill(status=502,body='image failed')
+                    route.fulfill(content_type='image/png', body=b'not an image')
                 else:
-                    route.fulfill(content_type='image/png',body=image.getvalue())
-            page.route('**/fixture.png*',picture)
-            page.route('**/api/image-proxy?*',picture)
+                    route.fulfill(content_type='image/png', headers={'ETag': image_version['value']}, body=image.getvalue())
+            page.route('**/api/page-image?*', picture)
             authorized = False
             def verify(route):
                 nonlocal authorized
@@ -75,11 +73,10 @@ def main():
             print('PASS: scroll reader initial page, directory, keyboard and asynchronous image resize alignment')
 
             touch = browser.new_page(has_touch=True, is_mobile=True, viewport={'width':390,'height':844})
-            touch.route('**/api/gallery-images?*', lambda r:r.fulfill(json={'total':2,'images':[
+            touch.route('**/api/gallery-images/part?*', lambda r:r.fulfill(json={'total':2,'images':[
                 {'pageNum':i,'pageUrl':str(i),'thumbSprite':'','thumbX':0,'thumbW':100,'thumbH':150}
                 for i in (1,2)]}))
-            touch.route('**/api/image-url?*', lambda r:r.fulfill(json={'imageUrl':base+'/fixture.png'}))
-            touch.route('**/fixture.png', picture)
+            touch.route('**/api/page-image?*', picture)
             for mode in ('book','scroll'):
                 touch.goto(base+'/#/gallery/1/read?token=abcde')
                 touch.evaluate("mode=>localStorage.setItem('reader-settings',JSON.stringify({readingMode:mode,pagesPerScreen:1}))",mode)
@@ -144,13 +141,13 @@ def main():
             expect(page.locator('.gt-page-img')).to_be_visible()
             pending.pop(0).fulfill(json={'results':[{'text':'OLD_PAGE_OCR','confidence':1,'bbox':[10,10,100,100]}],'source':'vision'})
             page.wait_for_timeout(250)
-            assert not page.evaluate("localStorage.getItem('trans_cache_1_p1') || localStorage.getItem('trans_cache_1_p2')")
+            assert not page.evaluate("localStorage.getItem('trans_cache_catalog_1_p1') || localStorage.getItem('trans_cache_catalog_1_p2')")
             assert not translated
             page.get_by_role('button',name='识别并翻译',exact=True).click()
             page.wait_for_function("document.querySelector('.gt-header').textContent.includes('识别中')")
             pending.pop(0).fulfill(json={'results':[{'text':'CURRENT_PAGE_OCR','confidence':1,'bbox':[10,10,100,100]}],'source':'vision'})
-            page.wait_for_function("localStorage.getItem('trans_cache_1_p1')?.includes('CURRENT_TRANSLATION')")
-            assert 'CURRENT_PAGE_OCR' in page.evaluate("localStorage.getItem('trans_cache_1_p1')")
+            page.wait_for_function("localStorage.getItem('trans_cache_catalog_1_p1')?.includes('CURRENT_TRANSLATION')")
+            assert 'CURRENT_PAGE_OCR' in page.evaluate("localStorage.getItem('trans_cache_catalog_1_p1')")
             assert translated[0]['texts']==['CURRENT_PAGE_OCR']
             print('PASS: late OCR discarded after page 1 -> 2 -> 1; new request still translates and caches correctly')
             page.set_viewport_size({'width':390,'height':844})
@@ -170,16 +167,23 @@ def main():
             print('PASS: mobile translated bubble opens its own editor')
             page.set_viewport_size({'width':1440,'height':1000})
 
+            image_version['value'] = '"changed-image"'
+            page.reload()
+            expect(page.locator('.gt-page-img')).to_be_visible()
+            expect(page.locator('.gt-ocr-box')).to_have_count(0)
+            image_version['value'] = '"fixture"'
+            print('PASS: a different image version does not restore old OCR boxes')
 
             fail_image['value']=True
             page.goto(base+'/#/gallery/1/read?token=abcde&page=1')
             expect(page.locator('.pi-error:visible').first).to_be_visible()
-            assert any('refresh=true' in url for url in requests)
+            assert '1' in requests
+            requests.clear()
             fail_image['value']=False
             page.locator('.pi-error:visible').first.get_by_role('button',name='重试',exact=True).click()
             expect(page.locator('.pi-img:visible').first).to_be_visible()
-            assert 'refresh=true' in requests[-1]
-            print('PASS: automatic and manual image retry bypass server URL cache without nl')
+            assert '1' in requests
+            print('PASS: automatic decode retry and manual image refresh')
             page.locator('.scroll-view').click(position={'x':400,'y':300})
             expect(page.get_by_role('button',name='显示阅读工具栏')).to_be_visible()
             page.get_by_role('button',name='显示阅读工具栏').click()
@@ -199,11 +203,21 @@ def main():
             expect(page.locator('.home-filter-chip')).to_have_count(0)
             expect(page.get_by_role('combobox',name='搜索画廊',exact=True)).to_have_value('')
             print('PASS: quoted multiword search chip can be removed')
-            page.unroute('**/api/gallery-images?*')
-            page.route('**/api/gallery-images?*', lambda r:r.fulfill(json={'total':400,'images':[
-                {'pageNum':i,'pageUrl':f'https://e-hentai.org/s/abcde/1-{i}','thumbSprite':'','thumbX':0,'thumbW':100,'thumbH':150} for i in range(1,401)]}))
+            page.unroute('**/api/gallery-images/part?*')
+            requested_parts = []
+            def long_directory(route):
+                part = int(parse_qs(urlsplit(route.request.url).query)['part'][0])
+                requested_parts.append(part)
+                route.fulfill(json={'total': 400, 'partCount': 20, 'images': [
+                    {'pageNum': i, 'pageUrl': f'https://e-hentai.org/s/abcde/1-{i}', 'thumbSprite': '',
+                     'thumbX': 0, 'thumbW': 100, 'thumbH': 150}
+                    for i in range(part * 20 + 1, part * 20 + 21)
+                ]})
+            page.route('**/api/gallery-images/part?*', long_directory)
             page.evaluate("localStorage.setItem('reader-settings',JSON.stringify({readingMode:'book',pagesPerScreen:1,bookDirection:'ltr',pageTurnAnimation:'none'}))")
             page.goto(base+'/#/gallery/1/read?token=abcde&page=350')
+            expect(page.locator('.pi-img:visible').first).to_be_visible()
+            assert {0, 17}.issubset(requested_parts) and len(set(requested_parts)) < 20, requested_parts
             page.get_by_role('button',name='页目录',exact=True).click()
             expect(page.locator('.tg-item')).to_have_count(120)
             expect(page.locator('.tg-active')).to_contain_text('350')
@@ -239,9 +253,8 @@ def main():
                 return lambda route: load_requests.update({stage: route})
 
             for stage, pattern in (
-                ('list', '**/api/gallery-images?*'),
-                ('address', '**/api/image-url?*'),
-                ('image', re.compile(r'/api/image-proxy\?|/staged-image\.png')),
+                ('list', '**/api/gallery-images/part?*'),
+                ('image', '**/api/page-image?*'),
             ):
                 page.route(pattern, hold_load(stage))
             for view in ('read', 'translate'):
@@ -251,7 +264,6 @@ def main():
                     ('list', {'json': {'total': 1, 'images': [
                         {'pageNum': 1, 'pageUrl': 'https://e-hentai.org/s/abcde/1-1',
                          'thumbSprite': '', 'thumbX': 0, 'thumbW': 100, 'thumbH': 150}]}}),
-                    ('address', {'json': {'imageUrl': base+'/staged-image.png', 'nlParam': None}}),
                     ('image', {'content_type': 'image/png', 'body': image.getvalue()}),
                 ):
                     expect(page.locator(f'.image-load-progress.{stage}')).to_be_visible()
@@ -262,7 +274,7 @@ def main():
                     load_requests[stage].fulfill(**response)
                 expect(page.locator('.pi-img' if view == 'read' else '.gt-page-img')).to_be_visible()
                 expect(page.locator('.image-load-progress')).to_have_count(0)
-            print('PASS: reader and translator show each image loading stage until the image loads')
+            print('PASS: reader and translator show directory and image loading stages until the image loads')
             assert not errors, errors
             browser.close()
     finally:

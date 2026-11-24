@@ -122,7 +122,7 @@ def main():
                         translation_requests.append(data)
                         item = {'t': '普通译文', 'source': 'google'} if data['engine'] == 'google' else {'t': '模型译文'}
                         route.fulfill(json={'translations': [item]})
-                    media_routes=[re.compile(r'/api/gallery-images\?'),re.compile(r'/api/image-url\?'),re.compile(r'/api/image-proxy\?'),re.compile(r'/api/trans-ocr$')]
+                    media_routes=[re.compile(r'/api/gallery-images/part\?'),re.compile(r'/api/page-image\?'),re.compile(r'/api/trans-ocr$')]
                     media_state={'list_fail':True,'image_fail':True,'image_requests':0,'urls':[]}
                     def fake_pages(route):
                         if media_state['list_fail']:route.fulfill(status=502,content_type='text/html',body='upstream failed')
