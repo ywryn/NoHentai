@@ -92,7 +92,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="app-shell" :class="{'translate-entry': route.name === 'TranslateLookup'}">
+  <div class="app-shell" :class="{ 'public-layout': !isImmersivePage, 'translate-entry': route.name === 'TranslateLookup' }">
     <a v-if="!isImmersivePage" class="skip-link" href="#main-content" @click.prevent="focusContent">跳至内容</a>
     <header class="navigation-bar" v-if="!isImmersivePage">
       <RouterLink class="brand-logo" to="/" aria-label="NoHentai 首页"><BrandMark :size="32" /><BrandWordmark /></RouterLink>
@@ -120,22 +120,37 @@ onBeforeUnmount(() => {
       </nav>
     </header>
 
-    <component :is="route.path.startsWith('/admin') ? 'div' : 'main'" id="main-content" class="route-shell" tabindex="-1">
+    <component :is="route.path.startsWith('/admin') ? 'div' : 'main'" id="main-content" class="route-shell" :class="{ 'public-scroll-area visible-scrollbar': !isImmersivePage }" :tabindex="isImmersivePage ? -1 : 0">
       <router-view />
     </component>
   </div>
 </template>
 
 <style scoped>
-.app-shell.translate-entry {
-  min-height: 100vh;
-  min-height: 100dvh;
+.public-layout {
+  block-size: 100vh;
+  block-size: 100dvh;
   display: flex;
   flex-direction: column;
 }
-.app-shell.translate-entry > .navigation-bar { flex-shrink: 0; }
-.app-shell.translate-entry > .route-shell {
+
+.public-scroll-area {
+  position: relative;
   flex: 1;
+  min-block-size: 0;
+  overflow: auto;
+}
+
+.public-scroll-area:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: -2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .public-scroll-area { scrollbar-gutter: stable; }
+}
+
+.translate-entry > .public-scroll-area {
   display: flex;
   flex-direction: column;
 }
@@ -143,8 +158,8 @@ onBeforeUnmount(() => {
 /* ═══ 顶栏 ═══════════════════════════════════════════════ */
 
 .navigation-bar {
-  position: sticky;
-  top: 0;
+  position: relative;
+  flex: none;
   z-index: var(--z-nav);
   width: 100%;
   padding: 8px max(var(--page-gutter), calc((100vw - 1240px) / 2));

@@ -69,8 +69,8 @@ def main():
                     return [top.top-e.previousElementSibling.getBoundingClientRect().bottom,content.top-top.bottom,bottom.top-content.bottom];
                 }''')
                 assert all(abs(a-b)<1 for a,b in zip(gaps,[20,8,8])),(page.url,gaps)
-                assert page.evaluate('getComputedStyle(document.documentElement).scrollbarWidth')=='auto'
-                assert page.evaluate('getComputedStyle(document.documentElement).scrollbarColor')!='auto'
+                assert page.evaluate('getComputedStyle(document.documentElement).scrollbarColor')=='auto'
+                assert page.locator('#main-content').evaluate('e=>getComputedStyle(e).scrollbarColor')!='auto'
             def check_help_width():
                 for control in page.locator('.search-control').all():
                     help_button=control.locator('.search-control-help')
@@ -97,6 +97,26 @@ def main():
                 positions=page.locator('.nav-menu a').evaluate_all('items=>items.map(e=>e.getBoundingClientRect().x)')
                 assert all(abs(a-b)<1 for a,b in zip(nav_positions,positions)),(target,nav_positions,positions)
             print('PASS: navigation stays fixed when entering and leaving statistics')
+            page.goto(base+'/#/')
+            expect(page.locator('.gallery-row')).to_have_count(30)
+            main=page.locator('#main-content')
+            nav=page.locator('.navigation-bar')
+            assert main.bounding_box()['y']==nav.bounding_box()['height']
+            assert nav.bounding_box()['width']==page.evaluate('innerWidth')
+            assert main.evaluate('e=>e.scrollHeight>e.clientHeight')
+            main.evaluate('e=>{e.scrollTop=600}')
+            assert page.evaluate('window.scrollY')==0
+            nav.locator('a[href="#/translate"]').click()
+            expect(page.locator('.tl-card')).to_be_visible()
+            page.go_back()
+            expect(page.locator('.gallery-row')).to_have_count(30)
+            page.wait_for_function("document.querySelector('#main-content').scrollTop === 600")
+            page.get_by_role('button',name='下一页',exact=True).last.click()
+            expect(page).to_have_url(base+'/#/?page=2')
+            page.wait_for_function("document.querySelector('#main-content').scrollTop === 0")
+            page.go_back()
+            page.wait_for_function("document.querySelector('#main-content').scrollTop > 0")
+            print('PASS: content owns the scrollbar, pagination resets it and history restores it')
             pagination=[]
             for path,label in (('/printed','搜索书单'),('/','搜索画廊'),('/daily','搜索每日画廊')):
                 page.goto(base+'/#'+path)
@@ -243,21 +263,20 @@ def main():
                 page.set_viewport_size({'width':width,'height':height})
                 page.goto(base+'/#/translate')
                 expect(page.locator('.tl-card')).to_be_visible()
-                assert page.evaluate('document.documentElement.scrollHeight <= innerHeight+1'),(width,height,'entry overflow')
+                assert page.locator('#main-content').evaluate('e=>e.scrollHeight<=e.clientHeight+1'),(width,height,'entry overflow')
                 page.locator('.tl-input').fill('invalid')
                 page.get_by_role('button',name='进入',exact=True).click()
                 expect(page.locator('.tl-error')).to_be_visible()
-                assert page.evaluate('document.documentElement.scrollHeight <= innerHeight+1'),(width,height,'error overflow')
+                assert page.locator('#main-content').evaluate('e=>e.scrollHeight<=e.clientHeight+1'),(width,height,'error overflow')
             page.set_viewport_size({'width':320,'height':240})
-            assert page.evaluate('document.documentElement.scrollHeight > innerHeight'),'short view must remain scrollable'
-            page.evaluate('scrollTo(0,0)')
+            assert page.locator('#main-content').evaluate('e=>e.scrollHeight>e.clientHeight'),'short view must remain scrollable'
+            page.locator('#main-content').evaluate('e=>e.scrollTo(0,0)')
             assert page.locator('.tl-card').evaluate('e=>e.getBoundingClientRect().top >= document.querySelector(".navigation-bar").getBoundingClientRect().bottom')
             page.get_by_role('button',name='进入',exact=True).scroll_into_view_if_needed()
             expect(page.get_by_role('button',name='进入',exact=True)).to_be_in_viewport()
             page.set_viewport_size({'width':390,'height':844})
             page.goto(base+'/#/daily')
             expect(page.locator('.daily-group-pill')).to_be_visible()
-            expect(page.locator('.app-shell')).to_have_css('display','block')
             print('PASS: translation entry fits desktop/mobile/error views and scrolls in short viewports')
             for width,height,nav in ((1440,900,'.nav-menu'),(390,844,'.nav-menu')):
                 page.set_viewport_size({'width':width,'height':height})
@@ -270,7 +289,7 @@ def main():
                     page.goto(base+'/#'+origin)
                     expect(page.locator(selector)).to_be_visible()
                     if origin=='/printed': expect(page.locator('.pagination-control')).to_have_count(2)
-                    page.evaluate('scrollTo(0,0)')
+                    page.locator('#main-content').evaluate('e=>e.scrollTo(0,0)')
                     page.evaluate("""selector=>{
                         const old=document.querySelector(selector),samples=[];
                         const sample=()=>{const r=old.getBoundingClientRect();samples.push([r.x,r.y,r.width])};

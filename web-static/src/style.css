@@ -127,34 +127,29 @@ html {
     scrollbar-color: auto; /* The viewport colors should not cascade into every panel. */
   }
 
-  :is(html, .visible-scrollbar) {
+  :is(html.admin-active, .visible-scrollbar) {
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   }
 
-  /* Keep the shared navigation aligned when moving between short and long pages. */
-  html:has(.navigation-bar) {
-    scrollbar-gutter: stable;
-  }
-
   @media (prefers-contrast: more) {
-    :is(html, .visible-scrollbar) {
+    :is(html.admin-active, .visible-scrollbar) {
       --scrollbar-track: Canvas;
       --scrollbar-thumb: CanvasText;
     }
   }
 
   @supports not (scrollbar-color: auto) {
-    :is(html, .visible-scrollbar)::-webkit-scrollbar {
+    :is(html.admin-active, .visible-scrollbar)::-webkit-scrollbar {
       width: 12px;
       height: 12px;
     }
 
-    :is(html, .visible-scrollbar)::-webkit-scrollbar-thumb {
+    :is(html.admin-active, .visible-scrollbar)::-webkit-scrollbar-thumb {
       background: var(--scrollbar-thumb);
     }
 
-    :is(html, .visible-scrollbar)::-webkit-scrollbar-track,
-    :is(html, .visible-scrollbar)::-webkit-scrollbar-corner {
+    :is(html.admin-active, .visible-scrollbar)::-webkit-scrollbar-track,
+    :is(html.admin-active, .visible-scrollbar)::-webkit-scrollbar-corner {
       background: var(--scrollbar-track);
     }
   }

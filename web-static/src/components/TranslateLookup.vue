@@ -82,7 +82,7 @@ function handleKeydown(e) {
 
 /* URL 输入页样式 */
 .tl-container {
-  flex: 1;
+  flex: 1 0 auto;
   min-height: 0;
   display: flex;
   align-items: center;

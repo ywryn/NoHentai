@@ -28,7 +28,7 @@ const isFiltered=computed(()=>Boolean(searchQuery.value||category.value))
 const items=computed(()=>filtered.value.slice((page.value-1)*perPage,page.value*perPage).map(g=>({key:g.gid,gid:g.gid,to:g.gid?`/gallery/${g.gid}/?source=daily`:null,thumb:g.thumb,title:g.title_jpn||g.title,badge:g.category,badgeClass:exTypeClassMap[g.category]||'default',tags:enrichTags(g.tags||[],translations.value).slice(0,8).map(t=>t.tag_cn||t.value),pages:g.filecount?g.filecount+'p':null,date:formatTimestamp(g.posted)||null,rating:parseFloat(g.rating)||null,fav:null,refId:null,noMeta:false})))
 function update(values){const next={...route.query,...values};for(const key of Object.keys(next))if(next[key]===undefined||next[key]==='')delete next[key];router.replace({query:next})}
 function switchGroup(index){update({group:index?String(index+1):undefined,page:undefined})}
-function goToPage(value){const target=Math.max(1,Math.min(totalPages.value,Number(value)||1));update({page:target>1?String(target):undefined});window.scrollTo({top:0,behavior:'smooth'})}
+function goToPage(value){const target=Math.max(1,Math.min(totalPages.value,Number(value)||1));update({page:target>1?String(target):undefined})}
 function date(value){if(!value)return'尚未同步';const d=new Date(value);return isNaN(d.getTime())?value:d.toLocaleString('zh-CN',{hour12:false,month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}
 async function load(){error.value='';try{const response=await fetch('/api/daily');if(!response.ok)throw new Error('每日结果暂时不可用');const result=await response.json();groups.value=result.groups;translations.value=result.translations}catch(e){error.value=e.message}finally{loading.value=false}}
 watch(viewMode,()=>update({page:undefined}))

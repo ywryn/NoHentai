@@ -88,26 +88,45 @@ const routes: RouteRecordRaw[] = [
   },
 ]
 
+const history = createWebHashHistory()
+const contentScrollPositions = new Map<string, { top: number; left: number }>()
+let activeEntry: string | undefined
+let activePosition: unknown
+
+function publicScrollArea() {
+  return document.querySelector<HTMLElement>('#main-content.public-scroll-area')
+}
+
 const router = createRouter({
-  history: createWebHashHistory(),
+  history,
   routes,
-  /**
-   * 前进/后退恢复原滚动位置，其余情况回到顶部。
-   * 此前未配置：翻页后停留在原滚动位置，用户点击底部「下一页」
-   * 看到的是新一页的尾部。
-   */
   scrollBehavior(to, from, savedPosition) {
-    if (savedPosition) return savedPosition
-    if (to.meta.immersive) return false
-    if (to.path === from.path && to.query.page === from.query.page) return false
-    return { top: 0 }
+    const area = publicScrollArea()
+    if (!area || to.meta.immersive) return savedPosition || false
+
+    if (savedPosition && activeEntry) {
+      area.scrollTo(contentScrollPositions.get(activeEntry) ?? { top: 0, left: 0 })
+    } else if (!from.matched.length || to.path !== from.path || to.query.page !== from.query.page) {
+      area.scrollTo({ top: 0, left: 0 })
+    }
+    return false
   },
 })
 
 const BASE_TITLE = 'NoHentai | の変態'
 
 /* 路由切换时更新标题，便于区分多标签页与浏览历史 */
-router.afterEach(to => {
+router.afterEach((to, _from, failure) => {
+  if (failure) return
+  // afterEach runs before Vue replaces the view. Capture the outgoing history entry.
+  const position = history.state.position
+  const area = publicScrollArea()
+  if (area && activeEntry && activePosition !== position) {
+    contentScrollPositions.set(activeEntry, { top: area.scrollTop, left: area.scrollLeft })
+  }
+  activePosition = position
+  activeEntry = `${position}:${to.fullPath}`
+
   const favicon = document.getElementById('site-icon') as HTMLLinkElement | null
   if (favicon) favicon.href = to.path === '/admin' || to.path.startsWith('/admin/') ? '/brand/favicon-b-v2.png' : '/brand/favicon-g-v3.png'
   const title = to.meta.title as string | undefined
