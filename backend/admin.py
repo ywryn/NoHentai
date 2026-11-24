@@ -28,6 +28,9 @@ def handle(body, ip):
         return {**pagination, 'items':[{'id':r['id'],'resource':r['resource'],'message':r['message'],'date':r['created_at'],'fields':json.loads(r['data']).get('fields',[]) if r['data'].startswith('{') else []} for r in rows]}
     if action == 'overview':
         return operations.overview()
+    if action == 'provider-usage':
+        from .provider_usage import xai_usage
+        return {'xai': xai_usage()}
     if action == 'services':
         return services.status()
     if action == 'service-save':

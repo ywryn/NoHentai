@@ -10,6 +10,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
+import httpx
 from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 from PIL import Image
@@ -201,6 +202,56 @@ class AdminV2Tests(fixtures.BackendTests):
         self.assertEqual(self.admin('overview').status_code,401)
         self.assertFalse(security.verify_password(password))
         self.assertTrue(security.verify_password('a-new-long-password'))
+
+    def test_health_overview_reports_both_current_month_site_counters(self):
+        month = datetime.now(timezone.utc).strftime('%Y-%m')
+        self.assertTrue(db.reserve(f'vision:{month}', 1000, 3600, 3))
+        self.assertTrue(db.reserve(f'google-translate:{month}', 500000, 3600, 325))
+        self.assertTrue(db.reserve('vision:2000-01', 1000, 3600, 99))
+        with patch.dict(os.environ, {'GOOGLE_VISION_API_KEY': 'private-vision', 'VISION_MONTHLY_LIMIT': '50'}):
+            response = self.admin('overview')
+        self.assertEqual(response.status_code, 200, response.text)
+        usage = response.json()['localUsage']
+        self.assertEqual(usage['month'], month)
+        self.assertEqual([(row['id'], row['count']) for row in usage['items']], [('vision', 3), ('google-translate', 325)])
+        self.assertEqual(usage['items'][0], {'id': 'vision', 'count': 3, 'limit': 50, 'configured': True})
+
+    def test_xai_health_uses_provider_ledger_and_handles_partial_results(self):
+        env = {'LLM_API_BASE': 'https://api.x.ai/v1', 'XAI_TEAM_ID': 'demo-team',
+               'XAI_MANAGEMENT_KEY': 'private-management-key', 'NOHENTAI_DISABLE_UPSTREAM': '0'}
+
+        def send(request):
+            self.assertEqual(request.url.host, 'management-api.x.ai')
+            self.assertEqual(request.headers['Authorization'], 'Bearer private-management-key')
+            if request.method == 'POST':
+                self.assertEqual(request.url.path, '/v1/billing/teams/demo-team/usage')
+                self.assertEqual(json.loads(request.content)['analyticsRequest']['values'],
+                                 [{'name': 'usd', 'aggregation': 'AGGREGATION_SUM'}])
+                points = [{'values': [0.015]}, {'values': [0.0025]}]
+                return httpx.Response(200, json={'limitReached': False, 'timeSeries': [{'dataPoints': points}]})
+            self.assertEqual(request.url.path, '/v1/billing/teams/demo-team/prepaid/balance')
+            return httpx.Response(503)
+
+        provider = httpx.Client(transport=httpx.MockTransport(send), headers={'Authorization': 'Bearer private-management-key'})
+        with patch.dict(os.environ, env), patch('backend.provider_usage.httpx.Client', return_value=provider):
+            response = self.admin('provider-usage')
+        self.assertEqual(response.status_code, 200, response.text)
+        result = response.json()['xai']
+        self.assertEqual((result['state'], result['spendUsd'], result['balanceUsd']), ('available', '0.0175', None))
+        self.assertNotIn('private-management-key', response.text)
+
+        def send_balance_only(request):
+            if request.method == 'POST':
+                return httpx.Response(200, json={'limitReached': True, 'timeSeries': []})
+            return httpx.Response(200, json={'total': {'val': '-1234'}})
+
+        provider = httpx.Client(transport=httpx.MockTransport(send_balance_only))
+        with patch.dict(os.environ, env), patch('backend.provider_usage.httpx.Client', return_value=provider):
+            result = self.admin('provider-usage').json()['xai']
+        self.assertEqual((result['state'], result['spendUsd'], result['balanceUsd']), ('available', None, '12.34'))
+
+        with patch.dict(os.environ, dict(env, XAI_MANAGEMENT_KEY='')):
+            self.assertEqual(self.admin('provider-usage').json(), {'xai': {'state': 'unconfigured'}})
 
     def test_service_groups_separate_public_settings_and_encrypted_secrets(self):
         status=self.admin('services').json()['groups']
