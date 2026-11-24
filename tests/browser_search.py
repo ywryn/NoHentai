@@ -52,7 +52,7 @@ def main():
         else: raise AssertionError('Unexpected admin operation: '+body['action'])
     try:
         with sync_playwright() as p:
-            browser=p.chromium.launch(headless=True)
+            browser=p.chromium.launch(headless=True,ignore_default_args=['--hide-scrollbars'])
             page=browser.new_page(service_workers='block',viewport={'width':1440,'height':1000})
             errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
             page.route('**/api/galleries?*',catalog)
@@ -69,7 +69,8 @@ def main():
                     return [top.top-e.previousElementSibling.getBoundingClientRect().bottom,content.top-top.bottom,bottom.top-content.bottom];
                 }''')
                 assert all(abs(a-b)<1 for a,b in zip(gaps,[20,8,8])),(page.url,gaps)
-                assert page.evaluate('getComputedStyle(document.documentElement).scrollbarWidth')=='none'
+                assert page.evaluate('getComputedStyle(document.documentElement).scrollbarWidth')=='auto'
+                assert page.evaluate('getComputedStyle(document.documentElement).scrollbarColor')!='auto'
             def check_help_width():
                 for control in page.locator('.search-control').all():
                     help_button=control.locator('.search-control-help')

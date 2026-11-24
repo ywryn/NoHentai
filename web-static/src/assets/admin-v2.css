@@ -49,31 +49,11 @@
   overflow-y: auto;
   overscroll-behavior-y: contain;
   scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: var(--a-muted) var(--a-subtle);
 }
 .admin-shell .ops-gallery-matches:focus-visible {
   outline: 2px solid var(--a-accent);
   outline-offset: 2px;
 }
-.admin-shell .ops-gallery-matches::-webkit-scrollbar {
-  display: block;
-  width: 8px;
-  height: 8px;
-}
-.admin-shell .ops-gallery-matches::-webkit-scrollbar-track {
-  background: var(--a-subtle);
-  border-radius: 8px;
-}
-.admin-shell .ops-gallery-matches::-webkit-scrollbar-thumb {
-  background: var(--a-muted);
-  border: 2px solid var(--a-subtle);
-  border-radius: 8px;
-}
-.admin-shell .ops-gallery-matches::-webkit-scrollbar-thumb:hover {
-  background: var(--a-accent);
-}
-
 /* Workspace refinements: align with the catalog and keep controls legible. */
 .admin-shell{--a-bg:#f6f7f4;--a-subtle:#f1f4ee;--a-border:#e0e5db;--a-text:#29352f;--a-muted:#657269;--a-faint:#728070;--a-accent:#37644e;--a-accent-hover:#254b38;--a-soft:#edf3eb}
 .my-app-dark .admin-shell{--a-bg:#151819;--a-panel:#1c2021;--a-subtle:#252c28;--a-border:#343e37;--a-text:#e8edeb;--a-muted:#a6b2ae;--a-faint:#95a48f;--a-accent:#94cbb5;--a-accent-hover:#b4dfcc;--a-soft:#273b30}

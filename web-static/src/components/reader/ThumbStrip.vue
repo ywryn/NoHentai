@@ -1,6 +1,6 @@
 <!-- Left vertical thumbnail sidebar -->
 <template>
-  <div class="thumb-sidebar" ref="sidebarEl">
+  <div class="thumb-sidebar visible-scrollbar" ref="sidebarEl">
     <button
       v-for="pg in visiblePages"
       :key="pg.pageNum"
@@ -81,16 +81,11 @@ watch(currentPage, async () => {
   overflow-y: auto;
   overflow-x: hidden;
   background: #111827;
-  scrollbar-width: thin;
-  scrollbar-color: #374151 transparent;
   display: flex;
   flex-direction: column;
   gap: 2px;
   padding: 2px;
 }
-.thumb-sidebar::-webkit-scrollbar { width: 4px; }
-.thumb-sidebar::-webkit-scrollbar-track { background: transparent; }
-.thumb-sidebar::-webkit-scrollbar-thumb { background: #374151; border-radius: 2px; }
 
 .ts-item {
   position: relative;

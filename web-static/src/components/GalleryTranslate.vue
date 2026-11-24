@@ -96,7 +96,7 @@
       <!-- Sidebar（移动端为底部抽屉） -->
       <div
         ref="sidebarRef"
-        class="gt-sidebar"
+        class="gt-sidebar visible-scrollbar"
         :class="[`is-${sheetState}`, { 'is-dragging': sheetDragging }]"
       >
         <!-- 移动端抽屉把手：收起时只占一条，图片区因此能拿到整屏 -->
@@ -132,7 +132,7 @@
         <!-- Thumbnail strip inside sidebar -->
         <div class="gt-strip" v-if="galleryImages.length">
           <button class="gt-strip-nav" aria-label="上一页缩略图" :disabled="currentPage <= 1" @click="prevPage"><AppIcon name="chevron-left" :size="18" /></button>
-          <div class="gt-strip-scroll" ref="stripRef">
+          <div class="gt-strip-scroll visible-scrollbar" ref="stripRef">
             <div
               v-for="img in galleryImages"
               :key="img.pageNum"
@@ -373,7 +373,7 @@
             <button class="gt-wc-close" aria-label="关闭词语详情" @click="wordCard = null"><AppIcon name="close" :size="18" /></button>
           </div>
 
-          <div class="gt-wc-body">
+          <div class="gt-wc-body visible-scrollbar">
             <div v-if="wordCard.loading" class="gt-wc-state">
               <div class="gt-spinner-sm"></div><span>查询中...</span>
             </div>
@@ -2219,8 +2219,6 @@ export default {
   gap: 4px;
   overflow-x: auto;
   flex: 1;
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) transparent;
   padding-bottom: 4px;
 }
 
@@ -2652,8 +2650,6 @@ export default {
   background: var(--row-bg);
   border-left: 1px solid var(--border-color);
   overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 .gt-sidebar-hdr {
@@ -3222,8 +3218,6 @@ export default {
 .gt-wc-body {
   overflow-y: auto;
   flex: 1;
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 .gt-wc-state {

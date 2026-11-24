@@ -10,7 +10,7 @@
         </form>
         <button class="reader-btn" type="button" aria-label="关闭页目录" @click="modal?.close()"><AppIcon name="close" :size="18" /></button>
       </div>
-      <div class="tg-grid" ref="gridEl">
+      <div class="tg-grid visible-scrollbar" ref="gridEl">
         <button v-if="windowStart > 0" class="tg-more" type="button" @click="showPrevious"><AppIcon name="arrow-up" :size="18" /> 前 {{ Math.min(WINDOW_SIZE, windowStart) }} 页</button>
         <button
           v-for="pg in visiblePages"

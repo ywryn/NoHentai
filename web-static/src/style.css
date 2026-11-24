@@ -74,9 +74,8 @@
   --danger-color: #f87171;
   --warning-color: #fbbf24;
   --placeholder-bg: #1a2640;
-  --scrollbar-track: rgba(15, 23, 42, 0.35);
-  --scrollbar-thumb: rgba(71, 85, 105, 0.8);
-  --scrollbar-thumb-hover: rgba(100, 116, 139, 0.95);
+  --scrollbar-track: #263343;
+  --scrollbar-thumb: #91a5bd;
 }
 
 /* 浅色主题 - 护眼暖米色调 */
@@ -111,9 +110,8 @@
   --danger-color: #b91c1c;
   --warning-color: #b45309;
   --placeholder-bg: #e8e3dc;
-  --scrollbar-track: rgba(214, 211, 209, 0.45);
-  --scrollbar-thumb: rgba(148, 163, 184, 0.95);
-  --scrollbar-thumb-hover: rgba(100, 116, 139, 1);
+  --scrollbar-track: #eae4dd;
+  --scrollbar-thumb: #596a80;
 }
 
 /* HTML 根元素也需要设置背景色和过渡效果 */
@@ -123,13 +121,44 @@ html {
   transition: background-color var(--dur-slow) var(--ease-out), color var(--dur-slow) var(--ease-out);
 }
 
-/* Native scrolling stays available without scrollbar chrome in public views. */
-html:not(.admin-active),
-html:not(.admin-active) body,
-html:not(.admin-active) :is(body, .app-shell) * { scrollbar-width: none; }
-html:not(.admin-active)::-webkit-scrollbar,
-html:not(.admin-active) body::-webkit-scrollbar,
-html:not(.admin-active) :is(body, .app-shell) *::-webkit-scrollbar { display: none; width: 0; height: 0; }
+/* Touch-first devices use the platform scrollbar, including its own hide timing. */
+@media (hover: hover) and (pointer: fine) and (forced-colors: none) {
+  body {
+    scrollbar-color: auto; /* The viewport colors should not cascade into every panel. */
+  }
+
+  :is(html, .visible-scrollbar) {
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  /* Keep the shared navigation aligned when moving between short and long pages. */
+  html:has(.navigation-bar) {
+    scrollbar-gutter: stable;
+  }
+
+  @media (prefers-contrast: more) {
+    :is(html, .visible-scrollbar) {
+      --scrollbar-track: Canvas;
+      --scrollbar-thumb: CanvasText;
+    }
+  }
+
+  @supports not (scrollbar-color: auto) {
+    :is(html, .visible-scrollbar)::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+    }
+
+    :is(html, .visible-scrollbar)::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+    }
+
+    :is(html, .visible-scrollbar)::-webkit-scrollbar-track,
+    :is(html, .visible-scrollbar)::-webkit-scrollbar-corner {
+      background: var(--scrollbar-track);
+    }
+  }
+}
 
 html.home-scroll-locked,
 body.home-scroll-locked {

@@ -2,7 +2,10 @@
 <template>
   <div
     ref="scrollEl"
-    class="scroll-view"
+    class="scroll-view visible-scrollbar"
+    tabindex="0"
+    role="region"
+    aria-label="连续阅读"
     @pointerup="onTapEnd"
     @pointercancel="tapStart = null"
     @wheel.passive="releaseAnchor"
@@ -140,8 +143,6 @@ onBeforeUnmount(() => { scrollObserver?.disconnect(); resizeObserver?.disconnect
   flex-direction: column;
   align-items: center;
   background: var(--reader-bg);
-  scrollbar-width: thin;
-  scrollbar-color: rgba(148,163,184,0.3) transparent;
 }
 .scroll-page.page-image {
   width: 100%;
