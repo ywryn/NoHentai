@@ -371,8 +371,8 @@ def execute(job_id, allow_shrink=False):
         db.put_snapshot(con, 'release', {'commit': f'job-{job_id}', 'builtAt': db.now()})
         event(job_id,'publish','完整性与版本检查通过，数据已事务发布',con=con)
         con.execute("UPDATE jobs SET status='completed',conclusion='success',updated_at=?,summary=? WHERE id=?", (db.now(), '同步完成，数据已发布', job_id))
-        # Bound checkpoint storage; preserve failed jobs so they can be retried.
-        con.execute("UPDATE job_steps SET result_json=NULL WHERE job_id IN (SELECT id FROM jobs WHERE conclusion='success' ORDER BY id DESC LIMIT -1 OFFSET 10)")
+        # Published results already live in the catalog or snapshots.
+        con.execute('UPDATE job_steps SET result_json=NULL WHERE job_id=? AND result_json IS NOT NULL', (job_id,))
 
 
 def work(once=False):

@@ -384,6 +384,13 @@ class AdminV2Tests(fixtures.BackendTests):
         with patch.object(jobs,'collect_favorites',side_effect=AssertionError('must reuse checkpoint')),patch.object(jobs,'collect_translations',return_value=DICTIONARY),patch.object(jobs,'collect_daily',return_value=[]):
             jobs.execute(retried)
         self.assertEqual(self.client.get('/api/galleries/123').json()['gallery']['title'],'checkpoint')
+        with db.connect() as con:
+            self.assertEqual(con.execute('SELECT count(*) FROM job_steps WHERE job_id=? AND result_json IS NOT NULL',
+                                         (retried,)).fetchone()[0], 0)
+            self.assertEqual(con.execute('SELECT count(*) FROM job_steps WHERE job_id=? AND status=?',
+                                         (retried, 'success')).fetchone()[0], 3)
+            self.assertEqual(con.execute('SELECT count(*) FROM job_steps WHERE job_id=? AND result_json IS NOT NULL',
+                                         (job,)).fetchone()[0], 1)
         runs=self.admin('runs')
         self.assertNotIn('original',runs.text);self.assertNotIn('new"',runs.text)
         self.assertEqual(jobs.runs()[0]['parentId'],job)
