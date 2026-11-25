@@ -9,7 +9,7 @@ import { onBeforeRouteLeave } from 'vue-router'
 import { adminRequest, formatDate } from '@/utils/adminApi'
 const confirm = inject('adminConfirm')
 const runs=ref([]),schedules=ref([]),error=ref(''),notice=ref(''),busy=ref(false),loading=ref(true),selected=ref(null),modal=ref(null)
-const labels={all:'全量同步',favorites:'收藏同步',daily:'每日搜索',translations:'标签翻译'}
+const labels={all:'全量同步',favorites:'收藏同步',daily:'每日搜索',translations:'标签翻译','cookie-refresh':'刷新 ExHentai Cookie'}
 const taskIcons = { favorites: 'gallery', translations: 'translate', daily: 'filter' }
 const states={queued:'排队中',in_progress:'执行中',success:'成功',failure:'失败',cancelled:'已取消',timed_out:'超时',completed:'已完成'}
 const filter = ref('all')
@@ -92,6 +92,19 @@ async function load() {
 }
 async function perform(fn){if(busy.value)return;busy.value=true;error.value='';notice.value='';try{await fn();await load()}catch(e){error.value=e.message}finally{busy.value=false}}
 async function dispatch(kind){if(!await confirm({title:`启动${labels[kind]}？`,description:'使用当前已保存的配置加入后台队列，成功后直接更新公开数据。',confirmLabel:'启动任务'}))return;await perform(async()=>{const result=await adminRequest('dispatch',{workflow:kind});notice.value=`任务 #${result.id} 已排队。`})}
+async function refreshCookie() {
+  if (!await confirm({
+    title: '刷新 ExHentai Cookie？',
+    description: '使用服务配置中的表站论坛账号登录。新 Cookie 通过收藏访问验证后生效。',
+    confirmLabel: '启动刷新',
+  })) return
+  await perform(async () => {
+    const result = await adminRequest('dispatch', { workflow: 'cookie-refresh' })
+    notice.value = `Cookie 刷新任务 #${result.id} 已排队。`
+    filter.value = 'all'
+    await changePage(1)
+  })
+}
 async function all(){if(!await confirm({title:'分别同步全部数据？',description:'收藏、标签翻译和每日搜索将作为三个独立任务执行，各自成功后生效。',confirmLabel:'启动三个任务'}))return;await perform(async()=>{await adminRequest('dispatch-all');notice.value='三个同步任务已排队。'})}
 async function cancel(run){if(!await confirm({title:'取消此任务？',description:'正在抓取的任务会终止，尚未发布的数据不会覆盖现有结果。',confirmLabel:'取消任务',danger:true}))return;await perform(async()=>{await adminRequest('job-cancel',{runId:run.id});notice.value='取消请求已提交。'})}
 async function retry(run,original){if(!await confirm({title:original?'重试失败步骤？':'按当前配置重新执行？',description:original?'使用原任务的冻结配置，复用已成功步骤；原规则若已被修改，发布时仍会进行版本检查。':'全部步骤使用当前配置重新执行。',confirmLabel:original?'重试失败步骤':'重新执行'}))return;await perform(async()=>{await adminRequest('rerun',{runId:run.id,original});notice.value='任务已排队。'})}
@@ -171,6 +184,15 @@ onBeforeUnmount(()=>{clearInterval(timer);clearInterval(clockTimer);window.remov
         </div>
       </div>
 
+      <div class="task-launch-row" role="group" aria-label="Cookie 刷新">
+        <h2>Cookie 刷新</h2>
+        <div class="task-launch-actions">
+          <button type="button" class="a-button ops-launch" :disabled="busy" @click="refreshCookie">
+            <AdminIcon name="refresh" :size="17" />刷新 ExHentai Cookie
+          </button>
+        </div>
+      </div>
+
       <section class="a-card task-surface" aria-labelledby="runs-heading" :aria-busy="loading || changingPage">
         <header class="task-section-heading">
           <h2 id="runs-heading" ref="runsHeading" tabindex="-1">运行记录</h2>
@@ -211,7 +233,7 @@ onBeforeUnmount(()=>{clearInterval(timer);clearInterval(clockTimer);window.remov
                 <button v-if="run.status !== 'completed'" type="button" class="a-text-button" :disabled="busy || run.cancelRequested" @click="cancel(run)">取消任务</button>
                 <template v-else>
                   <button type="button" class="a-text-button" :disabled="busy" @click="retry(run, false)">按当前配置重跑</button>
-                  <button v-if="run.conclusion !== 'success'" type="button" class="a-text-button" :disabled="busy" @click="retry(run, true)">重试失败步骤</button>
+                  <button v-if="run.kind !== 'cookie-refresh' && run.conclusion !== 'success'" type="button" class="a-text-button" :disabled="busy" @click="retry(run, true)">重试失败步骤</button>
                 </template>
               </div>
             </article>

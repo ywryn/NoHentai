@@ -165,10 +165,12 @@ onMounted(async () => {
             <input v-else-if="field.type === 'number'" :id="'service-' + field.key" v-model.number="group.values[field.key]"
               type="number" required :min="field.limits[0]" :max="field.limits[1]" :step="field.key === 'RETRY_DELAY_SECONDS' ? 'any' : 1" />
             <input v-else :id="'service-' + field.key" v-model="group.values[field.key]"
-              :type="field.type === 'url' ? 'url' : 'text'"
+              :type="field.type === 'url' ? 'url' : field.key === 'EXHENTAI_LOGIN_PASSWORD' ? 'password' : 'text'"
               :maxlength="field.key === 'TRANS_PASSWORD' ? 1024 : field.type === 'secret' ? 16000 : 2000"
               autocomplete="off" spellcheck="false" />
-            <small class="ops-muted">{{ sourceName[field.source] }}</small>
+            <small class="ops-muted">{{ field.key.startsWith('EXHENTAI_LOGIN_')
+              ? (field.configured ? '已配置，输入新值可替换' : '手动刷新 Cookie 时使用')
+              : sourceName[field.source] }}</small>
           </div>
         </fieldset>
         <footer class="service-panel-footer">

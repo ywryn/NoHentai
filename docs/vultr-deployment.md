@@ -73,6 +73,17 @@ sudo systemctl list-timers 'nohentai-*'
 
 服务以 nohentai 用户运行，仅 `/var/lib/nohentai` 可写。API 使用两个 Uvicorn worker，队列 worker 为一个进程；SQLite 的 WAL、busy timeout、事务及 OS 文件锁控制并发。API 启动会检查管理密码、加密主密钥和导入状态，缺配置直接启动失败，避免半配置上线。
 
+手动刷新 ExHentai Cookie 需要另外安装 Playwright 和 Chromium Headless Shell：
+
+```sh
+cd /opt/nohentai
+sudo .venv/bin/pip install -r backend/requirements-cookie-refresh.txt
+sudo env PLAYWRIGHT_BROWSERS_PATH=/opt/nohentai-browser .venv/bin/playwright install --only-shell chromium
+sudo systemctl enable --now nohentai-cookie-refresh.socket
+```
+
+在「服务配置 → 收藏来源」保存表站论坛账号和密码，再到「同步任务与调度」手动启动刷新。套接字只在任务运行时启动浏览器服务。若论坛要求人工验证，任务失败并保留原 Cookie，仍可在服务配置中手动更新和验证收藏访问。
+
 前端构建不再生成业务数据，完整 `npm run build` 会移除 `dist/data`。`publish-frontend.sh` 创建 release 目录并原子切换 `/srv/nohentai/www/current`，保留旧 release 便于回滚。不要在 `VITE_*` 中放服务端配置；默认不设置 VITE_API_BASE，统一同域。
 
 ## 4. Nginx、域名与 HTTPS

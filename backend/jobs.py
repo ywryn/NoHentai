@@ -22,7 +22,7 @@ class JobFailure(Exception):
 class JobCancelled(JobFailure):
     pass
 
-KINDS = {'all': '全量同步', 'favorites': '同步收藏', 'translations': '同步标签翻译', 'daily': '同步每日搜索'}
+KINDS = {'all': '全量同步', 'favorites': '同步收藏', 'translations': '同步标签翻译', 'daily': '同步每日搜索', 'cookie-refresh': '刷新 ExHentai Cookie'}
 
 
 def event(job_id, stage, message, level='info', data=None, con=None):
@@ -49,6 +49,8 @@ def detail(job_id, after=None):
 
 
 def freeze(con, rule_id=None, kind='all'):
+    if kind == 'cookie-refresh':
+        return '{}', None
     groups, version = db.resource(con, 'daily')
     rows = con.execute('SELECT id,data,version FROM daily_rules ORDER BY position').fetchall()
     if rule_id:
@@ -74,6 +76,12 @@ def enqueue_in(con, kind, rule_id=None, parent=None, original=False):
         return existing[0]
     if con.execute("SELECT COUNT(*) FROM jobs WHERE status='queued'").fetchone()[0] >= 20:
         fail(409, '任务队列已满')
+    if kind == 'cookie-refresh':
+        from .cookie_refresh import LOGIN_FIELDS
+        if original:
+            fail(400, 'Cookie 刷新只能按当前已保存的配置运行')
+        if not all(credential(key, con) for key in LOGIN_FIELDS):
+            fail(400, '请先在服务配置的收藏来源中保存表站论坛账号和密码')
     if original:
         config, ciphertext = parent['config_json'], parent['config_ciphertext']
         if not config or not ciphertext:
@@ -277,6 +285,13 @@ def collect_daily(groups):
 
 
 def execute(job_id, allow_shrink=False):
+    with db.connect() as con:
+        job = con.execute("SELECT kind FROM jobs WHERE id=? AND status='in_progress'", (job_id,)).fetchone()
+    if not job:
+        raise JobFailure('任务未被 worker 领取')
+    if job['kind'] == 'cookie-refresh':
+        from .cookie_refresh import request
+        return request(job_id)
     from .cli import backup
     backup()
     event(job_id,'backup','同步前一致性备份已完成')
@@ -401,22 +416,27 @@ def work(once=False):
                     process = subprocess.Popen([sys.executable, '-m', 'backend.cli', '_execute', str(row[0])], cwd=settings.ROOT,
                                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                     started = time.monotonic()
+                    cookie_refresh = row['kind'] == 'cookie-refresh'
                     while process.poll() is None:
                         if cancelled(row[0]):
                             process.kill(); process.wait()
                             conclusion, message = 'cancelled', '任务已取消，原数据保留'
                             break
-                        if time.monotonic()-started > 6*3600:
+                        if time.monotonic()-started > (105 if cookie_refresh else 6*3600):
                             process.kill(); process.wait()
-                            conclusion, message = 'timed_out', '任务超过六小时，已终止'
+                            conclusion, message = 'timed_out', 'Cookie 刷新超时，原 Cookie 已保留' if cookie_refresh else '任务超过六小时，已终止'
                             break
                         try:
                             process.wait(timeout=1)
                         except subprocess.TimeoutExpired:
                             pass
                     if process.returncode == 0:
-                        conclusion, message = 'success', '同步完成'
+                        conclusion, message = 'success', 'Cookie 已验证并更新' if cookie_refresh else '同步完成'
                     with db.connect() as con:
+                        if cookie_refresh and con.execute('SELECT status FROM jobs WHERE id=?', (row[0],)).fetchone()[0] == 'completed':
+                            if once:
+                                return
+                            continue
                         event(row[0],'finish',message,'info' if conclusion=='success' else 'error',con=con)
                         con.execute("UPDATE jobs SET status='completed',conclusion=?,summary=?,updated_at=? WHERE id=? AND status='in_progress'",
                                     (conclusion, message, db.now(), row[0]))

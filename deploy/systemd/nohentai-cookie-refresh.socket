@@ -1,0 +1,14 @@
+[Unit]
+Description=NoHentai manual ExHentai cookie refresh socket
+
+[Socket]
+ListenStream=/run/nohentai-cookie-refresh.sock
+SocketUser=nohentai
+SocketGroup=nohentai
+SocketMode=0600
+Accept=yes
+MaxConnections=1
+RemoveOnStop=yes
+
+[Install]
+WantedBy=sockets.target
