@@ -9,7 +9,7 @@ import { onBeforeRouteLeave } from 'vue-router'
 import { adminRequest, formatDate } from '@/utils/adminApi'
 const confirm = inject('adminConfirm')
 const runs=ref([]),schedules=ref([]),error=ref(''),notice=ref(''),busy=ref(false),loading=ref(true),selected=ref(null),modal=ref(null)
-const labels={all:'全量同步',favorites:'收藏同步',daily:'每日搜索',translations:'标签翻译','cookie-refresh':'刷新 ExHentai Cookie'}
+const labels={all:'全量同步',favorites:'收藏同步',daily:'每日搜索',translations:'标签翻译'}
 const taskIcons = { favorites: 'gallery', translations: 'translate', daily: 'filter' }
 const states={queued:'排队中',in_progress:'执行中',success:'成功',failure:'失败',cancelled:'已取消',timed_out:'超时',completed:'已完成'}
 const filter = ref('all')
@@ -92,19 +92,6 @@ async function load() {
 }
 async function perform(fn){if(busy.value)return;busy.value=true;error.value='';notice.value='';try{await fn();await load()}catch(e){error.value=e.message}finally{busy.value=false}}
 async function dispatch(kind){if(!await confirm({title:`启动${labels[kind]}？`,description:'使用当前已保存的配置加入后台队列，成功后直接更新公开数据。',confirmLabel:'启动任务'}))return;await perform(async()=>{const result=await adminRequest('dispatch',{workflow:kind});notice.value=`任务 #${result.id} 已排队。`})}
-async function refreshCookie() {
-  if (!await confirm({
-    title: '刷新 ExHentai Cookie？',
-    description: '使用服务配置中的表站论坛账号登录。新 Cookie 通过收藏访问验证后生效。',
-    confirmLabel: '启动刷新',
-  })) return
-  await perform(async () => {
-    const result = await adminRequest('dispatch', { workflow: 'cookie-refresh' })
-    notice.value = `Cookie 刷新任务 #${result.id} 已排队。`
-    filter.value = 'all'
-    await changePage(1)
-  })
-}
 async function all(){if(!await confirm({title:'分别同步全部数据？',description:'收藏、标签翻译和每日搜索将作为三个独立任务执行，各自成功后生效。',confirmLabel:'启动三个任务'}))return;await perform(async()=>{await adminRequest('dispatch-all');notice.value='三个同步任务已排队。'})}
 async function cancel(run){if(!await confirm({title:'取消此任务？',description:'正在抓取的任务会终止，尚未发布的数据不会覆盖现有结果。',confirmLabel:'取消任务',danger:true}))return;await perform(async()=>{await adminRequest('job-cancel',{runId:run.id});notice.value='取消请求已提交。'})}
 async function retry(run,original){if(!await confirm({title:original?'重试失败步骤？':'按当前配置重新执行？',description:original?'使用原任务的冻结配置，复用已成功步骤；原规则若已被修改，发布时仍会进行版本检查。':'全部步骤使用当前配置重新执行。',confirmLabel:original?'重试失败步骤':'重新执行'}))return;await perform(async()=>{await adminRequest('rerun',{runId:run.id,original});notice.value='任务已排队。'})}
@@ -184,15 +171,6 @@ onBeforeUnmount(()=>{clearInterval(timer);clearInterval(clockTimer);window.remov
         </div>
       </div>
 
-      <div class="task-launch-row" role="group" aria-label="Cookie 刷新">
-        <h2>Cookie 刷新</h2>
-        <div class="task-launch-actions">
-          <button type="button" class="a-button ops-launch" :disabled="busy" @click="refreshCookie">
-            <AdminIcon name="refresh" :size="17" />刷新 ExHentai Cookie
-          </button>
-        </div>
-      </div>
-
       <section class="a-card task-surface" aria-labelledby="runs-heading" :aria-busy="loading || changingPage">
         <header class="task-section-heading">
           <h2 id="runs-heading" ref="runsHeading" tabindex="-1">运行记录</h2>
@@ -232,8 +210,8 @@ onBeforeUnmount(()=>{clearInterval(timer);clearInterval(clockTimer);window.remov
                 <button type="button" class="a-text-button" @click="details(run)"><AdminIcon name="tasks" :size="16" />日志与进度</button>
                 <button v-if="run.status !== 'completed'" type="button" class="a-text-button" :disabled="busy || run.cancelRequested" @click="cancel(run)">取消任务</button>
                 <template v-else>
-                  <button type="button" class="a-text-button" :disabled="busy" @click="retry(run, false)">按当前配置重跑</button>
-                  <button v-if="run.kind !== 'cookie-refresh' && run.conclusion !== 'success'" type="button" class="a-text-button" :disabled="busy" @click="retry(run, true)">重试失败步骤</button>
+                  <button v-if="!run.retired" type="button" class="a-text-button" :disabled="busy" @click="retry(run, false)">按当前配置重跑</button>
+                  <button v-if="!run.retired && run.conclusion !== 'success'" type="button" class="a-text-button" :disabled="busy" @click="retry(run, true)">重试失败步骤</button>
                 </template>
               </div>
             </article>
@@ -291,7 +269,7 @@ onBeforeUnmount(()=>{clearInterval(timer);clearInterval(clockTimer);window.remov
         </div>
       </section>
     </section>
-<dialog ref="modal" class="a-modal ops-task-drawer" @pointerdown="drawerPointerDown" @pointerup="drawerPointerUp" @close="selected=null"><template v-if="selected"><header class="ops-drawer-header"><div><span class="ops-kicker">TASK #{{selected.id}}</span><h2>{{selected.name}}</h2><p>{{formatDate(selected.createdAt)}} · {{elapsed(selected)}}</p></div><button class="ops-icon" aria-label="关闭任务详情" @click="modal.close()"><AdminIcon name="close"/></button></header><div class="ops-drawer-body touch-scroll-area"><div class="ops-section-title"><span class="ops-state" :class="selected.conclusion||selected.status">{{states[selected.conclusion||selected.status]}}</span><label class="ops-inline-check"><input v-model="live" type="checkbox"/>实时更新</label></div><p class="ops-run-summary">{{selected.summary||'等待执行'}}</p><div class="ops-task-stages"><article v-for="step in selected.steps" :key="step.name" :class="step.status"><AdminIcon :name="step.status==='success'?'check':'clock'" :size="18"/><div><strong>{{labels[step.name]}}</strong><p>{{step.summary||'正在处理'}}</p><small v-if="step.progress.totalGroups">分组 {{step.progress.group}} / {{step.progress.totalGroups}}</small><small v-if="step.progress.pages">已扫描 {{step.progress.pages}} 页<span v-if="step.progress.items">，累计 {{step.progress.items}} 条</span></small><small v-if="step.progress.totalBatches">元数据 {{step.progress.completedBatches||0}} / {{step.progress.totalBatches}} 批</small><div class="ops-progress" :class="{'is-indeterminate':percent(step)===null&&step.status==='in_progress'}"><i :style="{width:(percent(step)||0)+'%'}"/></div></div><span>{{states[step.status]}}</span></article></div><div class="ops-section-title ops-log-heading"><h3>执行日志 <small>{{events.length}}</small></h3><button class="a-text-button" @click="refreshDetails">刷新</button></div><div class="ops-log-tools"><select v-model="logLevel" aria-label="日志级别"><option value="all">全部事件</option><option value="warning">警告与错误</option></select><label class="ops-inline-check"><input v-model="follow" type="checkbox"/>跟随最新</label></div><p v-if="logError" class="a-alert a-alert-error">{{logError}}</p><div ref="logBody" class="ops-log touch-scroll-area" @scroll="logScrolled" role="log" aria-label="任务执行日志" aria-live="off"><div v-for="entry in filteredEvents" :key="entry.id" :class="entry.level"><time>{{time(entry.at)}}</time><span class="ops-log-stage">{{labels[entry.stage]||({queue:'队列',backup:'备份',publish:'发布',finish:'结束'})[entry.stage]}}</span><span>{{entry.message}}</span></div><p v-if="!filteredEvents.length">{{events.length?'暂无警告或错误':selected.status==='queued'?'等待领取任务…':'该任务暂无事件记录。升级前的任务仍可查看上方步骤摘要。'}}</p></div><p class="ops-muted">保留每个任务最近 2,000 条事件。日志记录执行明细，不包含来源链接、Cookie 或服务密钥。</p><details v-if="dailyRules.length" class="ops-config-details"><summary>本次使用的规则 <span>{{dailyRules.length}} 个分组</span></summary><article v-for="group in dailyRules" :key="group.name"><strong>{{group.name}}</strong><p>{{group.keyword||'不限关键词'}}</p><small>回溯 {{group.cutoffDays}} 天 · {{group.minPages||'不限'}}–{{group.maxPages||'不限'}} 页 · 评分 {{group.minRating||'不限'}}</small></article></details></div><footer class="ops-drawer-footer"><span class="ops-muted">{{live?'每 2 秒自动更新':'自动更新已暂停'}}</span><button v-if="selected.status!=='completed'" class="a-button" :disabled="busy||selected.cancelRequested" @click="cancel(selected)">取消任务</button><button v-else class="a-button" :disabled="busy" @click="retry(selected,false)">按当前配置重跑</button></footer></template></dialog>
+<dialog ref="modal" class="a-modal ops-task-drawer" @pointerdown="drawerPointerDown" @pointerup="drawerPointerUp" @close="selected=null"><template v-if="selected"><header class="ops-drawer-header"><div><span class="ops-kicker">TASK #{{selected.id}}</span><h2>{{selected.name}}</h2><p>{{formatDate(selected.createdAt)}} · {{elapsed(selected)}}</p></div><button class="ops-icon" aria-label="关闭任务详情" @click="modal.close()"><AdminIcon name="close"/></button></header><div class="ops-drawer-body touch-scroll-area"><div class="ops-section-title"><span class="ops-state" :class="selected.conclusion||selected.status">{{states[selected.conclusion||selected.status]}}</span><label class="ops-inline-check"><input v-model="live" type="checkbox"/>实时更新</label></div><p class="ops-run-summary">{{selected.summary||'等待执行'}}</p><div class="ops-task-stages"><article v-for="step in selected.steps" :key="step.name" :class="step.status"><AdminIcon :name="step.status==='success'?'check':'clock'" :size="18"/><div><strong>{{labels[step.name]}}</strong><p>{{step.summary||'正在处理'}}</p><small v-if="step.progress.totalGroups">分组 {{step.progress.group}} / {{step.progress.totalGroups}}</small><small v-if="step.progress.pages">已扫描 {{step.progress.pages}} 页<span v-if="step.progress.items">，累计 {{step.progress.items}} 条</span></small><small v-if="step.progress.totalBatches">元数据 {{step.progress.completedBatches||0}} / {{step.progress.totalBatches}} 批</small><div class="ops-progress" :class="{'is-indeterminate':percent(step)===null&&step.status==='in_progress'}"><i :style="{width:(percent(step)||0)+'%'}"/></div></div><span>{{states[step.status]}}</span></article></div><div class="ops-section-title ops-log-heading"><h3>执行日志 <small>{{events.length}}</small></h3><button class="a-text-button" @click="refreshDetails">刷新</button></div><div class="ops-log-tools"><select v-model="logLevel" aria-label="日志级别"><option value="all">全部事件</option><option value="warning">警告与错误</option></select><label class="ops-inline-check"><input v-model="follow" type="checkbox"/>跟随最新</label></div><p v-if="logError" class="a-alert a-alert-error">{{logError}}</p><div ref="logBody" class="ops-log touch-scroll-area" @scroll="logScrolled" role="log" aria-label="任务执行日志" aria-live="off"><div v-for="entry in filteredEvents" :key="entry.id" :class="entry.level"><time>{{time(entry.at)}}</time><span class="ops-log-stage">{{labels[entry.stage]||({queue:'队列',backup:'备份',publish:'发布',finish:'结束'})[entry.stage]}}</span><span>{{entry.message}}</span></div><p v-if="!filteredEvents.length">{{events.length?'暂无警告或错误':selected.status==='queued'?'等待领取任务…':'该任务暂无事件记录。升级前的任务仍可查看上方步骤摘要。'}}</p></div><p class="ops-muted">保留每个任务最近 2,000 条事件。日志记录执行明细，不包含来源链接、Cookie 或服务密钥。</p><details v-if="dailyRules.length" class="ops-config-details"><summary>本次使用的规则 <span>{{dailyRules.length}} 个分组</span></summary><article v-for="group in dailyRules" :key="group.name"><strong>{{group.name}}</strong><p>{{group.keyword||'不限关键词'}}</p><small>回溯 {{group.cutoffDays}} 天 · {{group.minPages||'不限'}}–{{group.maxPages||'不限'}} 页 · 评分 {{group.minRating||'不限'}}</small></article></details></div><footer class="ops-drawer-footer"><span class="ops-muted">{{live?'每 2 秒自动更新':'自动更新已暂停'}}</span><button v-if="selected.status!=='completed'" class="a-button" :disabled="busy||selected.cancelRequested" @click="cancel(selected)">取消任务</button><button v-else-if="!selected.retired" class="a-button" :disabled="busy" @click="retry(selected,false)">按当前配置重跑</button></footer></template></dialog>
 </div></template>
 
 <style scoped>

@@ -18,8 +18,6 @@ FIELDS = {
  'EXHENTAI_COOKIE_MEMBER_ID': ('favorites', 'Member ID', 'secret', '', None),
  'EXHENTAI_COOKIE_PASS_HASH': ('favorites', 'Pass Hash', 'secret', '', None),
  'EXHENTAI_COOKIE_IGNEOUS': ('favorites', 'Igneous', 'secret', '', None),
- 'EXHENTAI_LOGIN_USERNAME': ('favorites', '表站论坛账号（Cookie 刷新）', 'secret', '', None),
- 'EXHENTAI_LOGIN_PASSWORD': ('favorites', '表站论坛密码（Cookie 刷新）', 'secret', '', None),
  'MAX_RETRIES': ('favorites', '元数据重试次数', 'number', 5, (0, 10)),
  'RETRY_DELAY_SECONDS': ('favorites', '重试间隔（秒）', 'number', 2, (0, 60)),
  'GOOGLE_TRANSLATE_API_KEY': ('translate-google', 'Google 翻译 API Key', 'secret', '', None),
@@ -74,11 +72,8 @@ def status():
                         except ValueError: value = default
                     else:
                         value = raw or default
-                configured = bool(value)
-                if name in ('EXHENTAI_LOGIN_USERNAME', 'EXHENTAI_LOGIN_PASSWORD'):
-                    value = ''
                 fields.append({'key': name, 'label': title, 'type': field_type, 'value': value,
-                               'configured': configured, 'source': source, 'limits': limits,
+                               'configured': bool(value), 'source': source, 'limits': limits,
                                'effective': (security.credential('LLM_MODEL',con) or 'gpt-4o-mini') if name=='model' and value is None else security.credential('LLM_JSON_MODE',con)=='1' if name=='jsonMode' and value is None else value})
             check = con.execute('SELECT * FROM service_checks WHERE name=?', (group,)).fetchone()
             groups.append({'id': group, 'label': label, 'version': version(con, group), 'fields': fields,
@@ -184,18 +179,6 @@ def save(group, expected, values, operations=None):
     return {'ok': True, 'message': '配置已保存，后续请求或任务使用新值'}
 
 
-def probe_favorites(url=None):
-    from bs4 import BeautifulSoup
-    from .upstream import fetch
-
-    target = url or security.credential('EXHENTAI_BASE_URL') or 'https://exhentai.org/favorites.php'
-    if url:
-        content, _ = fetch(target, gallery=True, fixed_host='exhentai.org')
-    else:
-        content, _ = fetch(target, gallery=True)
-    return BeautifulSoup(content, 'html.parser').select_one('table.itg') is not None
-
-
 def test(group):
     if group not in GROUPS:
         fail(400, '未知服务')
@@ -204,7 +187,10 @@ def test(group):
     ok, message = False, '连接失败，请检查地址、凭证或服务状态'
     try:
         if group == 'favorites':
-            ok = probe_favorites()
+            from .upstream import fetch
+            content, _ = fetch(security.credential('EXHENTAI_BASE_URL') or 'https://exhentai.org/favorites.php', gallery=True)
+            from bs4 import BeautifulSoup
+            ok = BeautifulSoup(content, 'html.parser').select_one('table.itg') is not None
             message = '已通过收藏页访问验证' if ok else '未读取到收藏列表，请检查 Cookie 与来源访问状态'
         elif group in ('translate', 'translate-google'):
             from .translation import translate

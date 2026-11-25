@@ -369,6 +369,19 @@ class BackendTests(unittest.TestCase):
                 response = self.client.post('/api/trans-translate', json=dict(body, engine='google'))
                 self.assertEqual(response.status_code, 503)
 
+    def test_history_displays_retired_tasks_without_allowing_reruns(self):
+        with db.connect() as con:
+            run_id = con.execute(
+                "INSERT INTO jobs(kind,status,conclusion,created_at,updated_at) VALUES (?,?,?,?,?)",
+                ('retired-example', 'completed', 'failure', db.now(), db.now()),
+            ).lastrowid
+        history = self.client.post('/api/admin', json={'action': 'runs', 'password': self.token, 'page': 1})
+        self.assertTrue(history.json()['runs'][0]['retired'])
+        detail = self.client.post('/api/admin', json={'action': 'job-detail', 'password': self.token, 'runId': run_id})
+        self.assertEqual(detail.json()['run']['name'], '已停用的任务')
+        retry = self.client.post('/api/admin', json={'action': 'rerun', 'password': self.token, 'runId': run_id})
+        self.assertEqual(retry.status_code, 400)
+
     def test_page_image_retries_with_nl_and_versions_bytes(self):
         page = 'https://e-hentai.org/s/abc/123-1'
         first = 'https://ehgt.org/old.jpg'

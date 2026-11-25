@@ -43,14 +43,12 @@ def cookies():
     }.items() if v)
 
 
-def fetch(url, gallery=False, image=False, *, cover_validators=None, fixed_host=None, **kwargs):
+def fetch(url, gallery=False, image=False, *, cover_validators=None, **kwargs):
     if os.getenv('NOHENTAI_DISABLE_UPSTREAM') == '1':
         fail(503, '验收环境未启用外部服务')
     # Follow each redirect explicitly, applying the host/network checks again.
     for _ in range(5):
         validate_url(url, gallery=gallery, image=image)
-        if fixed_host is not None and urlsplit(url).hostname != fixed_host:
-            fail(502, '上游响应离开预期站点')
         headers = {'User-Agent': 'Mozilla/5.0 NoHentai/2.0', 'Referer': 'https://e-hentai.org/'}
         if urlsplit(url).hostname == 'exhentai.org':
             headers['Cookie'] = cookies()

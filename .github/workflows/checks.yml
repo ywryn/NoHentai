@@ -24,6 +24,5 @@ jobs:
       - run: npm run build --prefix web-static
       - run: pip install -r tests/requirements-browser.txt
       - run: python -m playwright install --with-deps chromium
-      - run: python tests/browser_cookie_refresh.py
       - run: python tests/browser_review.py
       - run: python tests/browser_search.py
