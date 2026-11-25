@@ -84,7 +84,7 @@ def enqueue_in(con, kind, rule_id=None, parent=None, original=False):
     job_id = con.execute("INSERT INTO jobs(kind,status,created_at,updated_at,config_json,config_ciphertext,parent_id) VALUES (?,'queued',?,?,?,?,?)",
                          (kind, stamp, stamp, config, ciphertext, parent['id'] if parent else None)).lastrowid
     event(job_id,'queue','任务已排队，等待 worker 领取',con=con)
-    if original:
+    if original and parent['conclusion'] != 'success':
         for step in con.execute("SELECT * FROM job_steps WHERE job_id=? AND status='success' AND result_json IS NOT NULL", (parent['id'],)).fetchall():
             con.execute("INSERT INTO job_steps(job_id,name,status,finished_at,progress_json,result_json,summary) VALUES (?,?,'success',?,?,?,?)",
                         (job_id, step['name'], step['finished_at'], step['progress_json'], step['result_json'], '复用原任务已成功步骤'))
@@ -276,6 +276,26 @@ def collect_daily(groups):
     return output
 
 
+def prune_published_results(con, job_id=None):
+    scope = "job_id IN (SELECT id FROM jobs WHERE conclusion='success')" if job_id is None else 'job_id=?'
+    params = () if job_id is None else (job_id,)
+    trimmed = con.execute(f"""UPDATE job_steps SET result_json=NULL
+        WHERE {scope} AND name!='daily' AND result_json IS NOT NULL""", params).rowcount
+    # Legacy daily snapshots can recover their frozen rule by matching these identifiers.
+    rows = con.execute(f"""SELECT job_id,result_json FROM job_steps
+        WHERE {scope} AND name='daily' AND result_json IS NOT NULL""", params).fetchall()
+    for row in rows:
+        groups = json.loads(row['result_json'])
+        identifiers = [{'name': group.get('name'), 'generatedAt': group.get('generatedAt')}
+                       for group in groups if group.get('name') and group.get('generatedAt')]
+        value = db.dumps(identifiers) if identifiers else None
+        if value != row['result_json']:
+            con.execute("UPDATE job_steps SET result_json=? WHERE job_id=? AND name='daily'",
+                        (value, row['job_id']))
+            trimmed += 1
+    return trimmed
+
+
 def execute(job_id, allow_shrink=False):
     from .cli import backup
     backup()
@@ -371,8 +391,7 @@ def execute(job_id, allow_shrink=False):
         db.put_snapshot(con, 'release', {'commit': f'job-{job_id}', 'builtAt': db.now()})
         event(job_id,'publish','完整性与版本检查通过，数据已事务发布',con=con)
         con.execute("UPDATE jobs SET status='completed',conclusion='success',updated_at=?,summary=? WHERE id=?", (db.now(), '同步完成，数据已发布', job_id))
-        # Published results already live in the catalog or snapshots.
-        con.execute('UPDATE job_steps SET result_json=NULL WHERE job_id=? AND result_json IS NOT NULL', (job_id,))
+        prune_published_results(con, job_id)
 
 
 def work(once=False):

@@ -628,6 +628,11 @@ class AdminV2Tests(fixtures.BackendTests):
         job=self.claim('daily')
         payload=[{'name':g['name'],'generatedAt':'2026-11-03T03:00:00+00:00','galleries':[GALLERY],'filters':['obsolete']} for g in self.daily]
         with patch.object(jobs,'collect_daily',return_value=payload):jobs.execute(job)
+        with db.connect() as con:
+            result = con.execute("SELECT result_json FROM job_steps WHERE job_id=? AND name='daily'", (job,)).fetchone()[0]
+            self.assertEqual(json.loads(result), [{'name': group['name'], 'generatedAt': group['generatedAt']}
+                                                 for group in payload])
+        self.assertEqual(jobs.detail(jobs.rerun(job, original=True))['run']['steps'], [])
         saved=self.admin('record-save',kind='daily',id=rule['id'],version=rule['version'],data=dict(original,keyword='changed',minPages=99,maxPages=999))
         self.assertEqual(saved.status_code,200,saved.text)
         for url in ('/api/daily','/data/daily_search.json'):
