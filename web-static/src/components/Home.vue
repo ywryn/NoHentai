@@ -10,8 +10,8 @@
         </div>
 
         <GalleryFilters :query="appliedQuery" :types="activeTypes" :counts="typeCounts" :totals="totalTypeCounts"
-          :sort="activeSort" :fav="activeFav" :fav-counts="favCounts" enable-sort
-          @change="changeFilters" @update:sort="changeSort" @update:fav="changeFav" />
+          :fav="activeFav" :fav-counts="favCounts"
+          @change="changeFilters" @clear="setQuery({ q: undefined, type: undefined, fav: undefined, page: undefined })" @update:fav="changeFav" />
       </div>
 
       <section class="home-content-panel catalog-results" :aria-busy="loading" aria-label="画廊列表">
@@ -53,21 +53,18 @@ const route = useRoute()
 
 function setQuery(patch, history = false) {
   const query = { ...route.query, ...patch }
+  delete query.sort
   for (const key of Object.keys(query)) if (query[key] === undefined || query[key] === '') delete query[key]
   if (JSON.stringify(query) !== JSON.stringify(route.query)) router[history ? 'push' : 'replace']({ query })
 }
 const appliedQuery = computed(() => String(route.query.q || ''))
 const activeTypes = computed(() => String(route.query.type || '').split(',').filter(Boolean))
-const activeSort = computed(() => String(route.query.sort || 'default'))
 const activeFav = computed(() => String(route.query.fav || ''))
 function changeFilters(q, types) {
   setQuery({q:q.trim(), type:types.join(','), page:undefined})
 }
-function changeSort(sort) {
-  setQuery({ sort: sort && sort !== 'default' ? sort : undefined, page: undefined })
-}
-function changeFav(fav) {
-  setQuery({ fav: fav || undefined, page: undefined })
+function changeFav(fav, q) {
+  setQuery({ fav: fav || undefined, q: q.trim(), page: undefined })
 }
 const currentPage = computed({
   get: () => Math.max(1, Number.parseInt(route.query.page) || 1),
@@ -120,7 +117,6 @@ async function fetchPage() {
       types: activeTypes.value.join(','),
       page: currentPage.value,
       per_page: perPage.value,
-      ...(activeSort.value !== 'default' ? { sort: activeSort.value } : {}),
       ...(activeFav.value ? { fav: activeFav.value } : {}),
     }, pageController.signal)
     if (version !== requestVersion) return
@@ -132,7 +128,7 @@ async function fetchPage() {
     if (version === requestVersion && e.name !== 'AbortError') error.value = e.message || '画廊加载失败，请重试'
   } finally { if (version === requestVersion) loading.value = false }
 }
-watch(() => [route.query.q, route.query.type, route.query.sort, route.query.fav, route.query.page], fetchPage, { immediate: true })
+watch([appliedQuery, () => route.query.type, activeFav, currentPage], fetchPage, { immediate: true })
 const stopRevision = watchPublicRevision(fetchPage)
 onBeforeUnmount(() => {
   pageController?.abort(); stopRevision()

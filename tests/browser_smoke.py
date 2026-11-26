@@ -95,7 +95,7 @@ def main():
                     expect(cards.first).to_have_attribute('href', first_href)
                     page.get_by_role('button', name='清空搜索画廊', exact=True).click()
                     expect(cards).to_have_count(30)
-                    page.locator('.home-filter-btn').click()
+                    page.locator('.home-category-trigger').click()
                     page.get_by_label('Manga', exact=False).first.check()
                     expect(page).to_have_url(BASE + '/#/?type=Manga')
                     expect(cards).to_have_count(30)

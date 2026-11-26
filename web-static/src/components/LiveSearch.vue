@@ -57,7 +57,7 @@ async function search(q:string, selected:string[], cursor='', prev='') {
         <span v-if="host" class="catalog-count">{{host}}</span>
       </div></div>
       <GalleryFilters :query="input" :types="types" profile="live" :submitting="busy"
-        label="搜索上游画廊" @change="edit" @submit="search" />
+        label="搜索上游画廊" @change="edit" @clear="edit('', [])" @submit="search" />
     </header>
     <p v-if="error" class="catalog-error" role="alert">{{error}}</p>
     <section v-if="busy || searched" class="catalog-results home-content-panel" :aria-busy="busy">

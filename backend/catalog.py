@@ -158,6 +158,9 @@ def term_sql(term):
             match, args = f'substr({expr},1,length(?))=?', params + [value, value]
         else:
             match, args = f'instr({expr},?)>0', params + [value]
+        if ns and not term['exact']:
+            # Match the namespace once, instead of scanning its index for every visible gallery.
+            return f'visible.gid IN (SELECT gt.gid FROM gallery_tags gt WHERE {prefix}{match})', args
         return f'EXISTS (SELECT 1 FROM gallery_tags gt WHERE gt.gid=visible.gid AND {prefix}{match})', args
     field = term['field']
     if field == 'gid':

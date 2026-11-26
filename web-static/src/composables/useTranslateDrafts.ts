@@ -1,26 +1,22 @@
-const STORAGE_KEY = 'translate-drafts:v1'
+const STORAGE_KEY = 'translate-drafts:v2'
 const MAX_DRAFTS = 60
 
-export interface TranslateDraftItem {
-  _id: number
+interface TranslateDraftItem {
+  _id: string | number
   text: string
-  translation: string
-  translationSource?: string
-  confidence?: number
-  kind?: string
-  box?: number[][]
+  bbox: [number, number, number, number]
 }
 
 interface StoredDraft {
-  updatedAt: number
-  items: TranslateDraftItem[]
+  ts: number
+  version: string
+  ocrResults: TranslateDraftItem[]
+  lastOcrSource: string | null
 }
 
 function readAll(): Record<string, StoredDraft> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return {}
-    const parsed = JSON.parse(raw)
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
     return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}
   } catch {
     return {}
@@ -30,58 +26,40 @@ function readAll(): Record<string, StoredDraft> {
 function writeAll(store: Record<string, StoredDraft>) {
   const bounded = Object.fromEntries(
     Object.entries(store)
-      .filter(([, v]) => v && Array.isArray(v.items) && v.items.length > 0)
-      .sort((a, b) => (b[1].updatedAt || 0) - (a[1].updatedAt || 0))
+      .sort((a, b) => (b[1]?.ts || 0) - (a[1]?.ts || 0))
       .slice(0, MAX_DRAFTS)
   )
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(bounded))
+    return true
   } catch {
-    // Ignore quota errors cleanly.
+    // Storage may be disabled or full.
+    return false
   }
 }
 
-function draftKey(gid: string, page: number) {
-  return `${gid}:${page}`
+export function validOcrResults(items: unknown): items is TranslateDraftItem[] {
+  return Array.isArray(items) && items.length > 0 && items.every(item =>
+    item && (typeof item._id === 'number' || typeof item._id === 'string') &&
+    typeof item.text === 'string' && Array.isArray(item.bbox) &&
+    item.bbox.length === 4 && item.bbox.every(Number.isFinite)
+  )
 }
 
-export function loadPageDraft(gid: string, page: number): TranslateDraftItem[] | null {
-  if (!gid || !Number.isFinite(page) || page < 1) return null
-  const entry = readAll()[draftKey(gid, page)]
-  if (!entry || !Array.isArray(entry.items) || !entry.items.length) return null
-  return entry.items
+export function loadPageDraft(key: string, version: string): StoredDraft | null {
+  const entry = readAll()[key]
+  return entry?.version === version && validOcrResults(entry.ocrResults) ? entry : null
 }
 
-export function savePageDraft(gid: string, page: number, items: any[]) {
-  if (!gid || !Number.isFinite(page) || page < 1) return
+export function savePageDraft(key: string, version: string, ocrResults: TranslateDraftItem[], lastOcrSource: string | null) {
+  if (!validOcrResults(ocrResults)) return false
   const store = readAll()
-  const key = draftKey(gid, page)
-  if (!Array.isArray(items) || !items.length) {
-    if (store[key]) {
-      delete store[key]
-      writeAll(store)
-    }
-    return
-  }
-  store[key] = {
-    updatedAt: Date.now(),
-    items: items.map((item, idx) => ({
-      _id: typeof item._id === 'number' ? item._id : idx + 1,
-      text: String(item.text || ''),
-      translation: String(item.translation || ''),
-      ...(item.translationSource ? { translationSource: String(item.translationSource) } : {}),
-      ...(typeof item.confidence === 'number' ? { confidence: item.confidence } : {}),
-      ...(item.kind ? { kind: String(item.kind) } : {}),
-      ...(Array.isArray(item.box) ? { box: item.box } : {}),
-    })),
-  }
-  writeAll(store)
+  store[key] = { ts: Date.now(), version, ocrResults, lastOcrSource }
+  return writeAll(store)
 }
 
-export function clearPageDraft(gid: string, page: number) {
-  if (!gid || !Number.isFinite(page) || page < 1) return
+export function clearPageDraft(key: string) {
   const store = readAll()
-  const key = draftKey(gid, page)
   if (store[key]) {
     delete store[key]
     writeAll(store)

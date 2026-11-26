@@ -10,28 +10,20 @@ const props = defineProps({
   query: {type:String, required:true}, types: {type:Array, required:true},
   counts: Object, totals: Object, submitting:Boolean, label: {type:String, default:'搜索画廊'},
   profile: {type:String, default:'gallery'}, debounce: {type:Number, default:220},
-  sort: {type:String, default:'default'}, fav: {type:String, default:''},
-  favCounts: Object, enableSort: {type:Boolean, default:false},
+  fav: {type:String, default:''}, favCounts: Object,
 })
-const emit = defineEmits(['change','submit','update:sort','update:fav'])
-const SORT_OPTIONS = [
-  { value: 'default', label: '默认收藏顺序' },
-  { value: 'posted_desc', label: '最新发布' },
-  { value: 'posted_asc', label: '最早发布' },
-  { value: 'rating_desc', label: '评分最高' },
-  { value: 'pages_desc', label: '页数最多' },
-  { value: 'pages_asc', label: '页数最少' },
-]
+const emit = defineEmits(['change','submit','clear','update:fav'])
 const favOptions = computed(() =>
   Object.entries(props.favCounts || {})
     .filter(([name]) => name)
     .sort((a, b) => b[1] - a[1])
 )
 const categoryPopover = ref(), categoryOpen = ref(false), searchInputRef = ref()
+const favPopover = ref(), favOpen = ref(false), favTrigger = ref()
 const searchQuery = computed({ get: () => props.query, set: value => emit('change', value, props.types) })
 const activeTypes = computed(() => props.types)
 const activeTerms = computed(() => parsedTerms(parseQuery(props.query)))
-const isFiltered = computed(() => activeTypes.value.length || activeTerms.value.length || Boolean(props.fav) || (props.enableSort && props.sort !== 'default'))
+const isFiltered = computed(() => activeTypes.value.length || activeTerms.value.length || Boolean(props.fav))
 const categoryLabel = computed(() => {
   const [first,...others] = props.types
   return others.length ? `${first} +${others.length}` : first || '分类'
@@ -48,19 +40,22 @@ function toggleType(type) {
   emit('change', searchInputRef.value.currentText(), props.types.includes(type) ? props.types.filter(t=>t!==type) : [...props.types,type])
 }
 function removeTerm(term) { searchQuery.value = removeQueryTerm(props.query,term) }
+function selectFav(value) {
+  emit('update:fav', value, searchInputRef.value.currentText())
+  favPopover.value?.hide()
+  favTrigger.value?.focus()
+}
 function clearAll() {
   searchInputRef.value?.reset()
-  emit('change','',[])
-  if (props.fav) emit('update:fav', '')
-  if (props.enableSort && props.sort !== 'default') emit('update:sort', 'default')
+  emit('clear')
 }
 </script>
 <template>
         <div class="home-filter-panel">
-          <GallerySearchInput ref="searchInputRef" v-model="searchQuery" :label="label" :profile="profile" :debounce="debounce" :search-button="profile === 'live'" :submitting="submitting" @search-click="value => emit('submit',value,types)">
+          <GallerySearchInput ref="searchInputRef" v-model="searchQuery" :label="label" :profile="profile" :debounce="debounce" :search-button="profile === 'live'" :submitting="submitting" help-in-filter-row @search-click="value => emit('submit',value,types)">
             <template #actions>
             <button
-              class="home-filter-btn"
+              class="home-filter-btn home-category-trigger"
               :class="{ 'is-on': activeTypes.length }"
               type="button"
               aria-haspopup="dialog"
@@ -74,31 +69,22 @@ function clearAll() {
                 :style="{ background: exTypeDotColors[activeTypes[0]] }"
               ></span>
               <AppIcon name="filter" :size="20" v-else />
-              {{ categoryLabel }}
+              <span class="home-filter-label">{{ categoryLabel }}</span>
+              <span class="home-filter-caret" aria-hidden="true"><AppIcon name="chevron-down" :size="18" /></span>
+            </button>
+            <button v-if="favOptions.length || fav" ref="favTrigger" type="button" class="home-filter-btn"
+              :class="{ 'is-on': fav }" aria-haspopup="dialog" :aria-expanded="favOpen"
+              :aria-label="fav ? `收藏夹：${fav}` : '收藏夹'" @click="favPopover.toggle($event)">
+              <AppIcon name="grid" :size="14" />
+              <span class="home-filter-label">{{ fav || '收藏夹' }}</span>
               <span class="home-filter-caret" aria-hidden="true"><AppIcon name="chevron-down" :size="18" /></span>
             </button>
             </template>
           </GallerySearchInput>
 
-          <div v-if="enableSort || favOptions.length" class="home-refine-row">
-            <label v-if="enableSort" class="home-refine-field">
-              <span class="home-refine-label">排序</span>
-              <select class="home-refine-select" :value="sort" aria-label="排序方式" @change="emit('update:sort', $event.target.value)">
-                <option v-for="opt in SORT_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-              </select>
-            </label>
-            <label v-if="favOptions.length" class="home-refine-field">
-              <span class="home-refine-label">收藏夹</span>
-              <select class="home-refine-select" :value="fav" aria-label="按收藏夹筛选" @change="emit('update:fav', $event.target.value)">
-                <option value="">全部收藏夹</option>
-                <option v-for="[name, count] in favOptions" :key="name" :value="name">{{ name }} ({{ count }})</option>
-              </select>
-            </label>
-          </div>
-
           <!-- 当前生效的筛选条件：逐项可移除 -->
           <div v-if="isFiltered" class="home-active-filters">
-            <button v-if="fav" class="home-filter-chip" type="button" :title="`移除收藏夹：${fav}`" @click="emit('update:fav', '')">
+            <button v-if="fav" class="home-filter-chip" type="button" :title="`移除收藏夹：${fav}`" @click="selectFav('')">
               ♥ {{ fav }}
               <span class="chip-x" aria-hidden="true"><AppIcon name="close" :size="18" /></span>
             </button>
@@ -157,6 +143,19 @@ function clearAll() {
                 <span class="category-name">{{ opt.name }}</span>
                 <span v-if="opt.count != null" class="category-count">{{ opt.count }}</span>
               </label>
+            </li>
+          </ul>
+        </div>
+      </Popover>
+      <Popover ref="favPopover" class="category-popover" aria-label="按收藏夹筛选" @show="favOpen = true" @hide="favOpen = false">
+        <div class="category-panel">
+          <div class="category-panel-head"><span class="category-panel-title">按收藏夹筛选</span></div>
+          <ul class="category-list">
+            <li><button type="button" class="category-row home-fav-option" :aria-pressed="!fav" @click="selectFav('')">全部收藏夹</button></li>
+            <li v-for="[name, count] in favOptions" :key="name">
+              <button type="button" class="category-row home-fav-option" :aria-pressed="fav === name" @click="selectFav(name)">
+                <span class="category-name">{{ name }}</span><span class="category-count">{{ count }}</span>
+              </button>
             </li>
           </ul>
         </div>

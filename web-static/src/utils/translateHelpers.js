@@ -102,7 +102,7 @@ function convexHull(pts) {
   return [...lower, ...upper]
 }
 
-function boxOrientation(bbox) {
+export function boxOrientation(bbox) {
   const w = Math.max(1, bbox[2] - bbox[0])
   const h = Math.max(1, bbox[3] - bbox[1])
   return h / w > VERTICAL_ASPECT ? 'vertical' : 'horizontal'

@@ -49,6 +49,7 @@ async function findLinked(gid) {
 async function load(target = page.value) {
   const ticket = ++sequence
   loading.value = true
+  batchIds.value = []
   try {
     const result = await adminRequest('records', { kind: props.kind, query: query.value, page: target, ...(props.kind === 'gallery' ? { origin: origin.value } : {}) })
     if (ticket !== sequence) return
@@ -70,7 +71,7 @@ async function guard() {
 }
 async function choose(item) {
   if (batchMode.value && props.kind === 'gallery') {
-    if (item.origin === 'manual') return
+    if (busy.value || loading.value || item.origin === 'manual') return
     batchIds.value = batchIds.value.includes(item.id) ? batchIds.value.filter(id => id !== item.id) : [...batchIds.value, item.id]
     return
   }
@@ -80,18 +81,20 @@ const batchCandidates = computed(() => list.value.filter(item => item.origin !==
 function toggleBatchMode() { batchMode.value = !batchMode.value; batchIds.value = [] }
 function selectAllPage() { batchIds.value = batchCandidates.value.map(item => item.id) }
 async function runBatch(operation) {
+  if (busy.value || loading.value) return
   const targets = batchCandidates.value.filter(item => batchIds.value.includes(item.id))
   if (!targets.length) return
-  if ((operation === 'add-tag' || operation === 'remove-tag') && !batchTag.value.trim()) {
+  const tag = batchTag.value.trim()
+  if ((operation === 'add-tag' || operation === 'remove-tag') && !tag) {
     error.value = '请输入要批量操作的标签'; return
   }
-  const labelsMap = { hide: '隐藏', show: '显示', 'add-tag': `添加标签「${batchTag.value.trim()}」`, 'remove-tag': `移除标签「${batchTag.value.trim()}」` }
+  const labelsMap = { hide: '隐藏', show: '显示', 'add-tag': `添加标签「${tag}」`, 'remove-tag': `移除标签「${tag}」` }
   if (!await confirm({ title: `批量${labelsMap[operation]}`, description: `将对已选 ${targets.length} 个同步画廊执行操作并记录修改历史。`, confirmLabel: '确认执行', danger: operation === 'hide' || operation === 'remove-tag' })) return
   await perform(async () => {
     const result = await adminRequest('gallery-batch', {
       items: targets.map(item => ({ id: item.id, version: item.version })),
       operation,
-      tag: batchTag.value.trim(),
+      tag,
     })
     batchIds.value = []
     await load(page.value)
@@ -216,7 +219,56 @@ onBeforeUnmount(()=>{ sequence++;matchSequence++;window.removeEventListener('bef
             <span>{{ label }}</span>
           </label>
         </fieldset>
-      </div><div class="a-list-caption"><span>共 {{ total }} 条 <span v-if="loading">正在加载…</span></span><button v-if="kind==='gallery'" type="button" class="a-text-button" @click="toggleBatchMode">{{ batchMode ? '退出批量' : '批量操作' }}</button></div><div v-if="batchMode && kind==='gallery'" class="batch-bar"><div class="batch-bar-row"><span>已选 {{ batchIds.length }} 项</span><div class="batch-bar-actions"><button type="button" class="a-text-button" @click="selectAllPage">全选本页</button><button v-if="batchIds.length" type="button" class="a-text-button" @click="batchIds=[]">清空</button></div></div><div class="batch-bar-row"><button type="button" class="a-button" :disabled="busy||!batchIds.length" @click="runBatch('hide')">批量隐藏</button><button type="button" class="a-button" :disabled="busy||!batchIds.length" @click="runBatch('show')">批量显示</button></div><div class="batch-bar-row"><input v-model="batchTag" class="batch-tag-input" placeholder="标签，如 other:anthology" :disabled="busy" /><button type="button" class="a-button" :disabled="busy||!batchIds.length||!batchTag.trim()" @click="runBatch('add-tag')">+标签</button><button type="button" class="a-button" :disabled="busy||!batchIds.length||!batchTag.trim()" @click="runBatch('remove-tag')">-标签</button></div></div><div class="a-gallery-list touch-scroll-area visible-scrollbar"><button v-for="item in list" :key="item.id" class="a-gallery-row" :class="{'is-selected': batchMode ? batchIds.includes(item.id) : selected?.id===item.id}" @click="choose(item)"><input v-if="batchMode && kind==='gallery'" type="checkbox" class="batch-check" :checked="batchIds.includes(item.id)" :disabled="item.origin==='manual'" tabindex="-1" aria-hidden="true" /><img v-if="rowThumb(item)" class="ops-list-cover" :src="rowThumb(item)" alt="条目封面" referrerpolicy="no-referrer" @error="$event.target.style.visibility='hidden'"/><span v-if="kind==='daily'" class="ops-rule-icon"><AdminIcon name="filter" :size="20"/></span><span class="a-gallery-copy"><strong>{{ name(item) }}</strong><span v-if="kind==='gallery'" class="ops-category" :style="{'--category':exTypeDotColors[item.effective.category]}">{{item.effective.category}}</span><span>{{ kind==='gallery' ? '#'+item.id : kind==='book' ? item.data.ID : '回溯 '+item.data.cutoffDays+' 天 · '+categoryMask.filter(([,mask])=>Boolean(item.data.categories&mask)).length+' 个分类' }}</span><span v-if="item.origin==='manual'" class="a-badge a-badge-accent">手动新增 · {{ item.data.published ? '已发布' : '草稿' }}</span><span v-else-if="kind==='gallery' && Object.keys(item.data).length" class="a-badge a-badge-accent">人工覆盖</span></span><AdminIcon name="chevron" /></button><p v-if="!loading&&!list.length" class="a-empty">没有匹配的条目</p></div><footer class="a-pagination"><button class="a-button" :disabled="page<=1||loading" @click="load(page-1)">上一页</button><span>{{page}} / {{pages}}</span><button class="a-button" :disabled="page>=pages||loading" @click="load(page+1)">下一页</button></footer></aside>
+      </div>
+      <div class="a-list-caption">
+        <span>共 {{ total }} 条 <span v-if="loading">正在加载…</span></span>
+        <button v-if="kind==='gallery'" type="button" class="a-text-button" @click="toggleBatchMode">{{ batchMode ? '退出批量' : '批量操作' }}</button>
+      </div>
+      <div v-if="batchMode && kind==='gallery'" class="batch-bar">
+        <div class="batch-bar-row">
+          <span>已选 {{ batchIds.length }} 项</span>
+          <div class="batch-bar-actions">
+            <button type="button" class="a-text-button" :disabled="loading || busy" @click="selectAllPage">全选本页</button>
+            <button v-if="batchIds.length" type="button" class="a-text-button" @click="batchIds=[]">清空</button>
+          </div>
+        </div>
+        <div class="batch-bar-row">
+          <button type="button" class="a-button" :disabled="busy || loading || !batchIds.length" @click="runBatch('hide')">批量隐藏</button>
+          <button type="button" class="a-button" :disabled="busy || loading || !batchIds.length" @click="runBatch('show')">批量显示</button>
+        </div>
+        <div class="batch-bar-row">
+          <input v-model="batchTag" class="batch-tag-input" aria-label="批量操作标签" placeholder="标签，如 other:anthology" :disabled="busy" />
+          <button type="button" class="a-button" :disabled="busy || loading || !batchIds.length || !batchTag.trim()" @click="runBatch('add-tag')">+标签</button>
+          <button type="button" class="a-button" :disabled="busy || loading || !batchIds.length || !batchTag.trim()" @click="runBatch('remove-tag')">-标签</button>
+        </div>
+      </div>
+      <div class="a-gallery-list touch-scroll-area visible-scrollbar">
+        <button v-for="item in list" :key="item.id" type="button" class="a-gallery-row"
+          :class="{'is-selected': batchMode ? batchIds.includes(item.id) : selected?.id===item.id}"
+          :aria-pressed="batchMode && kind==='gallery' && item.origin!=='manual' ? batchIds.includes(item.id) : undefined"
+          :disabled="batchMode && (loading || busy || item.origin==='manual')" @click="choose(item)">
+          <span v-if="batchMode && kind==='gallery' && item.origin!=='manual'" class="batch-check" aria-hidden="true">
+            <AdminIcon v-if="batchIds.includes(item.id)" name="check" :size="14" />
+          </span>
+          <img v-if="rowThumb(item)" class="ops-list-cover" :src="rowThumb(item)" alt="条目封面" referrerpolicy="no-referrer" @error="$event.target.style.visibility='hidden'"/>
+          <span v-if="kind==='daily'" class="ops-rule-icon"><AdminIcon name="filter" :size="20"/></span>
+          <span class="a-gallery-copy">
+            <strong>{{ name(item) }}</strong>
+            <span v-if="kind==='gallery'" class="ops-category" :style="{'--category':exTypeDotColors[item.effective.category]}">{{item.effective.category}}</span>
+            <span>{{ kind==='gallery' ? '#'+item.id : kind==='book' ? item.data.ID : '回溯 '+item.data.cutoffDays+' 天 · '+categoryMask.filter(([,mask])=>Boolean(item.data.categories&mask)).length+' 个分类' }}</span>
+            <span v-if="item.origin==='manual'" class="a-badge a-badge-accent">手动新增 · {{ item.data.published ? '已发布' : '草稿' }}</span>
+            <span v-else-if="kind==='gallery' && Object.keys(item.data).length" class="a-badge a-badge-accent">人工覆盖</span>
+          </span>
+          <AdminIcon name="chevron" />
+        </button>
+        <p v-if="!loading&&!list.length" class="a-empty">没有匹配的条目</p>
+      </div>
+      <footer class="a-pagination">
+        <button class="a-button" :disabled="page<=1||loading" @click="load(page-1)">上一页</button>
+        <span>{{page}} / {{pages}}</span>
+        <button class="a-button" :disabled="page>=pages||loading" @click="load(page+1)">下一页</button>
+      </footer>
+      </aside>
       <section class="a-card a-detail-pane touch-scroll-area"><template v-if="data"><button class="a-button a-mobile-back" @click="detailOpen=false">返回列表</button><div class="a-section-heading"><h2>{{ kind==='gallery' ? (manual ? '首页图书信息' : '编辑画廊展示信息') : kind==='book' ? '书目信息' : '搜索规则' }}</h2><button class="a-button" @click="exportDraft">导出草稿</button></div>
         <component :is="kind==='book' ? 'form' : 'div'" id="record-edit-fields" @submit.prevent="save">
         <fieldset :disabled="busy" class="a-form-stack">
@@ -322,5 +374,6 @@ onBeforeUnmount(()=>{ sequence++;matchSequence++;window.removeEventListener('bef
   color: var(--a-text);
   font-size: 12px;
 }
-.batch-check { width: 16px; height: 16px; accent-color: var(--a-accent); flex-shrink: 0; }
+.batch-check { display: grid; place-items: center; width: 16px; height: 16px; border: 1px solid var(--a-border); border-radius: 3px; flex-shrink: 0; }
+.a-gallery-row[aria-pressed="true"] .batch-check { border-color: var(--a-accent); color: var(--a-accent); }
 </style>

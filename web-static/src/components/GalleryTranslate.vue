@@ -425,8 +425,8 @@ import AppIcon from '@/components/ui/AppIcon.vue'
 import ImageLoadProgress from '@/components/ui/ImageLoadProgress.vue'
 import {readTranslationResponse,scaleOcrResults} from '@/utils/translationApi'
 import { loadGallery } from '@/composables/useGalleryData'
-import { loadPageDraft, savePageDraft, clearPageDraft } from '@/composables/useTranslateDrafts'
-import { VERTICAL_ASPECT, POS_COLOR, loadKuromoji, hasKanji, toHiragana, mergeOcrResults, fitTextToBox } from '@/utils/translateHelpers'
+import { loadPageDraft, savePageDraft, clearPageDraft, validOcrResults } from '@/composables/useTranslateDrafts'
+import { VERTICAL_ASPECT, POS_COLOR, loadKuromoji, hasKanji, toHiragana, mergeOcrResults, fitTextToBox, boxOrientation } from '@/utils/translateHelpers'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
@@ -1716,11 +1716,11 @@ export default {
     // ── Translation cache ─────────────────────────────────────────────────────
 
     cacheKey(pageNum) {
-      return `trans_cache_${this.$route.query.site || 'catalog'}_${this.gid}_p${pageNum}`
+      return `trans_cache_${this.live ? (this.$route.query.site || 'live') : 'catalog'}_${this.gid}_p${pageNum}`
     },
 
     clearPageCache(pageNum = this.currentPage) {
-      clearPageDraft(String(this.gid || ''), pageNum)
+      clearPageDraft(this.cacheKey(pageNum))
       try { localStorage.removeItem(this.cacheKey(pageNum)) } catch {}
     },
 
@@ -1731,24 +1731,25 @@ export default {
 
     writePageCache(pageNum, ocrResults, lastOcrSource, version = this.imageVersion) {
       if (!version) return
-      savePageDraft(String(this.gid || ''), pageNum, ocrResults)
-      try {
-        localStorage.setItem(this.cacheKey(pageNum), JSON.stringify({ ocrResults, lastOcrSource, version, ts: Date.now() }))
-      } catch {}
+      const key = this.cacheKey(pageNum)
+      if (savePageDraft(key, version, ocrResults, lastOcrSource)) {
+        try { localStorage.removeItem(key) } catch {}
+      }
     },
 
     loadPageCache(pageNum, version = this.imageVersion) {
       if (!version) return null
+      const key = this.cacheKey(pageNum)
+      const draft = loadPageDraft(key, version)
+      if (draft) return draft
       try {
-        const raw = localStorage.getItem(this.cacheKey(pageNum))
-        if (raw) {
-          const entry = JSON.parse(raw)
-          if (Date.now() - entry.ts <= TRANS_CACHE_TTL && entry.version === version) return entry
-          if (Date.now() - entry.ts > TRANS_CACHE_TTL) localStorage.removeItem(this.cacheKey(pageNum))
-        }
+        const raw = localStorage.getItem(key)
+        if (!raw) return null
+        const entry = JSON.parse(raw)
+        if (Date.now() - entry.ts > TRANS_CACHE_TTL) localStorage.removeItem(key)
+        else if (entry.version === version && validOcrResults(entry.ocrResults)) return entry
       } catch {}
-      const draft = loadPageDraft(String(this.gid || ''), pageNum)
-      return draft ? { ocrResults: draft, lastOcrSource: null } : null
+      return null
     },
 
     // ── Toasts ────────────────────────────────────────────────────────────────

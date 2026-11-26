@@ -62,55 +62,6 @@
   gap: 14px;
 }
 
-.home-refine-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px 14px;
-}
-
-.home-refine-field {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 36px;
-}
-
-.home-refine-label {
-  font-size: 12px;
-  color: var(--muted-color);
-  white-space: nowrap;
-}
-
-.home-refine-select {
-  min-height: 36px;
-  padding: 6px 10px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-color);
-  background: var(--surface-color);
-  color: var(--text-color);
-  font-family: inherit;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.home-refine-select:focus-visible {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 1px;
-}
-
-@media (max-width: 600px) {
-  .home-refine-field {
-    flex: 1 1 140px;
-    min-height: 44px;
-  }
-  .home-refine-select {
-    flex: 1;
-    min-width: 0;
-    min-height: 44px;
-  }
-}
-
 /* ── 当前生效条件 ────────────────────────────────────────── */
 
 .home-active-filters {
@@ -201,11 +152,9 @@
   border-style: solid;
 }
 
-/* ── 分类筛选触发器 ──────────────────────────────────────
-   原先是 10 个宽度不一的 pill 走 flex-wrap，行数随视口在 2/3/5 行之间
-   跳变、尾部永远参差；且给了 2028 条的 Doujinshi 和 0 条的 Asian Porn
-   同等视觉权重（前两类占全部藏品的 90%）。改为收进下拉多选面板。 */
+/* ── 搜索工具栏 ────────────────────────────────────── */
 .home-filter-btn {
+  min-width: 0;
   height: 44px;
   padding: 0 10px 0 12px;
   border-radius: var(--radius-md);
@@ -219,6 +168,7 @@
   gap: 7px;
   flex-shrink: 0;
   max-width: 190px;
+  box-shadow: none;
   white-space: nowrap;
   cursor: pointer;
   transition:
@@ -230,6 +180,11 @@
 .home-filter-btn svg {
   width: 14px;
   height: 14px;
+}
+
+.home-filter-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .home-filter-btn:hover {
@@ -256,7 +211,7 @@
 /* ── 分类多选面板 ────────────────────────────────────── */
 
 .category-popover {
-  max-width: 280px;
+  max-width: min(280px, calc(100vw - 24px));
 }
 
 .category-panel {
@@ -299,7 +254,7 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  max-height: 320px;
+  max-height: min(320px, 55dvh);
   overflow-y: auto;
 }
 
@@ -315,6 +270,22 @@
 }
 
 .category-row:hover { background: var(--hover-bg); }
+
+.home-fav-option {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--text-color);
+  font: inherit;
+  text-align: start;
+}
+
+.home-fav-option[aria-pressed="true"] {
+  background: var(--selection-bg);
+  color: var(--text-color);
+}
+
+.home-fav-option:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; }
 
 /* 当前查询下没有结果的分类：可见但不可选，避免点进空结果 */
 .category-row.is-empty {
@@ -451,10 +422,12 @@
 }
 
 @media (max-width: 767px) {
-  /* 窄屏搜索行换行：输入框独占一行，两个按钮平分下一行 */
+  /* 窄屏搜索框独占一行，筛选按钮平分下一行。 */
 
   .home-filter-btn {
     flex: 1 1 0;
+    padding-inline: 5px;
+    gap: 4px;
     max-width: none;
     justify-content: center;
   }

@@ -20,9 +20,9 @@ def upgrade(con, now):
         upgrade_events(con)
     if 2 <= version < 4:
         upgrade_home_catalog(con)
-    if 2 <= version < 5:
-        upgrade_traffic(con)
     if version >= 2:
+        # The two v5 branches added different tables. Ensure both exist.
+        upgrade_traffic(con)
         upgrade_catalog_index(con)
         return
     statements = [

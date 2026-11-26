@@ -8,6 +8,25 @@ GALLERY = fixtures.GALLERY
 
 class CatalogTests(fixtures.BackendTests):
     # Reuse database fixture, without rerunning BackendTests' inherited tests.
+    def test_upgrade_both_schema_5_variants(self):
+        with db.connect() as con:
+            con.execute("INSERT INTO traffic_daily VALUES ('2026-11-26', 8, 5, 3)")
+            con.execute('DROP TABLE gallery_tags')
+            con.execute('PRAGMA user_version=5')
+        db.initialize()
+        self.assertEqual(self.client.get('/api/galleries', params={'q': 'a:te*'}).json()['total'], 1)
+        with db.connect() as con:
+            self.assertEqual(con.execute('SELECT views FROM traffic_daily').fetchone()[0], 8)
+            con.execute('DROP TABLE traffic_daily')
+            con.execute('DROP TABLE traffic_visitors')
+            con.execute('PRAGMA user_version=5')
+        db.initialize()
+        db.initialize()
+        with db.connect() as con:
+            self.assertEqual(con.execute('SELECT COUNT(*) FROM traffic_daily').fetchone()[0], 0)
+            self.assertEqual(con.execute('SELECT COUNT(*) FROM traffic_visitors').fetchone()[0], 0)
+        self.assertEqual(self.client.get('/api/galleries', params={'q': 'a:te*'}).json()['total'], 1)
+
     def test_sql_search_matches_frontend_and_preserves_overrides(self):
         source = [
             dict(GALLERY, gid=1, title='School romance', uploader='Alice', tags=['female:sole female', 'artist:asanagi']),

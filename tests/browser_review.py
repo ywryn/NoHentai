@@ -141,13 +141,13 @@ def main():
             expect(page.locator('.gt-page-img')).to_be_visible()
             pending.pop(0).fulfill(json={'results':[{'text':'OLD_PAGE_OCR','confidence':1,'bbox':[10,10,100,100]}],'source':'vision'})
             page.wait_for_timeout(250)
-            assert not page.evaluate("localStorage.getItem('trans_cache_catalog_1_p1') || localStorage.getItem('trans_cache_catalog_1_p2')")
+            assert not page.evaluate("localStorage.getItem('translate-drafts:v2')")
             assert not translated
             page.get_by_role('button',name='识别并翻译',exact=True).click()
             page.wait_for_function("document.querySelector('.gt-header').textContent.includes('识别中')")
             pending.pop(0).fulfill(json={'results':[{'text':'CURRENT_PAGE_OCR','confidence':1,'bbox':[10,10,100,100]}],'source':'vision'})
-            page.wait_for_function("localStorage.getItem('trans_cache_catalog_1_p1')?.includes('CURRENT_TRANSLATION')")
-            assert 'CURRENT_PAGE_OCR' in page.evaluate("localStorage.getItem('trans_cache_catalog_1_p1')")
+            page.wait_for_function("localStorage.getItem('translate-drafts:v2')?.includes('CURRENT_TRANSLATION')")
+            assert 'CURRENT_PAGE_OCR' in page.evaluate("localStorage.getItem('translate-drafts:v2')")
             assert translated[0]['texts']==['CURRENT_PAGE_OCR']
             print('PASS: late OCR discarded after page 1 -> 2 -> 1; new request still translates and caches correctly')
             page.set_viewport_size({'width':390,'height':844})
@@ -167,6 +167,10 @@ def main():
             print('PASS: mobile translated bubble opens its own editor')
             page.set_viewport_size({'width':1440,'height':1000})
 
+            page.reload()
+            expect(page.locator('.gt-page-img')).to_be_visible()
+            expect(page.locator('.gt-ocr-box')).to_have_count(1)
+            assert page.evaluate("JSON.parse(localStorage.getItem('translate-drafts:v2')).trans_cache_catalog_1_p1.ocrResults[0].bbox") == [10,10,100,100]
             image_version['value'] = '"changed-image"'
             page.reload()
             expect(page.locator('.gt-page-img')).to_be_visible()

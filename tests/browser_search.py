@@ -28,16 +28,16 @@ def main():
     books[0]['书名']='中國服裝'
     options=[{'tag':'female:chinese dress','namespace':'female','value':'chinese dress','tag_cn':'中国服装'},
              {'tag':'female:chinese','namespace':'female','value':'chinese','tag_cn':'中文'}]
-    suggestion_requests=[]; queries=[]; pending=[]; hold={'value':False}
+    suggestion_requests=[]; queries=[]; catalog_params=[]; pending=[]; hold={'value':False}
     def suggestions(route):
         token=parse_qs(urlsplit(route.request.url).query).get('token',[''])[0]
         suggestion_requests.append(token)
         if hold['value']: pending.append(route)
         else: route.fulfill(json={'items':options})
     def catalog(route):
-        params=parse_qs(urlsplit(route.request.url).query);queries.append(params.get('q',[''])[0])
+        params=parse_qs(urlsplit(route.request.url).query);queries.append(params.get('q',[''])[0]);catalog_params.append(params)
         page=int(params.get('page',['1'])[0])
-        route.fulfill(json={'items':galleries[(page-1)*30:page*30],'total':65,'totalAll':65,'page':page,'perPage':30,'categoryCounts':{'Manga':65},'totalCategoryCounts':{'Manga':65}})
+        route.fulfill(json={'items':galleries[(page-1)*30:page*30],'total':65,'totalAll':65,'page':page,'perPage':30,'categoryCounts':{'Manga':65},'totalCategoryCounts':{'Manga':65},'favCounts':{'待下载':1}})
     def admin(route):
         body=route.request.post_data_json
         if body['action']=='records':
@@ -179,6 +179,16 @@ def main():
             touch.goto(base+'/#/admin/galleries')
             gallery_list=touch.locator('.a-gallery-list')
             expect(gallery_list.locator('.a-gallery-row')).to_have_count(30)
+            touch.get_by_role('button',name='批量操作',exact=True).click()
+            touch.get_by_role('button',name='全选本页').click()
+            expect(touch.locator('.batch-bar')).to_contain_text('已选 30 项')
+            touch.get_by_role('button',name='下一页',exact=True).click()
+            expect(touch.locator('.a-pagination')).to_contain_text('2 / 3')
+            expect(touch.locator('.batch-bar')).to_contain_text('已选 0 项')
+            expect(touch.get_by_role('button',name='批量隐藏')).to_be_disabled()
+            touch.get_by_role('button',name='上一页',exact=True).click()
+            expect(touch.locator('.a-pagination')).to_contain_text('1 / 3')
+            touch.get_by_role('button',name='退出批量').click()
             expect(gallery_list).to_have_css('scrollbar-width','none')
             gallery_list.evaluate('e=>{e.scrollTop=250}')
             expect(indicator).to_have_css('opacity','1')
@@ -239,6 +249,26 @@ def main():
             assert all(item==pagination[0] for item in pagination),pagination
             assert pagination[0]==['0px','3px','3px','8px','8px'],pagination
             print('PASS: all six pagination bars share spacing and have no divider')
+
+            page.goto(base+'/#/?q=fixture&type=Manga&sort=rating_desc')
+            toolbar_buttons=page.locator('.home-filter-panel .home-filter-btn')
+            expect(toolbar_buttons).to_have_count(3)
+            for width in (1440, 390, 320):
+                page.set_viewport_size({'width':width,'height':900})
+                bounds=[button.bounding_box() for button in toolbar_buttons.all()]
+                assert all(box and box['height']==44 and abs(box['y']-bounds[0]['y'])<1 for box in bounds), bounds
+                assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
+            page.get_by_role('button',name='收藏夹',exact=True).click()
+            page.get_by_role('dialog',name='按收藏夹筛选').get_by_role('button',name='待下载').click()
+            expect(page.get_by_role('button',name='收藏夹：待下载')).to_be_focused()
+            page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).has('fav')")
+            expect(page.locator('.catalog-results')).to_have_attribute('aria-busy','false')
+            assert catalog_params[-1].get('fav')==['待下载'] and 'sort' not in catalog_params[-1]
+            page.get_by_role('button',name='全部清除').click()
+            expect(page).to_have_url(base+'/#/')
+            expect(page.get_by_role('combobox',name='搜索画廊')).to_have_value('')
+            page.set_viewport_size({'width':1440,'height':1000})
+            print('PASS: home filter controls share a row, filter by favorite and clear together')
 
             page.goto(base+'/#/')
             tags=page.locator('.gallery-row').first.locator('.gr-tag')
@@ -450,7 +480,7 @@ def main():
             page.route('**/api/trans-translate',lambda r:r.fulfill(json={'translations':[{'t':'测试译文'}]}))
             page.get_by_role('button',name='识别并翻译').click()
             expect(page.get_by_role('button',name='重新识别')).to_be_enabled()
-            assert '测试译文' in page.evaluate("localStorage.getItem('trans_cache_e-hentai.org_123_p1')")
+            assert '测试译文' in page.evaluate("localStorage.getItem('translate-drafts:v2')")
             page.locator('.gt-thumb[data-page="2"]').evaluate('el=>el.click()')
             expect(page).to_have_url(re.compile('page=2'))
             expect(page.locator('.gt-page-img')).to_have_attribute('src',re.compile('^blob:'))

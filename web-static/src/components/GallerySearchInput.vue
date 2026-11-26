@@ -10,6 +10,7 @@ const props = defineProps({
   profile: { type: String, default: 'gallery' },
   variant: { type: String, default: 'public' },
   help: { type: Boolean, default: true },
+  helpInFilterRow: Boolean,
   searchButton: Boolean,
   submitting: Boolean,
   debounce: { type: Number, default: 220 },
@@ -83,7 +84,14 @@ defineExpose({ focus, clear, reset, currentText: () => text.value })
       </div>
       <slot name="actions" :submit="() => commit(true)" />
       <button v-if="searchButton" type="button" class="search-control-help" :disabled="submitting || composing" @click="emit('search-click',text)">搜索</button>
-      <button v-else-if="help && profile !== 'plain'" type="button" class="search-control-help" :aria-expanded="helpOpen" :aria-controls="`${id}-help`" @click="helpOpen = !helpOpen">语法 <span aria-hidden="true">{{helpOpen ? '−' : '＋'}}</span></button>
+      <button v-else-if="help && profile !== 'plain'" type="button" class="search-control-help"
+        :class="{ 'home-filter-btn': helpInFilterRow, 'is-on': helpInFilterRow && helpOpen }"
+        :aria-expanded="helpOpen" :aria-controls="`${id}-help`" @click="helpOpen = !helpOpen">
+        <AppIcon v-if="helpInFilterRow" name="info" :size="14" />
+        语法
+        <AppIcon v-if="helpInFilterRow" :name="helpOpen ? 'chevron-up' : 'chevron-down'" :size="14" />
+        <span v-else aria-hidden="true">{{helpOpen ? '−' : '＋'}}</span>
+      </button>
     </div>
     <small v-if="failure" class="search-control-note" role="status">{{failure}}</small>
     <div v-if="helpOpen && help && profile !== 'plain'" :id="`${id}-help`" class="search-control-syntax">
@@ -98,14 +106,18 @@ defineExpose({ focus, clear, reset, currentText: () => text.value })
 .search-control-box:focus-within{border-color:var(--search-accent);outline:2px solid color-mix(in srgb,var(--search-accent) 25%,transparent);outline-offset:1px}.search-control-icon{width:17px;height:17px;flex-shrink:0}
 .search-control .search-control-box input{width:100%;min-width:0;min-height:42px;padding:8px 0;border:0;border-radius:0;outline:0;background:transparent;color:var(--search-text);font:inherit;font-size:13px;box-shadow:none;box-sizing:border-box}.search-control-box input::placeholder{color:var(--search-muted)}
 .search-control-clear{display:flex;align-items:center;justify-content:center;flex-shrink:0;min-width:30px;min-height:32px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--search-muted);font-size:20px;cursor:pointer;box-shadow:none}.search-control-clear:hover{background:var(--search-hover);color:var(--search-text)}
-.search-control-help{display:flex;align-items:center;gap:8px;padding:0 12px;min-height:44px;flex-shrink:0;border:1px solid var(--search-border);border-radius:8px;background:var(--search-panel);color:var(--search-muted);font-size:12px;cursor:pointer;box-shadow:none}.search-control-help>span{inline-size:1em;flex-shrink:0;text-align:center}.search-control-help[aria-expanded=true]{background:var(--search-hover);color:var(--search-accent)}
+.search-control-help:not(.home-filter-btn){display:flex;align-items:center;gap:8px;padding:0 12px;min-height:44px;flex-shrink:0;border:1px solid var(--search-border);border-radius:8px;background:var(--search-panel);color:var(--search-muted);font-size:12px;cursor:pointer;box-shadow:none}.search-control-help>span{inline-size:1em;flex-shrink:0;text-align:center}.search-control-help:not(.home-filter-btn)[aria-expanded=true]{background:var(--search-hover);color:var(--search-accent)}
 .search-control-suggestions{list-style:none;margin:0;position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:35;max-height:300px;overflow:auto;padding:5px;border:1px solid var(--search-border);border-radius:8px;background:var(--search-panel);box-shadow:0 10px 28px #15204125;color:var(--search-text)}
 .search-control-suggestions li{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;padding:9px 10px;border-radius:6px;cursor:pointer}.search-control-suggestions li:hover,.search-control-suggestions li[aria-selected=true]{background:var(--search-hover)}.search-control-suggestions strong{font-size:12px;font-weight:550}.search-control-suggestions small{font-size:10px;color:var(--search-muted);overflow-wrap:anywhere}
 .search-control-syntax{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 16px;padding-top:12px}.search-control-syntax button{display:flex;gap:10px;align-items:start;padding:7px 0;text-align:left;border:0;background:none;color:var(--search-muted);font-size:11px;cursor:pointer;box-shadow:none}.search-control-syntax code{color:var(--search-accent);min-width:65px}.search-control-note{display:block;color:var(--search-muted);font-size:11px;margin-top:6px}.search-control button:focus-visible,.search-control [role=option]:focus-visible{outline:2px solid var(--search-accent);outline-offset:2px}
-@media(max-width:600px){.search-control-syntax{grid-template-columns:1fr}.search-control-row{gap:6px}.search-control-help{padding:0 9px}}
+@media(max-width:600px){.search-control-syntax{grid-template-columns:1fr}.search-control-row{gap:6px}.search-control-help:not(.home-filter-btn){padding:0 9px}}
+@media(max-width:767px){
+.search-control-row:has(.home-filter-btn){flex-wrap:wrap}
+.search-control-row:has(.home-filter-btn) .search-control-box{flex-basis:100%}
+}
 @media(max-width:600px){
-.search-control-row:has(.home-filter-btn,.daily-reset){flex-wrap:wrap}
-.search-control-row:has(.home-filter-btn,.daily-reset) .search-control-box{flex-basis:100%}
+.search-control-row:has(.daily-reset){flex-wrap:wrap}
+.search-control-row:has(.daily-reset) .search-control-box{flex-basis:100%}
 .search-control .search-control-box input{font-size:16px}
 .search-control-clear{min-width:44px;min-height:44px}
 .search-control-suggestions li{min-height:44px}
