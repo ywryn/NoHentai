@@ -16,6 +16,7 @@ const confirm = inject('adminConfirm'), navigation = inject('adminOpenNavigation
 const titles = { gallery: '画廊', book: '实体书单', daily: '每日筛选' }
 const origin = ref('all')
 const list = ref([]), total = ref(0), page = ref(1), pages = ref(1), query = ref('')
+const batchMode = ref(false), batchIds = ref([]), batchTag = ref('')
 const selected = ref(null), data = ref(null), original = ref(''), loading = ref(true), busy = ref(false), error = ref(''), errorStatus = ref(0), notice = ref(''), detailOpen = ref(false)
 const history = ref(null), matchQuery = ref(''), matches = ref([]), matching = ref(false), linked = ref(null)
 const matchTotal = ref(0), matchPage = ref(1), matchPages = ref(1), matchError = ref('')
@@ -67,7 +68,36 @@ async function guard() {
   if (busy.value) return false
   return !dirty.value || await confirm({ title: '放弃当前条目的未保存修改？', description: '可以取消并先保存当前条目，也可以导出草稿留存。', confirmLabel: '放弃并继续', danger: true })
 }
-async function choose(item) { if (await guard()) { apply(item); detailOpen.value = true } }
+async function choose(item) {
+  if (batchMode.value && props.kind === 'gallery') {
+    if (item.origin === 'manual') return
+    batchIds.value = batchIds.value.includes(item.id) ? batchIds.value.filter(id => id !== item.id) : [...batchIds.value, item.id]
+    return
+  }
+  if (await guard()) { apply(item); detailOpen.value = true }
+}
+const batchCandidates = computed(() => list.value.filter(item => item.origin !== 'manual'))
+function toggleBatchMode() { batchMode.value = !batchMode.value; batchIds.value = [] }
+function selectAllPage() { batchIds.value = batchCandidates.value.map(item => item.id) }
+async function runBatch(operation) {
+  const targets = batchCandidates.value.filter(item => batchIds.value.includes(item.id))
+  if (!targets.length) return
+  if ((operation === 'add-tag' || operation === 'remove-tag') && !batchTag.value.trim()) {
+    error.value = '请输入要批量操作的标签'; return
+  }
+  const labelsMap = { hide: '隐藏', show: '显示', 'add-tag': `添加标签「${batchTag.value.trim()}」`, 'remove-tag': `移除标签「${batchTag.value.trim()}」` }
+  if (!await confirm({ title: `批量${labelsMap[operation]}`, description: `将对已选 ${targets.length} 个同步画廊执行操作并记录修改历史。`, confirmLabel: '确认执行', danger: operation === 'hide' || operation === 'remove-tag' })) return
+  await perform(async () => {
+    const result = await adminRequest('gallery-batch', {
+      items: targets.map(item => ({ id: item.id, version: item.version })),
+      operation,
+      tag: batchTag.value.trim(),
+    })
+    batchIds.value = []
+    await load(page.value)
+    notice.value = `批量操作完成：更新 ${result.updated} 条` + (result.unchanged ? `，${result.unchanged} 条无需变更` : '')
+  })
+}
 async function add() {
   if (!await guard()) return
   if (props.kind === 'gallery') {
@@ -186,7 +216,7 @@ onBeforeUnmount(()=>{ sequence++;matchSequence++;window.removeEventListener('bef
             <span>{{ label }}</span>
           </label>
         </fieldset>
-      </div><div class="a-list-caption">共 {{ total }} 条 <span v-if="loading">正在加载…</span></div><div class="a-gallery-list touch-scroll-area visible-scrollbar"><button v-for="item in list" :key="item.id" class="a-gallery-row" :class="{'is-selected':selected?.id===item.id}" @click="choose(item)"><img v-if="rowThumb(item)" class="ops-list-cover" :src="rowThumb(item)" alt="条目封面" referrerpolicy="no-referrer" @error="$event.target.style.visibility='hidden'"/><span v-if="kind==='daily'" class="ops-rule-icon"><AdminIcon name="filter" :size="20"/></span><span class="a-gallery-copy"><strong>{{ name(item) }}</strong><span v-if="kind==='gallery'" class="ops-category" :style="{'--category':exTypeDotColors[item.effective.category]}">{{item.effective.category}}</span><span>{{ kind==='gallery' ? '#'+item.id : kind==='book' ? item.data.ID : '回溯 '+item.data.cutoffDays+' 天 · '+categoryMask.filter(([,mask])=>Boolean(item.data.categories&mask)).length+' 个分类' }}</span><span v-if="item.origin==='manual'" class="a-badge a-badge-accent">手动新增 · {{ item.data.published ? '已发布' : '草稿' }}</span><span v-else-if="kind==='gallery' && Object.keys(item.data).length" class="a-badge a-badge-accent">人工覆盖</span></span><AdminIcon name="chevron" /></button><p v-if="!loading&&!list.length" class="a-empty">没有匹配的条目</p></div><footer class="a-pagination"><button class="a-button" :disabled="page<=1||loading" @click="load(page-1)">上一页</button><span>{{page}} / {{pages}}</span><button class="a-button" :disabled="page>=pages||loading" @click="load(page+1)">下一页</button></footer></aside>
+      </div><div class="a-list-caption"><span>共 {{ total }} 条 <span v-if="loading">正在加载…</span></span><button v-if="kind==='gallery'" type="button" class="a-text-button" @click="toggleBatchMode">{{ batchMode ? '退出批量' : '批量操作' }}</button></div><div v-if="batchMode && kind==='gallery'" class="batch-bar"><div class="batch-bar-row"><span>已选 {{ batchIds.length }} 项</span><div class="batch-bar-actions"><button type="button" class="a-text-button" @click="selectAllPage">全选本页</button><button v-if="batchIds.length" type="button" class="a-text-button" @click="batchIds=[]">清空</button></div></div><div class="batch-bar-row"><button type="button" class="a-button" :disabled="busy||!batchIds.length" @click="runBatch('hide')">批量隐藏</button><button type="button" class="a-button" :disabled="busy||!batchIds.length" @click="runBatch('show')">批量显示</button></div><div class="batch-bar-row"><input v-model="batchTag" class="batch-tag-input" placeholder="标签，如 other:anthology" :disabled="busy" /><button type="button" class="a-button" :disabled="busy||!batchIds.length||!batchTag.trim()" @click="runBatch('add-tag')">+标签</button><button type="button" class="a-button" :disabled="busy||!batchIds.length||!batchTag.trim()" @click="runBatch('remove-tag')">-标签</button></div></div><div class="a-gallery-list touch-scroll-area visible-scrollbar"><button v-for="item in list" :key="item.id" class="a-gallery-row" :class="{'is-selected': batchMode ? batchIds.includes(item.id) : selected?.id===item.id}" @click="choose(item)"><input v-if="batchMode && kind==='gallery'" type="checkbox" class="batch-check" :checked="batchIds.includes(item.id)" :disabled="item.origin==='manual'" tabindex="-1" aria-hidden="true" /><img v-if="rowThumb(item)" class="ops-list-cover" :src="rowThumb(item)" alt="条目封面" referrerpolicy="no-referrer" @error="$event.target.style.visibility='hidden'"/><span v-if="kind==='daily'" class="ops-rule-icon"><AdminIcon name="filter" :size="20"/></span><span class="a-gallery-copy"><strong>{{ name(item) }}</strong><span v-if="kind==='gallery'" class="ops-category" :style="{'--category':exTypeDotColors[item.effective.category]}">{{item.effective.category}}</span><span>{{ kind==='gallery' ? '#'+item.id : kind==='book' ? item.data.ID : '回溯 '+item.data.cutoffDays+' 天 · '+categoryMask.filter(([,mask])=>Boolean(item.data.categories&mask)).length+' 个分类' }}</span><span v-if="item.origin==='manual'" class="a-badge a-badge-accent">手动新增 · {{ item.data.published ? '已发布' : '草稿' }}</span><span v-else-if="kind==='gallery' && Object.keys(item.data).length" class="a-badge a-badge-accent">人工覆盖</span></span><AdminIcon name="chevron" /></button><p v-if="!loading&&!list.length" class="a-empty">没有匹配的条目</p></div><footer class="a-pagination"><button class="a-button" :disabled="page<=1||loading" @click="load(page-1)">上一页</button><span>{{page}} / {{pages}}</span><button class="a-button" :disabled="page>=pages||loading" @click="load(page+1)">下一页</button></footer></aside>
       <section class="a-card a-detail-pane touch-scroll-area"><template v-if="data"><button class="a-button a-mobile-back" @click="detailOpen=false">返回列表</button><div class="a-section-heading"><h2>{{ kind==='gallery' ? (manual ? '首页图书信息' : '编辑画廊展示信息') : kind==='book' ? '书目信息' : '搜索规则' }}</h2><button class="a-button" @click="exportDraft">导出草稿</button></div>
         <component :is="kind==='book' ? 'form' : 'div'" id="record-edit-fields" @submit.prevent="save">
         <fieldset :disabled="busy" class="a-form-stack">
@@ -268,4 +298,29 @@ onBeforeUnmount(()=>{ sequence++;matchSequence++;window.removeEventListener('bef
 @media (max-width: 640px) {
   .record-origin span { min-block-size: 44px; }
 }
+.a-list-caption { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.batch-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border: 1px solid var(--a-border);
+  border-radius: 8px;
+  background: var(--a-subtle);
+}
+.batch-bar-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; color: var(--a-muted); }
+.batch-bar-actions { display: flex; gap: 8px; margin-left: auto; }
+.batch-tag-input {
+  flex: 1;
+  min-width: 120px;
+  min-height: 34px;
+  padding: 4px 8px;
+  border: 1px solid var(--a-border);
+  border-radius: 6px;
+  background: var(--a-panel);
+  color: var(--a-text);
+  font-size: 12px;
+}
+.batch-check { width: 16px; height: 16px; accent-color: var(--a-accent); flex-shrink: 0; }
 </style>

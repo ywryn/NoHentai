@@ -9,14 +9,29 @@ import { parseQuery, parsedTerms, removeQueryTerm } from '@/utils/gallerySearch'
 const props = defineProps({
   query: {type:String, required:true}, types: {type:Array, required:true},
   counts: Object, totals: Object, submitting:Boolean, label: {type:String, default:'搜索画廊'},
-  profile: {type:String, default:'gallery'}, debounce: {type:Number, default:220}
+  profile: {type:String, default:'gallery'}, debounce: {type:Number, default:220},
+  sort: {type:String, default:'default'}, fav: {type:String, default:''},
+  favCounts: Object, enableSort: {type:Boolean, default:false},
 })
-const emit = defineEmits(['change','submit'])
+const emit = defineEmits(['change','submit','update:sort','update:fav'])
+const SORT_OPTIONS = [
+  { value: 'default', label: '默认收藏顺序' },
+  { value: 'posted_desc', label: '最新发布' },
+  { value: 'posted_asc', label: '最早发布' },
+  { value: 'rating_desc', label: '评分最高' },
+  { value: 'pages_desc', label: '页数最多' },
+  { value: 'pages_asc', label: '页数最少' },
+]
+const favOptions = computed(() =>
+  Object.entries(props.favCounts || {})
+    .filter(([name]) => name)
+    .sort((a, b) => b[1] - a[1])
+)
 const categoryPopover = ref(), categoryOpen = ref(false), searchInputRef = ref()
 const searchQuery = computed({ get: () => props.query, set: value => emit('change', value, props.types) })
 const activeTypes = computed(() => props.types)
 const activeTerms = computed(() => parsedTerms(parseQuery(props.query)))
-const isFiltered = computed(() => activeTypes.value.length || activeTerms.value.length)
+const isFiltered = computed(() => activeTypes.value.length || activeTerms.value.length || Boolean(props.fav) || (props.enableSort && props.sort !== 'default'))
 const categoryLabel = computed(() => {
   const [first,...others] = props.types
   return others.length ? `${first} +${others.length}` : first || '分类'
@@ -33,7 +48,12 @@ function toggleType(type) {
   emit('change', searchInputRef.value.currentText(), props.types.includes(type) ? props.types.filter(t=>t!==type) : [...props.types,type])
 }
 function removeTerm(term) { searchQuery.value = removeQueryTerm(props.query,term) }
-function clearAll() { searchInputRef.value?.reset(); emit('change','',[]) }
+function clearAll() {
+  searchInputRef.value?.reset()
+  emit('change','',[])
+  if (props.fav) emit('update:fav', '')
+  if (props.enableSort && props.sort !== 'default') emit('update:sort', 'default')
+}
 </script>
 <template>
         <div class="home-filter-panel">
@@ -60,8 +80,28 @@ function clearAll() { searchInputRef.value?.reset(); emit('change','',[]) }
             </template>
           </GallerySearchInput>
 
+          <div v-if="enableSort || favOptions.length" class="home-refine-row">
+            <label v-if="enableSort" class="home-refine-field">
+              <span class="home-refine-label">排序</span>
+              <select class="home-refine-select" :value="sort" aria-label="排序方式" @change="emit('update:sort', $event.target.value)">
+                <option v-for="opt in SORT_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+              </select>
+            </label>
+            <label v-if="favOptions.length" class="home-refine-field">
+              <span class="home-refine-label">收藏夹</span>
+              <select class="home-refine-select" :value="fav" aria-label="按收藏夹筛选" @change="emit('update:fav', $event.target.value)">
+                <option value="">全部收藏夹</option>
+                <option v-for="[name, count] in favOptions" :key="name" :value="name">{{ name }} ({{ count }})</option>
+              </select>
+            </label>
+          </div>
+
           <!-- 当前生效的筛选条件：逐项可移除 -->
           <div v-if="isFiltered" class="home-active-filters">
+            <button v-if="fav" class="home-filter-chip" type="button" :title="`移除收藏夹：${fav}`" @click="emit('update:fav', '')">
+              ♥ {{ fav }}
+              <span class="chip-x" aria-hidden="true"><AppIcon name="close" :size="18" /></span>
+            </button>
 
             <button
               v-for="term in activeTerms"

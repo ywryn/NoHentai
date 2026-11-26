@@ -105,7 +105,7 @@ def book_term_sql(term):
             SELECT g.gid,CASE WHEN p.data IS NULL THEN g.data ELSE json_patch(g.data,p.data) END AS data
             FROM galleries g LEFT JOIN gallery_overrides p ON p.gid=g.gid
             WHERE g.gid=json_extract(books.data,'$.sid')
-        ) linked WHERE """ + condition + ')', params
+        ) visible WHERE """ + condition + ')', params
     field = term['field']
     if field == 'id': return book_text('ID', wildcard=False)
     if field == 'name': return book_text('书名')
@@ -258,10 +258,16 @@ def write(con, kind, record_id, expected, data, delete=False, message='保存条
     version = uuid.uuid4().hex
     if delete:
         con.execute(f'DELETE FROM {TABLES[kind]} WHERE {key_field(kind)}=?', (record_id,))
+        if kind == 'manual':
+            catalog.sync_tag_index(con, 'local-' + record_id, [])
     elif kind == 'gallery':
         con.execute('INSERT OR REPLACE INTO gallery_overrides VALUES (?,?,?,?)', (record_id, db.dumps(data), version, db.now()))
+        source = con.execute('SELECT data FROM galleries WHERE gid=?', (record_id,)).fetchone()
+        effective = dict(json.loads(source[0]), **data) if source else data
+        catalog.sync_tag_index(con, record_id, effective.get('tags', []))
     elif kind == 'manual':
         con.execute('INSERT INTO manual_galleries VALUES (?,?,?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data,version=excluded.version,updated_at=excluded.updated_at', (record_id, db.dumps(data), version, db.now()))
+        catalog.sync_tag_index(con, 'local-' + record_id, data.get('tags', []))
     else:
         position = current['position'] if current else con.execute(f'SELECT COALESCE(MAX(position),-1)+1 FROM {TABLES[kind]}').fetchone()[0]
         if kind == 'book':
@@ -348,3 +354,61 @@ def reorder(kind, record_id, direction, expected):
                 audit(con, kind, item['id'], version, json.loads(item['data']), json.loads(item['data']), '调整顺序')
             db.bump_resource(con, RESOURCES[kind])
     return {'ok': True}
+
+
+def batch_galleries(items, operation, tag=None):
+    if operation not in ('hide', 'show', 'add-tag', 'remove-tag'):
+        fail(400, '批量操作类型不正确')
+    if not isinstance(items, list) or not 1 <= len(items) <= 100:
+        fail(400, '每次最多批量操作 100 个画廊')
+    if operation in ('add-tag', 'remove-tag'):
+        if not text(tag, 200) or not tag.strip():
+            fail(400, '请输入有效的标签')
+        tag = tag.strip()
+    seen = set()
+    normalized = []
+    for entry in items:
+        if not isinstance(entry, dict):
+            fail(400, '批量条目格式不正确')
+        gid = str(entry.get('id') or '')
+        expected = entry.get('version')
+        if not re.fullmatch(r'[1-9][0-9]{0,14}', gid) or not isinstance(expected, str) or gid in seen:
+            fail(400, '批量画廊 ID 或版本不正确')
+        seen.add(gid)
+        normalized.append((gid, expected))
+    updated = 0
+    unchanged = 0
+    messages = {'hide': '批量隐藏', 'show': '批量显示', 'add-tag': f'批量添加标签 {tag}', 'remove-tag': f'批量移除标签 {tag}'}
+    with db.connect() as con:
+        con.execute('BEGIN IMMEDIATE')
+        for gid, expected in normalized:
+            source_row = con.execute('SELECT data FROM galleries WHERE gid=?', (gid,)).fetchone()
+            if not source_row:
+                fail(404, f'画廊 #{gid} 不存在')
+            source = json.loads(source_row[0])
+            current = row(con, 'gallery', gid)
+            patch = json.loads(current['data']) if current else {}
+            if operation == 'hide':
+                patch['hidden'] = True
+            elif operation == 'show':
+                if source.get('hidden'):
+                    patch['hidden'] = False
+                else:
+                    patch.pop('hidden', None)
+            else:
+                tags = list(patch.get('tags') if 'tags' in patch else (source.get('tags') or []))
+                if operation == 'add-tag':
+                    if tag not in tags:
+                        tags.append(tag)
+                else:
+                    tags = [t for t in tags if t != tag]
+                if sorted(set(tags)) == sorted(set(source.get('tags') or [])):
+                    patch.pop('tags', None)
+                else:
+                    patch['tags'] = tags
+            result = write(con, 'gallery', gid, expected, patch, message=messages[operation])
+            if result.get('unchanged'):
+                unchanged += 1
+            else:
+                updated += 1
+    return {'ok': True, 'updated': updated, 'unchanged': unchanged}

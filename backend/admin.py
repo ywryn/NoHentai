@@ -114,6 +114,8 @@ def handle(body, ip):
     if action == 'gallery-search':
         result = records.list_records('gallery', str(body.get('query') or ''), body.get('page') or 1)
         return {**result, 'items': [{'gallery': r['effective'], 'source': r['source'], 'override': r['data']} for r in result['items']]}
+    if action == 'gallery-batch':
+        return records.batch_galleries(body.get('items'), body.get('operation'), body.get('tag'))
     if action == 'job-cancel':
         return jobs.cancel(body.get('runId'))
     if action == 'dispatch-all':

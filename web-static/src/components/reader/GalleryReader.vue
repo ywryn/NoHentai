@@ -28,6 +28,8 @@
           @back="exit"
           @toggle-sidebar="showSidebar = !showSidebar"
           @toggle-thumb-grid="showThumbGrid = !showThumbGrid"
+          @translate="openTranslate"
+          @toggle-help="showHelp = !showHelp"
         />
       </Transition>
 
@@ -39,6 +41,18 @@
 
       <button v-if="!chromeVisible" class="reader-reveal" type="button" aria-label="显示阅读工具栏" @click="chromeVisible = true">{{ currentPage }} / {{ reader.total.value }}</button>
 
+      <div v-if="showHelp" class="gr-hint" role="dialog" aria-modal="true" aria-label="快捷键说明" @click.self="showHelp = false">
+        <div class="gr-hint-card">
+          <p class="gr-hint-title">阅读器快捷键</p>
+          <p class="gr-hint-keys">← / → 或 A / D：翻页（遵循当前阅读方向）</p>
+          <p class="gr-hint-keys">F：打开或关闭页目录</p>
+          <p class="gr-hint-keys">M：切换书页 / 滚动模式</p>
+          <p class="gr-hint-keys">T：翻译当前页 · ?：显示此说明</p>
+          <p class="gr-hint-keys">Esc：关闭弹窗或返回详情</p>
+          <button type="button" class="reader-btn gr-hint-btn" @click="showHelp = false">知道了</button>
+        </div>
+      </div>
+
       <Teleport to="body">
         <ThumbGrid v-if="showThumbGrid" @close="showThumbGrid = false" />
       </Teleport>
@@ -48,6 +62,7 @@
 
 <script setup lang="ts">
 import { useReaderZoom } from '@/composables/useReaderZoom'
+import { saveReadingProgress } from '@/composables/useReadingProgress'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import ImageLoadProgress from '@/components/ui/ImageLoadProgress.vue'
 import { ref, provide, onMounted, onBeforeUnmount, watch } from 'vue'
@@ -75,6 +90,7 @@ const startPage = parseInt(route.query.page as string) || 1
 
 const showSidebar   = ref(false)
 const showThumbGrid = ref(false)
+const showHelp      = ref(false)
 /** 工具栏显隐，由中间点击区切换，用于沉浸阅读 */
 const chromeVisible = ref(true)
 
@@ -100,9 +116,18 @@ function exit() {
   else router.push({ name: 'GalleryDetail', params: { gid } })
 }
 
+function openTranslate() {
+  router.push({
+    name: liveSite !== undefined ? 'LiveTranslate' : 'GalleryTranslate',
+    params: { gid },
+    query: { ...route.query, token, page: String(currentPage.value) },
+  })
+}
+
 function onKey(e: KeyboardEvent) {
   // Native directory dialog owns dismissal and focus while it is open.
   if (picture.value) { if (e.key === 'Escape') zoom.reset(); return }
+  if (showHelp.value) { if (e.key === 'Escape' || e.key === '?') showHelp.value = false; return }
   if (showThumbGrid.value) return
   if (['INPUT','TEXTAREA','SELECT'].includes((e.target as HTMLElement).tagName)) return
   const rtl = settings.bookDirection === 'rtl'
@@ -116,8 +141,16 @@ function onKey(e: KeyboardEvent) {
     case 'f': case 'F': showThumbGrid.value = !showThumbGrid.value; break
     case 'm': case 'M':
       updateSetting('readingMode', settings.readingMode === 'book' ? 'scroll' : 'book'); break
+    case 't': case 'T':
+      openTranslate(); break
+    case '?':
+      showHelp.value = true; break
   }
 }
+
+watch([currentPage, reader.total], ([page, total]) => {
+  if (total > 0 && page >= 1) saveReadingProgress(gid, page, total)
+})
 
 watch(currentPage, page => {
   zoom.reset()

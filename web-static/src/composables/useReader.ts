@@ -187,11 +187,20 @@ export function useReader(liveSite?: string) {
     // Live images are intentionally not retained by the browser HTTP cache.
     if (site !== undefined) return
     const step = settings.readingMode === 'scroll' ? 1 : effectivePagesPerScreen.value
-    const next = center + step
-    if (next > total.value) return
+    const targets: number[] = []
+    for (const off of [1, 2]) {
+      const target = center + off * step
+      if (target >= 1 && target <= total.value) targets.push(target)
+    }
+    if (!targets.length) return
     const controller = new AbortController()
     prefetch = controller
-    void loadPageImage(next, { signal: controller.signal, background: true }).catch(() => {})
+    void (async () => {
+      for (const pageNum of targets) {
+        if (controller.signal.aborted) break
+        await loadPageImage(pageNum, { signal: controller.signal, background: true }).catch(() => {})
+      }
+    })()
   }
 
   function stopPreload() { prefetch?.abort() }

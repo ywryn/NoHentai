@@ -69,6 +69,26 @@
       </div>
 
       <button
+        class="tb-icon-btn"
+        type="button"
+        aria-label="翻译当前页"
+        title="翻译当前页（T）"
+        @click="$emit('translate')"
+      >
+        <AppIcon name="translate" :size="20" />
+      </button>
+
+      <button
+        class="tb-icon-btn"
+        type="button"
+        aria-label="快捷键说明"
+        title="快捷键说明（?）"
+        @click="$emit('toggleHelp')"
+      >
+        <AppIcon name="info" :size="20" />
+      </button>
+
+      <button
         class="tb-icon-btn tb-settings"
         type="button"
         :aria-expanded="settingsOpen"
@@ -114,6 +134,8 @@ defineEmits<{
   back: []
   toggleSidebar: []
   toggleThumbGrid: []
+  translate: []
+  toggleHelp: []
 }>()
 
 const { isMomMode, toggleMomMode } = useMomMode()

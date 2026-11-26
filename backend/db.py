@@ -104,6 +104,8 @@ def put_resource(con, name, data, message='管理后台保存'):
             for gid in previous | data.keys():
                 con.execute('INSERT OR REPLACE INTO gallery_overrides VALUES (?,?,?,?)',
                             (gid, dumps(data.get(gid, {})), uuid.uuid4().hex, now()))
+            from . import catalog
+            catalog.rebuild_tag_index(con)
         else:
             table = 'books' if name == 'printed' else 'daily_rules'
             previous = {r['position']: r['id'] for r in con.execute(f'SELECT id,position FROM {table}')}
@@ -145,6 +147,8 @@ def replace_galleries(con, data, allow_shrink=False):
     con.execute('DELETE FROM galleries')
     con.executemany('INSERT INTO galleries(gid,position,data,title,title_jpn,category,uploader,posted) VALUES (?,?,?,?,?,?,?,?)',
                     [(str(g['gid']), i, dumps(g), *(g.get(k) for k in ('title','title_jpn','category','uploader','posted'))) for i,g in enumerate(data)])
+    from . import catalog
+    catalog.rebuild_tag_index(con)
     put_snapshot(con, 'catalog-revision', uuid.uuid4().hex)
     put_snapshot(con, 'favorites-revision', uuid.uuid4().hex)
 

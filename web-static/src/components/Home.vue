@@ -10,7 +10,8 @@
         </div>
 
         <GalleryFilters :query="appliedQuery" :types="activeTypes" :counts="typeCounts" :totals="totalTypeCounts"
-          @change="changeFilters" />
+          :sort="activeSort" :fav="activeFav" :fav-counts="favCounts" enable-sort
+          @change="changeFilters" @update:sort="changeSort" @update:fav="changeFav" />
       </div>
 
       <section class="home-content-panel catalog-results" :aria-busy="loading" aria-label="画廊列表">
@@ -57,19 +58,27 @@ function setQuery(patch, history = false) {
 }
 const appliedQuery = computed(() => String(route.query.q || ''))
 const activeTypes = computed(() => String(route.query.type || '').split(',').filter(Boolean))
+const activeSort = computed(() => String(route.query.sort || 'default'))
+const activeFav = computed(() => String(route.query.fav || ''))
 function changeFilters(q, types) {
   setQuery({q:q.trim(), type:types.join(','), page:undefined})
+}
+function changeSort(sort) {
+  setQuery({ sort: sort && sort !== 'default' ? sort : undefined, page: undefined })
+}
+function changeFav(fav) {
+  setQuery({ fav: fav || undefined, page: undefined })
 }
 const currentPage = computed({
   get: () => Math.max(1, Number.parseInt(route.query.page) || 1),
   set: page => setQuery({ page: page > 1 ? String(page) : undefined }, true),
 })
 const pageItems = ref([]), totalRecords = ref(0), totalAll = ref(0)
-const typeCounts = ref({}), totalTypeCounts = ref({})
+const typeCounts = ref({}), totalTypeCounts = ref({}), favCounts = ref({})
 const perPage = ref(PER_PAGE), loading = ref(true), error = ref('')
 
 const totalPages = computed(() => Math.max(1, Math.ceil(totalRecords.value / perPage.value)))
-const isFiltered = computed(() => parsedTerms(parseQuery(appliedQuery.value)).length > 0 || activeTypes.value.length > 0)
+const isFiltered = computed(() => parsedTerms(parseQuery(appliedQuery.value)).length > 0 || activeTypes.value.length > 0 || Boolean(activeFav.value))
 
 const normalizedItems = computed(() =>
   pageItems.value.map(item => {
@@ -106,17 +115,24 @@ async function fetchPage() {
   const version = ++requestVersion
   loading.value = true; error.value = ''
   try {
-    const result = await loadGalleryPage({ q: appliedQuery.value, types: activeTypes.value.join(','),
-      page: currentPage.value, per_page: perPage.value }, pageController.signal)
+    const result = await loadGalleryPage({
+      q: appliedQuery.value,
+      types: activeTypes.value.join(','),
+      page: currentPage.value,
+      per_page: perPage.value,
+      ...(activeSort.value !== 'default' ? { sort: activeSort.value } : {}),
+      ...(activeFav.value ? { fav: activeFav.value } : {}),
+    }, pageController.signal)
     if (version !== requestVersion) return
     pageItems.value = result.items; totalRecords.value = result.total; totalAll.value = result.totalAll
     typeCounts.value = result.categoryCounts; totalTypeCounts.value = result.totalCategoryCounts
+    favCounts.value = result.favCounts || {}
     if (result.page !== currentPage.value) currentPage.value = result.page
   } catch (e) {
     if (version === requestVersion && e.name !== 'AbortError') error.value = e.message || '画廊加载失败，请重试'
   } finally { if (version === requestVersion) loading.value = false }
 }
-watch(() => [route.query.q, route.query.type, route.query.page], fetchPage, { immediate: true })
+watch(() => [route.query.q, route.query.type, route.query.sort, route.query.fav, route.query.page], fetchPage, { immediate: true })
 const stopRevision = watchPublicRevision(fetchPage)
 onBeforeUnmount(() => {
   pageController?.abort(); stopRevision()

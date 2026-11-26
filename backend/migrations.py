@@ -22,6 +22,8 @@ def upgrade(con, now):
         upgrade_home_catalog(con)
     if version >= 2:
         upgrade_traffic(con)
+    if version >= 2:
+        upgrade_catalog_index(con)
         return
     statements = [
         'CREATE TABLE resource_versions(name TEXT PRIMARY KEY, version TEXT NOT NULL)',
@@ -84,6 +86,7 @@ def upgrade(con, now):
     upgrade_events(con)
     upgrade_home_catalog(con)
     upgrade_traffic(con)
+    upgrade_catalog_index(con)
 
 
 def upgrade_events(con):
@@ -115,4 +118,14 @@ def upgrade_traffic(con):
     con.execute("""CREATE TABLE IF NOT EXISTS traffic_daily (
         day TEXT PRIMARY KEY, views INTEGER NOT NULL, visitors INTEGER NOT NULL, new_visitors INTEGER NOT NULL
     ) WITHOUT ROWID""")
+
+
+def upgrade_catalog_index(con):
+    from . import catalog
+    con.execute("""CREATE TABLE IF NOT EXISTS gallery_tags (
+        gid TEXT NOT NULL, tag TEXT NOT NULL, ns TEXT NOT NULL, val TEXT NOT NULL, PRIMARY KEY(gid,tag)
+    )""")
+    con.execute('CREATE INDEX IF NOT EXISTS gallery_tags_tag ON gallery_tags(tag,gid)')
+    con.execute('CREATE INDEX IF NOT EXISTS gallery_tags_ns_val ON gallery_tags(ns,val,gid)')
+    catalog.rebuild_tag_index(con)
     con.execute('PRAGMA user_version=5')
