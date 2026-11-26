@@ -164,7 +164,7 @@ sudo systemctl start nohentai-backup.timer
 # 数据库内的调度状态来自所恢复的快照，请在后台确认。
 ```
 
-目录备份名已存在时改用新名字，勿覆盖。恢复快照会同时恢复当时的内容、配置、加密凭证、会话与任务状态；恢复后建议轮换管理密码以使旧会话失效。使用对应加密密钥，否则无法读取凭证。前端可把 current 符号链接切回先前 release，但后端降级前必须确认数据库 schema 兼容；本版 schema 为 3，拒绝高于 3 的数据库；旧 schema 1 代码不能读取升级后的库。
+目录备份名已存在时改用新名字，勿覆盖。恢复快照会同时恢复当时的内容、配置、加密凭证、会话与任务状态；恢复后建议轮换管理密码以使旧会话失效。使用对应加密密钥，否则无法读取凭证。前端可把 current 符号链接切回先前 release，但后端降级前必须确认数据库 schema 兼容；本版 schema 为 6，拒绝高于 6 的数据库；旧版本代码不能读取升级后的库。
 
 确认主动批量取消收藏，需要绕过 20% 保护时，先停止常驻 worker，在具备生产环境变量的本机维护终端执行：
 
@@ -208,6 +208,15 @@ sudo systemd-run --wait --pipe --collect --uid=nohentai --gid=nohentai \
 ## schema 2 升级到 schema 3
 
 停写并保留一致性回退备份后，使用新代码初始化数据库，将事务新增 job_events 表及索引。内容、记录版本、任务、凭证、账户和会话保持不变。历史任务仍保留摘要，无法追溯升级前未采集的日志。部署前检查无运行任务，先验证数据库副本；旧代码不接受 schema 3，回退需旧代码与对应旧库一起恢复。
+
+## schema 3 升级到 schema 6
+
+`db.initialize()` 会在同一事务内按版本顺序自动幂等升级到 `SCHEMA_VERSION = 6`：
+- **v4**：新增 `manual_galleries`、`source_covers`、`source_cover_refs` 及索引，并将当前已发布封面入队等待缓存。
+- **v5**：新增 `traffic_visitors` 与 `traffic_daily`（`WITHOUT ROWID`）用于第一方访问统计。
+- **v6**：新增 `gallery_tags` 表及索引，并调用 `catalog.rebuild_tag_index(con)` 为存量画廊重建标签倒排索引（同时兼容修复早期 v5 分支库）。
+
+部署前同样需先备份并验证副本、确认无运行任务；旧代码拒绝启动高于其 `SCHEMA_VERSION` 的数据库，回退需旧代码与对应旧库一起恢复。
 
 ## 大图片请求与测试目录隔离
 

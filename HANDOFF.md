@@ -1,6 +1,6 @@
 # NoHentai 开发交接
 
-本文按仓库版本 `631c13e` 核对。接手一个页面时，先定位它的路由和数据来源，再沿下面的组件关系找到最接近的现有页面。对外观做决定时，以当前代码和已验收的用户路径为准。历史评审和方案记录可以解释背景，其中的提议需要与现状核对。
+本文按仓库版本 `28bdbf7`（`SCHEMA_VERSION = 6`）核对。接手一个页面时，先定位它的路由和数据来源，再沿下面的组件关系找到最接近的现有页面。对外观做决定时，以当前代码和已验收的用户路径为准。历史评审和方案记录已归档至 `docs/archive/`，其中的提议需要与现状核对。
 
 ## 从任务找到入口
 
@@ -8,13 +8,13 @@
 
 | 改什么 | 先读哪个实现 | 数据和交互由谁负责 |
 | --- | --- | --- |
-| 首页收藏画廊 `/` | [Home.vue](web-static/src/components/Home.vue) | 页面把 URL 的查询、分类和页码交给服务端分页，把响应映射成列表项。改筛选条件重置页码，主动翻页支持浏览器后退。 |
+| 首页收藏画廊 `/` | [Home.vue](web-static/src/components/Home.vue) | 页面把 URL 的查询、分类（`types`）、多选收藏夹（`fav`）、排序（`sort`）和页码交给服务端分页，把响应映射成列表项。改筛选条件重置页码，主动翻页支持浏览器后退，并在异步列表渲染后恢复滚动位置。 |
 | 搜索 `/search` | [LiveAccess.vue](web-static/src/components/LiveAccess.vue) → [LiveSearch.vue](web-static/src/components/LiveSearch.vue) | 搜索 E/EX。前者验证访问权，并在详情、阅读器、翻译之间切换子视图；后者持有编辑中的条件、上次提交的条件、结果和游标。旧 `/live`、详情及阅读链接仍会重定向。 |
-| 每日 `/daily`、书单 `/printed` | [DailySearch.vue](web-static/src/components/DailySearch.vue) · [Printed.vue](web-static/src/components/Printed.vue) | 每日展示同步好的分组及生成时的规则，书单组合书目和已关联画廊。两页在已取得的数据上筛选和分页。书单还有简繁匹配与书目专属字段。 |
-| 画廊详情 `/gallery/:gid`、`/search/:gid` | [GalleryDetail.vue](web-static/src/components/GalleryDetail.vue) | 两个入口共用封面、操作栏、信息卡、标签、预览和错误状态。来源决定取数方式和可展示的字段。操作栏有「开始阅读」「翻译」，浏览器承担返回。 |
-| 两类详情下的 `read`、`translate` | [GalleryReader.vue](web-static/src/components/reader/GalleryReader.vue) · [GalleryTranslate.vue](web-static/src/components/GalleryTranslate.vue) | 沉浸页面各自管理工具栏。`/translate` 是独立的 [URL 输入入口](web-static/src/components/TranslateLookup.vue)，解析 gid 和 token 后进入工作台。 |
+| 每日 `/daily`、书单 `/printed` | [DailySearch.vue](web-static/src/components/DailySearch.vue) · [Printed.vue](web-static/src/components/Printed.vue) | 每日展示同步好的分组及生成时的规则，书单组合书目和已关联画廊（按最新优先排序）。两页在已取得的数据上筛选和分页。书单还有简繁匹配与书目专属字段。 |
+| 画廊详情 `/gallery/:gid`、`/search/:gid` | [GalleryDetail.vue](web-static/src/components/GalleryDetail.vue) | 两个入口共用封面、操作栏、信息卡、标签（含词典释义悬停）、预览和错误状态。来源决定取数方式和可展示的字段。操作栏读取 [useReadingProgress](web-static/src/composables/useReadingProgress.ts)（LRU 200），有进度时以 Split Button（`.gd-action-split`）合并「继续阅读 · 第 N 页」与「从第 1 页阅读」，另有「翻译」，浏览器承担返回。 |
+| 两类详情下的 `read`、`translate` | [GalleryReader.vue](web-static/src/components/reader/GalleryReader.vue) · [GalleryTranslate.vue](web-static/src/components/GalleryTranslate.vue) | 沉浸页面各自管理工具栏，并通过 [pageImage.ts](web-static/src/utils/pageImage.ts) 共用页图加载与重试。阅读器顶栏支持直达「翻译当前页」（快捷键 `T`）及 `?` 快捷键说明，并支持 2 步前瞻预加载；翻译工作台通过 [useTranslateDrafts](web-static/src/composables/useTranslateDrafts.ts)（LRU 60）缓存页草稿。`/translate` 是独立的 [URL 输入入口](web-static/src/components/TranslateLookup.vue)，解析 gid 和 token 后进入工作台。 |
 | 统计 `/data` | [DataAnalys.vue](web-static/src/components/DataAnalys.vue) · [TagCountTable.vue](web-static/src/components/TagCountTable.vue) | 聚合来自 `/api/stats`，标签表另有分页接口。Chart.js、矩阵图和页面样式随统计功能加载。 |
-| 管理 `/admin/*` | [Admin.vue](web-static/src/components/admin/Admin.vue) → [AdminPanel.vue](web-static/src/components/admin/AdminPanel.vue) | 前者负责管理会话、导航、确认入口和管理主题。后者按 section 分发记录编辑、服务、任务、健康、备份等面板。`/admin/printed` 经 [PrintedEditor.vue](web-static/src/components/PrintedEditor.vue) 进入书目编辑。 |
+| 管理 `/admin/*` | [Admin.vue](web-static/src/components/admin/Admin.vue) → [AdminPanel.vue](web-static/src/components/admin/AdminPanel.vue) | 前者负责管理会话、导航、确认入口和管理主题。后者按 section 分发概览（含第一方访问量/独立访客）、记录编辑（含画廊批量显隐与增删标签）、服务配置、服务用量（本地额度与 xAI 账单）、任务、健康、备份等面板。`/admin/printed` 经 [PrintedEditor.vue](web-static/src/components/PrintedEditor.vue) 进入书目编辑。 |
 
 ## 组装一个和现有前台一致的页面
 
@@ -23,7 +23,7 @@
 | 需求 | 可用组件及调用约定 |
 | --- | --- |
 | 输入关键词、补全标签 | [GallerySearchInput](web-static/src/components/GallerySearchInput.vue) 接受 `v-model`、可访问名称 `label`、`profile` 和 `variant`。画廊、书目、纯文本、上游搜索分别使用 `gallery/book/plain/live`。额外操作放入 `#actions`。输入法组合、光标处 token 替换、上下键选项、Enter/Tab 选中、迟到补全响应都已有处理。[补全逻辑](web-static/src/composables/useSearchSuggestions.js) |
-| 同时筛分类、显示和清除条件 | [GalleryFilters](web-static/src/components/GalleryFilters.vue) 内含上述输入框、分类 Popover 和已选条件。父页传 `query`、`types`，接收 `change(q, types)`。首页还提供计数；搜索页用 `profile="live"`、`submitting` 和单独的 `submit` 事件决定何时请求上游。 |
+| 同时筛分类/收藏夹、显示和清除条件 | [GalleryFilters](web-static/src/components/GalleryFilters.vue) 内含上述输入框、分类与收藏夹 Popover 和已选条件。父页传 `query`、`types`，首页还传 `counts`、`fav`、`favCounts` 与 `update:fav`，接收 `change(q, types)`；搜索页用 `profile="live"`、`submitting` 和单独的 `submit` 事件决定何时请求上游。 |
 | 展示搜索结果、切换列表与封面 | [GalleryList](web-static/src/components/GalleryList.vue) 接受已经映射好的 `items`、`loading`、`emptyText`、`emptyHint`。照首页 `normalizedItems` 准备稳定的 `key`、`title`、`thumb`、`tags` 数组，以及适用的分类、评分和页数。站内目的地传 `to`，外部搜索传 `searchUrl`；组件据此生成真正可打开新标签页的链接。骨架、空结果、封面失败及两种视图由列表处理，请求失败和重试由父页处理。 |
 | 有总页数的列表 | [Paginator](web-static/src/components/Paginator.vue) 接收 `page` 和总页数 `total`，发出 `go`。首页、每日、书单的上下分页连接同一个页码状态。E/EX 只返回上一批、下一批游标，沿用搜索页的批次按钮。 |
 | 访问密码、图片加载阶段、评分 | [AccessPassword](web-static/src/components/AccessPassword.vue) 负责输入、提交、错误和返回，父级处理验证和票据。传 `v-model`、`prefix`、`label`、加载及错误状态。[ImageLoadProgress](web-static/src/components/ui/ImageLoadProgress.vue) 区分目录、地址解析和图片加载；[StaticRating](web-static/src/components/ui/StaticRating.vue) 用于只读评分。 |
@@ -62,10 +62,11 @@ GalleryDetail 为本地和搜索来源提供同一套内容层级。搜索详情
 
 | 工作 | 请求链路与修改位置 |
 | --- | --- |
-| 公共目录读取 | [useGalleryData.js](web-static/src/composables/useGalleryData.js) → [FastAPI 入口](backend/main.py) → [catalog.py](backend/catalog.py)。首页用 `GET /api/galleries` 取得单页和分类计数，详情按 gid 取。书单、每日读取各自的数据集；统计由 [stats.py](backend/stats.py) 聚合。已有页面通过 `watchPublicRevision` 在获得焦点或重新可见时核对版本。 |
-| 上游搜索和图片 | [live.ts](web-static/src/utils/live.ts) → `/api/live/{search,directory,image-url,image}` → [live.py](backend/live.py)、[media.py](backend/media.py)、[upstream.py](backend/upstream.py)。浏览器路径是 `/search`，API 前缀仍是 `/api/live`。服务器按后台配置选择 E/EX，检查票据、限流及来源站点。搜索内容按请求转发，原图解析走非持久化路径。收藏阅读的媒体接口有自己的缓存行为。 |
-| 保存管理记录 | [adminApi.js](web-static/src/utils/adminApi.js) 获取同源 Cookie 会话和 CSRF 值，向 `POST /api/admin` 发送 action。后端经 [admin.py](backend/admin.py) 分派到 [records.py](backend/records.py) 等模块。记录编辑区分同步源、人工覆盖和合并后的展示值，保存带预期版本，并写审计历史。关联搜索、重新登录、版本冲突时注意保留未保存草稿。[后台说明](docs/admin.md) |
-| 同步和持久化 | [db.py](backend/db.py) 和 [migrations.py](backend/migrations.py) 管理 SQLite。管理操作入队，[jobs.py](backend/jobs.py) 和 [schedules.py](backend/schedules.py) 由独立 worker 运行；抓取逻辑在 [app/](app/)。任务冻结配置、保存检查点，在发布事务内检查取消和版本。同步、记录编辑和公开读取应沿用已有版本更新路径，以便缓存失效并保留人工覆盖。[数据同步](docs/data-sync.md) |
+| 公共目录与统计 | [useGalleryData.js](web-static/src/composables/useGalleryData.js) → [FastAPI 入口](backend/main.py) → [catalog.py](backend/catalog.py)。首页用 `GET /api/galleries` 取得单页、分类/收藏夹计数及排序结果（由 `gallery_tags` 倒排索引加速），详情按 gid 取。书单、每日读取各自的数据集；统计由 [stats.py](backend/stats.py) 聚合；第一方页面访问与独立访客由 [router/index.ts](web-static/src/router/index.ts) 上报至 `POST /api/visits` → [traffic.py](backend/traffic.py)。已有页面通过 `watchPublicRevision` 在获得焦点或重新可见时核对版本。 |
+| 上游搜索和图片 | [live.ts](web-static/src/utils/live.ts)、[pageImage.ts](web-static/src/utils/pageImage.ts) → `/api/live/{search,directory,image-url,image}` 与 `/api/page-image` → [live.py](backend/live.py)、[media.py](backend/media.py)、[upstream.py](backend/upstream.py)。浏览器路径是 `/search`，API 前缀仍是 `/api/live`。服务器按后台配置选择 E/EX，检查票据、限流及来源站点。搜索内容按请求转发，原图解析走非持久化路径。收藏阅读的媒体接口有自己的缓存行为。 |
+| 保存管理记录 | [adminApi.js](web-static/src/utils/adminApi.js) 获取同源 Cookie 会话和 CSRF 值，向 `POST /api/admin` 发送 action。后端经 [admin.py](backend/admin.py) 分派到 [records.py](backend/records.py) 等模块（含 `gallery-batch` 批量显隐与增删标签）。记录编辑区分同步源、人工覆盖和合并后的展示值，保存带预期版本，同步维护 `gallery_tags` 索引，并写审计历史。关联搜索、重新登录、版本冲突时注意保留未保存草稿。[后台说明](docs/admin.md) |
+| 同步和持久化 | [db.py](backend/db.py) 和 [migrations.py](backend/migrations.py) 管理 SQLite（当前 `SCHEMA_VERSION = 6`）。管理操作入队，[jobs.py](backend/jobs.py) 和 [schedules.py](backend/schedules.py) 由独立 worker 运行；抓取逻辑在 [app/](app/)。任务冻结配置、保存检查点，在发布事务内检查取消和版本，发布后清理检查点大结果并调度来源封面缓存（[cover_cache.py](backend/cover_cache.py)）。同步、记录编辑和公开读取应沿用已有版本更新路径，以便缓存失效并保留人工覆盖。[数据同步](docs/data-sync.md) |
+| 服务健康与用量 | [WorkspaceOverview.vue](web-static/src/components/admin/WorkspaceOverview.vue)、[ServiceUsage.vue](web-static/src/components/admin/ServiceUsage.vue) → [operations.py](backend/operations.py)、[provider_usage.py](backend/provider_usage.py)。汇总后台服务状态、本地配额、xAI 账单与第一方访问统计。 |
 
 生产运行数据来自 SQLite。仓库的 `web-static/public/data` 用作首次导入等用途，构建完成后会移除 `dist/data`。开发服务器将 `/api`、`/data`、`/media` 代理给 FastAPI；PWA 对运行时数据和静态资源有不同缓存策略。改数据优先从对应查询和写入路径入手。[Vite 配置](web-static/vite.config.ts) · [兼容数据接口](backend/public.py)
 

@@ -10,13 +10,13 @@ Home、Printed、Daily、后台列表和画廊关联使用同一个 `GallerySear
 - 每个实例生成独立的 input / listbox / option ID，关闭补全时移除 active descendant。
 - 光标所在 token 可以替换为补全结果，后续搜索条件保留。
 - 统一语法帮助；`gallery/book/plain` profile 控制字段说明与补全。书单提供 `id/name/jpname/sid`；plain 适合普通文字输入。
-- Home 的分类按钮通过 actions slot 放入搜索行。标签编辑继续承担添加、删除和去重等编辑动作。
+- Home 的分类与收藏夹按钮通过 actions slot 放入搜索行，支持多选分类（`types`）、多选收藏夹（`fav`）及排序（`sort`：发布时间/评分/页数）。标签编辑继续承担添加、删除和去重等编辑动作。
 - 页面使用组件的 focus / clear / reset 接口处理外部重置，不再复制键盘、输入法或补全代码。
 
 ## 搜索执行
 
 - `gallerySearch.js` 维护浏览器的 tokenizer、解析、AND / 排除 / OR、文本 / 标签匹配、光标 token 替换和书单字段适配。
-- `backend/catalog.py` 维护 Python 端的同一语法和 SQL 条件组合；首页与后台画廊复用它。
+- `backend/catalog.py` 维护 Python 端的同一语法和 SQL 条件组合，并通过 `gallery_tags` 倒排索引加速标签检索；首页与后台画廊复用它。
 - 后台书单经 `book_term_sql()` 适配书目字段和关联画廊，复用解析、条件组合及画廊条件生成。已关联画廊的人工覆盖参与匹配；未关联书目仍可按书名、编号、备注等检索。
 - Printed、Daily 对已获取的数据使用浏览器匹配。Printed 继续传入现有的简转繁扩展；这是书单页面的匹配适配，不额外下载全收藏。
 - 画廊 profile 的纯数字和完整 E-Hentai / ExHentai 链接按 gid 定位；书单 profile 的纯数字仍可查书目编号。
