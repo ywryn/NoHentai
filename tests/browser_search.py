@@ -37,7 +37,7 @@ def main():
     def catalog(route):
         params=parse_qs(urlsplit(route.request.url).query);queries.append(params.get('q',[''])[0]);catalog_params.append(params)
         page=int(params.get('page',['1'])[0])
-        route.fulfill(json={'items':galleries[(page-1)*30:page*30],'total':65,'totalAll':65,'page':page,'perPage':30,'categoryCounts':{'Manga':65},'totalCategoryCounts':{'Manga':65},'favCounts':{'待下载':1}})
+        route.fulfill(json={'items':galleries[(page-1)*30:page*30],'total':65,'totalAll':65,'page':page,'perPage':30,'categoryCounts':{'Manga':65},'totalCategoryCounts':{'Manga':65},'favCounts':{'待下载':1,'归档，已读':2}})
     def admin(route):
         body=route.request.post_data_json
         if body['action']=='records':
@@ -258,12 +258,38 @@ def main():
                 bounds=[button.bounding_box() for button in toolbar_buttons.all()]
                 assert all(box and box['height']==44 and abs(box['y']-bounds[0]['y'])<1 for box in bounds), bounds
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
+            page.locator('.home-category-trigger').click()
+            category_row=page.locator('.category-popover:visible').locator('.category-row').first
+            style_metrics="row=>[getComputedStyle(row.querySelector('.category-name')).fontSize,getComputedStyle(row.querySelector('.category-count')).fontSize,row.offsetHeight]"
+            category_style=category_row.evaluate(style_metrics)
+            page.keyboard.press('Escape')
             page.get_by_role('button',name='收藏夹',exact=True).click()
-            page.get_by_role('dialog',name='按收藏夹筛选').get_by_role('button',name='待下载').click()
-            expect(page.get_by_role('button',name='收藏夹：待下载')).to_be_focused()
-            page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).has('fav')")
+            favorites=page.get_by_role('dialog',name='按收藏夹筛选')
+            rows=favorites.locator('.category-row')
+            expect(rows).to_have_count(2)
+            favorite_styles=rows.evaluate_all(f'rows=>rows.map({style_metrics})')
+            assert favorite_styles==[category_style, category_style], (category_style, favorite_styles)
+            colors=favorites.locator('.home-type-dot').evaluate_all("dots=>dots.map(dot=>getComputedStyle(dot).backgroundColor)")
+            assert len(set(colors))==2
+            download=favorites.get_by_role('checkbox',name='待下载')
+            archived=favorites.get_by_role('checkbox',name='归档，已读')
+            download.check()
+            expect(page.get_by_role('button',name='收藏夹：已选 1 个')).to_have_attribute('aria-expanded','true')
+            archived.press('Space')
+            expect(archived).to_be_checked()
+            expect(page.get_by_role('button',name='收藏夹：已选 2 个')).to_have_attribute('aria-expanded','true')
+            page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).getAll('fav').length === 2")
             expect(page.locator('.catalog-results')).to_have_attribute('aria-busy','false')
-            assert catalog_params[-1].get('fav')==['待下载'] and 'sort' not in catalog_params[-1]
+            assert catalog_params[-1].get('fav')==['待下载','归档，已读'] and 'sort' not in catalog_params[-1]
+            page.reload()
+            page.get_by_role('button',name='收藏夹：已选 2 个').click()
+            expect(download).to_be_checked()
+            expect(archived).to_be_checked()
+            favorites.get_by_role('button',name='清除',exact=True).click()
+            expect(download).not_to_be_checked()
+            expect(archived).not_to_be_checked()
+            download.check()
+            page.keyboard.press('Escape')
             page.get_by_role('button',name='全部清除').click()
             expect(page).to_have_url(base+'/#/')
             expect(page.get_by_role('combobox',name='搜索画廊')).to_have_value('')

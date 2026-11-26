@@ -140,7 +140,7 @@ console.log(JSON.stringify(queries.map(q=>source.filter(g=>passesQuery(g,parseQu
     def test_sort_and_fav_filter_and_batch_gallery_actions(self):
         source = [
             dict(GALLERY, gid=10, title='A', posted=100, rating=3.5, filecount=20, favCategory='Fav 0', tags=['other:a']),
-            dict(GALLERY, gid=20, title='B', posted=300, rating=4.9, filecount=50, favCategory='Fav 1', tags=['other:b']),
+            dict(GALLERY, gid=20, title='B', posted=300, rating=4.9, filecount=50, favCategory='Fav, 1', tags=['other:b']),
             dict(GALLERY, gid=30, title='C', posted=200, rating=4.2, filecount=10, favCategory='Fav 0', tags=['other:a']),
         ]
         with db.connect() as con:
@@ -150,7 +150,13 @@ console.log(JSON.stringify(queries.map(q=>source.filter(g=>passesQuery(g,parseQu
         self.assertEqual([i['gid'] for i in self.client.get('/api/galleries', params={'sort': 'pages_asc'}).json()['items']], [30, 10, 20])
         fav = self.client.get('/api/galleries', params={'fav': 'Fav 0'}).json()
         self.assertEqual([i['gid'] for i in fav['items']], [10, 30])
-        self.assertEqual(fav['favCounts'], {'Fav 0': 2, 'Fav 1': 1})
+        self.assertEqual(fav['favCounts'], {'Fav 0': 2, 'Fav, 1': 1})
+        selected = [('fav', 'Fav 0'), ('fav', 'Fav, 1'), ('fav', 'Fav 0')]
+        response = self.client.get('/api/galleries', params=selected).json()
+        self.assertEqual([i['gid'] for i in response['items']], [10, 20, 30])
+        response = self.client.get('/api/galleries', params=[*selected, ('q', 'o:a$')]).json()
+        self.assertEqual([i['gid'] for i in response['items']], [10, 30])
+        self.assertEqual(self.client.get('/api/galleries', params={'fav': 'a' * 201}).status_code, 400)
         self.assertEqual(self.client.get('/api/galleries', params={'sort': 'invalid'}).status_code, 400)
 
         recs = {item['id']: item['version'] for item in self.admin('records', kind='gallery').json()['items']}

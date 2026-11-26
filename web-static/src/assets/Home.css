@@ -271,22 +271,6 @@
 
 .category-row:hover { background: var(--hover-bg); }
 
-.home-fav-option {
-  width: 100%;
-  border: 0;
-  background: transparent;
-  color: var(--text-color);
-  font: inherit;
-  text-align: start;
-}
-
-.home-fav-option[aria-pressed="true"] {
-  background: var(--selection-bg);
-  color: var(--text-color);
-}
-
-.home-fav-option:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; }
-
 /* 当前查询下没有结果的分类：可见但不可选，避免点进空结果 */
 .category-row.is-empty {
   opacity: 0.42;

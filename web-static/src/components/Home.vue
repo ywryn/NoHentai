@@ -59,12 +59,16 @@ function setQuery(patch, history = false) {
 }
 const appliedQuery = computed(() => String(route.query.q || ''))
 const activeTypes = computed(() => String(route.query.type || '').split(',').filter(Boolean))
-const activeFav = computed(() => String(route.query.fav || ''))
+const activeFav = computed(() => {
+  const values = Array.isArray(route.query.fav) ? route.query.fav : [route.query.fav]
+  return [...new Set(values.filter(Boolean))]
+})
 function changeFilters(q, types) {
   setQuery({q:q.trim(), type:types.join(','), page:undefined})
 }
 function changeFav(fav, q) {
-  setQuery({ fav: fav || undefined, q: q.trim(), page: undefined })
+  const value = fav.length > 1 ? fav : fav[0]
+  setQuery({ fav: value, q: q.trim(), page: undefined })
 }
 const currentPage = computed({
   get: () => Math.max(1, Number.parseInt(route.query.page) || 1),
@@ -75,7 +79,7 @@ const typeCounts = ref({}), totalTypeCounts = ref({}), favCounts = ref({})
 const perPage = ref(PER_PAGE), loading = ref(true), error = ref('')
 
 const totalPages = computed(() => Math.max(1, Math.ceil(totalRecords.value / perPage.value)))
-const isFiltered = computed(() => parsedTerms(parseQuery(appliedQuery.value)).length > 0 || activeTypes.value.length > 0 || Boolean(activeFav.value))
+const isFiltered = computed(() => parsedTerms(parseQuery(appliedQuery.value)).length > 0 || activeTypes.value.length > 0 || activeFav.value.length > 0)
 
 const normalizedItems = computed(() =>
   pageItems.value.map(item => {
@@ -112,13 +116,14 @@ async function fetchPage() {
   const version = ++requestVersion
   loading.value = true; error.value = ''
   try {
-    const result = await loadGalleryPage({
+    const params = new URLSearchParams({
       q: appliedQuery.value,
       types: activeTypes.value.join(','),
       page: currentPage.value,
       per_page: perPage.value,
-      ...(activeFav.value ? { fav: activeFav.value } : {}),
-    }, pageController.signal)
+    })
+    for (const favorite of activeFav.value) params.append('fav', favorite)
+    const result = await loadGalleryPage(params, pageController.signal)
     if (version !== requestVersion) return
     pageItems.value = result.items; totalRecords.value = result.total; totalAll.value = result.totalAll
     typeCounts.value = result.categoryCounts; totalTypeCounts.value = result.totalCategoryCounts

@@ -218,20 +218,21 @@ def translations(con):
     return index
 
 
-def list_galleries(query='', types='', page=1, per_page=30, sort='default', fav=''):
+def list_galleries(query='', types='', page=1, per_page=30, sort='default', fav=None):
+    favorites = tuple(sorted({name for name in fav or () if name}))
     # Each process checks a shared revision. Source sync, overrides and tag
     # translations bump it in the SAME write transaction as their data.
     with db.connect() as con:
         revision = db.snapshot(con, 'catalog-revision')
-        result = cached_page(str(settings.DB_PATH), revision, query, types, page, per_page, sort or 'default', fav or '')
+        result = cached_page(str(settings.DB_PATH), revision, query, types, page, per_page, sort or 'default', favorites)
         items = [dict(item) for item in result['items']]
         cover_cache.prefer(con, items)
     return dict(result, items=items)
 
 
 @lru_cache(maxsize=64)
-def cached_page(database_path, revision, query, types, page, per_page, sort='default', fav=''):
-    if len(query) > 2000 or len(types) > 1000 or len(fav) > 200:
+def cached_page(database_path, revision, query, types, page, per_page, sort='default', favorites=()):
+    if len(query) > 2000 or len(types) > 1000 or any(len(name) > 200 for name in favorites):
         fail(400, '搜索条件过长')
     if sort not in SORTS:
         fail(400, '排序方式不正确')
@@ -249,9 +250,10 @@ def cached_page(database_path, revision, query, types, page, per_page, sort='def
         if categories:
             selected_parts.append("json_extract(data,'$.category') IN (" + ','.join('?' for _ in categories) + ')')
             selected_params.extend(categories)
-        if fav:
-            selected_parts.append("json_extract(data,'$.favCategory')=?")
-            selected_params.append(fav)
+        if favorites:
+            placeholders = ','.join('?' for _ in favorites)
+            selected_parts.append(f"json_extract(data,'$.favCategory') IN ({placeholders})")
+            selected_params.extend(favorites)
         selected = ' AND '.join(selected_parts) or '1'
         order_by = SORTS[sort]
         sql = matched + f''', selected AS MATERIALIZED (SELECT * FROM matched WHERE {selected}),
