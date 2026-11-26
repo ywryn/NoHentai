@@ -11,6 +11,7 @@ export const iconPaths = {
   translate: ['M3 6h11M8 3v3M5 6c1 4 4 7 8 9M12 6c-1 4-4 7-8 9', 'm13 21 4-11 4 11M14.5 17h5'],
   search: ['M18 10.5a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z', 'm16 16 5 5'],
   filter: ['M4 5h16l-6 7v7l-4 2v-9Z'],
+  folder: ['M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z'],
   grid: ['M4 4h6v6H4ZM14 4h6v6h-6ZM4 14h6v6H4ZM14 14h6v6h-6Z'],
   list: ['M4 5h4v5H4ZM4 14h4v5H4ZM12 6h8M12 9h6M12 15h8M12 18h6'],
   gallery: ['M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z', 'm4 16 5-5 4 4 3-3 4 4M15 8h.01'],

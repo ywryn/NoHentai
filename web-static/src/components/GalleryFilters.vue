@@ -75,7 +75,7 @@ function clearAll() {
             <button v-if="favOptions.length || fav" ref="favTrigger" type="button" class="home-filter-btn"
               :class="{ 'is-on': fav }" aria-haspopup="dialog" :aria-expanded="favOpen"
               :aria-label="fav ? `收藏夹：${fav}` : '收藏夹'" @click="favPopover.toggle($event)">
-              <AppIcon name="grid" :size="14" />
+              <AppIcon name="folder" :size="14" />
               <span class="home-filter-label">{{ fav || '收藏夹' }}</span>
               <span class="home-filter-caret" aria-hidden="true"><AppIcon name="chevron-down" :size="18" /></span>
             </button>
