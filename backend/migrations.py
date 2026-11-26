@@ -2,7 +2,7 @@
 import json
 import uuid
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 
 def upgrade(con, now):
@@ -20,7 +20,7 @@ def upgrade(con, now):
         upgrade_events(con)
     if 2 <= version < 4:
         upgrade_home_catalog(con)
-    if version >= 2:
+    if 2 <= version < 5:
         upgrade_traffic(con)
     if version >= 2:
         upgrade_catalog_index(con)
@@ -118,6 +118,7 @@ def upgrade_traffic(con):
     con.execute("""CREATE TABLE IF NOT EXISTS traffic_daily (
         day TEXT PRIMARY KEY, views INTEGER NOT NULL, visitors INTEGER NOT NULL, new_visitors INTEGER NOT NULL
     ) WITHOUT ROWID""")
+    con.execute('PRAGMA user_version=5')
 
 
 def upgrade_catalog_index(con):
@@ -128,4 +129,4 @@ def upgrade_catalog_index(con):
     con.execute('CREATE INDEX IF NOT EXISTS gallery_tags_tag ON gallery_tags(tag,gid)')
     con.execute('CREATE INDEX IF NOT EXISTS gallery_tags_ns_val ON gallery_tags(ns,val,gid)')
     catalog.rebuild_tag_index(con)
-    con.execute('PRAGMA user_version=5')
+    con.execute('PRAGMA user_version=6')
