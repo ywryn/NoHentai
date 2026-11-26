@@ -90,6 +90,56 @@ def parse_query(query, extra_fields=()):
     return terms
 
 
+SORTS = {
+    'default': 'position',
+    'posted_desc': "CAST(COALESCE(json_extract(data,'$.posted'),0) AS INTEGER) DESC, position",
+    'posted_asc': "CAST(COALESCE(json_extract(data,'$.posted'),0) AS INTEGER) ASC, position",
+    'rating_desc': "CAST(COALESCE(json_extract(data,'$.rating'),0) AS REAL) DESC, position",
+    'pages_desc': "CAST(COALESCE(json_extract(data,'$.filecount'),0) AS INTEGER) DESC, position",
+    'pages_asc': "CAST(COALESCE(json_extract(data,'$.filecount'),0) AS INTEGER) ASC, position",
+}
+
+
+def sync_tag_index(con, gid, tags):
+    con.execute('DELETE FROM gallery_tags WHERE gid=?', (gid,))
+    rows = []
+    seen = set()
+    for raw in tags or ():
+        if not isinstance(raw, str):
+            continue
+        lower = raw.lower()
+        if lower in seen:
+            continue
+        seen.add(lower)
+        ns, val = lower.split(':', 1) if ':' in lower else ('', lower)
+        rows.append((gid, lower, ns, val))
+    if rows:
+        con.executemany('INSERT OR IGNORE INTO gallery_tags(gid,tag,ns,val) VALUES (?,?,?,?)', rows)
+
+
+def rebuild_tag_index(con):
+    con.execute('DELETE FROM gallery_tags')
+    rows = con.execute("""SELECT g.gid, CASE WHEN p.data IS NULL THEN g.data ELSE json_patch(g.data,p.data) END AS data
+        FROM galleries g LEFT JOIN gallery_overrides p ON p.gid=g.gid
+        UNION ALL
+        SELECT 'local-' || id AS gid, data FROM manual_galleries""").fetchall()
+    batch = []
+    for row in rows:
+        data = json.loads(row['data'])
+        seen = set()
+        for raw in data.get('tags') or ():
+            if not isinstance(raw, str):
+                continue
+            lower = raw.lower()
+            if lower in seen:
+                continue
+            seen.add(lower)
+            ns, val = lower.split(':', 1) if ':' in lower else ('', lower)
+            batch.append((row['gid'], lower, ns, val))
+    if batch:
+        con.executemany('INSERT OR IGNORE INTO gallery_tags(gid,tag,ns,val) VALUES (?,?,?,?)', batch)
+
+
 def term_sql(term):
     value, wildcard = term['value'], term['wildcard']
     def text(column):
@@ -97,22 +147,18 @@ def term_sql(term):
         return (f'substr({expr},1,length(?))=?', [value, value]) if wildcard else (f'instr({expr},?)>0', [value])
     def tags():
         ns = term['namespace']
-        tag_value = "CASE WHEN instr(t.value,':')>0 THEN substr(t.value,instr(t.value,':')+1) ELSE t.value END"
         if ns:
-            expr, params = f'unicode_lower(substr(t.value,length(?)+2))', [ns]
-            prefix = "substr(unicode_lower(t.value),1,length(?)+1)=? || ':' AND "
-            params = [ns, ns] + params
+            prefix, params, expr = 'gt.ns=? AND ', [ns], 'gt.val'
         else:
-            expr = f'unicode_lower({tag_value})' if term['exact'] or wildcard else 'unicode_lower(t.value)'
             prefix, params = '', []
+            expr = 'gt.val' if term['exact'] or wildcard else 'gt.tag'
         if term['exact']:
             match, args = f'{expr}=?', params + [value]
         elif wildcard:
-            # expr may contain a namespace placeholder and is repeated here.
             match, args = f'substr({expr},1,length(?))=?', params + [value, value]
         else:
             match, args = f'instr({expr},?)>0', params + [value]
-        return f"EXISTS (SELECT 1 FROM json_each(COALESCE(json_extract(data,'$.tags'),'[]')) t WHERE {prefix}{match})", args
+        return f'EXISTS (SELECT 1 FROM gallery_tags gt WHERE gt.gid=visible.gid AND {prefix}{match})', args
     field = term['field']
     if field == 'gid':
         return 'gid=?', [value]
@@ -169,21 +215,23 @@ def translations(con):
     return index
 
 
-def list_galleries(query='', types='', page=1, per_page=30):
+def list_galleries(query='', types='', page=1, per_page=30, sort='default', fav=''):
     # Each process checks a shared revision. Source sync, overrides and tag
     # translations bump it in the SAME write transaction as their data.
     with db.connect() as con:
         revision = db.snapshot(con, 'catalog-revision')
-        result = cached_page(str(settings.DB_PATH), revision, query, types, page, per_page)
+        result = cached_page(str(settings.DB_PATH), revision, query, types, page, per_page, sort or 'default', fav or '')
         items = [dict(item) for item in result['items']]
         cover_cache.prefer(con, items)
     return dict(result, items=items)
 
 
 @lru_cache(maxsize=64)
-def cached_page(database_path, revision, query, types, page, per_page):
-    if len(query) > 2000 or len(types) > 1000:
+def cached_page(database_path, revision, query, types, page, per_page, sort='default', fav=''):
+    if len(query) > 2000 or len(types) > 1000 or len(fav) > 200:
         fail(400, '搜索条件过长')
+    if sort not in SORTS:
+        fail(400, '排序方式不正确')
     condition, params = filter_sql(query)
     categories = list(dict.fromkeys(t for t in types.split(',') if t))
     if len(categories) > 30:
@@ -193,21 +241,32 @@ def cached_page(database_path, revision, query, types, page, per_page):
         con.create_function('unicode_lower', 1, lambda v: str(v).lower(), deterministic=True)
         con.execute('BEGIN')
         matched = HOME_VISIBLE + f', matched AS MATERIALIZED (SELECT * FROM visible WHERE {condition})'
-        selected = "json_extract(data,'$.category') IN (" + ','.join('?' for _ in categories) + ')' if categories else '1'
+        selected_parts = []
+        selected_params = []
+        if categories:
+            selected_parts.append("json_extract(data,'$.category') IN (" + ','.join('?' for _ in categories) + ')')
+            selected_params.extend(categories)
+        if fav:
+            selected_parts.append("json_extract(data,'$.favCategory')=?")
+            selected_params.append(fav)
+        selected = ' AND '.join(selected_parts) or '1'
+        order_by = SORTS[sort]
         sql = matched + f''', selected AS MATERIALIZED (SELECT * FROM matched WHERE {selected}),
         totals AS (SELECT COUNT(*) AS n FROM selected),
-        paged AS (SELECT data FROM selected ORDER BY position LIMIT ?
+        paged AS (SELECT data FROM selected ORDER BY {order_by} LIMIT ?
                   OFFSET min(?, ((SELECT max(n-1,0) FROM totals) / ?) * ?))
         SELECT
           (SELECT json_group_object(category,n) FROM (
             SELECT COALESCE(json_extract(data,'$.category'),'') AS category,COUNT(*) AS n FROM visible GROUP BY category)) AS counts,
           (SELECT json_group_object(category,n) FROM (
             SELECT COALESCE(json_extract(data,'$.category'),'') AS category,COUNT(*) AS n FROM matched GROUP BY category)) AS matched_counts,
+          (SELECT json_group_object(fav,n) FROM (
+            SELECT json_extract(data,'$.favCategory') AS fav,COUNT(*) AS n FROM visible WHERE fav IS NOT NULL AND fav!='' GROUP BY fav)) AS fav_counts,
           (SELECT n FROM totals) AS total,
           (SELECT json_group_array(json(data)) FROM paged) AS items
         '''
-        row = con.execute(sql, params + categories + [per_page, (page-1)*per_page, per_page, per_page]).fetchone()
-        counts, category_counts, total = json.loads(row['counts']), json.loads(row['matched_counts']), row['total']
+        row = con.execute(sql, params + selected_params + [per_page, (page-1)*per_page, per_page, per_page]).fetchone()
+        counts, category_counts, fav_counts, total = json.loads(row['counts']), json.loads(row['matched_counts']), json.loads(row['fav_counts']), row['total']
         page = min(page, max(1, math.ceil(total / per_page)))
         rows = json.loads(row['items'])
         index = translations(con) if rows else {}
@@ -218,7 +277,7 @@ def cached_page(database_path, revision, query, types, page, per_page):
             item['tagLabels'] = list_tag_labels(tags, index)
             items.append(item)
         return {'items': items, 'total': total, 'totalAll': sum(counts.values()), 'page': page, 'perPage': per_page,
-                'categoryCounts': category_counts, 'totalCategoryCounts': counts}
+                'categoryCounts': category_counts, 'totalCategoryCounts': counts, 'favCounts': fav_counts}
 
 
 def suggest_tags(token):

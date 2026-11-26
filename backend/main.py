@@ -158,8 +158,9 @@ def books_api():
 
 @app.get('/api/galleries')
 def catalog_api(q: str = Query('', max_length=2000), types: str = Query('', max_length=1000),
-                page: int = Query(1, ge=1, le=100000), per_page: int = Query(30, ge=1, le=100)):
-    return safely(catalog.list_galleries, q, types, page, per_page)
+                page: int = Query(1, ge=1, le=100000), per_page: int = Query(30, ge=1, le=100),
+                sort: str = Query('default', max_length=30), fav: str = Query('', max_length=200)):
+    return safely(catalog.list_galleries, q, types, page, per_page, sort, fav)
 
 
 @app.get('/api/galleries/{gid}')

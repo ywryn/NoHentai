@@ -21,14 +21,19 @@
           </div>
 
           <nav v-if="galleryData.token" class="gd-actions" aria-label="画廊操作">
-            <RouterLink class="gd-action gd-action-primary" :to="readerRoute(1)">
+            <RouterLink v-if="resumePage > 1" class="gd-action gd-action-primary" :to="readerRoute(resumePage)">
+              <AppIcon name="book-open" :size="20" />
+              <span>继续阅读 · 第 {{ resumePage }} 页</span>
+            </RouterLink>
+            <RouterLink v-else class="gd-action gd-action-primary" :to="readerRoute(1)">
               <AppIcon name="book-open" :size="20" />
               <span>开始阅读</span>
             </RouterLink>
-            <RouterLink class="gd-action gd-action-secondary" :to="{name:live ? 'LiveTranslate' : 'GalleryTranslate',params:{gid:sourceGid},query:{...(live ? $route.query : {}),token:galleryData.token,page:'1'}}">
+            <RouterLink class="gd-action gd-action-secondary" :to="{name:live ? 'LiveTranslate' : 'GalleryTranslate',params:{gid:sourceGid},query:{...(live ? $route.query : {}),token:galleryData.token,page:String(resumePage > 1 ? resumePage : 1)}}">
               <AppIcon name="translate" :size="20" />
               <span>翻译</span>
             </RouterLink>
+            <RouterLink v-if="resumePage > 1" class="gd-action gd-action-restart" :to="readerRoute(1)">从第 1 页阅读</RouterLink>
           </nav>
 
           <!-- 以下两块由 margin-top:auto 推到底部，与封面栏底边对齐 -->
@@ -80,7 +85,7 @@
                 <RouterLink
                   class="tag-chip-main"
                   :to="tagSearchRoute(tag)"
-                  :title="`按 ${tag.value} 检索`"
+                  :title="tag.intro ? `${tag.intro}\n点击按 ${tag.value} 检索` : `按 ${tag.value} 检索`"
                 >{{ isChinese ? (tag.tag_cn || tag.value) : tag.value }}</RouterLink>
                 <button
                   class="tag-chip-copy"
@@ -195,6 +200,7 @@ import ToggleSwitch from "primevue/toggleswitch";
 import { exTypeClassMap } from '@/utils/galleryUtils';
 import { liveData, liveUrl } from '@/utils/live';
 import { loadGallery } from '@/composables/useGalleryData';
+import { getReadingProgress } from '@/composables/useReadingProgress';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';
 const THUMBS_PER_PAGE = 20;
@@ -442,6 +448,12 @@ export default {
     },
     sourceGid() {
       return this.galleryData?.linkedGid || this.itemId;
+    },
+    resumePage() {
+      const progress = getReadingProgress(this.sourceGid);
+      const max = Number(this.galleryData?.filecount) || progress?.total || 0;
+      if (!progress || progress.page <= 1 || (max > 0 && progress.page > max)) return 1;
+      return progress.page;
     },
     externalLink() {
       return this.galleryData?.sourceUrl || (this.galleryData?.token ? `https://exhentai.org/g/${this.sourceGid}/${this.galleryData.token}` : null);

@@ -37,7 +37,7 @@ def books():
         con.execute('BEGIN')
         rows = con.execute("""SELECT b.id,b.data AS book,g.data AS gallery,p.data AS patch
             FROM books b LEFT JOIN galleries g ON g.gid=b.gallery_gid
-            LEFT JOIN gallery_overrides p ON p.gid=g.gid ORDER BY b.position""").fetchall()
+            LEFT JOIN gallery_overrides p ON p.gid=g.gid ORDER BY b.position DESC""").fetchall()
         index = catalog.translations(con)
         items = []
         for row in rows:

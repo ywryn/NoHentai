@@ -118,6 +118,35 @@ console.log(JSON.stringify(queries.map(q=>source.filter(g=>passesQuery(g,parseQu
         self.assertEqual(response['categoryCounts'], {'Doujinshi': 1})
         self.assertEqual(response['items'][0]['category'], 'Doujinshi')
 
+    def test_sort_and_fav_filter_and_batch_gallery_actions(self):
+        source = [
+            dict(GALLERY, gid=10, title='A', posted=100, rating=3.5, filecount=20, favCategory='Fav 0', tags=['other:a']),
+            dict(GALLERY, gid=20, title='B', posted=300, rating=4.9, filecount=50, favCategory='Fav 1', tags=['other:b']),
+            dict(GALLERY, gid=30, title='C', posted=200, rating=4.2, filecount=10, favCategory='Fav 0', tags=['other:a']),
+        ]
+        with db.connect() as con:
+            db.replace_galleries(con, source)
+        self.assertEqual([i['gid'] for i in self.client.get('/api/galleries', params={'sort': 'posted_desc'}).json()['items']], [20, 30, 10])
+        self.assertEqual([i['gid'] for i in self.client.get('/api/galleries', params={'sort': 'rating_desc'}).json()['items']], [20, 30, 10])
+        self.assertEqual([i['gid'] for i in self.client.get('/api/galleries', params={'sort': 'pages_asc'}).json()['items']], [30, 10, 20])
+        fav = self.client.get('/api/galleries', params={'fav': 'Fav 0'}).json()
+        self.assertEqual([i['gid'] for i in fav['items']], [10, 30])
+        self.assertEqual(fav['favCounts'], {'Fav 0': 2, 'Fav 1': 1})
+        self.assertEqual(self.client.get('/api/galleries', params={'sort': 'invalid'}).status_code, 400)
+
+        recs = {item['id']: item['version'] for item in self.admin('records', kind='gallery').json()['items']}
+        res = self.admin('gallery-batch', items=[{'id': '10', 'version': recs['10']}, {'id': '30', 'version': recs['30']}], operation='add-tag', tag='artist:demo')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json()['updated'], 2)
+        self.assertEqual([i['gid'] for i in self.client.get('/api/galleries', params={'q': 'a:demo$'}).json()['items']], [10, 30])
+
+        recs2 = {item['id']: item['version'] for item in self.admin('records', kind='gallery').json()['items']}
+        hide = self.admin('gallery-batch', items=[{'id': '10', 'version': recs2['10']}], operation='hide')
+        self.assertEqual(hide.status_code, 200)
+        self.assertEqual([i['gid'] for i in self.client.get('/api/galleries').json()['items']], [20, 30])
+        conflict = self.admin('gallery-batch', items=[{'id': '10', 'version': recs['10']}], operation='show')
+        self.assertEqual(conflict.status_code, 409)
+
 
 # unittest would otherwise rerun all inherited integration tests for this class.
 for name in list(fixtures.BackendTests.__dict__):

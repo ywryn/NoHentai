@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>滚动条样式对比 · NoHentai</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f4f6fa;
+      --surface: #fff;
+      --text: #182434;
+      --muted: #4e5d70;
+      --border: #cbd5e1;
+      --accent: #2458a0;
+      --track: #e2e8f0;
+      --thumb: #596a80;
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --page: #10151e;
+      --surface: #192230;
+      --text: #edf2f8;
+      --muted: #bac8d8;
+      --border: #475569;
+      --accent: #9cc5ff;
+      --track: #263343;
+      --thumb: #91a5bd;
+    }
+
+    body {
+      max-inline-size: 68rem;
+      margin: auto;
+      padding: clamp(1rem, 4vw, 3rem);
+      background: var(--page);
+      color: var(--text);
+      font: 1rem/1.6 system-ui, sans-serif;
+    }
+
+    header { margin-block-end: 1.5rem; }
+    h1 { margin-block: 0 .25rem; font-size: clamp(1.6rem, 4vw, 2.2rem); }
+    h2 { margin: 0; font-size: 1.06rem; }
+    p { margin-block: .25rem .75rem; color: var(--muted); }
+    label { display: inline-flex; align-items: center; gap: .65rem; }
+    select { min-block-size: 2.75rem; font: inherit; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+    .samples {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 25rem), 1fr));
+      gap: 1rem;
+    }
+
+    .sample {
+      min-inline-size: 0;
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: .75rem;
+      background: var(--surface);
+    }
+
+    .scroll-area {
+      block-size: 12rem;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: .375rem;
+    }
+
+    table {
+      inline-size: 100%;
+      min-inline-size: 37rem;
+      border-collapse: collapse;
+      text-align: start;
+      white-space: nowrap;
+      font-size: .9rem;
+    }
+
+    th, td {
+      padding: .5rem .75rem;
+      border-block-end: 1px solid var(--border);
+      text-align: start;
+    }
+
+    thead { background: var(--page); }
+    .native { scrollbar-width: auto; scrollbar-color: auto; }
+
+    .themed {
+      --sample-thumb: var(--thumb);
+      --sample-track: var(--track);
+      --legacy-size: 12px;
+      scrollbar-width: auto;
+      scrollbar-color: var(--sample-thumb) var(--sample-track);
+    }
+
+    .thin {
+      --sample-track: transparent;
+      --legacy-size: 8px;
+      scrollbar-width: thin;
+    }
+
+    .hidden { scrollbar-width: none; }
+
+    @media (prefers-contrast: more) {
+      .themed {
+        --sample-thumb: #000;
+        --sample-track: #fff;
+        --legacy-size: 12px;
+        scrollbar-width: auto;
+      }
+    }
+
+    @supports not (scrollbar-color: auto) {
+      .themed { scrollbar-width: auto; }
+      .themed::-webkit-scrollbar { width: var(--legacy-size); height: var(--legacy-size); }
+      .themed::-webkit-scrollbar-thumb { background: var(--sample-thumb); }
+      .themed::-webkit-scrollbar-track { background: var(--sample-track); }
+    }
+
+    @supports not (scrollbar-width: none) {
+      .hidden::-webkit-scrollbar { display: none; }
+    }
+
+    @media (forced-colors: active) {
+      .themed { scrollbar-color: auto; scrollbar-width: auto; }
+      .themed::-webkit-scrollbar { width: revert; height: revert; }
+      .themed::-webkit-scrollbar-thumb,
+      .themed::-webkit-scrollbar-track { background: revert; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>滚动条样式对比</h1>
+    <p>每组使用相同的内容。试试拖动滑块、用触控板横向滚动，或按 Tab 聚焦滚动区域后用方向键滚动。</p>
+    <p>如果系统设置为自动隐藏滚动条，滑块可能只在滚动时出现。</p>
+    <label>主题
+      <select id="theme">
+        <option value="system">跟随系统</option>
+        <option value="light">浅色</option>
+        <option value="dark">深色</option>
+      </select>
+    </label>
+  </header>
+  <main class="samples">
+    <section class="sample">
+      <h2 id="native-title">系统默认</h2>
+      <p>系统配色与宽度，适合页面主滚动区。</p>
+      <div class="scroll-area native" role="region" tabindex="0" aria-labelledby="native-title"></div>
+    </section>
+    <section class="sample">
+      <h2 id="themed-title">常规宽度 · 可见轨道</h2>
+      <p>明确区分滑块和轨道，适合工作台和长列表。</p>
+      <div class="scroll-area themed" role="region" tabindex="0" aria-labelledby="themed-title"></div>
+    </section>
+    <section class="sample">
+      <h2 id="thin-title">细条 · 透明轨道</h2>
+      <p>占用空间较少，适合有键盘滚动方式的辅助面板。</p>
+      <div class="scroll-area themed thin" role="region" tabindex="0" aria-labelledby="thin-title"></div>
+    </section>
+    <section class="sample">
+      <h2 id="hidden-title">隐藏 · 现状对照</h2>
+      <p>可用滚轮或键盘滚动，用来对比滚动范围是否容易发现。</p>
+      <div class="scroll-area hidden" role="region" tabindex="0" aria-labelledby="hidden-title"></div>
+    </section>
+  </main>
+
+  <template id="sample-table">
+    <table>
+      <thead>
+        <tr><th scope="col">记录</th><th scope="col">标题</th><th scope="col">来源</th><th scope="col">页数</th><th scope="col">分类</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </template>
+
+  <script>
+    const theme = document.querySelector('#theme')
+    const darkPreference = matchMedia('(prefers-color-scheme: dark)')
+    function applyTheme() {
+      const systemTheme = darkPreference.matches ? 'dark' : 'light'
+      document.documentElement.dataset.theme = theme.value === 'system' ? systemTheme : theme.value
+    }
+    theme.addEventListener('change', applyTheme)
+    darkPreference.addEventListener('change', applyTheme)
+    applyTheme()
+
+    const table = document.querySelector('#sample-table').content
+    const rows = table.querySelector('tbody')
+    for (let index = 1; index <= 30; index += 1) {
+      const row = rows.insertRow()
+      for (const value of [index, `示例收藏 ${index}`, '收藏画廊', 12 + index * 2, '已归档']) {
+        row.insertCell().textContent = value
+      }
+    }
+    for (const area of document.querySelectorAll('.scroll-area')) {
+      area.append(table.cloneNode(true))
+    }
+  </script>
+</body>
+</html>

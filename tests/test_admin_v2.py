@@ -93,6 +93,44 @@ class AdminV2Tests(fixtures.BackendTests):
         self.assertEqual(self.client.get('/api/galleries/2').json()['gallery']['title'],'B')
         self.assertEqual(self.admin('record-restore',historyId=history[-1]['id'],version=first.json()['version']).status_code,409)
 
+    def test_history_pages_include_old_entries_and_locate_selected_version(self):
+        existing_events = [event['id'] for event in self.admin('audit-events').json()['items']]
+        with db.connect() as con:
+            history_ids = [
+                records.audit(con, 'gallery', '123', str(i), {'title': str(i)}, {'title': str(i + 1)}, '测试修改')
+                for i in range(121)
+            ]
+            event_ids = [
+                con.execute('INSERT INTO history(resource,version,data,created_at,message) VALUES(?,?,?,?,?)',
+                            ('test-config', str(i), '{"fields":[]}', db.now(), '测试配置')).lastrowid
+                for i in range(105)
+            ]
+            con.execute('INSERT INTO history(resource,version,data,created_at,message) VALUES(?,?,?,?,?)',
+                        ('printed', 'test', '[]', db.now(), '不计入配置操作'))
+
+        for action, ids in [('record-history', history_ids), ('audit-events', existing_events + event_ids)]:
+            pages = (len(ids) + 19) // 20
+            seen = []
+            for page in range(1, pages + 1):
+                response = self.admin(action, page=page)
+                self.assertEqual(response.status_code, 200, response.text)
+                result = response.json()
+                self.assertEqual((result['page'], result['pages'], result['total']), (page, pages, len(ids)))
+                self.assertLessEqual(len(result['items']), 20)
+                seen.extend(item['id'] for item in result['items'])
+            self.assertEqual(seen, sorted(ids, reverse=True))
+            self.assertEqual(self.admin(action, page=100000).json()['page'], pages)
+            self.assertEqual(self.admin(action, page=False).status_code, 400)
+            self.assertEqual(len(self.admin(action).json()['items']), 100)
+
+        old_id = history_ids[0]
+        result = self.admin('record-history', kind='gallery', id='123', page=1, focusId=old_id).json()
+        self.assertEqual((result['page'], result['items'][0]['id']), (7, old_id))
+        empty = self.admin('record-history', kind='gallery', id='999', page=10).json()
+        self.assertEqual(empty, {'page': 1, 'pages': 1, 'total': 0, 'items': []})
+        restored = self.admin('record-restore', historyId=old_id, version='0')
+        self.assertEqual(restored.status_code, 200, restored.text)
+
     def test_books_have_stable_ids_no_duplicate_storage_and_delete_restore(self):
         original=self.admin('records',kind='book').json()['items'][0]
         created=self.admin('record-save',kind='book',version='0',data=dict(BOOK)).json()
@@ -102,8 +140,17 @@ class AdminV2Tests(fixtures.BackendTests):
         with db.connect() as con:
             self.assertIsNone(con.execute("SELECT 1 FROM resources WHERE name='printed'").fetchone())
             self.assertEqual(con.execute('SELECT COUNT(*) FROM books').fetchone()[0],2)
-        self.assertEqual(self.client.get('/api/books').json()['items'][0]['book']['书名'],'updated')
-        deleted=self.admin('record-delete',kind='book',id=original['id'],version=changed.json()['version'])
+        def assert_book_order(expected):
+            self.assertEqual([item['id'] for item in self.client.get('/api/books').json()['items']], expected)
+            self.assertEqual([item['id'] for item in self.admin('records',kind='book').json()['items']], expected)
+
+        assert_book_order([created['id'], original['id']])
+        moved = self.admin('record-reorder', kind='book', id=original['id'],
+                           version=changed.json()['version'], direction=-1)
+        self.assertEqual(moved.status_code, 200, moved.text)
+        assert_book_order([original['id'], created['id']])
+        current = self.admin('record', kind='book', id=original['id']).json()
+        deleted=self.admin('record-delete',kind='book',id=original['id'],version=current['version'])
         self.assertEqual(deleted.status_code,200)
         restored=self.admin('record-restore',historyId=deleted.json()['historyId'],version='0')
         self.assertEqual(restored.status_code,200,restored.text)
@@ -187,6 +234,23 @@ class AdminV2Tests(fixtures.BackendTests):
             group=next(g for g in self.admin('services').json()['groups'] if g['id']=='ocr')
             self.assertEqual(self.admin('service-save',service='ocr',version=group['version'],values={},operations={'OCR_SPACE_KEY':'inherit'}).status_code,200)
             self.assertEqual(security.credential('OCR_SPACE_KEY'),'env-secret')
+
+    def test_translation_providers_have_independent_settings_and_checks(self):
+        groups = {group['id']: group for group in self.admin('services').json()['groups']}
+        google = groups['translate-google']
+        model = groups['translate']
+        self.assertIn('GOOGLE_TRANSLATE_API_KEY', {field['key'] for field in google['fields']})
+        self.assertNotIn('GOOGLE_TRANSLATE_API_KEY', {field['key'] for field in model['fields']})
+        with patch('backend.translation.translate', return_value={'translations': [{'t': '测试'}]}) as translate:
+            for group, engine in [(google, 'google'), (model, 'model')]:
+                self.assertTrue(self.admin('service-test', service=group['id']).json()['ok'])
+                self.assertEqual(translate.call_args.args[0]['engine'], engine)
+        self.assertEqual(self.admin('service-save', service=google['id'], version=google['version'],
+                                    values={'GOOGLE_TRANSLATE_MONTHLY_CHARS': 3000}).status_code, 200)
+        groups = {group['id']: group for group in self.admin('services').json()['groups']}
+        self.assertNotEqual(groups[google['id']]['version'], google['version'])
+        self.assertEqual(groups[model['id']]['version'], model['version'])
+        self.assertEqual(groups[model['id']]['check']['version'], model['version'])
 
     def test_service_current_values_and_empty_secret_override(self):
         with patch.dict(os.environ, {'OCR_SPACE_KEY': 'env-secret', 'LLM_MODEL': 'inherited-model'}):
@@ -438,7 +502,7 @@ class AdminV2Tests(fixtures.BackendTests):
         db.initialize();db.initialize()
         self.assertEqual(self.admin('records',kind='book').json()['items'],before)
         self.assertEqual(jobs.runs()[0]['id'],job)
-        with db.connect() as con:self.assertEqual(con.execute('PRAGMA user_version').fetchone()[0],4)
+        with db.connect() as con:self.assertEqual(con.execute('PRAGMA user_version').fetchone()[0],5)
 
     def test_migration_is_idempotent_and_preserves_v1_data(self):
         path=Path(self.tmp.name)/'legacy.sqlite3'
@@ -462,7 +526,7 @@ class AdminV2Tests(fixtures.BackendTests):
                 self.assertEqual(db.resource(con,'printed')[0],[BOOK,BOOK])
                 self.assertEqual(db.resource(con,'daily')[0],self.daily)
                 self.assertEqual(db.resource(con,'overrides')[0],{'123':{'title':'manual'}})
-                self.assertEqual(con.execute('PRAGMA user_version').fetchone()[0],4)
+                self.assertEqual(con.execute('PRAGMA user_version').fetchone()[0],5)
                 self.assertIsNone(con.execute("SELECT 1 FROM resources WHERE name='printed'").fetchone())
                 self.assertEqual(con.execute('SELECT title FROM galleries').fetchone()[0],'source')
             db.initialize()

@@ -190,11 +190,27 @@ export function useReader(liveSite?: string) {
     return result
   }
 
+  const preloadedImages = new Set<string>()
+  function warmImage(data: ImageData) {
+    const src = liveSite !== undefined
+      ? data.imageUrl
+      : `${API_BASE}/api/image-proxy?imageUrl=${encodeURIComponent(data.imageUrl)}`
+    if (!src || preloadedImages.has(src)) return
+    preloadedImages.add(src)
+    if (preloadedImages.size > 40) {
+      const first = preloadedImages.values().next().value
+      if (first) preloadedImages.delete(first)
+    }
+    const img = new Image()
+    img.decoding = 'async'
+    img.src = src
+  }
+
   function preload(center: number) {
     const step = settings.readingMode === 'scroll' ? 1 : effectivePagesPerScreen.value
     const targets = new Set<number>()
 
-    for (const off of [1, -1]) {
+    for (const off of [1, 2, -1]) {
       const start = center + off * step
       if (start < 1 || start > total.value) continue
       targets.add(start)
@@ -202,7 +218,7 @@ export function useReader(liveSite?: string) {
     }
 
     for (const pageNum of targets) {
-      getImageUrl(pageNum).catch(() => {})
+      getImageUrl(pageNum).then(warmImage).catch(() => {})
     }
   }
 

@@ -18,9 +18,14 @@ def handle(body, ip):
             con.execute('DELETE FROM sessions WHERE digest=?', (security.digest(token),))
         return {'ok': True}
     if action == 'audit-events':
+        source = "FROM history WHERE resource NOT IN ('printed','overrides','daily')"
         with db.connect() as con:
-            rows=con.execute("SELECT resource,message,created_at,data FROM history WHERE resource NOT IN ('printed','overrides','daily') ORDER BY id DESC LIMIT 100").fetchall()
-        return {'items':[{'resource':r['resource'],'message':r['message'],'date':r['created_at'],'fields':json.loads(r['data']).get('fields',[]) if r['data'].startswith('{') else []} for r in rows]}
+            if 'page' in body:
+                rows, pagination = records.history_page(con, source, (), body['page'])
+            else:
+                rows = con.execute('SELECT * ' + source + ' ORDER BY id DESC LIMIT 100').fetchall()
+                pagination = {}
+        return {**pagination, 'items':[{'id':r['id'],'resource':r['resource'],'message':r['message'],'date':r['created_at'],'fields':json.loads(r['data']).get('fields',[]) if r['data'].startswith('{') else []} for r in rows]}
     if action == 'overview':
         return operations.overview()
     if action == 'services':
@@ -52,7 +57,9 @@ def handle(body, ip):
     if action in ('record-save', 'record-delete'):
         return records.save(body.get('kind'), body.get('id'), body.get('version'), body.get('data'), action == 'record-delete')
     if action == 'record-history':
-        return records.history(body.get('kind'), body.get('id'))
+        if 'page' in body and body['page'] is None:
+            fail(400, '修改记录分页参数不正确')
+        return records.history(body.get('kind'), body.get('id'), body.get('page'), body.get('focusId'))
     if action == 'record-restore':
         return records.restore(body.get('historyId'), body.get('version'))
     if action == 'record-reorder':
@@ -104,6 +111,8 @@ def handle(body, ip):
     if action == 'gallery-search':
         result = records.list_records('gallery', str(body.get('query') or ''), body.get('page') or 1)
         return {**result, 'items': [{'gallery': r['effective'], 'source': r['source'], 'override': r['data']} for r in result['items']]}
+    if action == 'gallery-batch':
+        return records.batch_galleries(body.get('items'), body.get('operation'), body.get('tag'))
     if action == 'job-cancel':
         return jobs.cancel(body.get('runId'))
     if action == 'dispatch-all':

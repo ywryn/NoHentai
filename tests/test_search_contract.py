@@ -34,7 +34,7 @@ console.log(JSON.stringify(queries.map(q=>books.filter(b=>passesQuery(b,parseQue
         for query,titles in zip(queries,expected):
             result=self.admin('records',kind='book',query=query)
             self.assertEqual(result.status_code,200,(query,result.text))
-            self.assertEqual([item['data']['书名'] for item in result.json()['items']],titles,query)
+            self.assertEqual([item['data']['书名'] for item in result.json()['items']],titles[::-1],query)
 
     def test_gallery_lookup_is_consistent_in_public_and_admin_scopes(self):
         for query in ('123','https://exhentai.org/g/123/abcdef1234/','https://e-hentai.org/g/123/abcdef1234/?p=2'):
