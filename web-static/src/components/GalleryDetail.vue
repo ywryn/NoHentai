@@ -20,11 +20,16 @@
             <p v-if="galleryData.description" class="subtitle gd-description">{{ galleryData.description }}</p>
           </div>
 
-          <nav v-if="galleryData.token" class="gd-actions" aria-label="画廊操作">
-            <RouterLink v-if="resumePage > 1" class="gd-action gd-action-primary" :to="readerRoute(resumePage)">
-              <AppIcon name="book-open" :size="20" />
-              <span>继续阅读 · 第 {{ resumePage }} 页</span>
-            </RouterLink>
+          <nav v-if="galleryData.token" class="gd-actions" :class="{ 'gd-actions-resumable': resumePage > 1 }" aria-label="画廊操作">
+            <div v-if="resumePage > 1" class="gd-action-split">
+              <RouterLink class="gd-action gd-action-primary gd-action-split-main" :to="readerRoute(resumePage)">
+                <AppIcon name="book-open" :size="20" />
+                <span>继续阅读 · <span class="gd-action-page-prefix">第&nbsp;</span>{{ resumePage }} 页</span>
+              </RouterLink>
+              <RouterLink class="gd-action gd-action-restart" :to="readerRoute(1)" aria-label="从第 1 页阅读" title="从第 1 页阅读">
+                <AppIcon name="refresh" :size="18" />
+              </RouterLink>
+            </div>
             <RouterLink v-else class="gd-action gd-action-primary" :to="readerRoute(1)">
               <AppIcon name="book-open" :size="20" />
               <span>开始阅读</span>
@@ -33,7 +38,6 @@
               <AppIcon name="translate" :size="20" />
               <span>翻译</span>
             </RouterLink>
-            <RouterLink v-if="resumePage > 1" class="gd-action gd-action-restart" :to="readerRoute(1)">从第 1 页阅读</RouterLink>
           </nav>
 
           <!-- 以下两块由 margin-top:auto 推到底部，与封面栏底边对齐 -->
