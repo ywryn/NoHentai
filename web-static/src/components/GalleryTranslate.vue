@@ -7,7 +7,7 @@
   <!-- Main Workbench -->
   <div v-else class="gt-workbench" :style="{ '--gt-sheet-h': sheetHeight }">
     <!-- Header -->
-    <header class="gt-header">
+    <header v-show="!comparing" class="gt-header">
       <button class="gt-back-btn" aria-label="返回详情" @click="$router.back()"><AppIcon name="arrow-left" :size="18" /></button>
 
       <div class="gt-header-info">
@@ -15,6 +15,7 @@
       </div>
 
       <div class="gt-header-actions">
+        <RouterLink v-if="imageReady && ocrResults.length && !ocrProcessing && !translating" class="gt-btn" :to="{ query: { ...$route.query, view: 'compare' } }">排版对比</RouterLink>
         <button v-if="ocrResults.length" class="gt-btn gt-view-toggle" type="button" :aria-pressed="showTranslation" @click="showTranslation = !showTranslation">{{ showTranslation ? '显示原图' : '显示译文' }}</button>
         <button class="gt-btn gt-btn-primary" type="button"
           :disabled="!imageReady || imageError || imageLoading || ocrProcessing || translating || imagesLoading"
@@ -26,7 +27,8 @@
     </header>
 
     <!-- Main body -->
-    <div class="gt-body">
+    <LayoutCompare v-if="comparing" :image="imageReady ? $refs.imgRef : null" :results="ocrResults" :page="currentPage" :error="imageError || imagesError" />
+    <div v-show="!comparing" class="gt-body">
       <!-- Image panel -->
       <div
         class="gt-image-panel"
@@ -337,7 +339,7 @@
 
     <!-- 移动端：点框后浮在抽屉把手上方的气泡卡，不用拉抽屉就能读原文 + 译文 -->
     <Transition name="gt-bc">
-      <div v-if="bubbleCard != null && ocrResults[bubbleCard]" class="gt-bubble-card" role="dialog" aria-label="对白详情">
+      <div v-if="!comparing && bubbleCard != null && ocrResults[bubbleCard]" class="gt-bubble-card" role="dialog" aria-label="对白详情">
         <div class="gt-bc-head">
           <button class="gt-bc-nav" type="button" :disabled="bubbleCard <= 0" aria-label="上一条" @click="stepBubble(-1)"><AppIcon name="chevron-left" :size="18" /></button>
           <span class="gt-bc-pos">{{ bubbleCard + 1 }} / {{ ocrResults.length }}</span>
@@ -418,7 +420,7 @@
 </template>
 
 <script>
-import { markRaw } from 'vue'
+import { defineAsyncComponent, markRaw } from 'vue'
 import { useReader } from '@/composables/useReader'
 import AccessPassword from './AccessPassword.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
@@ -483,7 +485,7 @@ function savedTranslationEngine() {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default {
-  components: { AppIcon, ImageLoadProgress, AccessPassword },
+  components: { LayoutCompare: defineAsyncComponent(() => import('./LayoutCompare.vue')), AppIcon, ImageLoadProgress, AccessPassword },
   name: 'GalleryTranslate',
   props: { live: Boolean },
 
@@ -596,6 +598,7 @@ export default {
       if (this.sheetDragH != null) return `${this.sheetDragH}px`
       return SHEET_SNAPS[this.sheetState] || SHEET_SNAPS.peek
     },
+    comparing() { return this.$route.query.view === 'compare' },
     stageStyle() {
       const { scale, tx, ty } = this.zoom
       const ox = tx + this.pageOffset
@@ -1087,7 +1090,7 @@ export default {
           this.unfitBoxes = {}
           this.$nextTick(() => this.applyTextFit())
           this.maybePrefetchNext()
-        } else if (this.autoTranslate) {
+        } else if (this.autoTranslate && !this.comparing) {
           await this.$nextTick()
           await this.performOcrAndTranslate()
         }
@@ -1438,7 +1441,7 @@ export default {
 
     /** 自动模式下，当前页出结果后就在后台把下一页 OCR + 翻译好写进缓存，翻页零等待 */
     maybePrefetchNext() {
-      if (!this.autoTranslate) return
+      if (!this.autoTranslate || this.comparing) return
       const next = this.currentPage + 1
       if (next > this.totalPages) return
       if (!this._prefetch) this._prefetch = {}
