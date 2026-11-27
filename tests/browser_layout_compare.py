@@ -9,6 +9,24 @@ from PIL import Image, ImageDraw
 from playwright.sync_api import expect, sync_playwright
 
 
+def check_overlays(page, count):
+    boxes = page.locator('.lab .gt-ocr-box')
+    expect(boxes).to_have_count(count)
+    for overlay in boxes.all():
+        expect(overlay).to_have_css('position', 'absolute')
+        text = overlay.locator('.gt-box-trans-text')
+        expect(text).to_have_css('writing-mode', 'vertical-rl')
+        assert overlay.evaluate("""box => {
+            const image = box.parentElement.querySelector('img').getBoundingClientRect()
+            const bounds = box.getBoundingClientRect()
+            const text = box.firstElementChild.getBoundingClientRect()
+            return bounds.top >= image.top - 1 && bounds.bottom <= image.bottom + 1
+                && bounds.left >= image.left - 1 && bounds.right <= image.right + 1
+                && text.left >= bounds.left - 1 && text.right <= bounds.right + 1
+                && text.top >= bounds.top - 1 && text.bottom <= bounds.bottom + 1
+        }""")
+
+
 def run():
     folder = Path(__file__).resolve().parents[1] / 'web-static/dist'
     server = ThreadingHTTPServer(('127.0.0.1', 0), partial(SimpleHTTPRequestHandler, directory=str(folder)))
@@ -47,6 +65,7 @@ def run():
                 page.get_by_role('link', name='排版对比').click()
                 expect(page.locator('.lab article')).to_have_count(3)
                 expect(page.get_by_text('识别到轮廓 1 / 1', exact=False)).to_be_visible()
+                check_overlays(page, 3)
                 page.get_by_label('分组轮廓').check()
                 expect(page.locator('.lab .outline')).to_have_count(3)
                 page.locator('.lab article').first.get_by_role('button', name='对白 1').click()
@@ -63,6 +82,7 @@ def run():
                 page.get_by_label('方案').select_option('balloon')
                 expect(page.locator('.lab h2')).to_contain_text('气泡轮廓')
                 assert pane.evaluate('(el)=>[el.scrollLeft,el.scrollTop]') == [100, 150]
+                check_overlays(page, 1)
                 assert calls == {'ocr': 1, 'translate': 1}, calls
                 assert not errors, errors
                 page.close()

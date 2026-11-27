@@ -1770,4 +1770,5 @@ export default {
 }
 </script>
 
+<style scoped src="../assets/translationOverlay.css"></style>
 <style scoped src="../assets/GalleryTranslate.css"></style>

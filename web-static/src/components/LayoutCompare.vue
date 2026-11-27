@@ -48,7 +48,7 @@ function sync(source, x, y) {
   top = y
   for (const [id, pane] of panes) if (id !== source) pane.pan(x, y)
 }
-watch(visible, async () => {
+watch(mobile, async () => {
   await nextTick()
   for (const pane of panes.values()) pane.pan(left, top)
 })
@@ -83,7 +83,7 @@ watch(visible, async () => {
         旧缓存仅保存合并框，轮廓以现有文字组估算。
       </p>
       <div class="panels">
-        <article v-for="s in visible" :key="s.id">
+        <article v-for="s in visible" :key="mobile ? 'mobile' : s.id">
           <h2>
             {{ s.label }}
             <small v-if="s.id === 'balloon'"

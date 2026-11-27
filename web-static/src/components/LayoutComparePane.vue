@@ -134,6 +134,7 @@ defineExpose({ pan })
     </div>
   </div>
 </template>
+<style scoped src="../assets/translationOverlay.css"></style>
 <style scoped>
 .viewport {
   overflow: auto;
