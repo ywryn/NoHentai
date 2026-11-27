@@ -299,6 +299,75 @@
   pointer-events: none;
 }
 
+.gt-ocr-box {
+  position: absolute;
+  border: 1.5px solid rgba(148, 163, 184, 0.42);
+  background: rgba(148, 163, 184, 0.05);
+  border-radius: 2px;
+  cursor: pointer;
+  pointer-events: all;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+  transition: border-color var(--dur-fast), background var(--dur-fast), box-shadow var(--dur-fast);
+}
+.gt-ocr-box:hover {
+  border-color: color-mix(in srgb, var(--primary-color) 68%, white 32%);
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+}
+.gt-box-selected {
+  border-color: var(--primary-color) !important;
+  background: color-mix(in srgb, var(--primary-color) 16%, transparent) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary-color) 36%, transparent);
+}
+.gt-box-hidden { border-color: transparent !important; background: transparent !important; box-shadow: none !important; }
+
+.gt-box-trans-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+  text-align: center;
+  word-break: break-word;
+  white-space: pre-wrap;
+  padding: 2px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  overflow: hidden;
+}
+
+/* 高瘦的对白框按竖排渲染：横排中文塞进 30×150 的框只能一列单字，竖排才是漫画本来的样子 */
+.gt-box-trans-text.gt-box-vertical {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  letter-spacing: 0.04em;
+}
+
+/* 放不下译文的框：只留一个序号徽标，点击后在列表 / 气泡卡里看全文 */
+.gt-ocr-box.gt-box-has-badge { overflow: visible; }
+
+.gt-box-badge {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--primary-color);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
 .gt-config-panel {
   padding: 10px 16px;
   border-bottom: 1px solid var(--border-color);
@@ -827,6 +896,12 @@
 
 @media (max-width: 767px) {
   .gt-glossary { margin-left: 0; }
+}
+
+/* 拟声词：不压黑底，半透明底 + 加粗，与对白区分 */
+.gt-box-trans-text.gt-box-sfx {
+  background: rgba(0, 0, 0, 0.45);
+  font-weight: 700;
 }
 
 /* ── Spinners ────────────────────────────────────────────────────────────────── */

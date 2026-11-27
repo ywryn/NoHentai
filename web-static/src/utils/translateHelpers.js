@@ -162,7 +162,6 @@ export function mergeOcrResults(items, { blockLevel = false, confidenceThreshold
         orientation: vertical ? 'vertical' : 'horizontal',
         is_merged: true,
         original_count: sorted.length,
-        memberBoxes: sorted.map(r => r.bbox),
         original_texts: sorted.map(r => r.text),
         translation: null,
       })
