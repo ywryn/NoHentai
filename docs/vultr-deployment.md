@@ -147,14 +147,18 @@ worker 运行中不要替换 Python 代码。计划维护时先查看任务状�
 
 ## 7. 备份、恢复与回退
 
-每天 UTC 19:45 及每次同步开始前使用 SQLite Backup API 生成一致性备份，保留最近七份，路径为 `/var/lib/nohentai/backups`。这表示七个快照，不一定覆盖七天；频繁手动同步会更快轮换。有上传封面时同时生成同名 `.media.zip`，恢复时将其中 WebP 放回数据目录的 uploads/。应把数据库、配套媒体以及单独保存的主密钥 / 环境文件复制到服务器以外的位置。
+每天 UTC 19:45 及每次同步开始前使用 SQLite Backup API 生成一致性快照，使用 gzip 压缩为 `.sqlite3.gz`。新旧格式合计保留最近七份，路径为 `/var/lib/nohentai/backups`。这表示七个快照，不一定覆盖七天；频繁手动同步会更快轮换。有上传封面时同时生成同名 `.media.zip`，恢复时将其中 WebP 放回数据目录的 uploads/。应把数据库、配套媒体以及单独保存的主密钥 / 环境文件复制到服务器以外的位置。
 
 恢复时停写并保留当前完整目录（包含 WAL/SHM），不要只复制在线 `.sqlite3` 文件：
 
 ```sh
+# 在 root 终端准备恢复文件；旧版 .sqlite3 可直接复制。
+umask 077
+gzip -dc /var/lib/nohentai/backups/nohentai-所选时间戳.sqlite3.gz > /root/restore.sqlite3
+# 确认解压成功且下列命令返回 ok 后继续。
+python3 -c "import sqlite3; print(sqlite3.connect('file:/root/restore.sqlite3?mode=ro', uri=True).execute('PRAGMA integrity_check').fetchone()[0])"
 sudo systemctl stop nohentai-sync.timer nohentai-backup.timer
 sudo systemctl stop nohentai-api nohentai-worker
-# 先将所选备份复制到 /root/restore.sqlite3，并验证 PRAGMA integrity_check = ok。
 # 保留原目录，使用新的空目录恢复，避免残留旧 WAL/SHM。
 sudo mv /var/lib/nohentai /var/lib/nohentai.before-restore
 sudo install -d -o nohentai -g nohentai -m 0700 /var/lib/nohentai

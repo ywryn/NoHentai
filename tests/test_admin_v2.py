@@ -1,4 +1,5 @@
 import base64
+import gzip
 import io
 import json
 import os
@@ -448,7 +449,7 @@ class AdminV2Tests(fixtures.BackendTests):
         login=self.client.post('/api/admin',json={'action':'verify','mode':'cookie','password':os.environ['ADMIN_PASSWORD']})
         self.assertEqual(login.status_code,200)
         downloaded=self.client.get('/api/admin/backups/'+name)
-        self.assertTrue(downloaded.content.startswith(b'SQLite format 3'))
+        self.assertTrue(gzip.decompress(downloaded.content).startswith(b'SQLite format 3'))
         backups=self.admin('backups').json()['items']
         self.assertTrue(backups[0]['media'])
         self.assertEqual(self.client.get('/api/admin/backups/not-a-backup.sqlite3').status_code,404)

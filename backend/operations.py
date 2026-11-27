@@ -3,23 +3,34 @@ import re
 import sqlite3
 import time
 from datetime import datetime, timezone
-from pathlib import Path
 from . import db, settings, security, traffic
 from .migrations import SCHEMA_VERSION
 from .security import fail
 
 
+def database_backups(directory):
+    return sorted((*directory.glob('nohentai-*.sqlite3'), *directory.glob('nohentai-*.sqlite3.gz')), reverse=True)
+
+
+def backup_media_path(path):
+    return path.with_name(path.name.split('.', 1)[0] + '.media.zip')
+
+
 def backups():
-    directory = settings.DATA_DIR / 'backups'
     items = []
-    for path in sorted(directory.glob('nohentai-*.sqlite3'), reverse=True):
-        items.append({'name': path.name, 'size': path.stat().st_size, 'modified': path.stat().st_mtime,
-                      'media': path.with_suffix('.media.zip').name if path.with_suffix('.media.zip').exists() else None})
+    for path in database_backups(settings.DATA_DIR / 'backups'):
+        try:
+            stat = path.stat()
+        except FileNotFoundError:
+            continue
+        media = backup_media_path(path)
+        items.append({'name': path.name, 'size': stat.st_size, 'modified': stat.st_mtime,
+                      'media': media.name if media.exists() else None})
     return {'items': items}
 
 
 def backup_file(name):
-    if not re.fullmatch(r'nohentai-[0-9]{8}T[0-9]{12}Z\.(?:sqlite3|media\.zip)', name):
+    if not re.fullmatch(r'nohentai-[0-9]{8}T[0-9]{12}Z\.(?:sqlite3(?:\.gz)?|media\.zip)', name):
         fail(404, '备份不存在')
     path = settings.DATA_DIR / 'backups' / name
     if not path.is_file():

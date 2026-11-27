@@ -56,7 +56,7 @@
 
 ## 备份与密码恢复
 
-后台可创建和下载 SQLite 备份及配套 media.zip（有上传文件时生成）。下载必须登录；备份不在公开目录。保留最近七份，本机恢复流程见 [部署文档](vultr-deployment.md)。在线不提供一键整库覆盖。
+后台可创建和下载 gzip 压缩的 SQLite 备份（.sqlite3.gz）及配套 media.zip（有上传文件时生成）。下载必须登录；备份不在公开目录。保留最近七份，本机恢复流程见 [部署文档](vultr-deployment.md)。在线不提供一键整库覆盖。
 
 忘记密码时，把新密码写入本机权限 0600 的文件，以生产环境和数据路径执行 `python -m backend.cli reset-admin --password-file /path/to/password`，随后安全删除临时文件。此操作撤销全部会话。数据库和主密钥分别保管。
 

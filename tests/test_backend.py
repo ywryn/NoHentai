@@ -1,6 +1,7 @@
 """Integration tests use a temporary SQLite database and fake upstream services."""
 import base64
 import copy
+import gzip
 import json
 import os
 import sqlite3
@@ -13,7 +14,7 @@ from pathlib import Path
 from unittest.mock import patch, Mock
 from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
-from backend import db, settings, jobs, security, translation, services, upstream
+from backend import db, settings, operations, jobs, security, translation, services, upstream
 from backend.main import app
 from backend.cli import initialize_data, backup
 from backend.validation import read_books, books_csv
@@ -215,12 +216,34 @@ class BackendTests(unittest.TestCase):
         db.set_cache('expired', {'ok': True}, -1)
         self.assertIsNone(db.get_cache('expired'))
         path = backup()
-        con = sqlite3.connect(path)
+        self.assertTrue(path.name.endswith('.sqlite3.gz'))
+        restored = path.parent / 'restore.sqlite3'
+        restored.write_bytes(gzip.decompress(path.read_bytes()))
+        con = sqlite3.connect(restored)
         self.assertEqual(con.execute('PRAGMA integrity_check').fetchone()[0], 'ok')
         self.assertEqual(con.execute('SELECT COUNT(*) FROM galleries').fetchone()[0], 1)
         con.close()
         with self.assertRaises(RuntimeError):
             initialize_data()
+
+    def test_backup_rotation_with_legacy_files_and_failed_compression(self):
+        directory = settings.DATA_DIR / 'backups'
+        directory.mkdir()
+        legacy = []
+        for day in range(1, 8):
+            path = directory / f'nohentai-202501{day:02}T000000000000Z.sqlite3'
+            path.touch()
+            path.with_suffix('.media.zip').touch()
+            legacy.append(path)
+        with patch('backend.cli.shutil.copyfileobj', side_effect=OSError('disk full')):
+            with self.assertRaises(OSError):
+                backup()
+        self.assertEqual(len(list(directory.iterdir())), 14)
+        newest = backup()
+        items = operations.backups()['items']
+        self.assertEqual([item['name'] for item in items], [newest.name] + [p.name for p in reversed(legacy[1:])])
+        self.assertEqual(operations.backup_file(legacy[-1].name), legacy[-1])
+        self.assertFalse(legacy[0].with_suffix('.media.zip').exists())
 
     def test_queue_dedup_rerun_and_interrupted_jobs(self):
         job = jobs.enqueue('favorites')

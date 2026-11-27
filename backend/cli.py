@@ -1,12 +1,16 @@
 """Local administration. Does not contact GitHub/Vercel or modify source data."""
 import argparse
+import gzip
 import json
-import os
+import shutil
 import sqlite3
+import tempfile
 import zipfile
+from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 from . import db, settings
+from .operations import database_backups, backup_media_path
 from .validation import read_books, validate
 
 
@@ -41,27 +45,29 @@ def backup():
     directory = settings.DATA_DIR / 'backups'
     directory.mkdir(mode=0o700, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
-    path = directory / f'nohentai-{stamp}.sqlite3'
-    with db.connect() as source:
-        target = sqlite3.connect(path)
-        try:
+    path = directory / f'nohentai-{stamp}.sqlite3.gz'
+    with tempfile.TemporaryDirectory(dir=directory) as temporary:
+        staging = Path(temporary)
+        snapshot = staging / 'snapshot.sqlite3'
+        with db.connect() as source, closing(sqlite3.connect(snapshot)) as target:
             source.backup(target)
-        finally:
-            target.close()
-    os.chmod(path, 0o600)
-    uploads = settings.DATA_DIR / 'uploads'
-    if uploads.exists() and any(uploads.iterdir()):
-        media_path = path.with_suffix('.media.zip')
-        with zipfile.ZipFile(media_path, 'w', compression=zipfile.ZIP_STORED) as archive:
-            for file in uploads.glob('*.webp'):
-                archive.write(file, arcname=file.name)
-        os.chmod(media_path, 0o600)
-    # Encrypted credentials are included; encryption key is intentionally separate.
-    for old in sorted(directory.glob('nohentai-*.sqlite3'), reverse=True)[7:]:
-        media_path = old.with_suffix('.media.zip')
-        if media_path.exists():
-            media_path.unlink()
-        old.unlink()
+        compressed = staging / path.name
+        with snapshot.open('rb') as raw, gzip.open(compressed, 'wb', compresslevel=6) as out:
+            shutil.copyfileobj(raw, out)
+        compressed.chmod(0o600)
+        covers = list((settings.DATA_DIR / 'uploads').glob('*.webp'))
+        if covers:
+            media = backup_media_path(path)
+            staged_media = staging / media.name
+            with zipfile.ZipFile(staged_media, 'w', compression=zipfile.ZIP_STORED) as archive:
+                for file in covers:
+                    archive.write(file, arcname=file.name)
+            staged_media.chmod(0o600)
+            staged_media.replace(media)
+        compressed.replace(path)
+    for old in database_backups(directory)[7:]:
+        old.unlink(missing_ok=True)
+        backup_media_path(old).unlink(missing_ok=True)
     return path
 
 
