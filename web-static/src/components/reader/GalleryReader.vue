@@ -49,7 +49,7 @@
           :aria-controls="showSidebar ? 'reader-thumbnails' : undefined"
           :inert="!chromeVisible"
           @click="showSidebar = !showSidebar"
-        >{{ pageCounter }}</button>
+        >{{ currentPage }} / {{ total }}</button>
       </Transition>
 
       <div v-if="showHelp" class="gr-hint" role="dialog" aria-modal="true" aria-label="快捷键说明" @click.self="showHelp = false">
@@ -73,7 +73,7 @@ import { useReaderZoom } from '@/composables/useReaderZoom'
 import { saveReadingProgress } from '@/composables/useReadingProgress'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import ImageLoadProgress from '@/components/ui/ImageLoadProgress.vue'
-import { computed, nextTick, ref, provide, onMounted, onBeforeUnmount, watch } from 'vue'
+import { nextTick, ref, provide, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useReader, READER_KEY } from '@/composables/useReader'
 import ReaderTopBar  from './ReaderTopBar.vue'
@@ -89,7 +89,7 @@ const liveSite = route.name === 'LiveReader' ? String(route.query.site || '') : 
 const reader = useReader(liveSite)
 provide(READER_KEY, reader)
 
-const { initLoading, initError, settings, currentPage, total, effectivePagesPerScreen, prev, next, updateSetting, onResize, init } = reader
+const { initLoading, initError, settings, currentPage, total, prev, next, updateSetting, onResize, init } = reader
 
 const gid       = route.params.gid as string
 const token     = (route.query.token as string) || ''
@@ -100,13 +100,6 @@ const showHelp      = ref(false)
 /** 工具栏显隐，由中间点击区切换，用于沉浸阅读 */
 const chromeVisible = ref(true)
 const pageCounterButton = ref<HTMLButtonElement | null>(null)
-const pageCounter = computed(() => {
-  const page = currentPage.value
-  const last = settings.readingMode === 'book'
-    ? Math.min(total.value, page + effectivePagesPerScreen.value - 1)
-    : page
-  return `${last > page ? `${page}–${last}` : page} / ${total.value}`
-})
 
 const zoom = useReaderZoom(target => {
   if (target.classList.contains('click-zone-left')) settings.bookDirection === 'rtl' ? next() : prev()
@@ -297,15 +290,24 @@ onBeforeUnmount(() => {
   right: calc(16px + env(safe-area-inset-right));
   bottom: calc(16px + env(safe-area-inset-bottom));
   z-index: 9;
-  height: 44px;
-  padding: 0 16px;
+  min-block-size: 30px;
+  min-inline-size: 44px;
+  padding: 0 10px;
   border: 1px solid var(--reader-border);
   border-radius: 999px;
   background: var(--reader-bg);
   color: var(--reader-text);
-  font: inherit;
+  font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
+}
+
+@media (any-pointer: coarse) {
+  .reader-reveal::after {
+    content: "";
+    position: absolute;
+    inset: -8px 0;
+  }
 }
 
 .reader-reveal:hover, .reader-reveal[aria-pressed="true"] { border-color: var(--reader-accent); }

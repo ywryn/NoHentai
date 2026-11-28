@@ -70,11 +70,10 @@ def main():
                     colors.backgroundColor, list.scrollbarColor]
             }""")
             assert palette == [True, 'rgb(16, 19, 18)', 'rgb(148, 163, 184) rgb(16, 19, 18)'], palette
-            jump = page.get_by_role('spinbutton', name='跳转页码')
-            jump.focus()
+            thumbnail = sidebar.get_by_role('button', name='第 1 页', exact=True)
             page.keyboard.press('Tab')
-            expect(sidebar.get_by_role('button', name='跳转', exact=True)).to_be_focused()
-            assert jump.evaluate("e=>{e.focus();return getComputedStyle(e).outlineStyle==='solid'}")
+            thumbnail.focus()
+            expect(thumbnail).to_have_css('outline-style', 'solid')
             page.keyboard.press('Escape')
             expect(sidebar).to_have_count(0)
             expect(capsule).to_be_focused()
@@ -147,22 +146,24 @@ def main():
             page.screenshot(path=str(output/'forced-colors.png'))
             page.emulate_media(forced_colors='none')
             print('PASS: forced-color system palette and visible active-navigation boundary')
-            # Keep thumbnail controls accessible in a short mobile viewport.
+            # The compact capsule still has a touch target in a short viewport.
             touch=browser.new_page(service_workers='block',viewport={'width':320,'height':420},is_mobile=True,has_touch=True)
             touch.route('**/api/gallery-images/part?*',lambda r:r.fulfill(json={'total':1,'images':[{'pageNum':1,'pageUrl':'https://e-hentai.org/s/abcde/1-1','thumbSprite':'','thumbX':0,'thumbW':85,'thumbH':120}]}))
             touch.route('**/api/page-image?*',lambda r:r.fulfill(status=503,json={'error':'fixture unavailable'}))
             touch.goto(base+'/#/gallery/1/read?token=abcde')
-            touch.locator('.top-bar').get_by_role('button', name='缩略图栏', exact=True).click()
-            assert touch.get_by_role('button', name='跳转', exact=True).bounding_box()['height'] >= 48
-            expect(touch.get_by_role('spinbutton', name='跳转页码')).to_be_visible()
+            touch_capsule = touch.locator('.reader-reveal')
+            expect(touch_capsule).to_have_text('1 / 1')
+            position = touch_capsule.bounding_box()
+            assert 24 <= position['height'] < 44 and position['width'] >= 44
+            touch.touchscreen.tap(position['x'] + position['width'] / 2, position['y'] - 5)
+            expect(touch.locator('.thumb-sidebar').get_by_role('button', name='第 1 页', exact=True)).to_be_visible()
             touch.get_by_role('button', name='阅读设置', exact=True).click()
             settings = touch.locator('.tb-controls').bounding_box()
-            position = touch.locator('.reader-reveal').bounding_box()
-            assert position['y'] >= settings['y'] + settings['height']
+            assert position['y'] - 7 >= settings['y'] + settings['height']
             assert position['y'] + position['height'] <= 421
             touch.screenshot(path=str(output/'thumbnails-mobile-short.png'))
             touch.close()
-            print('PASS: short mobile thumbnail controls, 48px submit and no settings overlap')
+            print('PASS: compact mobile capsule, expanded touch target and no settings overlap')
             assert not errors,errors
             browser.close()
     finally:

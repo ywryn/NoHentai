@@ -1,24 +1,6 @@
 <!-- Left vertical thumbnail sidebar -->
 <template>
   <aside id="reader-thumbnails" class="thumb-sidebar" aria-label="阅读缩略图栏">
-    <form class="ts-jump" @submit.prevent="jump">
-      <label for="reader-jump-page">跳转页码</label>
-      <div class="ts-jump-controls">
-        <input
-          id="reader-jump-page"
-          v-model.number="jumpPage"
-          name="page"
-          type="number"
-          required
-          min="1"
-          :max="total"
-          step="1"
-          inputmode="numeric"
-          enterkeyhint="go"
-        />
-        <button class="reader-btn" type="submit">跳转</button>
-      </div>
-    </form>
     <div class="ts-list visible-scrollbar" ref="listEl">
       <button
         v-for="pg in visiblePages"
@@ -44,9 +26,8 @@ import type { PageInfo } from '@/composables/useReader'
 import { useReducedMotion } from '@/composables/useReducedMotion'
 
 const reader = inject(READER_KEY)!
-const { pages, currentPage, total, settings, effectivePagesPerScreen, goTo } = reader
+const { pages, currentPage, settings, effectivePagesPerScreen, goTo } = reader
 const listEl = ref<HTMLElement | null>(null)
-const jumpPage = ref<number | string>(currentPage.value)
 const reducedMotion = useReducedMotion()
 const visiblePages = computed(() => {
   const start = Math.max(0, Math.min(currentPage.value - 31, pages.value.length - 80))
@@ -61,11 +42,6 @@ function isActive(pageNum: number) {
   const cur = currentPage.value
   const step = settings.readingMode === 'book' ? effectivePagesPerScreen.value : 1
   return pageNum >= cur && pageNum < cur + step
-}
-
-function jump() {
-  const page = Number(jumpPage.value)
-  if (Number.isInteger(page) && page >= 1 && page <= total.value) goTo(page)
 }
 
 const spriteMetaMap = computed(() => {
@@ -94,8 +70,7 @@ function spriteStyle(pg: PageInfo) {
   }
 }
 
-watch(currentPage, async (page, previous) => {
-  jumpPage.value = page
+watch(currentPage, async (_page, previous) => {
   await nextTick()
   listEl.value?.querySelector<HTMLElement>('[aria-current="page"]')?.scrollIntoView({
     behavior: previous === undefined || reducedMotion.value ? 'instant' : 'smooth',
@@ -117,46 +92,6 @@ watch(currentPage, async (page, previous) => {
   --scrollbar-thumb: var(--reader-muted);
   display: flex;
   flex-direction: column;
-}
-
-.ts-jump {
-  padding: 6px;
-  border-bottom: 1px solid var(--reader-border);
-}
-
-.ts-jump label {
-  display: block;
-  margin-bottom: 4px;
-  color: var(--reader-muted);
-  font-size: 12px;
-}
-
-.ts-jump-controls {
-  display: flex;
-  gap: 4px;
-}
-
-.ts-jump input, .ts-jump button {
-  min-height: 32px;
-  border: 1px solid var(--reader-border);
-  border-radius: var(--radius-sm);
-}
-
-.ts-jump input {
-  width: 100%;
-  min-width: 0;
-  padding: 3px 5px;
-  background: var(--reader-surface);
-  color: var(--reader-text);
-  font: inherit;
-  font-variant-numeric: tabular-nums;
-}
-
-.ts-jump button { padding-inline: 6px; }
-
-@media (pointer: coarse) {
-  .ts-jump input, .ts-jump button { min-height: 48px; }
-  .ts-jump input { font-size: max(1rem, 1em); }
 }
 
 .ts-list {
@@ -185,7 +120,7 @@ watch(currentPage, async (page, previous) => {
   border-color: color-mix(in srgb, var(--reader-accent) 45%, transparent);
 }
 .ts-item.ts-active { border-color: var(--reader-accent); }
-.thumb-sidebar :is(button, input):focus-visible {
+.ts-item:focus-visible {
   outline: 2px solid var(--reader-accent);
   outline-offset: 1px;
 }

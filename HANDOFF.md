@@ -48,7 +48,7 @@ E/EX 搜索有显式提交边界。输入、补全、清空、选择分类和打
 
 GalleryDetail 为本地和搜索来源提供同一套内容层级。搜索详情通过 `directory?details=true` 获取信息并复用首批预览，后续目录按需加载。向阅读器或翻译工作台传递 gid、token、页码；搜索来源还要保留 site 和相应的路由名。若改标签交互，核对展示译名、复制原始搜索表达式、按来源返回对应检索入口这三个动作。
 
-[GalleryReader](web-static/src/components/reader/GalleryReader.vue) 建立 [useReader](web-static/src/composables/useReader.ts) 并以 `READER_KEY` 提供给子组件。BookView 和 ScrollView 负责排版及分页，PageImage 负责图片加载和重试，ReaderTopBar 负责设置，ThumbStrip 负责缩略图栏和页码跳转，当前页与 URL 同步。换一种阅读模式或数据来源，继续走这条共享链路。
+[GalleryReader](web-static/src/components/reader/GalleryReader.vue) 建立 [useReader](web-static/src/composables/useReader.ts) 并以 `READER_KEY` 提供给子组件。BookView 和 ScrollView 负责排版及分页，PageImage 负责图片加载和重试，ReaderTopBar 负责设置，ThumbStrip 支持点击缩略图切页，当前页与 URL 同步。换一种阅读模式或数据来源，继续走这条共享链路。
 
 手机图片在点按位置连续三次**双击**，依次进入两档放大、动画还原。倍率由图像和视口尺寸计算；两次放大之间的单击不推进缩放档位。左、中、右单击区域用于翻页或唤出工具栏，点击区保持透明。手势的延迟判定、移动阈值、事件抑制和还原集中在 [useReaderZoom](web-static/src/composables/useReaderZoom.ts)。阅读设置里的「妈妈模式」同样适用于书页和滚动模式。[设置面板](web-static/src/components/reader/ReaderTopBar.vue)
 
