@@ -31,8 +31,10 @@ def main():
             browser = p.chromium.launch(headless=True)
             page = browser.new_page(service_workers='block', viewport={'width':1440,'height':1000})
             errors = []; page.on('pageerror', lambda error: errors.append(str(error)))
-            page.route('**/api/gallery-images/part?*', lambda r:r.fulfill(json={'total':5,'images':[
-                {'pageNum':i,'pageUrl':f'https://e-hentai.org/s/abcde/1-{i}','thumbSprite':'','thumbX':0,'thumbW':100,'thumbH':150} for i in range(1,6)]}))
+            def gallery_directory(route):
+                route.fulfill(json={'total':5,'images':[
+                    {'pageNum':i,'pageUrl':f'https://e-hentai.org/s/abcde/1-{i}','thumbSprite':'','thumbX':0,'thumbW':100,'thumbH':150} for i in range(1,6)]})
+            page.route('**/api/gallery-images/part?*', gallery_directory)
             requests = []
             fail_image = {'value': False}
             image_version = {'value': '"fixture"'}
@@ -71,6 +73,25 @@ def main():
             page.keyboard.press('ArrowRight')
             page.wait_for_function("Math.abs(document.querySelector('.scroll-page:nth-child(3)').getBoundingClientRect().top-document.querySelector('.scroll-view').getBoundingClientRect().top)<2")
             print('PASS: scroll reader initial page, directory, keyboard and asynchronous image resize alignment')
+
+            spread = browser.new_page(service_workers='block', viewport={'width':1440,'height':1000})
+            spread.route('**/api/gallery-images/part?*', gallery_directory)
+            spread.route('**/api/page-image?*', picture)
+            spread.add_init_script("localStorage.setItem('reader-hint-seen','1');localStorage.setItem('reader-settings',JSON.stringify({readingMode:'book',pagesPerScreen:2}))")
+            requested_pages = []
+            def image_request(request):
+                url = urlsplit(request.url)
+                if url.path == '/api/page-image':
+                    requested_pages.append(int(parse_qs(url.query)['pageUrl'][0].rsplit('-', 1)[1]))
+            spread.on('request', image_request)
+            with spread.expect_response(lambda response:
+                    urlsplit(response.url).path == '/api/page-image'
+                    and parse_qs(urlsplit(response.url).query)['pageUrl'][0].endswith('-4')):
+                spread.goto(base+'/#/gallery/1/read?token=abcde')
+            expect(spread.locator('.pi-img:visible')).to_have_count(2)
+            assert set(requested_pages) == {1, 2, 3, 4}, requested_pages
+            spread.close()
+            print('PASS: double-page reader preloads both images of the next spread')
 
             touch = browser.new_page(has_touch=True, is_mobile=True, viewport={'width':390,'height':844})
             touch.route('**/api/gallery-images/part?*', lambda r:r.fulfill(json={'total':2,'images':[
