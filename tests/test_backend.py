@@ -1,9 +1,11 @@
 """Integration tests use a temporary SQLite database and fake upstream services."""
 import base64
+import asyncio
 import copy
 import gzip
 import json
 import os
+import socket
 import sqlite3
 import tempfile
 import time
@@ -14,8 +16,8 @@ from pathlib import Path
 from unittest.mock import patch, Mock
 from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
-from backend import db, settings, operations, jobs, security, translation, services, upstream
-from backend.main import app
+from backend import db, settings, operations, jobs, security, translation, services, upstream, media
+from backend.main import app, load_page_image
 from backend.cli import initialize_data, backup
 from backend.validation import read_books, books_csv
 
@@ -409,7 +411,7 @@ class BackendTests(unittest.TestCase):
         page = 'https://e-hentai.org/s/abc/123-1'
         first = 'https://ehgt.org/old.jpg'
         second = 'https://ehgt.org/new.jpg'
-        with patch('backend.media.validate_url'), patch('backend.media.fetch') as fetch:
+        with patch('backend.media.validate_url'), patch('backend.media.fetch_page') as fetch:
             fetch.side_effect = [
                 (b"""<img id="img" src="https://ehgt.org/old.jpg"><a id="loadfail" onclick="nl('next')"></a>""", 'text/html'),
                 httpx.HTTPStatusError('gone', request=httpx.Request('GET', first), response=httpx.Response(404)),
@@ -424,10 +426,11 @@ class BackendTests(unittest.TestCase):
             self.assertEqual(fetch.call_args_list[2].args[0], page + '?nl=next')
             self.assertEqual(db.get_cache('image-url:' + page)['imageUrl'], second)
 
-        with patch('backend.media.validate_url'), patch('backend.media.fetch') as fetch:
+        with patch('backend.media.validate_url'), patch('backend.media.fetch_page') as fetch:
             fetch.return_value = (b'<img id="img" src="https://ehgt.org/509.gif">', 'text/html')
             response = self.client.get('/api/page-image', params={'pageUrl': page}, headers={'X-Page-Image-Refresh': '1'})
             self.assertEqual(response.status_code, 509)
+            self.assertEqual(response.json()['code'], 'quota_exhausted')
             self.assertEqual(response.headers['cache-control'], 'no-store')
             fetch.assert_called_once()
 
@@ -439,7 +442,155 @@ class BackendTests(unittest.TestCase):
             response = self.client.get('/api/page-image', params=params)
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.headers['cache-control'], 'private, no-store')
-            load.assert_called_once_with(params['pageUrl'], refresh=False, persistent=False)
+            self.assertEqual(load.call_args.args[0], params['pageUrl'])
+            self.assertEqual(load.call_args.kwargs, {'persistent': False})
+
+    def test_page_image_budget_includes_in_progress_download(self):
+        async def slow_fetch(url, client, *, image=False):
+            if image:
+                await asyncio.Event().wait()
+            return b'<img id="img" src="https://ehgt.org/page.jpg">', 'text/html'
+
+        with patch.object(media, 'PAGE_IMAGE_TIMEOUT', .05), patch.object(media, 'fetch_page', side_effect=slow_fetch):
+            result = self.client.get('/api/page-image', params={'pageUrl': 'https://e-hentai.org/s/abc/123-1'},
+                                     headers={'X-Page-Image-Refresh': '1'})
+        self.assertEqual(result.status_code, 504)
+        self.assertEqual(result.json()['code'], 'page_timeout')
+
+    def test_page_image_dns_failure_switches_to_another_node(self):
+        requests = []
+
+        def resolve(host, *args, **kwargs):
+            if host == 'old.hath.network':
+                raise socket.gaierror(socket.EAI_AGAIN, 'temporary DNS failure')
+            return [(0, 0, 0, '', ('91.193.7.122', 443))]
+
+        def upstream_response(request):
+            requests.append(request)
+            if request.url.host == 'e-hentai.org':
+                if 'nl' in request.url.params:
+                    return httpx.Response(200, text='<img id="img" src="https://new.hath.network/image.jpg">')
+                return httpx.Response(200, text=(
+                    '<img id="img" src="https://old.hath.network/image.jpg">'
+                    '<a id="loadfail" onclick="nl(\'next\')"></a>'
+                ))
+            return httpx.Response(200, content=b'image', headers={'Content-Type': 'image/jpeg'})
+
+        client = httpx.AsyncClient(transport=httpx.MockTransport(upstream_response))
+        try:
+            with patch.object(app.state, 'page_client', client), patch('socket.getaddrinfo', side_effect=resolve):
+                response = self.client.get('/api/page-image', params={'pageUrl': 'https://e-hentai.org/s/abc/123-1'})
+        finally:
+            self.client.portal.call(client.aclose)
+        self.assertEqual((response.status_code, response.content), (200, b'image'))
+        self.assertEqual([request.url.host for request in requests], ['e-hentai.org', 'e-hentai.org', 'new.hath.network'])
+        self.assertEqual(requests[1].url.params.get('nl'), 'next')
+
+    def test_page_image_does_not_switch_nodes_when_local_pool_is_busy(self):
+        with patch.object(media, 'fetch_page', side_effect=httpx.PoolTimeout('pool busy')) as fetch:
+            response = self.client.get('/api/page-image', params={'pageUrl': 'https://e-hentai.org/s/abc/123-1'},
+                                       headers={'X-Page-Image-Refresh': '1'})
+        self.assertEqual((response.status_code, response.json()['code']), (503, 'pool_busy'))
+        fetch.assert_awaited_once()
+
+    def test_concurrent_page_images_share_downloads_within_cache_policy(self):
+        async def check():
+            release = asyncio.Event()
+            entered = 0
+
+            async def download(*args, **kwargs):
+                await release.wait()
+                return b'image', 'image/jpeg'
+
+            async def record_request(*args, **kwargs):
+                nonlocal entered
+                entered += 1
+                if entered == 3:
+                    release.set()
+                return await load_page_image(*args, **kwargs)
+
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver') as client:
+                async def get(refresh=False):
+                    return await client.get('/api/page-image', params={'pageUrl': 'https://e-hentai.org/s/abc/123-1'},
+                                            headers={'X-Page-Image-Refresh': str(int(refresh))})
+
+                with patch.object(media, 'page_image', side_effect=download) as load, \
+                     patch('backend.main.load_page_image', side_effect=record_request):
+                    results = await asyncio.wait_for(asyncio.gather(get(), get(), get(True)), timeout=5)
+                    self.assertEqual([result.status_code for result in results], [200, 200, 200])
+                    self.assertEqual(load.await_count, 2)
+
+        self.client.portal.call(check)
+
+    def test_page_image_disconnect_only_cancels_after_last_waiter_leaves(self):
+        async def check():
+            page_url = 'https://e-hentai.org/s/abc/123-1'
+            started = asyncio.Event()
+            released = asyncio.Event()
+            cancelled = asyncio.Event()
+
+            async def download(*args, **kwargs):
+                started.set()
+                try:
+                    await released.wait()
+                    return b'image', 'image/jpeg'
+                except asyncio.CancelledError:
+                    cancelled.set()
+                    raise
+
+            async def connect(disconnect):
+                request_sent = False
+                responses = []
+
+                async def receive():
+                    nonlocal request_sent
+                    if not request_sent:
+                        request_sent = True
+                        return {'type': 'http.request', 'body': b''}
+                    await disconnect.wait()
+                    return {'type': 'http.disconnect'}
+
+                async def send(message):
+                    responses.append(message)
+
+                await app({
+                    'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.4'},
+                    'http_version': '1.1', 'scheme': 'http', 'method': 'GET', 'path': '/api/page-image',
+                    'query_string': f'pageUrl={page_url}'.encode(), 'headers': [],
+                    'client': ('127.0.0.1', 10000), 'server': ('testserver', 80),
+                }, receive, send)
+                return next(message['status'] for message in responses if message['type'] == 'http.response.start')
+
+            with patch.object(media, 'page_image', side_effect=download) as load:
+                first, second = asyncio.Event(), asyncio.Event()
+                a = asyncio.create_task(connect(first))
+                await asyncio.wait_for(started.wait(), timeout=3)
+                b = asyncio.create_task(connect(second))
+                key = (page_url, True)
+                for _ in range(100):
+                    if app.state.page_requests[key].waiters == 2:
+                        break
+                    await asyncio.sleep(.01)
+                self.assertEqual(app.state.page_requests[key].waiters, 2)
+                first.set()
+                self.assertEqual(await asyncio.wait_for(a, timeout=3), 499)
+                self.assertEqual(app.state.page_requests[key].waiters, 1)
+                self.assertFalse(cancelled.is_set())
+                released.set()
+                self.assertEqual(await asyncio.wait_for(b, timeout=3), 200)
+                self.assertEqual(load.await_count, 1)
+
+                released.clear()
+                started.clear()
+                last = asyncio.Event()
+                c = asyncio.create_task(connect(last))
+                await asyncio.wait_for(started.wait(), timeout=3)
+                last.set()
+                self.assertEqual(await asyncio.wait_for(c, timeout=3), 499)
+                self.assertTrue(cancelled.is_set())
+                self.assertNotIn(key, app.state.page_requests)
+
+        self.client.portal.call(check)
 
     def test_gallery_directory_fetches_only_the_requested_part(self):
         first_url = 'https://exhentai.org/g/123/abcde/'

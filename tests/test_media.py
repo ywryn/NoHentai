@@ -1,3 +1,4 @@
+import asyncio
 import unittest
 from unittest.mock import patch
 from fastapi import HTTPException
@@ -66,6 +67,38 @@ class MediaTests(unittest.TestCase):
         self.assertEqual(len(requests),1)
         self.assertNotIn('cookie',requests[0].headers)
         cookies.assert_not_called()
+
+    def test_pooled_page_fetch_validates_redirects_and_keeps_cookies_request_scoped(self):
+        import httpx
+        from backend import upstream
+
+        requests = []
+        def handle(request):
+            requests.append((request.url.host, request.headers.get('cookie')))
+            if request.url.path == '/missing-location':
+                return httpx.Response(302)
+            if request.url.path == '/start':
+                return httpx.Response(302, headers={'location': 'https://e-hentai.org/next',
+                                                    'set-cookie': 'upstream=unexpected; Path=/; Secure'})
+            return httpx.Response(200, content=b'page')
+
+        async def check():
+            constructor = httpx.AsyncClient
+            with patch.object(upstream.httpx, 'AsyncClient',
+                              side_effect=lambda **kwargs: constructor(transport=httpx.MockTransport(handle), **kwargs)), \
+                 patch.object(upstream, 'validate_url') as validate, \
+                 patch.object(upstream, 'cookies', side_effect=['session=one', 'session=two']):
+                async with upstream.page_client() as client:
+                    self.assertEqual((await upstream.fetch_page('https://exhentai.org/start', client))[0], b'page')
+                    await upstream.fetch_page('https://exhentai.org/again', client)
+                    with self.assertRaises(HTTPException) as error:
+                        await upstream.fetch_page('https://e-hentai.org/missing-location', client)
+                    self.assertEqual(error.exception.status_code, 502)
+            self.assertEqual(validate.call_count, 4)
+
+        asyncio.run(check())
+        self.assertEqual(requests, [('exhentai.org', 'session=one'), ('e-hentai.org', None),
+                                    ('exhentai.org', 'session=two'), ('e-hentai.org', None)])
 
     def test_ocr_bounding_boxes_and_provider_parsers(self):
         paddle = translation.parse_paddle({'result': {'ocrResults': [{'prunedResult': {

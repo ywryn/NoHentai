@@ -1,11 +1,15 @@
 // web-static/src/composables/useReader.ts
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, nextTick, watch } from 'vue'
 import { liveData, liveUrl } from '@/utils/live'
-import { fetchPageImage } from '@/utils/pageImage'
+import { fetchPageImage, PageImageRequestError } from '@/utils/pageImage'
 import type { InjectionKey } from 'vue'
 
 const API_BASE = (import.meta as any).env?.VITE_API_BASE ?? ''
 const SETTINGS_KEY = 'reader-settings'
+type PageImageOptions = NonNullable<Parameters<typeof fetchPageImage>[2]> & {
+  refreshDirectory?: boolean
+  manualRetry?: boolean
+}
 
 export interface PageInfo {
   pageNum: number
@@ -82,9 +86,14 @@ export function useReader(liveSite?: string) {
   let site = liveSite
   let perPart = 1
   let partCount = 1
-  const directories = new Map<number, Promise<void>>()
+  const directories = new Map<number, { refresh: boolean; task: Promise<PageInfo[]> }>()
   const loadedParts = new Set<number>()
-  let prefetch: AbortController | undefined
+  const prefetch = new Map<number, AbortController>()
+  let upcoming: number[] = []
+  let foregroundInFlight = 0
+  let preloadEnabled = false
+  let quotaSuspended = false
+  let rateLimitedUntil = 0
 
   async function fetchDirectory(part: number, background = false, refresh = false) {
     if (site !== undefined) return liveData('directory', { ...gallery, site, part: String(part) })
@@ -93,9 +102,10 @@ export function useReader(liveSite?: string) {
     if (refresh) params.set('refresh', 'true')
     const init: RequestInit & { priority?: 'low' } = background ? { priority: 'low' } : {}
     const res = await fetch(`${API_BASE}/api/gallery-images/part?${params}`, init)
-    const data = await res.json()
+    const data = await res.json().catch(() => null)
     if (!res.ok) {
-      throw new Error(data.error === 'exhentai_blocked' ? '画廊不可访问，请检查站点权限' : data.error || '获取页面列表失败')
+      const message = data?.error === 'exhentai_blocked' ? '画廊不可访问，请检查站点权限' : data?.error || '获取页面列表失败'
+      throw new PageImageRequestError(message, 'directory_error', res.status)
     }
     return data
   }
@@ -112,6 +122,10 @@ export function useReader(liveSite?: string) {
   }
 
   async function init(gid: string, token: string, startPage: number, preloadNeighbors = true) {
+    preloadEnabled = preloadNeighbors
+    stopPreload()
+    quotaSuspended = false
+    rateLimitedUntil = 0
     initLoading.value = true
     initError.value = null
     try {
@@ -144,9 +158,12 @@ export function useReader(liveSite?: string) {
     return Math.min(partCount - 1, Math.floor((pageNum - 1) / perPart))
   }
 
-  function loadPart(part: number, background = false, refresh = false) {
+  function loadPart(part: number, background = false, refresh = false): Promise<PageInfo[]> {
     const pending = directories.get(part)
-    if (pending) return pending
+    if (pending) {
+      if (!refresh || pending.refresh) return pending.task
+      return pending.task.catch(() => {}).then(() => loadPart(part, background, true))
+    }
     const task = fetchDirectory(part, background, refresh).then(data => {
       if (data.total !== total.value) throw new Error('画廊页数已变化，请重新打开')
       if (part === 0) {
@@ -155,8 +172,11 @@ export function useReader(liveSite?: string) {
       }
       installPages(data.images)
       loadedParts.add(part)
-    }).finally(() => directories.delete(part))
-    directories.set(part, task)
+      return data.images as PageInfo[]
+    }).finally(() => {
+      if (directories.get(part)?.task === task) directories.delete(part)
+    })
+    directories.set(part, { refresh, task })
     return task
   }
 
@@ -167,41 +187,104 @@ export function useReader(liveSite?: string) {
     }
   }
 
-  async function loadPageImage(pageNum: number, options: Parameters<typeof fetchPageImage>[2] = {}) {
-    const part = partFor(pageNum)
-    if (!pages.value[pageNum - 1]?.pageUrl) {
-      await loadPart(part, options.background)
-      if (!pages.value[pageNum - 1]?.pageUrl) {
-        await loadPart(0, options.background, true)
-        const refreshedPart = partFor(pageNum)
-        if (refreshedPart > 0) await loadPart(refreshedPart, options.background, true)
+  async function requestPageImage(pageNum: number, options: PageImageOptions) {
+    options.signal?.throwIfAborted()
+    try {
+      if (options.refreshDirectory || !pages.value[pageNum - 1]?.pageUrl) {
+        const part = partFor(pageNum)
+        let entries = await loadPart(part, options.background, options.refreshDirectory || options.refresh)
+        if (!entries.some(entry => entry.pageNum === pageNum)) {
+          options.signal?.throwIfAborted()
+          entries = await loadPart(0, options.background, true)
+          const refreshedPart = partFor(pageNum)
+          if (refreshedPart > 0) entries = await loadPart(refreshedPart, options.background, true)
+          if (!entries.some(entry => entry.pageNum === pageNum)) {
+            throw new Error(`无法定位第 ${pageNum} 页，请重试`)
+          }
+        }
       }
+    } catch (error) {
+      if (options.signal?.aborted || error instanceof PageImageRequestError) throw error
+      throw new PageImageRequestError(error instanceof Error ? error.message : '获取页面列表失败', 'directory_error')
     }
     const pageUrl = pages.value[pageNum - 1]?.pageUrl
-    if (!pageUrl) throw new Error(`无法定位第 ${pageNum} 页，请重新打开画廊`)
+    if (!pageUrl) throw new PageImageRequestError(`无法定位第 ${pageNum} 页，请重试`, 'directory_error')
     return fetchPageImage(pageUrl, site, options)
   }
 
-  function preload(center: number) {
-    prefetch?.abort()
-    // Live images are intentionally not retained by the browser HTTP cache.
-    if (site !== undefined) return
-    const step = settings.readingMode === 'scroll' ? 1 : effectivePagesPerScreen.value
-    // Start after the visible spread and warm the next two consecutive images.
-    const first = center + step
-    const last = Math.min(first + 1, total.value)
-    if (first > last) return
-    const controller = new AbortController()
-    prefetch = controller
-    void (async () => {
-      for (let pageNum = first; pageNum <= last; pageNum++) {
-        if (controller.signal.aborted) break
-        await loadPageImage(pageNum, { signal: controller.signal, background: true }).catch(() => {})
+  async function loadPageImage(pageNum: number, options: PageImageOptions = {}) {
+    if (options.background) return requestPageImage(pageNum, options)
+    foregroundInFlight++
+    try {
+      const image = await requestPageImage(pageNum, options)
+      if (quotaSuspended && options.manualRetry && !options.signal?.aborted) {
+        quotaSuspended = false
+        if (preloadEnabled) preload(currentPage.value)
       }
-    })()
+      return image
+    } catch (error) {
+      if (!options.signal?.aborted) pausePreloadFor(error)
+      throw error
+    } finally {
+      foregroundInFlight--
+      void nextTick(startPreload)
+    }
   }
 
-  function stopPreload() { prefetch?.abort() }
+  function pausePreloadFor(error: unknown) {
+    if (!(error instanceof PageImageRequestError)) return
+    if (error.status === 509) quotaSuspended = true
+    else if (error.status === 429) rateLimitedUntil = Date.now() + 60_000
+    else return
+    stopPreload()
+  }
+
+  function isPreloadPaused() {
+    return quotaSuspended || Date.now() < rateLimitedUntil
+  }
+
+  function startPreload() {
+    if (foregroundInFlight || prefetch.size || isPreloadPaused()) return
+    const pageNum = upcoming.shift()
+    if (pageNum === undefined) return
+    const controller = new AbortController()
+    prefetch.set(pageNum, controller)
+    void requestPageImage(pageNum, { signal: controller.signal, background: true })
+      .catch(error => { if (!controller.signal.aborted) pausePreloadFor(error) })
+      .finally(() => {
+        if (prefetch.get(pageNum) === controller) prefetch.delete(pageNum)
+        void nextTick(startPreload)
+      })
+  }
+
+  function preload(center: number) {
+    // ScrollView already loads images near the viewport. Live responses use no-store.
+    if (site !== undefined || settings.readingMode === 'scroll' || isPreloadPaused()) {
+      stopPreload()
+      return
+    }
+    const first = center + effectivePagesPerScreen.value
+    const last = Math.min(first + 1, total.value)
+    upcoming = []
+    for (let pageNum = first; pageNum <= last; pageNum++) {
+      if (!prefetch.has(pageNum) || prefetch.get(pageNum)?.signal.aborted) upcoming.push(pageNum)
+    }
+    // Keep any task the new spread can use until it settles, even if the
+    // visible PageImage has to wait for a directory segment before subscribing.
+    for (const [pageNum, controller] of prefetch) {
+      if (pageNum < center || pageNum > last) controller.abort()
+    }
+    void nextTick(startPreload)
+  }
+
+  function stopPreload() {
+    upcoming = []
+    for (const controller of prefetch.values()) controller.abort()
+  }
+
+  watch([() => settings.readingMode, effectivePagesPerScreen], () => {
+    if (preloadEnabled && !initLoading.value) preload(currentPage.value)
+  })
 
   function goTo(pageNum: number) {
     const n = Math.max(1, Math.min(total.value, pageNum))

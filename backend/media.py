@@ -1,11 +1,13 @@
+import asyncio
 import re
 from urllib.parse import urlencode, urljoin, urlsplit
 
 import httpx
 from bs4 import BeautifulSoup
-from . import db
+from . import db, observability
 from .security import fail
-from .upstream import fetch, json_request, validate_url
+from fastapi import HTTPException
+from .upstream import fetch, fetch_page, json_request, validate_url
 
 
 def gallery_directory_url(host, gid, token, part):
@@ -131,59 +133,99 @@ def image_url(page_url, refresh=False, persistent=True, *, store=True):
     if cached:
         return cached
     content, _ = fetch(page_url, gallery=True)
-    soup = BeautifulSoup(content, 'html.parser')
-    img = soup.select_one('#img[src]')
-    if not img:
-        fail(502, '无法读取图片地址')
-    validate_url(img['src'], image=True)
-    link = soup.select_one('#loadfail, a[onclick*="nl("]')
-    nl = re.search(r"nl\('([^']+)'\)", link.get('onclick', '')) if link else None
-    result = {'imageUrl': img['src'], 'nlParam': nl[1] if nl else None}
+    result = parse_image_page(content)
+    validate_url(result['imageUrl'], image=True)
     if persistent and store:
         db.set_cache(key, result, 900)
     return result
 
 
-def page_image(page_url, *, refresh=False, persistent=True):
+class PageImageError(HTTPException):
+    def __init__(self, status, message, code):
+        super().__init__(status, message)
+        self.code = code
+
+
+def parse_image_page(content):
+    soup = BeautifulSoup(content, 'html.parser')
+    img = soup.select_one('#img[src]')
+    if not img:
+        raise PageImageError(502, '无法读取图片地址', 'resolve_failed')
+    link = soup.select_one('#loadfail, a[onclick*="nl("]')
+    nl = re.search(r"nl\('([^']+)'\)", link.get('onclick', '')) if link else None
+    return {'imageUrl': img['src'], 'nlParam': nl[1] if nl else None}
+
+
+PAGE_IMAGE_TIMEOUT = 35
+
+
+async def page_image(page_url, client, *, refresh=False, persistent=True):
+    try:
+        async with asyncio.timeout(PAGE_IMAGE_TIMEOUT):
+            return await _load_page_image(page_url, client, refresh=refresh, persistent=persistent)
+    except TimeoutError as exc:
+        raise PageImageError(504, '页图加载超过等待时间，请重试', 'page_timeout') from exc
+
+
+async def _load_page_image(page_url, client, *, refresh, persistent):
     page = urlsplit(page_url)
     canonical = page._replace(query='', fragment='').geturl()
+    if not re.fullmatch(r'/s/[a-zA-Z0-9]+/[0-9]+-[0-9]+/?', page.path):
+        raise PageImageError(400, '图片页面路径不正确', 'invalid_page')
     candidate = canonical
     seen_keys = set()
     failed_urls = set()
+    last_download_error = None
     for attempt in range(3):
         stage = '图片地址'
         try:
-            resolved = image_url(candidate, refresh=refresh or attempt > 0, persistent=persistent, store=False)
+            resolved = None
+            if persistent and not refresh and attempt == 0:
+                await asyncio.to_thread(validate_url, candidate, gallery=True, retry_dns=True)
+                resolved = await asyncio.to_thread(db.get_cache, 'image-url:' + canonical)
+            if not resolved:
+                html, _ = await fetch_page(candidate, client)
+                resolved = await asyncio.to_thread(parse_image_page, html)
             target = resolved['imageUrl']
             if urlsplit(target).path.lower().endswith(('/509.gif', '/509s.gif')):
-                fail(509, '上游图片额度已用尽')
+                raise PageImageError(509, '上游图片额度已用尽', 'quota_exhausted')
             stage = '正文图片'
             if target in failed_urls:
                 break
-            content, mime = fetch(target, image=True)
+            last_download_error = None
+            content, mime = await fetch_page(target, client, image=True)
             if content and mime.lower().split(';', 1)[0].strip() in {
                 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif',
                 'image/bmp', 'image/x-ms-bmp', 'image/jxl', 'image/apng',
             }:
                 if persistent:
-                    db.set_cache('image-url:' + canonical, resolved, 900)
+                    await asyncio.to_thread(db.set_cache, 'image-url:' + canonical, resolved, 900)
                 return content, mime
             failed_urls.add(target)
         except httpx.HTTPStatusError as exc:
             status = exc.response.status_code
-            if status in (429, 509) or (stage == '图片地址' and status in (401, 403, 404)):
-                fail(status, f'上游{stage}不可访问')
+            if status == 509:
+                raise PageImageError(509, '上游图片额度已用尽', 'quota_exhausted') from exc
+            if status == 429:
+                raise PageImageError(429, '上游请求过多，请稍后重试', 'rate_limited') from exc
+            if stage == '图片地址' and status in (401, 403, 404):
+                raise PageImageError(status, '上游图片页面不可访问', 'page_unavailable') from exc
             if stage == '图片地址' and status >= 500 and attempt < 2:
                 continue
             if stage == '图片地址':
-                fail(502, '获取图片地址失败')
+                raise PageImageError(502, '获取图片地址失败', 'resolve_failed') from exc
             if status in (403, 404, 410):
                 failed_urls.add(target)
-        except httpx.TransportError:
-            if attempt == 2:
-                fail(504, f'{stage}超时或连接失败')
+        except httpx.PoolTimeout as exc:
+            observability.log_failure('page_image_pool', exc)
+            raise PageImageError(503, '页图请求繁忙，请稍后重试', 'pool_busy') from exc
+        except httpx.TransportError as exc:
             if stage == '图片地址':
+                if attempt == 2:
+                    raise PageImageError(504, '图片地址超时或连接失败', 'resolve_failed') from exc
                 continue
+            last_download_error = exc
+            failed_urls.add(target)
         key = resolved['nlParam']
         if key and key not in seen_keys:
             seen_keys.add(key)
@@ -192,7 +234,9 @@ def page_image(page_url, *, refresh=False, persistent=True):
             candidate = canonical
         else:
             break
-    fail(502, '正文图片下载失败，请重新加载')
+    if last_download_error is not None:
+        raise PageImageError(504, '正文图片超时或连接失败', 'download_timeout') from last_download_error
+    raise PageImageError(502, '正文图片下载失败，请重新加载', 'download_failed')
 
 
 def lookup(word):

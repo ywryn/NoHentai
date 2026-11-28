@@ -5,6 +5,12 @@ type Request = { controller: AbortController; users: number; promise: Promise<Pa
 
 const pending = new Map<string, Request>()
 
+export class PageImageRequestError extends Error {
+  constructor(message: string, readonly code?: string, readonly status?: number) {
+    super(message)
+  }
+}
+
 export async function fetchPageImage(pageUrl: string, site: string | undefined, options: {
   refresh?: boolean
   background?: boolean
@@ -26,12 +32,12 @@ export async function fetchPageImage(pageUrl: string, site: string | undefined, 
     if (refresh) init.headers = { 'X-Page-Image-Refresh': '1' }
     if (background) init.priority = 'low'
     const promise = fetch(url, init).then(async response => {
-      if (site !== undefined && response.status === 401) {
-        window.dispatchEvent(new Event('cost-session-expired'))
-      }
       if (!response.ok) {
         const data = await response.json().catch(() => ({}))
-        throw new Error(data.error || `图片请求失败（HTTP ${response.status}）`)
+        if (site !== undefined && response.status === 401 && data?.code !== 'page_unavailable') {
+          window.dispatchEvent(new Event('cost-session-expired'))
+        }
+        throw new PageImageRequestError(data?.error || `图片请求失败（HTTP ${response.status}）`, data?.code, response.status)
       }
       return { blob: await response.blob(), version: response.headers.get('ETag') }
     }).finally(() => {

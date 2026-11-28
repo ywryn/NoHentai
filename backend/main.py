@@ -1,5 +1,7 @@
 """Run with: uvicorn backend.main:app --host 127.0.0.1 --port 8000"""
 from contextlib import asynccontextmanager
+import asyncio
+from dataclasses import dataclass
 import hashlib
 import re
 from urllib.parse import urlsplit
@@ -7,8 +9,15 @@ from fastapi import FastAPI, Request, HTTPException, Body, Query
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from . import admin, cover_cache, db, settings, public, media, translation, security, catalog, services, media_store, operations, stats, observability, traffic
+from . import admin, cover_cache, db, settings, public, media, translation, security, catalog, services, media_store, operations, stats, observability, traffic, upstream
 from cryptography.fernet import Fernet
+from starlette.concurrency import run_in_threadpool
+
+
+@dataclass
+class PendingPageImage:
+    task: asyncio.Task
+    waiters: int = 0
 
 
 @asynccontextmanager
@@ -19,7 +28,15 @@ async def lifespan(app):
     with db.connect() as con:
         for name in admin.RESOURCES:
             db.resource(con, name)
-    yield
+    app.state.page_requests = {}
+    async with upstream.page_client() as app.state.page_client:
+        try:
+            yield
+        finally:
+            tasks = [entry.task for entry in app.state.page_requests.values()]
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
 
 
 app = FastAPI(title='NoHentai', lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
@@ -61,7 +78,10 @@ async def protect(request, call_next):
 
 @app.exception_handler(HTTPException)
 async def http_error(request, exc):
-    return JSONResponse({'error': exc.detail}, status_code=exc.status_code)
+    body = {'error': exc.detail}
+    if isinstance(exc, media.PageImageError):
+        body['code'] = exc.code
+    return JSONResponse(body, status_code=exc.status_code)
 
 
 @app.exception_handler(RequestValidationError)
@@ -219,9 +239,7 @@ def gallery_part_api(request: Request, gid: str, token: str, part: int = Query(0
     return safely(media.gallery_part, gid, token, part, source, refresh)
 
 
-@app.get('/api/page-image')
-def page_image_api(request: Request, pageUrl: str, site: str | None = None):
-    refresh = request.headers.get('x-page-image-refresh') == '1'
+def authorize_page_image(request, page_url, site, refresh):
     if site is None:
         limit(request, 'page-image', 180)
         if refresh:
@@ -230,9 +248,73 @@ def page_image_api(request: Request, pageUrl: str, site: str | None = None):
         from . import live
         live_access(request, 240)
         validate_page_site = live.site(site)
-        if safely(lambda: urlsplit(pageUrl).hostname) != validate_page_site:
+        if safely(lambda: urlsplit(page_url).hostname) != validate_page_site:
             raise HTTPException(400, '图片来源与当前站点不符')
-    content, mime = safely(lambda: media.page_image(pageUrl, refresh=refresh, persistent=site is None))
+
+
+async def load_page_image(request, page_url, persistent, refresh):
+    client = request.app.state.page_client
+    if refresh:
+        return await media.page_image(page_url, client, refresh=True, persistent=persistent)
+    key = (urlsplit(page_url)._replace(query='', fragment='').geturl(), persistent)
+    pending = request.app.state.page_requests
+    entry = pending.get(key)
+    if entry is None:
+        task = asyncio.create_task(media.page_image(page_url, client, persistent=persistent))
+        entry = pending[key] = PendingPageImage(task)
+
+        def finished(result):
+            if pending.get(key) is entry:
+                del pending[key]
+            if not result.cancelled():
+                result.exception()
+
+        task.add_done_callback(finished)
+    entry.waiters += 1
+    try:
+        return await asyncio.shield(entry.task)
+    finally:
+        entry.waiters -= 1
+        if entry.waiters == 0 and not entry.task.done():
+            if pending.get(key) is entry:
+                del pending[key]
+            entry.task.cancel()
+            await asyncio.gather(entry.task, return_exceptions=True)
+
+
+async def wait_for_page_image(request, page_url, persistent, refresh):
+    async def wait_for_disconnect():
+        while (await request.receive())['type'] != 'http.disconnect':
+            pass
+
+    download = asyncio.create_task(load_page_image(request, page_url, persistent, refresh))
+    disconnected = asyncio.create_task(wait_for_disconnect())
+    try:
+        done, _ = await asyncio.wait((download, disconnected), return_when=asyncio.FIRST_COMPLETED)
+        return download.result() if download in done else None
+    finally:
+        for task in (download, disconnected):
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(download, disconnected, return_exceptions=True)
+
+
+@app.get('/api/page-image')
+async def page_image_api(request: Request, pageUrl: str, site: str | None = None):
+    refresh = request.headers.get('x-page-image-refresh') == '1'
+    await run_in_threadpool(authorize_page_image, request, pageUrl, site, refresh)
+    try:
+        image = await wait_for_page_image(request, pageUrl, site is None, refresh)
+    except HTTPException:
+        raise
+    except ValueError:
+        raise media.PageImageError(400, '图片页面路径不正确', 'invalid_page') from None
+    except Exception as exc:
+        observability.log_failure('page_image', exc)
+        raise media.PageImageError(502, '页图服务暂时不可用，请重试', 'download_failed') from None
+    if image is None:
+        return Response(status_code=499)
+    content, mime = image
     return Response(content, media_type=mime, headers={
         'Cache-Control': 'private, no-store' if site is not None else 'private, max-age=900',
         'ETag': '"' + hashlib.sha256(content).hexdigest() + '"',

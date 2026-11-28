@@ -24,6 +24,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onBeforeUnmount, inject } from 'vue'
 import ImageLoadProgress from '@/components/ui/ImageLoadProgress.vue'
+import { PageImageRequestError } from '@/utils/pageImage'
 import { READER_KEY } from '@/composables/useReader'
 
 const props = withDefaults(defineProps<{
@@ -43,6 +44,7 @@ const errorMessage = ref('')
 let observer: IntersectionObserver | null = null
 let request: AbortController | undefined
 let autoRetried = false
+let failure: PageImageRequestError | undefined
 
 function clearImage() {
   request?.abort()
@@ -50,24 +52,30 @@ function clearImage() {
   imgSrc.value = ''
 }
 
-async function load(refresh = false) {
+async function load(refresh = false, refreshDirectory = false, manualRetry = false) {
   clearImage()
   const controller = new AbortController()
   request = controller
   state.value = 'loading'
   errorMessage.value = ''
   autoRetried = refresh
+  failure = undefined
   try {
-    const { blob } = await loadPageImage(props.pageNum, { refresh, signal: controller.signal })
+    const { blob } = await loadPageImage(props.pageNum, { refresh, refreshDirectory, manualRetry, signal: controller.signal })
     if (!controller.signal.aborted) imgSrc.value = URL.createObjectURL(blob)
   } catch (error) {
     if (controller.signal.aborted) return
+    failure = error instanceof PageImageRequestError ? error : undefined
     errorMessage.value = error instanceof Error ? error.message : ''
     state.value = 'error'
   }
 }
 
-function retry() { void load(true) }
+function reloadFailedPage(manualRetry = false) {
+  const code = failure?.code
+  void load(true, code === 'directory_error' || code === 'page_unavailable' || code === 'resolve_failed', manualRetry)
+}
+function retry() { reloadFailedPage(true) }
 function isCurrent(event: Event) {
   return imgSrc.value && (event.currentTarget as HTMLImageElement).src === imgSrc.value
 }
@@ -76,7 +84,7 @@ function onLoad(event: Event) {
 }
 function onImgError(event: Event) {
   if (!isCurrent(event)) return
-  if (!autoRetried) retry()
+  if (!autoRetried) void load(true)
   else {
     errorMessage.value = '图片解码失败'
     state.value = 'error'
@@ -121,9 +129,12 @@ watch(() => props.active, active => {
   }
   observer?.disconnect()
   observer = null
+  if (state.value === 'error') {
+    if (![429, 509].includes(failure?.status ?? 0)) reloadFailedPage()
+    return
+  }
   if (!props.lazy) startLoad(state.value !== 'loaded')
   else if (state.value === 'idle') attachObserver()
-  else if (state.value === 'error') startLoad(true)
 })
 
 onBeforeUnmount(() => {
@@ -135,6 +146,8 @@ watch(() => props.pageNum, () => {
   state.value = 'idle'
   clearImage()
   autoRetried = false
+  failure = undefined
+  errorMessage.value = ''
   observer?.disconnect()
   observer = null
   if (props.active === false) return

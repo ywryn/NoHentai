@@ -76,22 +76,107 @@ def main():
 
             spread = browser.new_page(service_workers='block', viewport={'width':1440,'height':1000})
             spread.route('**/api/gallery-images/part?*', gallery_directory)
-            spread.route('**/api/page-image?*', picture)
             spread.add_init_script("localStorage.setItem('reader-hint-seen','1');localStorage.setItem('reader-settings',JSON.stringify({readingMode:'book',pagesPerScreen:2}))")
             requested_pages = []
-            def image_request(request):
-                url = urlsplit(request.url)
-                if url.path == '/api/page-image':
-                    requested_pages.append(int(parse_qs(url.query)['pageUrl'][0].rsplit('-', 1)[1]))
-            spread.on('request', image_request)
+            held_images = {}
+            def spread_image(route):
+                url = urlsplit(route.request.url)
+                number = int(parse_qs(url.query)['pageUrl'][0].rsplit('-', 1)[1])
+                requested_pages.append(number)
+                if number in (1, 3) and number not in held_images:
+                    held_images[number] = route
+                else:
+                    picture(route)
+            spread.route('**/api/page-image?*', spread_image)
+            spread.goto(base+'/#/gallery/1/read?token=abcde')
+            expect(spread.get_by_alt_text('第 2 页', exact=True)).to_be_visible()
+            assert set(requested_pages) == {1, 2}, requested_pages
             with spread.expect_response(lambda response:
                     urlsplit(response.url).path == '/api/page-image'
                     and parse_qs(urlsplit(response.url).query)['pageUrl'][0].endswith('-4')):
-                spread.goto(base+'/#/gallery/1/read?token=abcde')
-            expect(spread.locator('.pi-img:visible')).to_have_count(2)
+                picture(held_images[1])
+                for _ in range(50):
+                    if 3 in held_images:
+                        break
+                    spread.wait_for_timeout(50)
+                assert 3 in held_images, requested_pages
+                spread.keyboard.press('ArrowLeft')
+            expect(spread.get_by_alt_text('第 4 页', exact=True)).to_be_visible()
             assert set(requested_pages) == {1, 2, 3, 4}, requested_pages
+            assert requested_pages.count(3) == 1, requested_pages
+            picture(held_images[3])
+            expect(spread.get_by_alt_text('第 3 页', exact=True)).to_be_visible()
             spread.close()
-            print('PASS: double-page reader preloads both images of the next spread')
+            print('PASS: double-page reader defers preloading and reuses the in-flight image after turning')
+
+            retry_page = browser.new_page(service_workers='block', viewport={'width':800,'height':1000})
+            retry_page.add_init_script("localStorage.setItem('reader-hint-seen','1')")
+            directory_refreshes = []
+            def retry_directory(route):
+                refreshed = parse_qs(urlsplit(route.request.url).query).get('refresh') == ['true']
+                directory_refreshes.append(refreshed)
+                route.fulfill(json={'total': 1, 'images': [
+                    {'pageNum': 1, 'pageUrl': f'https://e-hentai.org/s/{"fresh" if refreshed else "stale"}/1-1',
+                     'thumbSprite': '', 'thumbX': 0, 'thumbW': 100, 'thumbH': 150}]})
+            def retry_picture(route):
+                url = parse_qs(urlsplit(route.request.url).query)['pageUrl'][0]
+                if '/stale/' in url:
+                    route.fulfill(status=404, json={'code': 'page_unavailable', 'error': '上游图片页面不可访问'})
+                else:
+                    picture(route)
+            retry_page.route('**/api/gallery-images/part?*', retry_directory)
+            retry_page.route('**/api/page-image?*', retry_picture)
+            retry_page.goto(base+'/#/gallery/1/read?token=abcde')
+            expect(retry_page.locator('.pi-error')).to_contain_text('上游图片页面不可访问')
+            retry_page.get_by_role('button', name='重试', exact=True).click()
+            expect(retry_page.get_by_alt_text('第 1 页', exact=True)).to_be_visible()
+            assert directory_refreshes == [False, True], directory_refreshes
+            retry_page.close()
+            print('PASS: retry refreshes the directory when the saved image page is unavailable')
+
+            for status in (429, 509):
+                limited = browser.new_page(service_workers='block', viewport={'width':800,'height':1000})
+                limited.clock.install()
+                limited.add_init_script("localStorage.setItem('reader-hint-seen','1');localStorage.setItem('reader-settings',JSON.stringify({pagesPerScreen:1}))")
+                limited.route('**/api/gallery-images/part?*', gallery_directory)
+                requested = []
+                def limited_picture(route):
+                    url = parse_qs(urlsplit(route.request.url).query)['pageUrl'][0]
+                    number = int(url.rsplit('-', 1)[1])
+                    requested.append(number)
+                    if number == 1 and route.request.headers.get('x-page-image-refresh') != '1':
+                        route.fulfill(status=status, json={'error': '暂时无法加载'})
+                    else:
+                        picture(route)
+                limited.route('**/api/page-image?*', limited_picture)
+                limited.goto(base+'/#/gallery/1/read?token=abcde')
+                expect(limited.locator('.spread:visible .pi-error')).to_contain_text('暂时无法加载')
+                limited.keyboard.press('ArrowLeft')
+                expect(limited.get_by_alt_text('第 2 页', exact=True)).to_be_visible()
+                limited.wait_for_timeout(100)
+                assert requested == [1, 2], requested
+                if status == 429:
+                    limited.clock.fast_forward(61_000)
+                    limited.keyboard.press('ArrowLeft')
+                    expect(limited.get_by_alt_text('第 3 页', exact=True)).to_be_visible()
+                    for _ in range(40):
+                        if 4 in requested:
+                            break
+                        limited.wait_for_timeout(50)
+                    assert 4 in requested, requested
+                else:
+                    limited.keyboard.press('ArrowRight')
+                    expect(limited.locator('.spread:visible .pi-error')).to_contain_text('暂时无法加载')
+                    assert requested == [1, 2], requested
+                    limited.get_by_role('button', name='重试', exact=True).click()
+                    expect(limited.get_by_alt_text('第 1 页', exact=True)).to_be_visible()
+                    for _ in range(40):
+                        if 3 in requested:
+                            break
+                        limited.wait_for_timeout(50)
+                    assert 3 in requested, requested
+                limited.close()
+            print('PASS: page-image quota and rate limits suspend background preloads across page turns')
 
             touch = browser.new_page(has_touch=True, is_mobile=True, viewport={'width':390,'height':844})
             touch.route('**/api/gallery-images/part?*', lambda r:r.fulfill(json={'total':2,'images':[
