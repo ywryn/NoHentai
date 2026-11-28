@@ -48,7 +48,7 @@ E/EX 搜索有显式提交边界。输入、补全、清空、选择分类和打
 
 GalleryDetail 为本地和搜索来源提供同一套内容层级。搜索详情通过 `directory?details=true` 获取信息并复用首批预览，后续目录按需加载。向阅读器或翻译工作台传递 gid、token、页码；搜索来源还要保留 site 和相应的路由名。若改标签交互，核对展示译名、复制原始搜索表达式、按来源返回对应检索入口这三个动作。
 
-[GalleryReader](web-static/src/components/reader/GalleryReader.vue) 建立 [useReader](web-static/src/composables/useReader.ts) 并以 `READER_KEY` 提供给子组件。BookView 和 ScrollView 负责排版及分页，PageImage 负责图片加载和重试，ReaderTopBar 负责设置，ThumbStrip 和 ThumbGrid 分别负责侧栏和页目录。当前页与 URL 同步，页目录管理自己的焦点和关闭行为。换一种阅读模式或数据来源，继续走这条共享链路。
+[GalleryReader](web-static/src/components/reader/GalleryReader.vue) 建立 [useReader](web-static/src/composables/useReader.ts) 并以 `READER_KEY` 提供给子组件。BookView 和 ScrollView 负责排版及分页，PageImage 负责图片加载和重试，ReaderTopBar 负责设置，ThumbStrip 负责缩略图栏和页码跳转，当前页与 URL 同步。换一种阅读模式或数据来源，继续走这条共享链路。
 
 手机图片在点按位置连续三次**双击**，依次进入两档放大、动画还原。倍率由图像和视口尺寸计算；两次放大之间的单击不推进缩放档位。左、中、右单击区域用于翻页或唤出工具栏，点击区保持透明。手势的延迟判定、移动阈值、事件抑制和还原集中在 [useReaderZoom](web-static/src/composables/useReaderZoom.ts)。阅读设置里的「妈妈模式」同样适用于书页和滚动模式。[设置面板](web-static/src/components/reader/ReaderTopBar.vue)
 
@@ -78,7 +78,7 @@ GalleryDetail 为本地和搜索来源提供同一套内容层级。搜索详情
 | --- | --- |
 | 搜索、补全、分页、返回结果 | [browser_search.py](tests/browser_search.py) 验证 IME、同页多个搜索实例、手动搜索请求次数、搜索详情到翻译再返回。匹配语义还有 [跨端契约测试](tests/test_search_contract.py)。 |
 | 菜单、视觉、键盘可达性 | [browser_layout.py](tests/browser_layout.py) 覆盖多宽度和明暗主题；[browser_modern_guidance.py](tests/browser_modern_guidance.py) 覆盖焦点、对话框、强制颜色和减少动效。 |
-| 阅读、图片、翻译 | [browser_review.py](tests/browser_review.py) 覆盖触屏缩放、妈妈模式、页目录、图片阶段和切页后迟到的 OCR。涉及安卓手势时，再用 Android Chrome 走一次单击、双击、拖动、系统返回。 |
+| 阅读、图片、翻译 | [browser_review.py](tests/browser_review.py) 覆盖触屏缩放、妈妈模式、缩略图栏跳页、图片阶段和切页后迟到的 OCR。涉及安卓手势时，再用 Android Chrome 走一次单击、双击、拖动、系统返回。 |
 | API、数据写入、发布 | 在根目录运行 `.venv/bin/python -m unittest discover -s tests -p 'test_*.py'`。后端有独立的目录、每日同步、媒体、管理等测试。[browser_smoke.py](tests/browser_smoke.py) 在临时库和本机 Nginx 上做端到端验证。 |
 
 前端依赖安装在 `web-static`。根目录的 `npm test` 运行 JS 测试，`npm run build --prefix web-static` 包含类型检查及完整构建。浏览器脚本使用构建后的资源，修改组件后先重建，再从根目录运行相应脚本，例如 `.venv/bin/python tests/browser_search.py`。浏览器依赖安装见 README。部署和回滚另见[部署文档](docs/vultr-deployment.md)。

@@ -55,11 +55,17 @@
 .flip-right-enter-active,
 .flip-right-leave-active { transition: transform var(--reader-anim), opacity var(--reader-anim); }
 
+.fade-enter-from,
+.fade-leave-to { opacity: 0; }
+.fade-enter-active,
+.fade-leave-active { transition: opacity var(--reader-anim); }
+
 /* Keep the entering spread above the leaving spread during transitions. */
 .slide-left-enter-active,
 .slide-right-enter-active,
 .flip-left-enter-active,
 .flip-right-enter-active,
+.fade-enter-active,
 .instant-enter-active {
   z-index: 2;
 }
@@ -67,6 +73,7 @@
 .slide-right-leave-active,
 .flip-left-leave-active,
 .flip-right-leave-active,
+.fade-leave-active,
 .instant-leave-active {
   z-index: 1;
   pointer-events: none;
@@ -81,9 +88,11 @@
   .slide-left-enter-active, .slide-left-leave-active,
   .slide-right-enter-active, .slide-right-leave-active,
   .flip-left-enter-active, .flip-left-leave-active,
-  .flip-right-enter-active, .flip-right-leave-active { transition: none; }
+  .flip-right-enter-active, .flip-right-leave-active,
+  .fade-enter-active, .fade-leave-active { transition: none; }
   .slide-left-enter-from, .slide-left-leave-to,
   .slide-right-enter-from, .slide-right-leave-to,
   .flip-left-enter-from, .flip-left-leave-to,
-  .flip-right-enter-from, .flip-right-leave-to { transform: none; opacity: 1; }
+  .flip-right-enter-from, .flip-right-leave-to,
+  .fade-enter-from, .fade-leave-to { transform: none; opacity: 1; }
 }

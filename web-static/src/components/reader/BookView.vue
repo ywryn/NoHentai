@@ -63,6 +63,7 @@ watch(currentPage, newVal => {
 
 const transitionName = computed(() => {
   if (reducedMotion.value || settings.pageTurnAnimation === 'none') return 'instant'
+  if (settings.pageTurnAnimation === 'fade') return 'fade'
   const rtl = settings.bookDirection === 'rtl'
   const fwd = flipDir.value === 'forward'
   const dir = (rtl ? fwd : !fwd) ? 'left' : 'right'

@@ -23,7 +23,7 @@ export interface PageInfo {
 export interface ReaderSettings {
   readingMode: 'book' | 'scroll'
   bookDirection: 'rtl' | 'ltr'
-  pageTurnAnimation: 'slide' | 'flip' | 'none'
+  pageTurnAnimation: 'slide' | 'flip' | 'fade' | 'none'
   pagesPerScreen: 1 | 2
   widthScale: number
   scrollPageMargin: number

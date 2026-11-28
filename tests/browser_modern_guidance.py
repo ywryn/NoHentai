@@ -30,7 +30,7 @@ def main():
             page.route('**/api/page-image?*',lambda r:r.fulfill(status=503,json={'error':'fixture unavailable'}))
             page.route('**/api/trans-verify',lambda r:r.fulfill(status=401,json={'error':'fixture invalid password'}))
             page.route('**/api/admin/session',lambda r:r.fulfill(status=401,json={}))
-            page.add_init_script("localStorage.setItem('theme','light');localStorage.setItem('reader-settings',JSON.stringify({readingMode:'book',pagesPerScreen:1,bookDirection:'ltr',pageTurnAnimation:'flip'}))")
+            page.add_init_script("localStorage.setItem('theme','light');if(!localStorage.getItem('reader-settings'))localStorage.setItem('reader-settings',JSON.stringify({readingMode:'book',pagesPerScreen:1,bookDirection:'ltr',pageTurnAnimation:'flip'}))")
             page.goto(base+'/#/')
             expect(page.locator('.gallery-row')).to_have_count(6)
             expect(page.locator('.gallery-row input')).to_have_count(0)
@@ -46,57 +46,71 @@ def main():
             page.get_by_role('button',name='切换为封面视图',exact=True).click()
             page.keyboard.press('Escape')
             expect(page.locator('.vm-cover-card')).to_have_count(6)
-            grid=page.locator('.vm-cover-grid')
-            assert grid.evaluate("e=>getComputedStyle(e).gridTemplateColumns.split(' ').length")==2
             assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
             page.screenshot(path=str(output/'cover-320.png'))
-            print('PASS: static rating semantics, no form controls nested in links, component queries, 320px two-column covers')
+            # Two 132px cover tracks plus the gap require 278px of content width.
+            page.set_viewport_size({'width':360,'height':844})
+            grid=page.locator('.vm-cover-grid')
+            page.wait_for_function("e=>getComputedStyle(e).gridTemplateColumns.split(' ').length===2", arg=grid.element_handle())
+            print('PASS: static rating semantics, component queries, 320px overflow and two columns when they fit')
 
             page.set_viewport_size({'width':1024,'height':700})
             page.goto(base+'/#/gallery/1/read?token=abcde')
-            opener=page.get_by_role('button',name='页目录',exact=True)
+            opener = page.locator('.top-bar').get_by_role('button', name='缩略图栏', exact=True)
+            capsule = page.locator('.reader-reveal')
             opener.click()
-            modal=page.locator('dialog.tg-overlay')
-            expect(modal).to_be_visible()
-            assert modal.evaluate("e=>e.matches(':modal')")
-            expect(page.get_by_role('spinbutton',name='跳转页码')).to_be_focused()
-            page.locator('.tg-item').last.focus()
+            sidebar = page.locator('.thumb-sidebar')
+            expect(sidebar).to_be_visible()
+            expect(opener).to_have_attribute('aria-pressed', 'true')
+            expect(capsule).to_have_attribute('aria-pressed', 'true')
+            palette = sidebar.evaluate("""sidebar => {
+                const colors = getComputedStyle(sidebar)
+                const list = getComputedStyle(sidebar.querySelector('.ts-list'))
+                return [document.documentElement.classList.contains('my-app-light'),
+                    colors.backgroundColor, list.scrollbarColor]
+            }""")
+            assert palette == [True, 'rgb(16, 19, 18)', 'rgb(148, 163, 184) rgb(16, 19, 18)'], palette
+            jump = page.get_by_role('spinbutton', name='跳转页码')
+            jump.focus()
             page.keyboard.press('Tab')
-            # Native modals may allow the browser chrome between the last and first control.
-            assert page.evaluate("document.activeElement===document.body||document.querySelector('dialog').contains(document.activeElement)")
-            if not page.get_by_role('spinbutton',name='跳转页码').evaluate('e=>e===document.activeElement'):
-                page.keyboard.press('Tab')
-            expect(page.get_by_role('spinbutton',name='跳转页码')).to_be_focused()
-            page.locator('.tb-settings').evaluate('e=>e.focus()')
-            assert modal.evaluate('e=>e.contains(document.activeElement)')
+            expect(sidebar.get_by_role('button', name='跳转', exact=True)).to_be_focused()
+            assert jump.evaluate("e=>{e.focus();return getComputedStyle(e).outlineStyle==='solid'}")
             page.keyboard.press('Escape')
-            expect(modal).to_have_count(0)
-            expect(opener).to_be_focused()
-            opener.click()
-            # Exercise the manual fallback used where closedby is unavailable.
-            page.evaluate("delete HTMLDialogElement.prototype.closedBy;document.querySelector('dialog').removeAttribute('closedby')")
-            rect=modal.bounding_box()
-            page.mouse.click(rect['x']+8,rect['y']+3)
-            expect(modal).to_be_visible()
-            page.mouse.move(8,8);page.mouse.down();page.mouse.move(rect['x']+8,rect['y']+3);page.mouse.up()
-            expect(modal).to_be_visible()
-            page.mouse.click(8,8)
-            expect(modal).to_have_count(0)
-            expect(opener).to_be_focused()
-            print('PASS: native modal focus containment/return, Escape and safe light-dismiss fallback')
+            expect(sidebar).to_have_count(0)
+            expect(capsule).to_be_focused()
+            capsule.click()
+            expect(sidebar).to_be_visible()
+            page.keyboard.press('F')
+            expect(sidebar).to_have_count(0)
+            print('PASS: nonmodal thumbnail sidebar keyboard controls, focus return and dark scrollbar on light theme')
 
-            page.emulate_media(reduced_motion='reduce')
+            page.get_by_role('button', name='阅读设置').click()
+            page.get_by_label('翻页动画').select_option('fade')
+            page.reload()
+            page.get_by_role('button', name='阅读设置').click()
+            expect(page.get_by_label('翻页动画')).to_have_value('fade')
+            page.get_by_role('button', name='阅读设置').click()
+            page.evaluate("""() => {
+                window.readerTransitions = []
+                document.addEventListener('transitionrun', event => {
+                    if (event.target.matches('.spread')) {
+                        window.readerTransitions.push([event.propertyName, String(event.target.className)])
+                    }
+                })
+            }""")
             page.keyboard.press('ArrowRight')
-            expect(page.locator('.tb-counter')).to_have_text('2 / 8')
-            assert page.evaluate("[...document.querySelectorAll('.spread')].every(e=>e.getAnimations().every(a=>!a.effect.getKeyframes().some(k=>k.transform&&k.transform!=='none')))")
-            assert page.evaluate("JSON.parse(localStorage.getItem('reader-settings')).pageTurnAnimation")=='flip'
-            # Changing back must retain the saved animation choice.
-            page.emulate_media(reduced_motion='no-preference')
-            page.keyboard.press('ArrowRight')
-            expect(page.locator('.tb-counter')).to_have_text('3 / 8')
+            expect(capsule).to_have_text('2 / 8')
+            page.wait_for_function("readerTransitions.some(([property, classes]) => property === 'opacity' && classes.includes('fade-enter-active'))")
             page.emulate_media(reduced_motion='reduce')
-            assert page.locator('.reader-btn').first.evaluate("e=>getComputedStyle(e).transitionDuration")!='1e-05s'
-            print('PASS: live reduced-motion changes preserve reader settings and page navigation')
+            page.wait_for_function("!document.querySelector('.fade-enter-active,.fade-leave-active')")
+            page.evaluate('readerTransitions.length = 0')
+            page.keyboard.press('ArrowRight')
+            expect(capsule).to_have_text('3 / 8')
+            page.evaluate("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+            assert page.evaluate('readerTransitions.length') == 0
+            assert page.evaluate("JSON.parse(localStorage.getItem('reader-settings')).pageTurnAnimation") == 'fade'
+            assert page.locator('.reader-btn').first.evaluate("e=>getComputedStyle(e).transitionDuration") != '1e-05s'
+            print('PASS: fade persists after reload, animates opacity and honors live reduced-motion preference')
 
             page.goto(base+'/#/gallery/1/translate?token=abcde')
             password=page.get_by_label('翻译访问密码')
@@ -133,18 +147,22 @@ def main():
             page.screenshot(path=str(output/'forced-colors.png'))
             page.emulate_media(forced_colors='none')
             print('PASS: forced-color system palette and visible active-navigation boundary')
-            # Native sheet must remain usable in a short mobile viewport.
+            # Keep thumbnail controls accessible in a short mobile viewport.
             touch=browser.new_page(service_workers='block',viewport={'width':320,'height':420},is_mobile=True,has_touch=True)
             touch.route('**/api/gallery-images/part?*',lambda r:r.fulfill(json={'total':1,'images':[{'pageNum':1,'pageUrl':'https://e-hentai.org/s/abcde/1-1','thumbSprite':'','thumbX':0,'thumbW':85,'thumbH':120}]}))
             touch.route('**/api/page-image?*',lambda r:r.fulfill(status=503,json={'error':'fixture unavailable'}))
             touch.goto(base+'/#/gallery/1/read?token=abcde')
-            touch.get_by_role('button',name='页目录',exact=True).click()
-            sheet=touch.locator('dialog.tg-overlay').bounding_box()
-            assert sheet['height']<=420*.75+1 and sheet['y']+sheet['height']<=421
-            assert touch.get_by_role('button',name='关闭页目录').bounding_box()['height']>=44
-            touch.screenshot(path=str(output/'directory-mobile-short.png'))
+            touch.locator('.top-bar').get_by_role('button', name='缩略图栏', exact=True).click()
+            assert touch.get_by_role('button', name='跳转', exact=True).bounding_box()['height'] >= 48
+            expect(touch.get_by_role('spinbutton', name='跳转页码')).to_be_visible()
+            touch.get_by_role('button', name='阅读设置', exact=True).click()
+            settings = touch.locator('.tb-controls').bounding_box()
+            position = touch.locator('.reader-reveal').bounding_box()
+            assert position['y'] >= settings['y'] + settings['height']
+            assert position['y'] + position['height'] <= 421
+            touch.screenshot(path=str(output/'thumbnails-mobile-short.png'))
             touch.close()
-            print('PASS: short mobile directory and 44px coarse-pointer close control')
+            print('PASS: short mobile thumbnail controls, 48px submit and no settings overlap')
             assert not errors,errors
             browser.close()
     finally:

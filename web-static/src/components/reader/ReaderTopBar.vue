@@ -3,8 +3,6 @@
     <div class="top-bar">
       <button class="tb-icon-btn tb-back" type="button" title="返回" aria-label="返回" @click="$emit('back')"><AppIcon name="arrow-left" :size="18" /></button>
 
-      <button class="tb-counter" type="button" aria-label="打开页目录" @click="$emit('toggleThumbGrid')">{{ pageCounter }}</button>
-
       <div class="tb-spacer" />
 
       <!-- 宽屏内联展开的设置项；窄屏收进下方面板 -->
@@ -38,11 +36,12 @@
           </div>
 
           <div class="tb-control">
-            <span class="tb-label">翻页动画</span>
-            <select class="tb-select" :value="settings.pageTurnAnimation"
+            <label class="tb-label" for="reader-page-animation">翻页动画</label>
+            <select id="reader-page-animation" class="tb-select" :value="settings.pageTurnAnimation"
               @change="e => updateSetting('pageTurnAnimation', (e.target as HTMLSelectElement).value as any)">
               <option value="slide">滑动</option>
               <option value="flip">翻页</option>
+              <option value="fade">淡入淡出</option>
               <option value="none">无</option>
             </select>
           </div>
@@ -53,19 +52,6 @@
           <span class="tb-label">妈妈模式</span>
           <span aria-hidden="true" class="tb-toggle" :class="{ 'tb-toggle-on': isMomMode }" />
         </button>
-
-        <div class="tb-toggle-item">
-          <span class="tb-label">缩略图栏</span>
-          <button
-            class="tb-toggle"
-            type="button"
-            role="switch"
-            :aria-checked="showSidebar"
-            aria-label="缩略图栏"
-            :class="{ 'tb-toggle-on': showSidebar }"
-            @click="$emit('toggleSidebar')"
-          />
-        </div>
       </div>
 
       <button
@@ -102,15 +88,14 @@
       <button
         class="tb-icon-btn"
         type="button"
-        :aria-pressed="showThumbGrid"
-        aria-label="页目录"
-        title="页目录（F）"
-        @click="$emit('toggleThumbGrid')"
+        :aria-pressed="showSidebar"
+        :aria-controls="showSidebar ? 'reader-thumbnails' : undefined"
+        aria-label="缩略图栏"
+        title="缩略图栏（F）"
+        @click="$emit('toggleSidebar')"
       >
         <AppIcon name="grid" :size="20" />
       </button>
-
-
     </div>
 
     <!-- 阅读进度：3998 页的画廊只有文字计数时缺少空间感 -->
@@ -128,30 +113,21 @@ import { READER_KEY } from '@/composables/useReader'
 
 defineProps<{
   showSidebar: boolean
-  showThumbGrid: boolean
 }>()
 defineEmits<{
   back: []
   toggleSidebar: []
-  toggleThumbGrid: []
   translate: []
   toggleHelp: []
 }>()
 
 const { isMomMode, toggleMomMode } = useMomMode()
 const reader = inject(READER_KEY)!
-const { settings, updateSetting, currentPage, total, effectivePagesPerScreen } = reader
+const { settings, updateSetting, currentPage, total } = reader
 
 /** 窄屏时设置项收进折叠面板，此前 4 个 select + 2 个开关挤在 40px 单行里
     靠隐藏滚动条的横向滚动容纳，移动端有内容在屏幕外且毫无提示 */
 const settingsOpen = ref(false)
-
-const pageCounter = computed(() => {
-  const p = currentPage.value
-  const t = total.value
-  if (settings.readingMode === 'book' && effectivePagesPerScreen.value === 2 && p < t) return `${p}–${p + 1} / ${t}`
-  return `${p} / ${t}`
-})
 
 const progress = computed(() => (total.value ? (currentPage.value / total.value) * 100 : 0))
 </script>
@@ -173,15 +149,6 @@ const progress = computed(() => (total.value ? (currentPage.value / total.value)
   min-height: 44px;
   padding: 0 6px;
   color: var(--reader-text);
-}
-
-.tb-counter {
-  font-size: 12px;
-  color: var(--reader-muted);
-  white-space: nowrap;
-  padding: 0 6px;
-  font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
 }
 
 .tb-spacer { flex: 1; min-width: 4px; }
@@ -288,18 +255,16 @@ const progress = computed(() => (total.value ? (currentPage.value / total.value)
 
 .tb-back { font-size: 18px; }
 
-/* 宽屏设置项常驻，齿轮按钮无用 */
 .tb-settings { display: flex; }
 .tb-controls { display:none;position:absolute;right:12px;top:calc(100% + 8px);z-index:30;flex-direction:column;align-items:stretch;gap:8px;padding:16px;min-width:220px;border:1px solid var(--reader-border);border-radius:12px;background:#151b19;box-shadow:0 16px 36px #0007 }
 .tb-controls.is-open{
   display:flex;
   box-sizing:border-box;
-  max-height:calc(100dvh - 64px);
+  max-height:calc(100dvh - 64px - var(--reader-counter-space));
   overflow-y:auto;
 }
 .top-bar{position:relative}
 .tb-control,.tb-toggle-item{justify-content:space-between;min-height:40px}
-.tb-counter{border:0;background:none;cursor:pointer;font:inherit}
 
 .tb-progress {
   height: 2px;

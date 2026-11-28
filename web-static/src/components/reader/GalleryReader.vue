@@ -23,11 +23,10 @@
       <Transition name="gr-chrome">
         <ReaderTopBar
           v-show="chromeVisible"
+          :inert="!chromeVisible"
           :show-sidebar="showSidebar"
-          :show-thumb-grid="showThumbGrid"
           @back="exit"
           @toggle-sidebar="showSidebar = !showSidebar"
-          @toggle-thumb-grid="showThumbGrid = !showThumbGrid"
           @translate="openTranslate"
           @toggle-help="showHelp = !showHelp"
         />
@@ -39,23 +38,32 @@
         <ScrollView v-else @surface-click="onSurfaceClick" />
       </div>
 
-      <button v-if="!chromeVisible" class="reader-reveal" type="button" aria-label="显示阅读工具栏" @click="chromeVisible = true">{{ currentPage }} / {{ reader.total.value }}</button>
+      <Transition name="gr-chrome">
+        <button
+          v-show="chromeVisible"
+          ref="pageCounterButton"
+          class="reader-reveal"
+          type="button"
+          aria-label="缩略图栏"
+          :aria-pressed="showSidebar"
+          :aria-controls="showSidebar ? 'reader-thumbnails' : undefined"
+          :inert="!chromeVisible"
+          @click="showSidebar = !showSidebar"
+        >{{ pageCounter }}</button>
+      </Transition>
 
       <div v-if="showHelp" class="gr-hint" role="dialog" aria-modal="true" aria-label="快捷键说明" @click.self="showHelp = false">
         <div class="gr-hint-card">
           <p class="gr-hint-title">阅读器快捷键</p>
           <p class="gr-hint-keys">← / → 或 A / D：翻页（遵循当前阅读方向）</p>
-          <p class="gr-hint-keys">F：打开或关闭页目录</p>
+          <p class="gr-hint-keys">F：打开或关闭缩略图栏</p>
           <p class="gr-hint-keys">M：切换书页 / 滚动模式</p>
           <p class="gr-hint-keys">T：翻译当前页 · ?：显示此说明</p>
-          <p class="gr-hint-keys">Esc：关闭弹窗或返回详情</p>
+          <p class="gr-hint-keys">Esc：关闭弹窗或缩略图栏，或返回详情</p>
           <button type="button" class="reader-btn gr-hint-btn" @click="showHelp = false">知道了</button>
         </div>
       </div>
 
-      <Teleport to="body">
-        <ThumbGrid v-if="showThumbGrid" @close="showThumbGrid = false" />
-      </Teleport>
     </template>
   </div>
 </template>
@@ -65,14 +73,13 @@ import { useReaderZoom } from '@/composables/useReaderZoom'
 import { saveReadingProgress } from '@/composables/useReadingProgress'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import ImageLoadProgress from '@/components/ui/ImageLoadProgress.vue'
-import { ref, provide, onMounted, onBeforeUnmount, watch } from 'vue'
+import { computed, nextTick, ref, provide, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useReader, READER_KEY } from '@/composables/useReader'
 import ReaderTopBar  from './ReaderTopBar.vue'
 import BookView      from './BookView.vue'
 import ScrollView    from './ScrollView.vue'
 import ThumbStrip    from './ThumbStrip.vue'
-import ThumbGrid     from './ThumbGrid.vue'
 import '@/assets/reader.css'
 
 const route  = useRoute()
@@ -82,18 +89,24 @@ const liveSite = route.name === 'LiveReader' ? String(route.query.site || '') : 
 const reader = useReader(liveSite)
 provide(READER_KEY, reader)
 
-const { initLoading, initError, settings, currentPage, prev, next, updateSetting, onResize, init } = reader
+const { initLoading, initError, settings, currentPage, total, effectivePagesPerScreen, prev, next, updateSetting, onResize, init } = reader
 
 const gid       = route.params.gid as string
 const token     = (route.query.token as string) || ''
 const startPage = parseInt(route.query.page as string) || 1
 
 const showSidebar   = ref(false)
-const showThumbGrid = ref(false)
 const showHelp      = ref(false)
 /** 工具栏显隐，由中间点击区切换，用于沉浸阅读 */
 const chromeVisible = ref(true)
-
+const pageCounterButton = ref<HTMLButtonElement | null>(null)
+const pageCounter = computed(() => {
+  const page = currentPage.value
+  const last = settings.readingMode === 'book'
+    ? Math.min(total.value, page + effectivePagesPerScreen.value - 1)
+    : page
+  return `${last > page ? `${page}–${last}` : page} / ${total.value}`
+})
 
 const zoom = useReaderZoom(target => {
   if (target.classList.contains('click-zone-left')) settings.bookDirection === 'rtl' ? next() : prev()
@@ -125,10 +138,13 @@ function openTranslate() {
 }
 
 function onKey(e: KeyboardEvent) {
-  // Native directory dialog owns dismissal and focus while it is open.
   if (picture.value) { if (e.key === 'Escape') zoom.reset(); return }
   if (showHelp.value) { if (e.key === 'Escape' || e.key === '?') showHelp.value = false; return }
-  if (showThumbGrid.value) return
+  if (e.key === 'Escape' && showSidebar.value) {
+    e.preventDefault()
+    closeSidebar()
+    return
+  }
   if (['INPUT','TEXTAREA','SELECT'].includes((e.target as HTMLElement).tagName)) return
   const rtl = settings.bookDirection === 'rtl'
   switch (e.key) {
@@ -138,7 +154,10 @@ function onKey(e: KeyboardEvent) {
     case 'd': rtl ? prev() : next(); break
     case 'Escape':
       exit(); break
-    case 'f': case 'F': showThumbGrid.value = !showThumbGrid.value; break
+    case 'f': case 'F':
+      if (showSidebar.value) closeSidebar()
+      else showSidebar.value = true
+      break
     case 'm': case 'M':
       updateSetting('readingMode', settings.readingMode === 'book' ? 'scroll' : 'book'); break
     case 't': case 'T':
@@ -146,6 +165,12 @@ function onKey(e: KeyboardEvent) {
     case '?':
       showHelp.value = true; break
   }
+}
+
+function closeSidebar() {
+  const restoreFocus = chromeVisible.value && document.activeElement?.closest('#reader-thumbnails')
+  showSidebar.value = false
+  if (restoreFocus) void nextTick(() => pageCounterButton.value?.focus())
 }
 
 watch([currentPage, reader.total], ([page, total]) => {
@@ -179,6 +204,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .gr-root {
+  --reader-counter-space: calc(60px + env(safe-area-inset-bottom));
   position: fixed;
   inset: 0;
   z-index: 200;
@@ -217,6 +243,11 @@ onBeforeUnmount(() => {
 }
 .gr-chrome-enter-from,
 .gr-chrome-leave-to { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-chrome-enter-active, .gr-chrome-leave-active { transition: none; }
+  .gr-chrome-enter-from, .gr-chrome-leave-to { opacity: 1; }
+}
 
 .gr-hint {
   position: absolute;
@@ -261,5 +292,22 @@ onBeforeUnmount(() => {
   min-height: var(--tap-target);
   padding: 0 20px;
 }
-.reader-reveal{position:absolute;top:calc(12px + env(safe-area-inset-top));right:16px;z-index:15;min-height:44px;padding:0 16px;border:1px solid var(--reader-border);border-radius:999px;background:#101512dd;color:var(--reader-text);font:inherit;cursor:pointer}
+.reader-reveal {
+  position: absolute;
+  right: calc(16px + env(safe-area-inset-right));
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 9;
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--reader-border);
+  border-radius: 999px;
+  background: var(--reader-bg);
+  color: var(--reader-text);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.reader-reveal:hover, .reader-reveal[aria-pressed="true"] { border-color: var(--reader-accent); }
+.reader-reveal:focus-visible { outline: 2px solid var(--reader-accent); outline-offset: 2px; }
 </style>
