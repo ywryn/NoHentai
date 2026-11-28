@@ -442,15 +442,30 @@ class BackendTests(unittest.TestCase):
             load.assert_called_once_with(params['pageUrl'], refresh=False, persistent=False)
 
     def test_gallery_directory_fetches_only_the_requested_part(self):
-        with patch('backend.media.gallery_page', return_value=(20, [
-            {'pageNum': 11, 'pageUrl': '/s/abc/123-11', 'thumbSprite': ''}
-        ], 2)) as fetch:
-            response = self.client.get('/api/gallery-images/part', params={
-                'gid': '123', 'token': 'abcde', 'part': 1, 'source': 'e-hentai.org'
-            })
+        first_url = 'https://exhentai.org/g/123/abcde/'
+        params = {'gid': '123', 'token': 'abcde', 'part': 1, 'source': 'exhentai.org'}
+        gallery = b"""<table id="gdd"><tr><td class="gdt1">Length:</td><td>21 pages</td></tr></table>
+            <div id="gdt"><a href="/s/abc/123-21"></a></div>
+            <table class="ptt"><tr><td>1</td><td class="ptds">2</td></tr></table>"""
+        db.set_cache('gallery-part:exhentai.org:123:abcde:1', {
+            'total': 21, 'images': [{'pageNum': 1}], 'partCount': 2, 'source': 'exhentai.org'
+        }, 900)
+        with patch('backend.media.fetch', return_value=(gallery, 'text/html')) as fetch:
+            response = self.client.get('/api/gallery-images/part', params=params)
             self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.json()['images'][0]['pageUrl'], 'https://e-hentai.org/s/abc/123-11')
-            fetch.assert_called_once_with('https://e-hentai.org/g/123/abcde/?nw=always&p=1')
+            self.assertEqual(response.json()['images'][0]['pageUrl'], 'https://exhentai.org/s/abc/123-21')
+            fetch.assert_called_once_with(first_url + '?p=1', gallery=True)
+
+    def test_gallery_directory_rejects_redirected_part_before_caching(self):
+        first = b"""<table id="gdd"><tr><td class="gdt1">Length:</td><td>2 pages</td></tr></table>
+            <div id="gdt"><a href="/s/abc/123-1"></a></div>
+            <table class="ptt"><tr><td class="ptds">1</td><td>2</td></tr></table>"""
+        params = {'gid': '123', 'token': 'abcde', 'part': 1, 'source': 'exhentai.org'}
+        with patch('backend.media.fetch', return_value=(first, 'text/html')):
+            response = self.client.get('/api/gallery-images/part', params=params)
+        self.assertEqual(response.status_code, 502)
+        self.assertIn('错误的目录分页', response.json()['error'])
+        self.assertIsNone(db.get_cache('gallery-part:v2:exhentai.org:123:abcde:1'))
 
     def test_live_session_search_read_and_expire(self):
         urls = ['/api/live/search', '/api/live/directory?site=e-hentai.org&gid=2&token=abcde',
@@ -489,7 +504,7 @@ class BackendTests(unittest.TestCase):
             self.assertEqual(response.json()['images'][0]['pageUrl'],'https://e-hentai.org/s/aa/2-2')
             self.assertIn('prev=7', fetch.call_args_list[0].args[0])
             self.assertIn('f_cats=1019', fetch.call_args_list[0].args[0])
-            self.assertIn('p=1', fetch.call_args_list[1].args[0])
+            self.assertEqual(fetch.call_args_list[1].args[0], 'https://e-hentai.org/g/2/abcde/?p=1')
         with patch('backend.media.fetch', return_value=(b'<img id="img" src="https://ehgt.org/p.png">','text/html')), patch(
                 'backend.media.validate_url'), patch('backend.db.set_cache', side_effect=AssertionError):
             self.assertEqual(self.client.get(urls[2]).json()['imageUrl'], 'https://ehgt.org/p.png')

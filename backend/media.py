@@ -8,12 +8,18 @@ from .security import fail
 from .upstream import fetch, json_request, validate_url
 
 
-def gallery_page(url):
+def gallery_directory_url(host, gid, token, part):
+    # Upstream can redirect nw=always to the gallery root and drop p.
+    query = f'p={part}' if part else 'nw=always'
+    return f'https://{host}/g/{gid}/{token}/?{query}'
+
+
+def gallery_page(url, part=None):
     content, _ = fetch(url, gallery=True)
-    return parse_gallery_page(BeautifulSoup(content, 'html.parser'))
+    return parse_gallery_page(BeautifulSoup(content, 'html.parser'), part)
 
 
-def parse_gallery_page(soup):
+def parse_gallery_page(soup, part=None):
     if not soup.select_one('#gdt'):
         return None
     total = 0
@@ -36,6 +42,15 @@ def parse_gallery_page(soup):
                        'thumbSprite': sprite[1] if sprite else (img.get('src', '') if img else ''),
                        'thumbX': int(next(v for v in offset.groups() if v is not None)) if offset else 0,
                        'thumbW': int(width[1]) if width else 100, 'thumbH': int(height[1]) if height else 142})
+    if part is not None and images:
+        numbers = [image['pageNum'] for image in images]
+        active = soup.select_one('.ptt td.ptds')
+        if ((active and active.get_text(strip=True) != str(part + 1))
+                or (numbers[0] == 1) != (part == 0)):
+            fail(502, '上游返回了错误的目录分页，请刷新')
+        if (not 1 <= numbers[0] <= numbers[-1] <= total <= 100000
+                or numbers != list(range(numbers[0], numbers[0] + len(numbers)))):
+            fail(502, '上游目录页码不完整，请刷新')
     pages = [int(t.get_text(strip=True)) for t in soup.select('.ptt td') if t.get_text(strip=True).isdigit()]
     return total, images, max(pages, default=1)
 
@@ -44,13 +59,13 @@ def gallery_part(gid, token, part, source=None, refresh=False):
     if not re.fullmatch(r'[1-9][0-9]{0,14}', gid) or not re.fullmatch(r'[a-zA-Z0-9]{5,64}', token):
         fail(400, '画廊 ID 或 token 不正确')
     for host in ([source] if source else ['e-hentai.org', 'exhentai.org']):
-        key = f'gallery-part:{host}:{gid}:{token}:{part}'
+        key = f'gallery-part:v2:{host}:{gid}:{token}:{part}'
         cached = None if refresh else db.get_cache(key)
         if cached:
             return cached
-        url = f'https://{host}/g/{gid}/{token}/?nw=always&p={part}'
+        url = gallery_directory_url(host, gid, token, part)
         try:
-            result = gallery_page(url)
+            result = gallery_page(url, part)
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code not in (403, 404):
                 raise
@@ -58,9 +73,6 @@ def gallery_part(gid, token, part, source=None, refresh=False):
         if not result or not result[1]:
             continue
         total, images, part_count = result
-        numbers = [item['pageNum'] for item in images]
-        if not 0 < total <= 100000 or numbers != list(range(numbers[0], numbers[0] + len(numbers))) or not 1 <= numbers[0] <= numbers[-1] <= total:
-            fail(502, '上游目录页码不完整，请刷新')
         for item in images:
             item['pageUrl'] = urljoin(url, item['pageUrl'])
             if item['thumbSprite']:

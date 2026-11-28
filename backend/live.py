@@ -87,17 +87,12 @@ def gallery_metadata(soup, url, total):
 
 def directory(host, gid, token, part, details=False):
     host = site(host)
-    url = f'https://{host}/g/{gid}/{token}/?nw=always&p={part}'
+    url = media.gallery_directory_url(host, gid, token, part)
     soup = BeautifulSoup(document(url), 'html.parser')
-    page = media.parse_gallery_page(soup)
+    page = media.parse_gallery_page(soup, part)
     if not page or not page[1]:
         fail(403, '画廊不可访问，请检查站点权限')
     total, images, part_count = page
-    if not 0 < total <= 100000:
-        fail(502, '画廊页数无效')
-    numbers = [image['pageNum'] for image in images]
-    if numbers != list(range(numbers[0], numbers[0] + len(images))) or not 1 <= numbers[0] <= numbers[-1] <= total:
-        fail(502, '上游目录页码不完整，请刷新')
     for image in images:
         image['pageUrl'] = urljoin(url, image['pageUrl'])
         if image['thumbSprite']:
